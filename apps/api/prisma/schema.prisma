@@ -1,0 +1,981 @@
+// MASAR 34 — Prisma schema
+// Multi-tenant crowd/queue/operations platform.
+// Conventions: every tenant-scoped table carries organizationId; timestamps on all;
+// soft delete via deletedAt where records must be retained for audit.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────── Enums ───────────────────────────
+
+enum OrgStatus {
+  ACTIVE
+  SUSPENDED
+  TRIAL
+  CANCELLED
+}
+
+enum SubscriptionPlan {
+  TRIAL
+  STARTER
+  PROFESSIONAL
+  ENTERPRISE
+  GOV
+}
+
+enum UserStatus {
+  ACTIVE
+  INVITED
+  DISABLED
+  LOCKED
+}
+
+enum VenueType {
+  STADIUM
+  FAN_ZONE
+  AIRPORT
+  TRAIN_STATION
+  FESTIVAL
+  EXHIBITION
+  SHOPPING_MALL
+  PILGRIMAGE_SITE
+}
+
+enum OperationalStatus {
+  OPERATIONAL
+  DEGRADED
+  CLOSED
+  MAINTENANCE
+}
+
+enum ZoneType {
+  GATE
+  SEATING
+  FOOD
+  RETAIL
+  PARKING
+  TRANSPORTATION
+  PRAYER
+  MEDICAL
+  FAMILY
+  VIP
+  SECURITY
+  RESTROOM
+}
+
+enum RiskLevel {
+  LOW
+  MODERATE
+  HIGH
+  CRITICAL
+}
+
+enum GateType {
+  ENTRY
+  EXIT
+  BIDIRECTIONAL
+  VIP
+  STAFF
+  EMERGENCY
+}
+
+enum GateStatus {
+  OPEN
+  CLOSED
+  RESTRICTED
+  EMERGENCY_ONLY
+  MAINTENANCE
+}
+
+enum EventType {
+  FOOTBALL
+  CONCERT
+  FESTIVAL
+  CONFERENCE
+  EXHIBITION
+  RELIGIOUS
+  SPORTS_OTHER
+}
+
+enum EventStatus {
+  DRAFT
+  SCHEDULED
+  ACTIVE
+  PAUSED
+  COMPLETED
+  CANCELLED
+}
+
+enum SecurityLevel {
+  STANDARD
+  ELEVATED
+  HIGH
+  MAXIMUM
+}
+
+enum DensityLevel {
+  VERY_LOW
+  LOW
+  MODERATE
+  HIGH
+  CRITICAL
+}
+
+enum QueueType {
+  GATE
+  FOOD
+  RESTROOM
+  PARKING
+  TRANSPORT
+  SECURITY_CHECK
+  TICKET_CHECK
+  MEDICAL
+}
+
+enum AlertType {
+  CROWD_DENSITY
+  QUEUE_TIME
+  GATE_CAPACITY
+  SAFETY
+  INCIDENT
+  MEDICAL
+  TRANSPORTATION
+  SYSTEM
+  CAMERA_OFFLINE
+  SENSOR_OFFLINE
+  STAFF_SHORTAGE
+  WEATHER
+}
+
+enum Severity {
+  INFO
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum AlertStatus {
+  NEW
+  ACKNOWLEDGED
+  IN_PROGRESS
+  ESCALATED
+  RESOLVED
+  DISMISSED
+}
+
+enum IncidentType {
+  CROWD_SURGE
+  MEDICAL_EMERGENCY
+  LOST_PERSON
+  SECURITY_ISSUE
+  FIRE
+  GATE_FAILURE
+  TRANSPORT_DELAY
+  INFRASTRUCTURE_FAILURE
+  FOOD_SAFETY
+  POWER_FAILURE
+  WATER_LEAKAGE
+  SUSPICIOUS_ACTIVITY
+  EVACUATION
+}
+
+enum IncidentStatus {
+  OPEN
+  ACKNOWLEDGED
+  IN_PROGRESS
+  ESCALATED
+  RESOLVED
+  CLOSED
+}
+
+enum TaskStatus {
+  ASSIGNED
+  ACCEPTED
+  EN_ROUTE
+  ON_SITE
+  IN_PROGRESS
+  COMPLETED
+  REJECTED
+  ESCALATED
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum PartnerType {
+  RESTAURANT
+  COFFEE_SHOP
+  RETAIL_STORE
+  TRANSPORTATION
+  PARKING_OPERATOR
+  HOTEL
+  MEDICAL_PROVIDER
+  SECURITY_CONTRACTOR
+}
+
+enum DeviceType {
+  CAMERA
+  SENSOR
+}
+
+enum SimulationStatus {
+  IDLE
+  RUNNING
+  PAUSED
+  STOPPED
+}
+
+enum IntegrationType {
+  CCTV
+  PEOPLE_COUNTING
+  IOT_SENSOR
+  TICKETING
+  ACCESS_CONTROL
+  POS
+  PARKING
+  TRANSPORTATION
+  WEATHER
+  SMS
+  WHATSAPP
+  EMAIL
+  MAPS
+  EMERGENCY
+  GOVERNMENT
+}
+
+// ─────────────────────────── Identity & RBAC ───────────────────────────
+
+model Organization {
+  id               String            @id @default(cuid())
+  name             String
+  arabicName       String
+  commercialName   String?
+  type             String?
+  country          String            @default("SA")
+  city             String?
+  contactPerson    String?
+  phone            String?
+  email            String?
+  status           OrgStatus         @default(ACTIVE)
+  subscriptionPlan SubscriptionPlan  @default(TRIAL)
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  deletedAt        DateTime?
+
+  users        User[]
+  venues       Venue[]
+  events       Event[]
+  zones        Zone[]
+  gates        Gate[]
+  alerts       Alert[]
+  incidents    Incident[]
+  tasks        Task[]
+  fieldTeams   FieldTeam[]
+  staff        StaffMember[]
+  partners     Partner[]
+  simulations  Simulation[]
+  integrations IntegrationConnection[]
+  auditLogs    AuditLog[]
+
+  @@index([status])
+  @@map("organizations")
+}
+
+model Role {
+  id          String           @id @default(cuid())
+  key         String           @unique // e.g. SUPER_ADMIN, ORG_ADMIN
+  name        String
+  arabicName  String
+  description String?
+  isSystem    Boolean          @default(true)
+  createdAt   DateTime         @default(now())
+
+  users       UserRole[]
+  permissions RolePermission[]
+
+  @@map("roles")
+}
+
+model Permission {
+  id        String           @id @default(cuid())
+  key       String           @unique // e.g. venues:read
+  resource  String
+  action    String
+  createdAt DateTime         @default(now())
+
+  roles RolePermission[]
+
+  @@map("permissions")
+}
+
+model RolePermission {
+  roleId       String
+  permissionId String
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+  @@map("role_permissions")
+}
+
+model User {
+  id             String    @id @default(cuid())
+  organizationId String?
+  email          String    @unique
+  passwordHash   String
+  fullName       String
+  arabicName     String?
+  phone          String?
+  status         UserStatus @default(ACTIVE)
+  emailVerified  Boolean   @default(false)
+  mfaEnabled     Boolean   @default(false)
+  mfaSecret      String?
+  failedLogins   Int       @default(0)
+  lockedUntil    DateTime?
+  lastLoginAt    DateTime?
+  passwordChangedAt DateTime @default(now())
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  deletedAt      DateTime?
+
+  organization Organization? @relation(fields: [organizationId], references: [id])
+  roles        UserRole[]
+  sessions     Session[]
+  auditLogs    AuditLog[]
+  reportedIncidents Incident[] @relation("IncidentReporter")
+  assignedTasks     Task[]     @relation("TaskAssignee")
+
+  @@index([organizationId])
+  @@index([status])
+  @@map("users")
+}
+
+model UserRole {
+  userId String
+  roleId String
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role   Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@id([userId, roleId])
+  @@map("user_roles")
+}
+
+model Session {
+  id               String   @id @default(cuid())
+  userId           String
+  refreshTokenHash String
+  userAgent        String?
+  ipAddress        String?
+  expiresAt        DateTime
+  revokedAt        DateTime?
+  createdAt        DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("sessions")
+}
+
+// ─────────────────────────── Venues / Zones / Gates ───────────────────────────
+
+model Venue {
+  id               String            @id @default(cuid())
+  organizationId   String
+  name             String
+  arabicName       String
+  type             VenueType
+  address          String?
+  city             String?
+  latitude         Float?
+  longitude        Float?
+  capacity         Int               @default(0)
+  numGates         Int               @default(0)
+  numZones         Int               @default(0)
+  numParkingAreas  Int               @default(0)
+  emergencyExits   Int               @default(0)
+  status           OperationalStatus @default(OPERATIONAL)
+  contactManager   String?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  deletedAt        DateTime?
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  zones        Zone[]
+  gates        Gate[]
+  events       Event[]
+  devices      Device[]
+
+  @@index([organizationId])
+  @@index([type])
+  @@map("venues")
+}
+
+model Zone {
+  id             String    @id @default(cuid())
+  organizationId String
+  venueId        String
+  parentZoneId   String?
+  name           String
+  arabicName     String?
+  type           ZoneType
+  capacity       Int       @default(0)
+  currentOccupancy Int     @default(0)
+  entryPoints    Int       @default(1)
+  exitPoints     Int       @default(1)
+  latitude       Float?
+  longitude      Float?
+  riskLevel      RiskLevel @default(LOW)
+  status         OperationalStatus @default(OPERATIONAL)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  deletedAt      DateTime?
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  venue        Venue        @relation(fields: [venueId], references: [id])
+  parentZone   Zone?        @relation("ZoneHierarchy", fields: [parentZoneId], references: [id])
+  childZones   Zone[]       @relation("ZoneHierarchy")
+  gates        Gate[]
+  crowdReadings CrowdReading[]
+  queueReadings QueueReading[]
+  devices      Device[]
+
+  @@index([venueId])
+  @@index([organizationId])
+  @@index([type])
+  @@map("zones")
+}
+
+model Gate {
+  id             String     @id @default(cuid())
+  organizationId String
+  venueId        String
+  zoneId         String?
+  name           String
+  code           String
+  type           GateType   @default(BIDIRECTIONAL)
+  maxCapacityPerMinute Int  @default(30)
+  status         GateStatus @default(CLOSED)
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+  deletedAt      DateTime?
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  venue        Venue        @relation(fields: [venueId], references: [id])
+  zone         Zone?        @relation(fields: [zoneId], references: [id])
+  queueReadings QueueReading[]
+
+  @@unique([venueId, code])
+  @@index([venueId])
+  @@index([organizationId])
+  @@map("gates")
+}
+
+model Device {
+  id             String     @id @default(cuid())
+  organizationId String
+  venueId        String
+  zoneId         String?
+  type           DeviceType
+  name           String
+  externalId     String?
+  isOnline       Boolean    @default(true)
+  lastSeenAt     DateTime?
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  venue Venue @relation(fields: [venueId], references: [id])
+  zone  Zone? @relation(fields: [zoneId], references: [id])
+
+  @@index([venueId])
+  @@index([type])
+  @@map("devices")
+}
+
+// ─────────────────────────── Events ───────────────────────────
+
+model Event {
+  id                String        @id @default(cuid())
+  organizationId    String
+  venueId           String
+  name              String
+  arabicName        String
+  type              EventType
+  status            EventStatus   @default(DRAFT)
+  startDate         DateTime
+  endDate           DateTime
+  doorsOpenTime     DateTime?
+  expectedAttendance Int          @default(0)
+  actualAttendance  Int           @default(0)
+  organizer         String?
+  securityLevel     SecurityLevel @default(STANDARD)
+  weatherConditions String?
+  transportationPlan String?
+  emergencyPlan     String?
+  operationalNotes  String?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  deletedAt         DateTime?
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  venue        Venue        @relation(fields: [venueId], references: [id])
+  alerts       Alert[]
+  incidents    Incident[]
+  simulations  Simulation[]
+  crowdReadings CrowdReading[]
+  queueReadings QueueReading[]
+
+  @@index([organizationId])
+  @@index([venueId])
+  @@index([status])
+  @@map("events")
+}
+
+// ─────────────────────────── Telemetry ───────────────────────────
+
+model CrowdReading {
+  id             String       @id @default(cuid())
+  organizationId String
+  eventId        String?
+  zoneId         String
+  occupancy      Int
+  capacity       Int
+  densityLevel   DensityLevel
+  entryFlow      Int          @default(0) // per minute
+  exitFlow       Int          @default(0)
+  avgSpeed       Float        @default(0) // m/s
+  riskScore      Float        @default(0) // 0..100
+  recordedAt     DateTime     @default(now())
+
+  zone  Zone   @relation(fields: [zoneId], references: [id])
+  event Event? @relation(fields: [eventId], references: [id])
+
+  @@index([zoneId, recordedAt])
+  @@index([eventId])
+  @@index([organizationId])
+  @@map("crowd_readings")
+}
+
+model QueueReading {
+  id             String    @id @default(cuid())
+  organizationId String
+  eventId        String?
+  zoneId         String?
+  gateId         String?
+  type           QueueType
+  queueLength    Int       @default(0)
+  arrivalRate    Float     @default(0) // per minute
+  serviceRate    Float     @default(0) // per minute
+  waitingTime    Float     @default(0) // minutes
+  abandonmentRate Float    @default(0)
+  riskScore      Float     @default(0)
+  recordedAt     DateTime  @default(now())
+
+  zone  Zone?  @relation(fields: [zoneId], references: [id])
+  gate  Gate?  @relation(fields: [gateId], references: [id])
+  event Event? @relation(fields: [eventId], references: [id])
+
+  @@index([gateId, recordedAt])
+  @@index([zoneId, recordedAt])
+  @@index([organizationId])
+  @@map("queue_readings")
+}
+
+// ─────────────────────────── Alerts & Incidents ───────────────────────────
+
+model Alert {
+  id                String      @id @default(cuid())
+  organizationId    String
+  eventId           String?
+  venueId           String?
+  zoneId            String?
+  type              AlertType
+  severity          Severity
+  source            String?
+  message           String
+  recommendedAction String?
+  confidenceScore   Float       @default(1)
+  status            AlertStatus @default(NEW)
+  assignedToId      String?
+  acknowledgedAt    DateTime?
+  resolvedAt        DateTime?
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  event        Event?       @relation(fields: [eventId], references: [id])
+
+  @@index([organizationId, status])
+  @@index([eventId])
+  @@index([severity])
+  @@map("alerts")
+}
+
+model Incident {
+  id             String         @id @default(cuid())
+  organizationId String
+  eventId        String?
+  venueId        String?
+  zoneId         String?
+  number         String         @unique
+  type           IncidentType
+  severity       Severity
+  status         IncidentStatus @default(OPEN)
+  location       String?
+  description    String
+  reportedById   String?
+  assignedTeamId String?
+  responseTime   Int? // seconds to first response
+  rootCause      String?
+  correctiveAction String?
+  closureNotes   String?
+  slaDueAt       DateTime?
+  resolvedAt     DateTime?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  event        Event?       @relation(fields: [eventId], references: [id])
+  reportedBy   User?        @relation("IncidentReporter", fields: [reportedById], references: [id])
+  assignedTeam FieldTeam?   @relation(fields: [assignedTeamId], references: [id])
+  updates      IncidentUpdate[]
+  attachments  IncidentAttachment[]
+  tasks        Task[]
+
+  @@index([organizationId, status])
+  @@index([eventId])
+  @@map("incidents")
+}
+
+model IncidentUpdate {
+  id         String   @id @default(cuid())
+  incidentId String
+  authorId   String?
+  message    String
+  statusFrom IncidentStatus?
+  statusTo   IncidentStatus?
+  isInternal Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  incident Incident @relation(fields: [incidentId], references: [id], onDelete: Cascade)
+
+  @@index([incidentId])
+  @@map("incident_updates")
+}
+
+model IncidentAttachment {
+  id         String   @id @default(cuid())
+  incidentId String
+  fileName   String
+  fileUrl    String
+  mimeType   String?
+  sizeBytes  Int?
+  createdAt  DateTime @default(now())
+
+  incident Incident @relation(fields: [incidentId], references: [id], onDelete: Cascade)
+
+  @@index([incidentId])
+  @@map("incident_attachments")
+}
+
+// ─────────────────────────── Field operations ───────────────────────────
+
+model FieldTeam {
+  id             String   @id @default(cuid())
+  organizationId String
+  name           String
+  arabicName     String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization  @relation(fields: [organizationId], references: [id])
+  members      StaffMember[]
+  tasks        Task[]
+  incidents    Incident[]
+
+  @@index([organizationId])
+  @@map("field_teams")
+}
+
+model StaffMember {
+  id             String   @id @default(cuid())
+  organizationId String
+  fieldTeamId    String?
+  fullName       String
+  role           String?
+  phone          String?
+  isAvailable    Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  fieldTeam    FieldTeam?   @relation(fields: [fieldTeamId], references: [id])
+
+  @@index([organizationId])
+  @@index([fieldTeamId])
+  @@map("staff_members")
+}
+
+model Task {
+  id             String       @id @default(cuid())
+  organizationId String
+  eventId        String?
+  zoneId         String?
+  incidentId     String?
+  title          String
+  description    String?
+  priority       TaskPriority @default(MEDIUM)
+  status         TaskStatus   @default(ASSIGNED)
+  assignedTeamId String?
+  assignedUserId String?
+  acceptedAt     DateTime?
+  onSiteAt       DateTime?
+  completedAt    DateTime?
+  notes          String?
+  photoUrl       String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  incident     Incident?    @relation(fields: [incidentId], references: [id])
+  assignedTeam FieldTeam?   @relation(fields: [assignedTeamId], references: [id])
+  assignedUser User?        @relation("TaskAssignee", fields: [assignedUserId], references: [id])
+
+  @@index([organizationId, status])
+  @@index([assignedTeamId])
+  @@map("tasks")
+}
+
+// ─────────────────────────── Partners ───────────────────────────
+
+model Partner {
+  id             String      @id @default(cuid())
+  organizationId String
+  name           String
+  arabicName     String?
+  type           PartnerType
+  contactEmail   String?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  organization Organization      @relation(fields: [organizationId], references: [id])
+  locations    PartnerLocation[]
+
+  @@index([organizationId])
+  @@map("partners")
+}
+
+model PartnerLocation {
+  id         String   @id @default(cuid())
+  partnerId  String
+  venueId    String?
+  zoneId     String?
+  name       String
+  latitude   Float?
+  longitude  Float?
+  createdAt  DateTime @default(now())
+
+  partner      Partner       @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  transactions Transaction[]
+  forecasts    DemandForecast[]
+
+  @@index([partnerId])
+  @@map("partner_locations")
+}
+
+model Transaction {
+  id                String   @id @default(cuid())
+  partnerLocationId String
+  amount            Float
+  itemCount         Int      @default(1)
+  occurredAt        DateTime @default(now())
+
+  partnerLocation PartnerLocation @relation(fields: [partnerLocationId], references: [id], onDelete: Cascade)
+
+  @@index([partnerLocationId, occurredAt])
+  @@map("transactions")
+}
+
+// ─────────────────────────── AI predictions ───────────────────────────
+
+model DemandForecast {
+  id                String   @id @default(cuid())
+  partnerLocationId String?
+  zoneId            String?
+  horizonMinutes    Int
+  predictedDemand   Float
+  confidence        Float    @default(0.5)
+  factors           Json?
+  createdAt         DateTime @default(now())
+
+  partnerLocation PartnerLocation? @relation(fields: [partnerLocationId], references: [id])
+
+  @@index([partnerLocationId])
+  @@map("demand_forecasts")
+}
+
+model CongestionPrediction {
+  id             String   @id @default(cuid())
+  organizationId String
+  eventId        String?
+  zoneId         String?
+  gateId         String?
+  horizonMinutes Int
+  predictedValue Float // e.g. occupancy or wait time
+  metric         String // OCCUPANCY | WAIT_TIME | OVERLOAD_PROB
+  confidence     Float    @default(0.5)
+  factors        Json?
+  recommendation String?
+  createdAt      DateTime @default(now())
+
+  @@index([organizationId])
+  @@index([eventId])
+  @@map("congestion_predictions")
+}
+
+// ─────────────────────────── Simulation ───────────────────────────
+
+model Simulation {
+  id             String           @id @default(cuid())
+  organizationId String
+  eventId        String?
+  name           String
+  scenario       String // scenario key
+  status         SimulationStatus @default(IDLE)
+  config         Json?
+  startedAt      DateTime?
+  stoppedAt      DateTime?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  organization Organization      @relation(fields: [organizationId], references: [id])
+  event        Event?            @relation(fields: [eventId], references: [id])
+  events       SimulationEvent[]
+
+  @@index([organizationId])
+  @@map("simulations")
+}
+
+model SimulationEvent {
+  id           String   @id @default(cuid())
+  simulationId String
+  tick         Int
+  kind         String // VISITORS | GATE_SCAN | INCIDENT | ALERT ...
+  payload      Json
+  createdAt    DateTime @default(now())
+
+  simulation Simulation @relation(fields: [simulationId], references: [id], onDelete: Cascade)
+
+  @@index([simulationId, tick])
+  @@map("simulation_events")
+}
+
+// ─────────────────────────── Integrations & webhooks ───────────────────────────
+
+model IntegrationConnection {
+  id             String          @id @default(cuid())
+  organizationId String
+  type           IntegrationType
+  name           String
+  isEnabled      Boolean         @default(false)
+  config         Json?
+  apiKeyHash     String?
+  lastSyncAt     DateTime?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  organization Organization   @relation(fields: [organizationId], references: [id])
+  webhookEvents WebhookEvent[]
+
+  @@index([organizationId])
+  @@map("integration_connections")
+}
+
+model WebhookEvent {
+  id            String   @id @default(cuid())
+  integrationId String?
+  source        String
+  eventType     String
+  payload       Json
+  processed     Boolean  @default(false)
+  attempts      Int      @default(0)
+  lastError     String?
+  createdAt     DateTime @default(now())
+
+  integration IntegrationConnection? @relation(fields: [integrationId], references: [id])
+
+  @@index([integrationId])
+  @@index([processed])
+  @@map("webhook_events")
+}
+
+// ─────────────────────────── Notifications, reports, audit ───────────────────────────
+
+model Notification {
+  id             String   @id @default(cuid())
+  organizationId String?
+  userId         String?
+  channel        String   @default("IN_APP")
+  title          String
+  body           String?
+  data           Json?
+  readAt         DateTime?
+  createdAt      DateTime @default(now())
+
+  @@index([userId])
+  @@map("notifications")
+}
+
+model Report {
+  id             String   @id @default(cuid())
+  organizationId String
+  eventId        String?
+  type           String
+  format         String   @default("JSON")
+  data           Json?
+  fileUrl        String?
+  generatedById  String?
+  createdAt      DateTime @default(now())
+
+  @@index([organizationId])
+  @@map("reports")
+}
+
+model AuditLog {
+  id             String   @id @default(cuid())
+  organizationId String?
+  userId         String?
+  action         String
+  resource       String
+  resourceId     String?
+  metadata       Json?
+  ipAddress      String?
+  userAgent      String?
+  createdAt      DateTime @default(now())
+
+  organization Organization? @relation(fields: [organizationId], references: [id])
+  user         User?         @relation(fields: [userId], references: [id])
+
+  @@index([organizationId, createdAt])
+  @@index([userId])
+  @@map("audit_logs")
+}
+
+model SystemSetting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     Json
+  updatedAt DateTime @updatedAt
+
+  @@map("system_settings")
+}
