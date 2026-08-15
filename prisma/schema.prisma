@@ -1,0 +1,630 @@
+// Supplier Intelligence Hub — Prisma schema
+// Multi-tenant (organization-scoped) supplier qualification & discovery platform.
+// Every tenant-owned row carries organizationId; access is enforced server-side.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────────────────────────
+// Enums
+// ─────────────────────────────────────────────────────────────
+
+enum UserRole {
+  SUPER_ADMIN
+  PROCUREMENT_ADMIN
+  PROCUREMENT_USER
+  SUPPLIER
+}
+
+enum SupplierStatus {
+  REGISTERED
+  PROFILE_INCOMPLETE
+  SUBMITTED
+  UNDER_REVIEW
+  PREQUALIFIED
+  APPROVED
+  CONDITIONAL
+  REJECTED
+  SUSPENDED
+  BLACKLISTED
+}
+
+enum SupplierTypeEnum {
+  MANUFACTURER
+  AUTHORIZED_AGENT
+  DISTRIBUTOR
+  WHOLESALER
+  RETAILER
+  SERVICE_PROVIDER
+  CONTRACTOR
+  IMPORTER
+}
+
+enum BrandRelationship {
+  MANUFACTURER
+  AGENT
+  DISTRIBUTOR
+  RESELLER
+}
+
+enum DocumentStatus {
+  PENDING_VERIFICATION
+  VALID
+  EXPIRING_SOON
+  EXPIRED
+  REJECTED
+}
+
+enum EvaluationOutcome {
+  POSITIVE
+  NEUTRAL
+  NEGATIVE
+}
+
+enum AiJobType {
+  CATALOG_EXTRACTION
+  SUPPLIER_CLASSIFICATION
+}
+
+enum AiJobStatus {
+  PENDING
+  PROCESSING
+  NEEDS_REVIEW
+  APPROVED
+  FAILED
+}
+
+enum NotificationType {
+  APPLICATION_SUBMITTED
+  APPLICATION_APPROVED
+  APPLICATION_REJECTED
+  DOCUMENT_EXPIRING
+  MISSING_DOCUMENTS
+  PROFILE_INCOMPLETE
+  DOCUMENT_REJECTED
+  REQUEST_FOR_INFORMATION
+}
+
+// ─────────────────────────────────────────────────────────────
+// Tenancy & identity
+// ─────────────────────────────────────────────────────────────
+
+model Organization {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users            User[]
+  suppliers        Supplier[]
+  categories       Category[]
+  brands           Brand[]
+  documentTypes    DocumentType[]
+  requirementRules RequirementRule[]
+  shortlists       Shortlist[]
+  notifications    Notification[]
+  activityLogs     ActivityLog[]
+
+  @@map("organizations")
+}
+
+model User {
+  id             String   @id @default(cuid())
+  organizationId String
+  email          String
+  passwordHash   String
+  name           String
+  role           UserRole
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  // A SUPPLIER user owns exactly one supplier profile.
+  supplier     Supplier?     @relation("SupplierOwner")
+  notes        SupplierNote[]
+  evaluations  SupplierEvaluation[]
+  activityLogs ActivityLog[]
+  statusChanges SupplierStatusHistory[]
+  notifications Notification[]
+  shortlists    Shortlist[]
+
+  @@unique([organizationId, email])
+  @@index([organizationId])
+  @@map("users")
+}
+
+// ─────────────────────────────────────────────────────────────
+// Taxonomy: Category → Subcategory → ProductGroup (self-referencing)
+// ─────────────────────────────────────────────────────────────
+
+model Category {
+  id             String   @id @default(cuid())
+  organizationId String
+  parentId       String?
+  nameEn         String
+  nameAr         String
+  slug           String
+  level          Int      @default(0) // 0=Category, 1=Subcategory, 2=ProductGroup
+  createdAt      DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  parent       Category?    @relation("CategoryTree", fields: [parentId], references: [id], onDelete: Cascade)
+  children     Category[]   @relation("CategoryTree")
+
+  supplierCategories SupplierCategory[]
+  products           Product[]
+  requirementRules   RequirementRule[]
+
+  @@unique([organizationId, slug])
+  @@index([organizationId, parentId])
+  @@map("categories")
+}
+
+// ─────────────────────────────────────────────────────────────
+// Supplier core
+// ─────────────────────────────────────────────────────────────
+
+model Supplier {
+  id             String   @id @default(cuid())
+  organizationId String
+  supplierCode   String   // SUP-000001
+  ownerUserId    String?  @unique
+
+  companyNameEn  String
+  companyNameAr  String
+  crNumber       String?
+  vatNumber      String?
+  iban           String?
+  companyType    String?
+  yearEstablished Int?
+  country        String   @default("Saudi Arabia")
+  city           String?
+  headquarters   String?
+  website        String?
+  employeeCount  String?
+  annualRevenue  String?
+  logoUrl        String?
+  emailDomain    String?
+  primaryPhone   String?
+
+  supplierTypes  SupplierTypeEnum[]
+
+  status         SupplierStatus @default(REGISTERED)
+  completeness   Int            @default(0)
+  rating         Float?
+
+  aiPrimaryCategory   String?
+  aiKeywords          String[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  owner        User?        @relation("SupplierOwner", fields: [ownerUserId], references: [id])
+
+  contacts       SupplierContact[]
+  categories     SupplierCategory[]
+  products       Product[]
+  services       Service[]
+  brands         SupplierBrand[]
+  locations      SupplierLocation[]
+  documents      Document[]
+  certifications SupplierCertification[]
+  commercialTerms SupplierCommercialTerms?
+  statusHistory  SupplierStatusHistory[]
+  notes          SupplierNote[]
+  evaluations    SupplierEvaluation[]
+  catalogUploads CatalogUpload[]
+  aiJobs         AiExtractionJob[]
+  shortlistLinks ShortlistSupplier[]
+
+  @@unique([organizationId, supplierCode])
+  @@index([organizationId, status])
+  @@index([organizationId, crNumber])
+  @@index([organizationId, vatNumber])
+  @@map("suppliers")
+}
+
+model SupplierContact {
+  id         String  @id @default(cuid())
+  supplierId String
+  name       String
+  jobTitle   String?
+  mobile     String?
+  whatsapp   String?
+  email      String?
+  isPrimary  Boolean @default(false)
+
+  supplier Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+
+  @@index([supplierId])
+  @@map("supplier_contacts")
+}
+
+model SupplierCategory {
+  id         String @id @default(cuid())
+  supplierId String
+  categoryId String
+  isPrimary  Boolean @default(false)
+
+  supplier Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@unique([supplierId, categoryId])
+  @@index([categoryId])
+  @@map("supplier_categories")
+}
+
+model Product {
+  id          String  @id @default(cuid())
+  supplierId  String
+  categoryId  String?
+  nameEn      String
+  nameAr      String?
+  sku         String?
+  brand       String?
+  model       String?
+  countryOfOrigin String?
+  description String?
+  specifications String?
+  unitOfMeasure String?
+  minOrderQty Int?
+  leadTime    String?
+  warranty    String?
+  imageUrl    String?
+  catalogRef  String?
+  source      String  @default("MANUAL") // MANUAL | AI
+  createdAt   DateTime @default(now())
+
+  supplier Supplier  @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  category Category? @relation(fields: [categoryId], references: [id])
+
+  @@index([supplierId])
+  @@map("products")
+}
+
+model Service {
+  id            String  @id @default(cuid())
+  supplierId    String
+  name          String
+  category      String?
+  description   String?
+  citiesCovered String[]
+  sla           String?
+  experienceYears Int?
+
+  supplier Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+
+  @@index([supplierId])
+  @@map("services")
+}
+
+model Brand {
+  id             String @id @default(cuid())
+  organizationId String
+  name           String
+  country        String?
+
+  organization  Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  supplierBrands SupplierBrand[]
+
+  @@unique([organizationId, name])
+  @@map("brands")
+}
+
+model SupplierBrand {
+  id           String            @id @default(cuid())
+  supplierId   String
+  brandId      String
+  relationship BrandRelationship
+  certificateDocId String?
+
+  supplier Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  brand    Brand    @relation(fields: [brandId], references: [id], onDelete: Cascade)
+
+  @@unique([supplierId, brandId])
+  @@index([brandId])
+  @@map("supplier_brands")
+}
+
+model SupplierLocation {
+  id         String  @id @default(cuid())
+  supplierId String
+  country    String
+  region     String?
+  city       String?
+
+  supplier Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+
+  @@index([supplierId])
+  @@map("supplier_locations")
+}
+
+// ─────────────────────────────────────────────────────────────
+// Documents & certifications
+// ─────────────────────────────────────────────────────────────
+
+model DocumentType {
+  id             String  @id @default(cuid())
+  organizationId String
+  code           String  // e.g. COMMERCIAL_REGISTRATION
+  nameEn         String
+  nameAr         String
+  hasExpiry      Boolean @default(true)
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  documents    Document[]
+  requirementRules RequirementRule[]
+
+  @@unique([organizationId, code])
+  @@map("document_types")
+}
+
+model Document {
+  id             String   @id @default(cuid())
+  supplierId     String
+  documentTypeId String
+  fileName       String
+  filePath       String
+  fileSize       Int
+  mimeType       String
+  documentNumber String?
+  issueDate      DateTime?
+  expiryDate     DateTime?
+  status         DocumentStatus @default(PENDING_VERIFICATION)
+  rejectionReason String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  supplier     Supplier     @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  documentType DocumentType @relation(fields: [documentTypeId], references: [id])
+
+  @@index([supplierId])
+  @@index([status])
+  @@index([expiryDate])
+  @@map("documents")
+}
+
+model SupplierCertification {
+  id         String  @id @default(cuid())
+  supplierId String
+  name       String
+  issuer     String?
+  number     String?
+  expiryDate DateTime?
+
+  supplier Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+
+  @@index([supplierId])
+  @@map("supplier_certifications")
+}
+
+// ─────────────────────────────────────────────────────────────
+// Commercial terms
+// ─────────────────────────────────────────────────────────────
+
+model SupplierCommercialTerms {
+  id                 String  @id @default(cuid())
+  supplierId         String  @unique
+  paymentTerms       String?
+  creditDays         Int?
+  minimumOrder       String?
+  deliveryLeadTime   String?
+  deliveryCapability Boolean @default(false)
+  warehouseAvailable Boolean @default(false)
+  fleetAvailable     Boolean @default(false)
+  importCapability   Boolean @default(false)
+
+  supplier Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+
+  @@map("supplier_commercial_terms")
+}
+
+// ─────────────────────────────────────────────────────────────
+// Workflow: status history, notes, evaluations, activity
+// ─────────────────────────────────────────────────────────────
+
+model SupplierStatusHistory {
+  id         String         @id @default(cuid())
+  supplierId String
+  fromStatus SupplierStatus?
+  toStatus   SupplierStatus
+  reason     String?
+  changedById String?
+  createdAt  DateTime       @default(now())
+
+  supplier  Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  changedBy User?    @relation(fields: [changedById], references: [id])
+
+  @@index([supplierId])
+  @@map("supplier_status_history")
+}
+
+model SupplierNote {
+  id         String   @id @default(cuid())
+  supplierId String
+  authorId   String
+  body       String
+  createdAt  DateTime @default(now())
+
+  supplier Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  author   User     @relation(fields: [authorId], references: [id])
+
+  @@index([supplierId])
+  @@map("supplier_notes")
+}
+
+model SupplierEvaluation {
+  id         String            @id @default(cuid())
+  supplierId String
+  authorId   String
+  score      Int               // 1..5
+  outcome    EvaluationOutcome
+  comment    String?
+  createdAt  DateTime          @default(now())
+
+  supplier Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  author   User     @relation(fields: [authorId], references: [id])
+
+  @@index([supplierId])
+  @@map("supplier_evaluations")
+}
+
+model ActivityLog {
+  id             String   @id @default(cuid())
+  organizationId String
+  actorId        String?
+  supplierId     String?
+  action         String
+  detail         String?
+  createdAt      DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  actor        User?        @relation(fields: [actorId], references: [id])
+
+  @@index([organizationId, createdAt])
+  @@index([supplierId])
+  @@map("activity_logs")
+}
+
+// ─────────────────────────────────────────────────────────────
+// AI catalog extraction
+// ─────────────────────────────────────────────────────────────
+
+model CatalogUpload {
+  id         String   @id @default(cuid())
+  supplierId String
+  fileName   String
+  filePath   String
+  mimeType   String
+  createdAt  DateTime @default(now())
+
+  supplier Supplier          @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  jobs     AiExtractionJob[]
+
+  @@index([supplierId])
+  @@map("catalog_uploads")
+}
+
+model AiExtractionJob {
+  id             String      @id @default(cuid())
+  supplierId     String
+  catalogUploadId String?
+  type           AiJobType   @default(CATALOG_EXTRACTION)
+  status         AiJobStatus @default(PENDING)
+  model          String?
+  rawResult      Json?
+  error          String?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  supplier      Supplier            @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  catalogUpload CatalogUpload?      @relation(fields: [catalogUploadId], references: [id], onDelete: SetNull)
+  extractedProducts AiExtractedProduct[]
+
+  @@index([supplierId])
+  @@map("ai_extraction_jobs")
+}
+
+model AiExtractedProduct {
+  id        String  @id @default(cuid())
+  jobId     String
+  nameEn    String?
+  nameAr    String?
+  brand     String?
+  model     String?
+  category  String?
+  subcategory String?
+  description String?
+  specifications String?
+  countryOfOrigin String?
+  unit      String?
+  confidence Float?
+  approved  Boolean @default(false)
+
+  job AiExtractionJob @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@index([jobId])
+  @@map("ai_extracted_products")
+}
+
+// ─────────────────────────────────────────────────────────────
+// Shortlists
+// ─────────────────────────────────────────────────────────────
+
+model Shortlist {
+  id             String   @id @default(cuid())
+  organizationId String
+  ownerId        String
+  name           String
+  project        String?
+  createdAt      DateTime @default(now())
+
+  organization Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  owner        User                @relation(fields: [ownerId], references: [id])
+  suppliers    ShortlistSupplier[]
+
+  @@index([organizationId])
+  @@map("shortlists")
+}
+
+model ShortlistSupplier {
+  id          String @id @default(cuid())
+  shortlistId String
+  supplierId  String
+
+  shortlist Shortlist @relation(fields: [shortlistId], references: [id], onDelete: Cascade)
+  supplier  Supplier  @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+
+  @@unique([shortlistId, supplierId])
+  @@map("shortlist_suppliers")
+}
+
+// ─────────────────────────────────────────────────────────────
+// Dynamic requirement rules (category → required documents)
+// ─────────────────────────────────────────────────────────────
+
+model RequirementRule {
+  id             String  @id @default(cuid())
+  organizationId String
+  categoryId     String
+  documentTypeId String
+  mandatory      Boolean @default(true)
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  category     Category     @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  documentType DocumentType @relation(fields: [documentTypeId], references: [id], onDelete: Cascade)
+
+  @@unique([categoryId, documentTypeId])
+  @@map("requirement_rules")
+}
+
+// ─────────────────────────────────────────────────────────────
+// Notifications
+// ─────────────────────────────────────────────────────────────
+
+model Notification {
+  id             String           @id @default(cuid())
+  organizationId String
+  userId         String
+  type           NotificationType
+  title          String
+  body           String?
+  isRead         Boolean          @default(false)
+  createdAt      DateTime         @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead])
+  @@map("notifications")
+}

@@ -1,21 +1,50 @@
 {
-  "name": "masar34",
+  "name": "supplier-intelligence-hub",
   "version": "0.1.0",
   "private": true,
-  "description": "MASAR 34 — Smart crowd, queue and operations management platform",
-  "workspaces": [
-    "apps/api",
-    "apps/web"
-  ],
+  "description": "Supplier Intelligence Hub — enterprise supplier registration, qualification, classification and discovery platform.",
   "scripts": {
-    "dev": "npm run dev --workspace=apps/api & npm run dev --workspace=apps/web",
-    "build": "npm run build --workspace=apps/api && npm run build --workspace=apps/web",
-    "lint": "npm run lint --workspace=apps/api && npm run lint --workspace=apps/web",
-    "typecheck": "npm run typecheck --workspace=apps/api && npm run typecheck --workspace=apps/web",
-    "test": "npm run test --workspace=apps/api",
-    "db:migrate": "npm run db:migrate --workspace=apps/api",
-    "db:seed": "npm run db:seed --workspace=apps/api",
-    "db:generate": "npm run db:generate --workspace=apps/api"
+    "dev": "next dev",
+    "build": "prisma generate && next build",
+    "start": "next start",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate dev",
+    "db:deploy": "prisma migrate deploy",
+    "db:push": "prisma db push",
+    "db:seed": "tsx prisma/seed.ts",
+    "db:reset": "prisma migrate reset --force"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.32.1",
+    "@prisma/client": "^5.22.0",
+    "bcryptjs": "^2.4.3",
+    "clsx": "^2.1.1",
+    "lucide-react": "^0.454.0",
+    "next": "14.2.15",
+    "next-auth": "^4.24.10",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "tailwind-merge": "^2.5.4",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/node": "^22.7.5",
+    "@types/react": "^18.3.11",
+    "@types/react-dom": "^18.3.0",
+    "autoprefixer": "^10.4.20",
+    "eslint": "^8.57.1",
+    "eslint-config-next": "14.2.15",
+    "postcss": "^8.4.47",
+    "prisma": "^5.22.0",
+    "tailwindcss": "^3.4.14",
+    "tsx": "^4.19.1",
+    "typescript": "^5.6.3"
   },
   "engines": {
     "node": ">=20"

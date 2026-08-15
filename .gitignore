@@ -9,6 +9,7 @@ build/
 .next/
 out/
 *.tsbuildinfo
+next-env.d.ts
 
 # Env
 .env
@@ -16,25 +17,19 @@ out/
 .env.*.local
 !.env.example
 
+# Local file storage (dev uploads)
+storage/
+
 # Logs
 *.log
 npm-debug.log*
 logs/
-
-# Prisma
-apps/api/prisma/*.db
 
 # OS / editor
 .DS_Store
 .idea/
 .vscode/
 *.swp
-
-# Python
-__pycache__/
-*.pyc
-.venv/
-venv/
 
 # Coverage
 coverage/
