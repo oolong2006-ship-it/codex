@@ -1,0 +1,124 @@
+# =====================================================================
+#  نشر واجهة بوابة مشتريات الناضج على GitHub Pages
+#
+#  يعمل تلقائيًا عند كل دفع للفرع، ويمكن تشغيله يدويًا من تبويب Actions.
+#  المفاتيح المطلوبة في: Settings → Secrets and variables → Actions
+#    • NEXT_PUBLIC_SUPABASE_ANON_KEY   (مفتاح anon العام — وليس service_role)
+#    • NEXT_PUBLIC_SUPABASE_URL        (اختياري، له قيمة افتراضية)
+# =====================================================================
+name: نشر الواجهة — بوابة المشتريات
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [claude/alnadeg-procurement-portal-6urp3o]
+    paths:
+      - 'alnadeg-procurement/**'
+      - '.github/workflows/alnadeg-deploy-site.yml'
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: alnadeg-pages
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: alnadeg-procurement
+
+jobs:
+  build:
+    name: بناء الواجهة
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: التحقق من وجود المفاتيح
+        env:
+          ANON: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+        run: |
+          if [ -z "$ANON" ]; then
+            {
+              echo "## ❌ المفتاح العام غير مضبوط"
+              echo ""
+              echo "أضف السر التالي ثم أعد تشغيل سير العمل:"
+              echo ""
+              echo "| اسم السر | من أين تأخذه |"
+              echo "|---|---|"
+              echo "| \`NEXT_PUBLIC_SUPABASE_ANON_KEY\` | Supabase → Project Settings → API → مفتاح **anon public** |"
+              echo ""
+              echo "> ⚠️ لا تستخدم مفتاح \`service_role\` هنا إطلاقًا."
+              echo ""
+              echo "المسار: **Settings → Secrets and variables → Actions → New repository secret**"
+            } >> "$GITHUB_STEP_SUMMARY"
+            echo "::error::المفتاح NEXT_PUBLIC_SUPABASE_ANON_KEY غير مضبوط"
+            exit 1
+          fi
+          echo "✅ المفتاح موجود"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: alnadeg-procurement/package-lock.json
+
+      - name: تثبيت الحزم
+        run: npm ci
+
+      - name: فحص الأنواع
+        run: npm run typecheck
+
+      - name: اختبارات الوحدة
+        run: npm test
+
+      - name: بناء الواجهة
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL || 'https://wdtylpgeyjuetarwtbev.supabase.co' }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          NEXT_PUBLIC_BASE_PATH: /${{ github.event.repository.name }}
+        run: npm run build
+
+      - name: تعطيل معالجة Jekyll لمجلد _next
+        run: touch out/.nojekyll
+
+      - name: التأكد من خلو المخرجات من مفاتيح الخادم
+        run: |
+          if grep -rlE 'service_role|SUPABASE_SERVICE_ROLE' out/ 2>/dev/null; then
+            echo "::error::عُثر على مرجع لمفتاح الخدمة في مخرجات الواجهة"
+            exit 1
+          fi
+          echo "✅ لا مفاتيح خادم في الحزمة النهائية"
+
+      - uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: alnadeg-procurement/out
+
+  deploy:
+    name: نشر على GitHub Pages
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: النشر
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+      - name: تلخيص النتيجة
+        run: |
+          {
+            echo "## ✅ تم نشر الواجهة"
+            echo ""
+            echo "**رابط البوابة:** ${{ steps.deployment.outputs.page_url }}"
+            echo ""
+            echo "### الخطوة التالية"
+            echo "شغّل سير العمل **«تهيئة قاعدة البيانات والخدمة»** من تبويب Actions."
+          } >> "$GITHUB_STEP_SUMMARY"

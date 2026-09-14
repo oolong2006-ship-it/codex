@@ -17,7 +17,7 @@
     "activation:create": "node scripts/create-activation-link.mjs",
     "acceptance": "node scripts/acceptance.mjs",
     "verify": "npm run typecheck && npm run test && npm run build",
-    "build:deploy": "./scripts/build-deploy-bundle.sh && node scripts/build-edge-bundle.mjs"
+    "build:deploy": "./scripts/build-deploy-bundle.sh && node scripts/build-edge-bundle.mjs && node scripts/build-guide.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "3.9.1",

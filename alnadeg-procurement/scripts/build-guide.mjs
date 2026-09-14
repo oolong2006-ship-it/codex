@@ -237,11 +237,11 @@ footer{
     <span class="mark">ن</span>
     <div>
       <h1>تنصيب بوابة مشتريات الناضج</h1>
-      <p>خمس خطوات في المتصفح — بلا أوامر</p>
+      <p>أربع خطوات — GitHub ينفّذ النشر عنك</p>
     </div>
     <div class="prog">
       <span class="bar"><i id="bar"></i></span>
-      <b><span id="count">0</span>‏/5</b>
+      <b><span id="count">0</span>‏/4</b>
     </div>
   </div>
 </header>
@@ -249,11 +249,12 @@ footer{
 <div class="wrap">
 
   <section class="lede">
-    <h2>كل ما تحتاجه: متصفح، ونسخ ولصق</h2>
+    <h2>GitHub سيتولّى النشر نيابة عنك</h2>
     <p class="sub">
-      لن تكتب أمرًا واحدًا ولن تثبّت أي برنامج. في كل خطوة تضغط زر النسخ هنا،
-      وتلصق في الصفحة المذكورة، وتضغط زر التشغيل. هذه الصفحة تحفظ تقدّمك،
-      فيمكنك إغلاقها والعودة إليها.
+      خوادم GitHub متصلة بالإنترنت وتستطيع الوصول إلى Supabase. أعددت لك
+      ثلاثة سيور عمل جاهزة: تلصق ثلاثة مفاتيح مرة واحدة، تضغط زر تشغيل،
+      ويتولّى GitHub الباقي — تطبيق قاعدة البيانات، ونشر الخدمة، ونشر الموقع.
+      هذه الصفحة تحفظ تقدّمك، فأغلقها وعُد إليها متى شئت.
     </p>
 
     <div class="facts">
@@ -262,14 +263,15 @@ footer{
       <span class="fact"><b>5</b> مراحل اعتماد</span>
       <span class="fact"><b>7</b> أدوار وظيفية</span>
       <span class="fact">التكلفة <b>صفر</b></span>
+      <span class="fact">الاستضافة <b>GitHub Pages</b></span>
     </div>
 
     <div class="need">
       <h3>قبل أن تبدأ</h3>
       <ul>
         <li>حسابك في <b>Supabase</b> ومشروع <code>alnadeg-procurement</code> مفتوح أمامك.</li>
-        <li>حساب مجاني في <b>Vercel</b> — يمكن إنشاؤه بحساب GitHub في دقيقة.</li>
-        <li>نحو <b>٣٠ دقيقة</b> دون مقاطعة.</li>
+        <li>مستودعك على GitHub: <code>oolong2006-ship-it/codex</code> — لا تحتاج حسابًا جديدًا.</li>
+        <li>نحو <b>٢٠ دقيقة</b> دون مقاطعة.</li>
       </ul>
     </div>
   </section>
@@ -280,35 +282,42 @@ footer{
     <section class="step" data-step="1">
       <div class="rail"><span class="num">١</span></div>
       <div class="body">
-        <div class="head"><h3>الفحص</h3><span class="time">٣ دقائق</span></div>
+        <div class="head"><h3>أضف المفاتيح الثلاثة</h3><span class="time">٧ دقائق</span></div>
         <p>
-          قاعدتك تحتوي جداول قائمة. هذا الملف <b>يقرأ فقط ولا يغيّر شيئًا</b>،
-          ويخبرك إن كانت جاهزة للترقية المباشرة.
+          هذه المفاتيح تُخزَّن مشفّرة في GitHub ولا تظهر في أي سجل.
+          افتح مستودعك ثم:
+          <kbd>Settings</kbd> ← <kbd>Secrets and variables</kbd> ← <kbd>Actions</kbd>
+          ← <kbd>New repository secret</kbd>، وكرّر ثلاث مرات.
         </p>
-        <ol>
-          <li>في Supabase افتح <kbd>SQL Editor</kbd> ثم <kbd>New query</kbd>.</li>
-          <li>اضغط زر النسخ أدناه، والصق في المحرر.</li>
-          <li>اضغط <kbd>Run</kbd> واقرأ <b>السطر الأول</b> من النتيجة.</li>
-        </ol>
-        <button class="copy" data-file="preflight">نسخ ملف الفحص <span class="sz"></span></button>
 
-        <div class="note ok">
-          <b>إن ظهر ✅ نعم</b>
-          انتقل مباشرة إلى الخطوة الثانية.
-        </div>
-        <div class="note warn">
-          <b>إن ظهر ❌ لا</b>
-          قاعدتك تستخدم أنواعًا مخصصة قديمة. انسخ ملف الإصلاح أدناه وشغّله
-          بنفس الطريقة، ثم أعد تشغيل ملف الفحص. الإصلاح يحافظ على كل بياناتك.
-        </div>
-        <button class="copy" data-file="fix">نسخ ملف الإصلاح <span class="sz"></span></button>
+        <div class="tw"><table>
+          <tr><th>اسم السر</th><th>من أين تنسخه</th></tr>
+          <tr>
+            <td><code>NEXT_PUBLIC_SUPABASE_ANON_KEY</code></td>
+            <td>Supabase ← <kbd>Project Settings</kbd> ← <kbd>API</kbd> ← مفتاح <b>anon public</b></td>
+          </tr>
+          <tr>
+            <td><code>SUPABASE_DB_URL</code></td>
+            <td>Supabase ← <kbd>Project Settings</kbd> ← <kbd>Database</kbd> ← <b>Connection string</b> ← تبويب <b>URI</b></td>
+          </tr>
+          <tr>
+            <td><code>SUPABASE_ACCESS_TOKEN</code></td>
+            <td><code>supabase.com/dashboard/account/tokens</code> ← <kbd>Generate new token</kbd></td>
+          </tr>
+        </table></div>
 
         <div class="note stop">
-          <b>إن بقي ❌ بعد الإصلاح</b>
-          توقّف وأرسل لي صورة النتيجة. لا تشغّل الخطوة الثانية.
+          <b>لا تستخدم مفتاح <code>service_role</code> في الأول</b>
+          المطلوب هو <code>anon public</code>. مفتاح <code>service_role</code> لا
+          يلزم في هذه الخطوات إطلاقًا.
+        </div>
+        <div class="note warn">
+          <b>في <code>SUPABASE_DB_URL</code></b>
+          استبدل <code>[YOUR-PASSWORD]</code> بكلمة مرور قاعدة البيانات الفعلية.
+          إن نسيتها، أعد ضبطها من نفس الصفحة.
         </div>
 
-        <div class="mark-done"><label><input type="checkbox" id="s1"> أنجزت هذه الخطوة</label></div>
+        <div class="mark-done"><label><input type="checkbox" id="s1"> أضفت المفاتيح الثلاثة</label></div>
       </div>
     </section>
 
@@ -316,28 +325,33 @@ footer{
     <section class="step" data-step="2">
       <div class="rail"><span class="num">٢</span></div>
       <div class="body">
-        <div class="head"><h3>قاعدة البيانات</h3><span class="time">٥ دقائق</span></div>
+        <div class="head"><h3>شغّل تهيئة قاعدة البيانات</h3><span class="time">٥ دقائق</span></div>
         <p>
-          ينشئ الجداول والصلاحيات ويضيف المواقع الـ27. لا يحتوي أمر حذف واحد،
-          ويمكن تشغيله أكثر من مرة دون ضرر.
+          يفحص قاعدتك، ثم يطبّق الجداول والصلاحيات والمواقع الـ27،
+          ثم ينشر الخدمة ويضبط النطاق المسموح — كل ذلك في تشغيل واحد.
         </p>
         <ol>
-          <li><kbd>SQL Editor</kbd> ← <kbd>New query</kbd>.</li>
-          <li>الصق الملف واضغط <kbd>Run</kbd>، وانتظر نحو ٣٠ ثانية.</li>
-          <li>ستظهر في النهاية <b>قائمة من ١٢ بندًا</b>.</li>
+          <li>في مستودعك افتح تبويب <kbd>Actions</kbd>.</li>
+          <li>من القائمة اليمنى اختر <b>«تهيئة قاعدة البيانات والخدمة»</b>.</li>
+          <li>اضغط <kbd>Run workflow</kbd>، واختر الفرع
+            <code>claude/alnadeg-procurement-portal-6urp3o</code>، ثم <kbd>Run workflow</kbd>.</li>
+          <li>انتظر حتى تظهر علامة ✅ خضراء، ثم افتح التشغيل واقرأ <b>الملخص</b>.</li>
         </ol>
-        <button class="copy" data-file="database">نسخ ملف قاعدة البيانات <span class="sz"></span></button>
 
         <div class="note ok">
-          <b>المطلوب</b>
-          أن تكون البنود الاثنا عشر كلها ✅ سليم.
+          <b>المطلوب في الملخص</b>
+          جدول من ١٢ بندًا كلها ✅ سليم، ثم «تم نشر الواجهة البرمجية»
+          و«الخدمة تعمل».
         </div>
-        <div class="note stop">
-          <b>إن ظهر أي ❌</b>
-          أرسل لي صورة الجدول — البند الفاشل يحدد السبب بدقة.
+        <div class="note warn">
+          <b>إن توقّف عند الفحص برسالة تعارض</b>
+          قاعدتك تستخدم أنواعًا قديمة. انسخ ملف الإصلاح أدناه، والصقه في
+          Supabase ← <kbd>SQL Editor</kbd> ← <kbd>Run</kbd>، ثم أعد تشغيل سير العمل.
+          الإصلاح يحافظ على كل بياناتك.
         </div>
+        <button class="copy" data-file="fix">نسخ ملف الإصلاح <span class="sz"></span></button>
 
-        <div class="mark-done"><label><input type="checkbox" id="s2"> أنجزت هذه الخطوة</label></div>
+        <div class="mark-done"><label><input type="checkbox" id="s2"> اكتملت التهيئة بنجاح</label></div>
       </div>
     </section>
 
@@ -345,41 +359,26 @@ footer{
     <section class="step" data-step="3">
       <div class="rail"><span class="num">٣</span></div>
       <div class="body">
-        <div class="head"><h3>نشر الواجهة</h3><span class="time">١٠ دقائق</span></div>
-        <p>أولًا انسخ مفتاحين من Supabase: <kbd>Project Settings</kbd> ← <kbd>API</kbd></p>
-
+        <div class="head"><h3>تأكّد من نشر الموقع</h3><span class="time">٣ دقائق</span></div>
+        <p>
+          نشر الواجهة يبدأ تلقائيًا. تحقق منه في <kbd>Actions</kbd> ←
+          <b>«نشر الواجهة — بوابة المشتريات»</b>. إن لم يكن قد عمل، شغّله
+          بنفس طريقة الخطوة السابقة.
+        </p>
+        <p>عند نجاحه سيكون رابط بوابتك:</p>
         <div class="tw"><table>
-          <tr><th>في صفحة Supabase</th><th>ستضعه في Vercel باسم</th></tr>
-          <tr><td>Project URL</td><td><code>NEXT_PUBLIC_SUPABASE_URL</code></td></tr>
-          <tr><td>مفتاح <code>anon</code> <code>public</code></td><td><code>NEXT_PUBLIC_SUPABASE_ANON_KEY</code></td></tr>
-        </table></div>
-
-        <div class="note stop">
-          <b>لا تنسخ مفتاح <code>service_role</code></b>
-          مفتاح <code>anon</code> هو المطلوب، وهو آمن للنشر العلني لأن سياسات
-          الحماية داخل قاعدة البيانات هي التي تحرس البيانات.
-        </div>
-
-        <p>ثم في <b>vercel.com</b>: سجّل بحساب GitHub ← <kbd>Add New</kbd> ← <kbd>Project</kbd>
-          ← اختر مستودع <code>oolong2006-ship-it/codex</code> ← <kbd>Import</kbd>.</p>
-
-        <div class="tw"><table>
-          <tr><th>الحقل</th><th>القيمة</th></tr>
-          <tr><td>Root Directory</td><td><code>alnadeg-procurement</code></td></tr>
-          <tr><td>Branch</td><td><code>claude/alnadeg-procurement-portal-6urp3o</code></td></tr>
-          <tr><td>Environment Variables</td><td>المفتاحان أعلاه</td></tr>
+          <tr><th>الرابط</th></tr>
+          <tr><td><code>https://oolong2006-ship-it.github.io/codex/</code></td></tr>
         </table></div>
 
         <div class="note warn">
-          <b>أكثر خطأ شائع</b>
-          نسيان تغيير <code>Root Directory</code>. اضغط <kbd>Edit</kbd> بجانبه
-          واكتب <code>alnadeg-procurement</code>، وإلا ستظهر صفحة بيضاء.
+          <b>إن فشل النشر برسالة «Branch is not allowed to deploy»</b>
+          افتح <kbd>Settings</kbd> ← <kbd>Environments</kbd> ← <kbd>github-pages</kbd>
+          ← <b>Deployment branches</b>، وأضف الفرع
+          <code>claude/alnadeg-procurement-portal-6urp3o</code>، ثم أعد التشغيل.
         </div>
 
-        <p>اضغط <kbd>Deploy</kbd>، وبعد دقيقتين ستحصل على رابط مثل
-          <code>https://codex-xxxx.vercel.app</code> — <b>احفظه، ستحتاجه مرتين.</b></p>
-
-        <div class="mark-done"><label><input type="checkbox" id="s3"> أنجزت هذه الخطوة</label></div>
+        <div class="mark-done"><label><input type="checkbox" id="s3"> الموقع يفتح ويظهر صفحة الدخول</label></div>
       </div>
     </section>
 
@@ -387,42 +386,19 @@ footer{
     <section class="step" data-step="4">
       <div class="rail"><span class="num">٤</span></div>
       <div class="body">
-        <div class="head"><h3>الواجهة البرمجية</h3><span class="time">٥ دقائق</span></div>
-        <p>
-          هذه الخدمة تتولى التفعيل وإنشاء المستخدمين وروابط المرفقات المؤقتة.
-        </p>
-        <ol>
-          <li>في Supabase: <kbd>Edge Functions</kbd> ← <kbd>Deploy a new function</kbd> ← <kbd>Via editor</kbd>.</li>
-          <li>الاسم بالضبط: <code>procurement-portal</code></li>
-          <li>امسح الكود الافتراضي والصق الملف، ثم <kbd>Deploy</kbd>.</li>
-        </ol>
-        <button class="copy" data-file="edge">نسخ ملف الواجهة البرمجية <span class="sz"></span></button>
+        <div class="head"><h3>فعّل حسابك</h3><span class="time">دقيقتان</span></div>
 
-        <p>ثم اضبط النطاق المسموح: <kbd>Edge Functions</kbd> ← <kbd>Secrets</kbd> ← أضف:</p>
-        <div class="tw"><table>
-          <tr><th>الاسم</th><th>القيمة</th></tr>
-          <tr><td><code>ALLOWED_ORIGINS</code></td><td>رابط Vercel من الخطوة ٣ — بلا <code>/</code> في آخره</td></tr>
-        </table></div>
-
-        <div class="note warn">
-          <b>إن لم تجد خيار «Via editor»</b>
-          هذه الخطوة وحدها ستحتاج طرفية. أرسل لي صورة الشاشة وسأعطيك البديل.
+        <div class="note stop">
+          <b>هذه الخطوة خارج GitHub عمدًا</b>
+          مستودعك <b>عام</b>، وسجلات GitHub فيه مكشوفة للجميع. لو ولّدنا رمز
+          التفعيل هناك لأصبح متاحًا للعالم ٢٤ ساعة. لذلك يُولَّد داخل حساب
+          Supabase الخاص بك وحدك.
         </div>
 
-        <div class="mark-done"><label><input type="checkbox" id="s4"> أنجزت هذه الخطوة</label></div>
-      </div>
-    </section>
-
-    <!-- 5 -->
-    <section class="step" data-step="5">
-      <div class="rail"><span class="num">٥</span></div>
-      <div class="body">
-        <div class="head"><h3>تفعيل حسابك</h3><span class="time">دقيقتان</span></div>
         <ol>
-          <li>انسخ الملف أدناه والصقه في <kbd>SQL Editor</kbd>.</li>
-          <li><b>غيّر السطر الأول</b>: ضع رابط Vercel مكان
-            <code>https://ضع-رابطك-هنا.vercel.app</code></li>
-          <li><kbd>Run</kbd> ← انسخ قيمة <b>«الرابط الكامل»</b> وافتحها في المتصفح.</li>
+          <li>انسخ الملف أدناه والصقه في Supabase ← <kbd>SQL Editor</kbd>.</li>
+          <li>اضغط <kbd>Run</kbd> — الرابط مضبوط مسبقًا على عنوان بوابتك.</li>
+          <li>انسخ قيمة <b>«الرابط الكامل»</b> وافتحها في المتصفح.</li>
           <li>اختر كلمة مرورك: ١٢ حرفًا على الأقل، بحروف كبيرة وصغيرة ورقم ورمز.</li>
         </ol>
         <button class="copy" data-file="activation">نسخ ملف التفعيل <span class="sz"></span></button>
@@ -430,11 +406,11 @@ footer{
         <div class="note stop">
           <b>كلمة المرور لك وحدك</b>
           اكتبها داخل صفحة التفعيل فقط. لا ترسلها لي ولا لأحد، ولا تكتبها في
-          أي ملف. الرابط صالح ٢٤ ساعة ويُستخدم مرة واحدة — وتشغيل الملف مجددًا
+          أي ملف. الرابط صالح ٢٤ ساعة ويُستخدم مرة واحدة، وتشغيل الملف مجددًا
           يُصدر رابطًا جديدًا ويُبطل السابق.
         </div>
 
-        <div class="mark-done"><label><input type="checkbox" id="s5"> أنجزت هذه الخطوة</label></div>
+        <div class="mark-done"><label><input type="checkbox" id="s4"> فعّلت حسابي</label></div>
       </div>
     </section>
   </div>
@@ -442,13 +418,15 @@ footer{
   <section class="finish">
     <h2>وبعد؟</h2>
     <p>
-      سجّل دخولك برقم جوالك <b>0559847714</b> وكلمة المرور التي اخترتها.
-      يجب أن ترى لوحة المتابعة والمواقع الـ27 وبوابة الأدمن كاملة.
+      افتح <code>https://oolong2006-ship-it.github.io/codex/</code> وسجّل دخولك
+      برقم جوالك <b>0559847714</b> وكلمة المرور التي اخترتها. يجب أن ترى لوحة
+      المتابعة والمواقع الـ27 وبوابة الأدمن كاملة.
     </p>
     <div class="chips">
       <span>إدارة المستخدمين ← إضافة مستخدم</span>
       <span>كلمة مرور مؤقتة تظهر مرة واحدة</span>
       <span>طلب شراء جديد ← أرفق الفاتورة ← أرسل</span>
+      <span>Actions ← «اختبارات القبول» لتقرير موثّق</span>
     </div>
   </section>
 
@@ -459,13 +437,34 @@ footer{
     </p>
     <div class="tw"><table>
       <tr><th>ما تراه</th><th>السبب الغالب</th></tr>
-      <tr><td>❌ في فحص الخطوة ١</td><td>أعمدة قديمة بنوع مخصص — شغّل ملف الإصلاح</td></tr>
-      <tr><td>❌ في جدول الخطوة ٢</td><td>أرسل الجدول؛ البند الفاشل يحدد السبب</td></tr>
-      <tr><td>صفحة بيضاء بعد Vercel</td><td><code>Root Directory</code> لم يُضبط</td></tr>
-      <tr><td>«تعذر الاتصال بالخادم»</td><td><code>ALLOWED_ORIGINS</code> لا يطابق رابط Vercel</td></tr>
+      <tr><td>سير العمل يفشل فورًا برسالة «سر غير مضبوط»</td><td>راجع أسماء الأسرار في الخطوة ١ — حرف واحد يكفي لتخطئها</td></tr>
+      <tr><td>الفحص يتوقف بتعارض أنواع</td><td>شغّل ملف الإصلاح في الخطوة ٢</td></tr>
+      <tr><td>❌ في جدول البنود الـ12</td><td>أرسل الملخص؛ البند الفاشل يحدد السبب</td></tr>
+      <tr><td>«Branch is not allowed to deploy»</td><td>أضف الفرع في <kbd>Settings</kbd> ← <kbd>Environments</kbd> ← <kbd>github-pages</kbd></td></tr>
+      <tr><td>الموقع يفتح لكن «تعذر الاتصال بالخادم»</td><td>أعد تشغيل «تهيئة قاعدة البيانات» لضبط <code>ALLOWED_ORIGINS</code></td></tr>
+      <tr><td>خطأ اتصال بقاعدة البيانات</td><td><code>[YOUR-PASSWORD]</code> لم يُستبدل في <code>SUPABASE_DB_URL</code></td></tr>
       <tr><td>«رابط التفعيل غير صحيح»</td><td>الرمز نُسخ ناقصًا أو مضت ٢٤ ساعة — أعد الخطوة ٥</td></tr>
       <tr><td>«رقم الجوال أو كلمة المرور غير صحيحة»</td><td>جرّب الصيغة المحلية <code>0559847714</code></td></tr>
     </table></div>
+  </section>
+
+  <section class="trouble">
+    <h2>الطريقة اليدوية — إن تعذّر استخدام Actions</h2>
+    <p style="color:var(--ink-2);font-size:.93rem;margin-top:10px">
+      يمكنك تنفيذ كل شيء بنفسك عبر Supabase ← <kbd>SQL Editor</kbd>: الصق كل
+      ملف واضغط <kbd>Run</kbd> بالترتيب. النتيجة مطابقة تمامًا لما تفعله سيور العمل.
+    </p>
+    <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:6px">
+      <button class="copy" data-file="preflight">١ · ملف الفحص <span class="sz"></span></button>
+      <button class="copy" data-file="database">٢ · قاعدة البيانات <span class="sz"></span></button>
+    </div>
+    <p style="color:var(--ink-2);font-size:.93rem;margin-top:14px">
+      أما الخدمة فتُنشر من Supabase ← <kbd>Edge Functions</kbd> ←
+      <kbd>Deploy a new function</kbd> ← <kbd>Via editor</kbd>، بالاسم
+      <code>procurement-portal</code>، مع إضافة السر <code>ALLOWED_ORIGINS</code>
+      بقيمة <code>https://oolong2006-ship-it.github.io</code>.
+    </p>
+    <button class="copy" data-file="edge">٣ · ملف الخدمة <span class="sz"></span></button>
   </section>
 
   <footer>
@@ -482,7 +481,7 @@ ${embed("activation", files.activation)}
 
 <script>
 (function(){
-  var KEY="alnadeg-install-progress";
+  var KEY="alnadeg-install-progress-v2";
 
   function load(){
     try{ return JSON.parse(localStorage.getItem(KEY)||"{}"); }catch(e){ return {}; }
@@ -493,7 +492,7 @@ ${embed("activation", files.activation)}
 
   function paint(){
     var n=0;
-    for(var i=1;i<=5;i++){
+    for(var i=1;i<=4;i++){
       var box=document.getElementById("s"+i);
       var step=document.querySelector('.step[data-step="'+i+'"]');
       var on=!!state["s"+i];
@@ -502,10 +501,10 @@ ${embed("activation", files.activation)}
       if(on) n++;
     }
     document.getElementById("count").textContent=String(n);
-    document.getElementById("bar").style.width=(n/5*100)+"%";
+    document.getElementById("bar").style.width=(n/4*100)+"%";
   }
 
-  for(var i=1;i<=5;i++){
+  for(var i=1;i<=4;i++){
     (function(k){
       var box=document.getElementById("s"+k);
       if(!box) return;
