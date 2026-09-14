@@ -1,0 +1,6 @@
+project_id = "wdtylpgeyjuetarwtbev"
+
+[functions.procurement-portal]
+# مسارا التفعيل عامان بطبيعتهما، والتحقق من الهوية يتم داخل الدالة
+# لكل مسار على حدة، لذلك نعطّل التحقق التلقائي من رمز الدخول.
+verify_jwt = false

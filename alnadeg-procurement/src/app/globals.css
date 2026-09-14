@@ -1,0 +1,35 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    @apply bg-slate-50 text-slate-800 antialiased;
+  }
+  /* إصلاح اتجاه الحقول الرقمية داخل واجهة عربية */
+  input[type="number"],
+  input[type="date"],
+  input[type="tel"] {
+    direction: ltr;
+    text-align: right;
+  }
+  /* إخفاء أسهم حقول الأرقام */
+  input[type="number"]::-webkit-outer-spin-button,
+  input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  input[type="number"] {
+    -moz-appearance: textfield;
+  }
+}
+
+@layer components {
+  .skip-link {
+    @apply sr-only focus:not-sr-only focus:absolute focus:right-4 focus:top-4 focus:z-50
+           focus:rounded-lg focus:bg-brand-700 focus:px-4 focus:py-2 focus:text-white;
+  }
+}

@@ -1,0 +1,93 @@
+# =====================================================================
+#  اختبارات القبول الـ25 على البيئة الحيّة
+#
+#  اختياري — شغّله يدويًا بعد اكتمال النشر للحصول على تقرير موثّق.
+#  ينشئ مستخدمين تجريبيين، ينفّذ السيناريوهات، ثم يحذف كل ما أنشأه.
+#
+#  ⚠️ يتطلب السر SUPABASE_SERVICE_ROLE_KEY.
+#     أسرار GitHub مشفّرة ولا تظهر في السجلات، لكن المستودع عام،
+#     فلا تُضف هذا السر إلا إذا كنت تريد هذا التقرير، ويمكنك حذفه بعده.
+# =====================================================================
+name: اختبارات القبول
+
+on:
+  workflow_dispatch:
+    inputs:
+      project_ref:
+        description: 'معرّف مشروع Supabase'
+        type: string
+        default: 'wdtylpgeyjuetarwtbev'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: alnadeg-acceptance
+  cancel-in-progress: false
+
+defaults:
+  run:
+    working-directory: alnadeg-procurement
+
+jobs:
+  acceptance:
+    name: تشغيل اختبارات القبول
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: التحقق من الأسرار
+        env:
+          SRK: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          ANON: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+        run: |
+          MISSING=""
+          [ -z "$SRK" ]  && MISSING="$MISSING SUPABASE_SERVICE_ROLE_KEY"
+          [ -z "$ANON" ] && MISSING="$MISSING NEXT_PUBLIC_SUPABASE_ANON_KEY"
+          if [ -n "$MISSING" ]; then
+            {
+              echo "## ❌ أسرار ناقصة"
+              echo ""
+              echo "أضف:\`$MISSING\`"
+              echo ""
+              echo "من Supabase → Project Settings → API"
+            } >> "$GITHUB_STEP_SUMMARY"
+            echo "::error::أسرار ناقصة:$MISSING"
+            exit 1
+          fi
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: alnadeg-procurement/package-lock.json
+
+      - run: npm ci
+
+      - name: بناء الواجهة (لفحص تسرّب المفاتيح)
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: https://${{ inputs.project_ref }}.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          NEXT_PUBLIC_BASE_PATH: /${{ github.event.repository.name }}
+        run: npm run build
+
+      - name: تشغيل اختبارات القبول
+        env:
+          SUPABASE_URL: https://${{ inputs.project_ref }}.supabase.co
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          APP_BASE_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}
+        run: |
+          set -o pipefail
+          node scripts/acceptance.mjs 2>&1 | tee /tmp/acceptance.txt
+
+      - name: نشر التقرير
+        if: always()
+        run: |
+          {
+            echo "## 📋 تقرير اختبارات القبول"
+            echo ""
+            echo '```'
+            cat /tmp/acceptance.txt 2>/dev/null || echo "لم يكتمل التشغيل"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"

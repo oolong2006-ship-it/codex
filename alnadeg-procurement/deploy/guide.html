@@ -1,0 +1,3545 @@
+<title>تنصيب بوابة مشتريات الناضج</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&family=Readex+Pro:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  /* محايدات بميل أخضر خفيف — مشتقة من هوية النظام نفسه */
+  --ground:#f6f5f1; --surface:#ffffff; --surface-2:#f0efe9;
+  --ink:#16251c; --ink-2:#465247; --muted:#737e74;
+  --line:#dcded6; --line-strong:#c3c7bc;
+  --brand:#1f6543; --brand-deep:#123a27; --brand-soft:#e8f0ea;
+  --gold:#a8822f; --gold-soft:#f5eeda;
+  --ok:#1f6543; --ok-soft:#e8f0ea;
+  --warn:#8a5a10; --warn-soft:#fbf0d9;
+  --stop:#93321f; --stop-soft:#fae9e4;
+  --shadow:0 1px 2px rgba(18,37,25,.05),0 2px 8px rgba(18,37,25,.06);
+  --radius:14px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --ground:#10170f; --surface:#171f16; --surface-2:#1d271c;
+    --ink:#eef1e9; --ink-2:#c2cabe; --muted:#8e998d;
+    --line:#2a352a; --line-strong:#3a463a;
+    --brand:#6fb489; --brand-deep:#8fcaa4; --brand-soft:#1c2a20;
+    --gold:#d9b869; --gold-soft:#2a2418;
+    --ok:#6fb489; --ok-soft:#1c2a20;
+    --warn:#d9b869; --warn-soft:#2a2418;
+    --stop:#e79680; --stop-soft:#2e1d18;
+    --shadow:0 1px 2px rgba(0,0,0,.3),0 2px 10px rgba(0,0,0,.25);
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#10170f; --surface:#171f16; --surface-2:#1d271c;
+  --ink:#eef1e9; --ink-2:#c2cabe; --muted:#8e998d;
+  --line:#2a352a; --line-strong:#3a463a;
+  --brand:#6fb489; --brand-deep:#8fcaa4; --brand-soft:#1c2a20;
+  --gold:#d9b869; --gold-soft:#2a2418;
+  --ok:#6fb489; --ok-soft:#1c2a20;
+  --warn:#d9b869; --warn-soft:#2a2418;
+  --stop:#e79680; --stop-soft:#2e1d18;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 2px 10px rgba(0,0,0,.25);
+}
+
+html{direction:rtl;}
+*{box-sizing:border-box;}
+body{
+  background:var(--ground); color:var(--ink);
+  font-family:"Cairo","Segoe UI",Tahoma,sans-serif;
+  font-size:16px; line-height:1.75; margin:0;
+}
+h1,h2,h3{font-family:"Readex Pro","Cairo",sans-serif; text-wrap:balance; margin:0;}
+
+.wrap{max-width:820px; margin:0 auto; padding-inline:20px; padding-block:0 72px;}
+
+/* ── الرأس ── */
+.top{
+  position:sticky; top:0; z-index:20;
+  background:color-mix(in srgb,var(--ground) 92%,transparent);
+  backdrop-filter:blur(8px);
+  border-bottom:1px solid var(--line);
+}
+.top-in{
+  max-width:820px; margin:0 auto; padding:14px 20px;
+  display:flex; align-items:center; gap:14px; flex-wrap:wrap;
+}
+.mark{
+  width:40px; height:40px; flex:none; border-radius:11px;
+  background:linear-gradient(145deg,var(--brand),var(--brand-deep));
+  color:var(--gold-soft); display:grid; place-items:center;
+  font-family:"Readex Pro",sans-serif; font-weight:700; font-size:20px;
+}
+.top h1{font-size:1rem; font-weight:600; line-height:1.3;}
+.top p{margin:0; font-size:.78rem; color:var(--muted);}
+.prog{margin-inline-start:auto; display:flex; align-items:center; gap:10px; font-size:.8rem;}
+.bar{width:88px; height:6px; border-radius:99px; background:var(--surface-2); overflow:hidden;}
+.bar i{display:block; height:100%; width:0; background:var(--brand); transition:width .35s ease;}
+.prog b{font-variant-numeric:tabular-nums; font-weight:600; color:var(--ink-2);}
+
+/* ── الافتتاحية ── */
+.lede{padding-block:36px 8px;}
+.lede h2{font-size:1.65rem; font-weight:700; letter-spacing:-.01em;}
+.lede .sub{color:var(--ink-2); margin-top:10px; max-width:60ch;}
+
+.facts{display:flex; flex-wrap:wrap; gap:8px; margin-top:20px;}
+.fact{
+  background:var(--surface); border:1px solid var(--line); border-radius:99px;
+  padding:5px 13px; font-size:.8rem; color:var(--ink-2);
+}
+.fact b{color:var(--brand); font-weight:600; font-variant-numeric:tabular-nums;}
+
+.need{
+  margin-top:26px; background:var(--surface); border:1px solid var(--line);
+  border-radius:var(--radius); padding:18px 20px; box-shadow:var(--shadow);
+}
+.need h3{font-size:.82rem; font-weight:600; color:var(--muted);
+  letter-spacing:.07em; margin-bottom:12px;}
+.need ul{margin:0; padding-inline-start:20px; display:grid; gap:7px; font-size:.92rem;}
+
+/* ── الخطوات ── */
+.steps{margin-top:44px; display:grid; gap:18px;}
+.step{
+  background:var(--surface); border:1px solid var(--line);
+  border-radius:var(--radius); box-shadow:var(--shadow);
+  display:grid; grid-template-columns:56px 1fr; overflow:hidden;
+}
+.rail{
+  background:var(--surface-2); border-inline-end:1px solid var(--line);
+  display:flex; flex-direction:column; align-items:center; padding-block:18px; gap:10px;
+}
+.num{
+  width:30px; height:30px; border-radius:50%; flex:none;
+  display:grid; place-items:center;
+  font-family:"Readex Pro",sans-serif; font-weight:600; font-size:.88rem;
+  background:var(--surface); color:var(--ink-2);
+  border:1px solid var(--line-strong); font-variant-numeric:tabular-nums;
+}
+.step.done .num{background:var(--brand); border-color:var(--brand); color:#fff;}
+.step.done .rail{background:var(--brand-soft);}
+.body{padding:18px 20px 22px;}
+.head{display:flex; align-items:baseline; gap:10px; flex-wrap:wrap;}
+.head h3{font-size:1.1rem; font-weight:600;}
+.time{
+  font-size:.72rem; color:var(--muted); background:var(--surface-2);
+  border-radius:99px; padding:2px 9px; white-space:nowrap;
+}
+.body p{margin:12px 0 0; color:var(--ink-2); font-size:.95rem;}
+.body ol{margin:12px 0 0; padding-inline-start:20px; display:grid; gap:8px; font-size:.95rem; color:var(--ink-2);}
+.body ol b, .body p b{color:var(--ink); font-weight:600;}
+
+kbd{
+  font-family:"Cairo",sans-serif; font-size:.85em; font-weight:600;
+  background:var(--surface-2); border:1px solid var(--line-strong);
+  border-radius:6px; padding:1px 7px; color:var(--ink); white-space:nowrap;
+}
+code{
+  font-family:"IBM Plex Mono",monospace; font-size:.86em; direction:ltr;
+  background:var(--surface-2); border-radius:5px; padding:1px 6px;
+  unicode-bidi:embed; display:inline-block;
+}
+
+.copy{
+  margin-top:16px; display:inline-flex; align-items:center; gap:9px;
+  background:var(--brand); color:#fff; border:0; border-radius:10px;
+  padding:11px 18px; font-family:"Cairo",sans-serif; font-size:.92rem;
+  font-weight:600; cursor:pointer; transition:background .18s;
+}
+.copy:hover{background:var(--brand-deep);}
+:root[data-theme="dark"] .copy, :root:not([data-theme="light"]) .copy{color:#0e1a12;}
+@media (prefers-color-scheme:light){:root:not([data-theme="dark"]) .copy{color:#fff;}}
+.copy:focus-visible{outline:2px solid var(--gold); outline-offset:3px;}
+.copy .sz{font-size:.76rem; opacity:.75; font-variant-numeric:tabular-nums;}
+
+/* ── لوحات الحالة ── */
+.note{
+  margin-top:16px; border-radius:11px; padding:13px 16px;
+  font-size:.9rem; border:1px solid;
+}
+.note b{display:block; margin-bottom:3px; font-weight:600;}
+.note.ok{background:var(--ok-soft); border-color:var(--ok); color:var(--ink);}
+.note.warn{background:var(--warn-soft); border-color:var(--warn); color:var(--ink);}
+.note.stop{background:var(--stop-soft); border-color:var(--stop); color:var(--ink);}
+
+/* ── الجداول ── */
+.tw{margin-top:16px; overflow-x:auto; border:1px solid var(--line); border-radius:11px;}
+table{border-collapse:collapse; width:100%; font-size:.88rem; min-width:340px;}
+th,td{text-align:right; padding:10px 14px; border-bottom:1px solid var(--line);}
+th{background:var(--surface-2); font-weight:600; font-size:.8rem; color:var(--ink-2); white-space:nowrap;}
+tr:last-child td{border-bottom:0;}
+td code{font-size:.82em;}
+
+/* ── الإنجاز ── */
+.mark-done{
+  margin-top:18px; padding-top:16px; border-top:1px dashed var(--line-strong);
+  display:flex; align-items:center; gap:10px;
+}
+.mark-done label{display:flex; align-items:center; gap:9px; cursor:pointer;
+  font-size:.9rem; color:var(--ink-2); user-select:none;}
+.mark-done input{width:19px; height:19px; accent-color:var(--brand); cursor:pointer; margin:0;}
+
+/* ── الخاتمة ── */
+.finish{
+  margin-top:34px; background:linear-gradient(150deg,var(--brand-deep),var(--brand));
+  border-radius:var(--radius); padding:30px 26px; color:#f2f7f3;
+}
+.finish h2{font-size:1.3rem; color:#fff; font-weight:700;}
+.finish p{color:#d5e6db; margin:12px 0 0; font-size:.95rem;}
+.finish .chips{display:flex; gap:8px; flex-wrap:wrap; margin-top:18px;}
+.finish .chips span{
+  background:rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.18);
+  border-radius:99px; padding:5px 13px; font-size:.82rem;
+}
+
+.trouble{margin-top:34px;}
+.trouble h2{font-size:1.15rem; font-weight:600;}
+
+footer{
+  margin-top:40px; padding-top:20px; border-top:1px solid var(--line);
+  font-size:.8rem; color:var(--muted);
+}
+
+@media (max-width:560px){
+  .step{grid-template-columns:1fr;}
+  .rail{flex-direction:row; justify-content:flex-start; padding:10px 16px;
+    border-inline-end:0; border-bottom:1px solid var(--line);}
+  .lede h2{font-size:1.4rem;}
+  .prog{margin-inline-start:0;}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;}}
+</style>
+
+<header class="top">
+  <div class="top-in">
+    <span class="mark">ن</span>
+    <div>
+      <h1>تنصيب بوابة مشتريات الناضج</h1>
+      <p>أربع خطوات — GitHub ينفّذ النشر عنك</p>
+    </div>
+    <div class="prog">
+      <span class="bar"><i id="bar"></i></span>
+      <b><span id="count">0</span>‏/4</b>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <section class="lede">
+    <h2>GitHub سيتولّى النشر نيابة عنك</h2>
+    <p class="sub">
+      خوادم GitHub متصلة بالإنترنت وتستطيع الوصول إلى Supabase. أعددت لك
+      ثلاثة سيور عمل جاهزة: تلصق ثلاثة مفاتيح مرة واحدة، تضغط زر تشغيل،
+      ويتولّى GitHub الباقي — تطبيق قاعدة البيانات، ونشر الخدمة، ونشر الموقع.
+      هذه الصفحة تحفظ تقدّمك، فأغلقها وعُد إليها متى شئت.
+    </p>
+
+    <div class="facts">
+      <span class="fact"><b>27</b> موقعًا</span>
+      <span class="fact"><b>21</b> فرعًا و<b>6</b> مواقع مركزية</span>
+      <span class="fact"><b>5</b> مراحل اعتماد</span>
+      <span class="fact"><b>7</b> أدوار وظيفية</span>
+      <span class="fact">التكلفة <b>صفر</b></span>
+      <span class="fact">الاستضافة <b>GitHub Pages</b></span>
+    </div>
+
+    <div class="need">
+      <h3>قبل أن تبدأ</h3>
+      <ul>
+        <li>حسابك في <b>Supabase</b> ومشروع <code>alnadeg-procurement</code> مفتوح أمامك.</li>
+        <li>مستودعك على GitHub: <code>oolong2006-ship-it/codex</code> — لا تحتاج حسابًا جديدًا.</li>
+        <li>نحو <b>٢٠ دقيقة</b> دون مقاطعة.</li>
+      </ul>
+    </div>
+  </section>
+
+  <div class="steps">
+
+    <!-- 1 -->
+    <section class="step" data-step="1">
+      <div class="rail"><span class="num">١</span></div>
+      <div class="body">
+        <div class="head"><h3>أضف المفاتيح الثلاثة</h3><span class="time">٧ دقائق</span></div>
+        <p>
+          هذه المفاتيح تُخزَّن مشفّرة في GitHub ولا تظهر في أي سجل.
+          افتح مستودعك ثم:
+          <kbd>Settings</kbd> ← <kbd>Secrets and variables</kbd> ← <kbd>Actions</kbd>
+          ← <kbd>New repository secret</kbd>، وكرّر ثلاث مرات.
+        </p>
+
+        <div class="tw"><table>
+          <tr><th>اسم السر</th><th>من أين تنسخه</th></tr>
+          <tr>
+            <td><code>NEXT_PUBLIC_SUPABASE_ANON_KEY</code></td>
+            <td>Supabase ← <kbd>Project Settings</kbd> ← <kbd>API</kbd> ← مفتاح <b>anon public</b></td>
+          </tr>
+          <tr>
+            <td><code>SUPABASE_DB_URL</code></td>
+            <td>Supabase ← <kbd>Project Settings</kbd> ← <kbd>Database</kbd> ← <b>Connection string</b> ← تبويب <b>URI</b></td>
+          </tr>
+          <tr>
+            <td><code>SUPABASE_ACCESS_TOKEN</code></td>
+            <td><code>supabase.com/dashboard/account/tokens</code> ← <kbd>Generate new token</kbd></td>
+          </tr>
+        </table></div>
+
+        <div class="note stop">
+          <b>لا تستخدم مفتاح <code>service_role</code> في الأول</b>
+          المطلوب هو <code>anon public</code>. مفتاح <code>service_role</code> لا
+          يلزم في هذه الخطوات إطلاقًا.
+        </div>
+        <div class="note warn">
+          <b>في <code>SUPABASE_DB_URL</code></b>
+          استبدل <code>[YOUR-PASSWORD]</code> بكلمة مرور قاعدة البيانات الفعلية.
+          إن نسيتها، أعد ضبطها من نفس الصفحة.
+        </div>
+
+        <div class="mark-done"><label><input type="checkbox" id="s1"> أضفت المفاتيح الثلاثة</label></div>
+      </div>
+    </section>
+
+    <!-- 2 -->
+    <section class="step" data-step="2">
+      <div class="rail"><span class="num">٢</span></div>
+      <div class="body">
+        <div class="head"><h3>شغّل تهيئة قاعدة البيانات</h3><span class="time">٥ دقائق</span></div>
+        <p>
+          يفحص قاعدتك، ثم يطبّق الجداول والصلاحيات والمواقع الـ27،
+          ثم ينشر الخدمة ويضبط النطاق المسموح — كل ذلك في تشغيل واحد.
+        </p>
+        <ol>
+          <li>في مستودعك افتح تبويب <kbd>Actions</kbd>.</li>
+          <li>من القائمة اليمنى اختر <b>«تهيئة قاعدة البيانات والخدمة»</b>.</li>
+          <li>اضغط <kbd>Run workflow</kbd>، واختر الفرع
+            <code>claude/alnadeg-procurement-portal-6urp3o</code>، ثم <kbd>Run workflow</kbd>.</li>
+          <li>انتظر حتى تظهر علامة ✅ خضراء، ثم افتح التشغيل واقرأ <b>الملخص</b>.</li>
+        </ol>
+
+        <div class="note ok">
+          <b>المطلوب في الملخص</b>
+          جدول من ١٢ بندًا كلها ✅ سليم، ثم «تم نشر الواجهة البرمجية»
+          و«الخدمة تعمل».
+        </div>
+        <div class="note warn">
+          <b>إن توقّف عند الفحص برسالة تعارض</b>
+          قاعدتك تستخدم أنواعًا قديمة. انسخ ملف الإصلاح أدناه، والصقه في
+          Supabase ← <kbd>SQL Editor</kbd> ← <kbd>Run</kbd>، ثم أعد تشغيل سير العمل.
+          الإصلاح يحافظ على كل بياناتك.
+        </div>
+        <button class="copy" data-file="fix">نسخ ملف الإصلاح <span class="sz"></span></button>
+
+        <div class="mark-done"><label><input type="checkbox" id="s2"> اكتملت التهيئة بنجاح</label></div>
+      </div>
+    </section>
+
+    <!-- 3 -->
+    <section class="step" data-step="3">
+      <div class="rail"><span class="num">٣</span></div>
+      <div class="body">
+        <div class="head"><h3>تأكّد من نشر الموقع</h3><span class="time">٣ دقائق</span></div>
+        <p>
+          نشر الواجهة يبدأ تلقائيًا. تحقق منه في <kbd>Actions</kbd> ←
+          <b>«نشر الواجهة — بوابة المشتريات»</b>. إن لم يكن قد عمل، شغّله
+          بنفس طريقة الخطوة السابقة.
+        </p>
+        <p>عند نجاحه سيكون رابط بوابتك:</p>
+        <div class="tw"><table>
+          <tr><th>الرابط</th></tr>
+          <tr><td><code>https://oolong2006-ship-it.github.io/codex/</code></td></tr>
+        </table></div>
+
+        <div class="note warn">
+          <b>إن فشل النشر برسالة «Branch is not allowed to deploy»</b>
+          افتح <kbd>Settings</kbd> ← <kbd>Environments</kbd> ← <kbd>github-pages</kbd>
+          ← <b>Deployment branches</b>، وأضف الفرع
+          <code>claude/alnadeg-procurement-portal-6urp3o</code>، ثم أعد التشغيل.
+        </div>
+
+        <div class="mark-done"><label><input type="checkbox" id="s3"> الموقع يفتح ويظهر صفحة الدخول</label></div>
+      </div>
+    </section>
+
+    <!-- 4 -->
+    <section class="step" data-step="4">
+      <div class="rail"><span class="num">٤</span></div>
+      <div class="body">
+        <div class="head"><h3>فعّل حسابك</h3><span class="time">دقيقتان</span></div>
+
+        <div class="note stop">
+          <b>هذه الخطوة خارج GitHub عمدًا</b>
+          مستودعك <b>عام</b>، وسجلات GitHub فيه مكشوفة للجميع. لو ولّدنا رمز
+          التفعيل هناك لأصبح متاحًا للعالم ٢٤ ساعة. لذلك يُولَّد داخل حساب
+          Supabase الخاص بك وحدك.
+        </div>
+
+        <ol>
+          <li>انسخ الملف أدناه والصقه في Supabase ← <kbd>SQL Editor</kbd>.</li>
+          <li>اضغط <kbd>Run</kbd> — الرابط مضبوط مسبقًا على عنوان بوابتك.</li>
+          <li>انسخ قيمة <b>«الرابط الكامل»</b> وافتحها في المتصفح.</li>
+          <li>اختر كلمة مرورك: ١٢ حرفًا على الأقل، بحروف كبيرة وصغيرة ورقم ورمز.</li>
+        </ol>
+        <button class="copy" data-file="activation">نسخ ملف التفعيل <span class="sz"></span></button>
+
+        <div class="note stop">
+          <b>كلمة المرور لك وحدك</b>
+          اكتبها داخل صفحة التفعيل فقط. لا ترسلها لي ولا لأحد، ولا تكتبها في
+          أي ملف. الرابط صالح ٢٤ ساعة ويُستخدم مرة واحدة، وتشغيل الملف مجددًا
+          يُصدر رابطًا جديدًا ويُبطل السابق.
+        </div>
+
+        <div class="mark-done"><label><input type="checkbox" id="s4"> فعّلت حسابي</label></div>
+      </div>
+    </section>
+  </div>
+
+  <section class="finish">
+    <h2>وبعد؟</h2>
+    <p>
+      افتح <code>https://oolong2006-ship-it.github.io/codex/</code> وسجّل دخولك
+      برقم جوالك <b>0559847714</b> وكلمة المرور التي اخترتها. يجب أن ترى لوحة
+      المتابعة والمواقع الـ27 وبوابة الأدمن كاملة.
+    </p>
+    <div class="chips">
+      <span>إدارة المستخدمين ← إضافة مستخدم</span>
+      <span>كلمة مرور مؤقتة تظهر مرة واحدة</span>
+      <span>طلب شراء جديد ← أرفق الفاتورة ← أرسل</span>
+      <span>Actions ← «اختبارات القبول» لتقرير موثّق</span>
+    </div>
+  </section>
+
+  <section class="trouble">
+    <h2>إن تعثّرت</h2>
+    <p style="color:var(--ink-2);font-size:.93rem;margin-top:10px">
+      أرسل لي صورة الشاشة أو نص الخطأ. هذه أكثر الأعطال شيوعًا:
+    </p>
+    <div class="tw"><table>
+      <tr><th>ما تراه</th><th>السبب الغالب</th></tr>
+      <tr><td>سير العمل يفشل فورًا برسالة «سر غير مضبوط»</td><td>راجع أسماء الأسرار في الخطوة ١ — حرف واحد يكفي لتخطئها</td></tr>
+      <tr><td>الفحص يتوقف بتعارض أنواع</td><td>شغّل ملف الإصلاح في الخطوة ٢</td></tr>
+      <tr><td>❌ في جدول البنود الـ12</td><td>أرسل الملخص؛ البند الفاشل يحدد السبب</td></tr>
+      <tr><td>«Branch is not allowed to deploy»</td><td>أضف الفرع في <kbd>Settings</kbd> ← <kbd>Environments</kbd> ← <kbd>github-pages</kbd></td></tr>
+      <tr><td>الموقع يفتح لكن «تعذر الاتصال بالخادم»</td><td>أعد تشغيل «تهيئة قاعدة البيانات» لضبط <code>ALLOWED_ORIGINS</code></td></tr>
+      <tr><td>خطأ اتصال بقاعدة البيانات</td><td><code>[YOUR-PASSWORD]</code> لم يُستبدل في <code>SUPABASE_DB_URL</code></td></tr>
+      <tr><td>«رابط التفعيل غير صحيح»</td><td>الرمز نُسخ ناقصًا أو مضت ٢٤ ساعة — أعد الخطوة ٥</td></tr>
+      <tr><td>«رقم الجوال أو كلمة المرور غير صحيحة»</td><td>جرّب الصيغة المحلية <code>0559847714</code></td></tr>
+    </table></div>
+  </section>
+
+  <section class="trouble">
+    <h2>الطريقة اليدوية — إن تعذّر استخدام Actions</h2>
+    <p style="color:var(--ink-2);font-size:.93rem;margin-top:10px">
+      يمكنك تنفيذ كل شيء بنفسك عبر Supabase ← <kbd>SQL Editor</kbd>: الصق كل
+      ملف واضغط <kbd>Run</kbd> بالترتيب. النتيجة مطابقة تمامًا لما تفعله سيور العمل.
+    </p>
+    <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:6px">
+      <button class="copy" data-file="preflight">١ · ملف الفحص <span class="sz"></span></button>
+      <button class="copy" data-file="database">٢ · قاعدة البيانات <span class="sz"></span></button>
+    </div>
+    <p style="color:var(--ink-2);font-size:.93rem;margin-top:14px">
+      أما الخدمة فتُنشر من Supabase ← <kbd>Edge Functions</kbd> ←
+      <kbd>Deploy a new function</kbd> ← <kbd>Via editor</kbd>، بالاسم
+      <code>procurement-portal</code>، مع إضافة السر <code>ALLOWED_ORIGINS</code>
+      بقيمة <code>https://oolong2006-ship-it.github.io</code>.
+    </p>
+    <button class="copy" data-file="edge">٣ · ملف الخدمة <span class="sz"></span></button>
+  </section>
+
+  <footer>
+    ملفات التنصيب المضمّنة هنا مطابقة تمامًا لما في المستودع على الفرع
+    <code>claude/alnadeg-procurement-portal-6urp3o</code>، ومُولَّدة من الكود المصدري نفسه.
+  </footer>
+</div>
+
+<script type="text/plain" id="file-preflight">-- =====================================================================
+--  فحص ما قبل التنصيب — بوابة مشتريات الناضج
+--
+--  الصقه في Supabase SQL Editor واضغط Run. لا يعدّل أي شيء — قراءة فقط.
+--
+--  اقرأ السطر الأول «الخلاصة»:
+--    ✅  → أكمل إلى الملف 01-database.sql
+--    ❌  → أرسل النتيجة كاملة قبل تشغيل أي شيء آخر
+--
+--  ملاحظة تقنية: تُستخدم query_to_xml للعدّ لأن الإشارة المباشرة إلى
+--  جدول غير موجود تُفشل الاستعلام كله عند التحليل، لا عند التنفيذ.
+-- =====================================================================
+with critical as (
+  -- أعمدة يجب أن تكون نصية؛ وجودها كنوع مخصص (ENUM) يمنع الترقية الآمنة
+  select c.table_name, c.column_name, c.data_type
+    from information_schema.columns c
+   where c.table_schema = 'public'
+     and (c.table_name, c.column_name) in (
+       ('profiles','role'), ('profiles','phone'),
+       ('purchase_requests','status'), ('purchase_requests','current_stage'),
+       ('purchase_requests','purchase_type'), ('purchase_requests','priority'),
+       ('locations','kind'),
+       ('approvals','decision'), ('approvals','stage'),
+       ('request_documents','document_type')
+     )
+),
+conflicts as (
+  select * from critical where data_type not in ('text','character varying')
+)
+select 1 as "#", 'الخلاصة' as "القسم",
+       'هل يمكن تشغيل ملف التنصيب مباشرة؟' as "البند",
+       case when (select count(*) from conflicts) = 0
+            then '✅ نعم — شغّل ملف 01-database.sql'
+            else '❌ لا — ' || (select count(*) from conflicts)::text ||
+                 ' عمودًا بنوع مخصص. أرسل هذه النتيجة قبل المتابعة.'
+       end as "النتيجة"
+
+union all
+select 2, 'الخلاصة', 'أعمدة متعارضة (يجب أن تكون صفرًا)',
+       (select count(*)::text from conflicts)
+
+union all
+select 3, 'تفاصيل التعارض', table_name || '.' || column_name,
+       'النوع الحالي: ' || data_type || ' — المتوقع: text'
+  from conflicts
+
+union all
+select 10, 'الجداول القائمة', t.table_name,
+       (select count(*)::text || ' عمودًا' from information_schema.columns c
+         where c.table_schema = 'public' and c.table_name = t.table_name)
+  from information_schema.tables t
+ where t.table_schema = 'public' and t.table_type = 'BASE TABLE'
+
+union all
+select 20, 'حجم البيانات القائمة', 'عدد المواقع',
+       case when to_regclass('public.locations') is null then '— الجدول غير موجود'
+            else (xpath('/row/c/text()', query_to_xml(
+                   'select count(*) as c from public.locations',
+                   false, true, '')))[1]::text end
+
+union all
+select 21, 'حجم البيانات القائمة', 'عدد المستخدمين',
+       case when to_regclass('public.profiles') is null then '— الجدول غير موجود'
+            else (xpath('/row/c/text()', query_to_xml(
+                   'select count(*) as c from public.profiles',
+                   false, true, '')))[1]::text end
+
+union all
+select 22, 'حجم البيانات القائمة', 'عدد طلبات الشراء',
+       case when to_regclass('public.purchase_requests') is null then '— الجدول غير موجود'
+            else (xpath('/row/c/text()', query_to_xml(
+                   'select count(*) as c from public.purchase_requests',
+                   false, true, '')))[1]::text end
+
+union all
+select 23, 'حجم البيانات القائمة', 'مديرو نظام مفعّلون',
+       case when not exists (select 1 from information_schema.columns
+                              where table_schema='public' and table_name='profiles'
+                                and column_name='role')
+            then '— العمود غير موجود'
+            else (xpath('/row/c/text()', query_to_xml(
+                   'select count(*) as c from public.profiles where role::text = ''super_admin''',
+                   false, true, '')))[1]::text end
+
+union all
+select 24, 'حجم البيانات القائمة', 'حسابات Auth القائمة',
+       case when to_regclass('auth.users') is null then '— غير متاح'
+            else (xpath('/row/c/text()', query_to_xml(
+                   'select count(*) as c from auth.users', false, true, '')))[1]::text end
+
+union all
+select 30, 'الحماية', 'جداول بلا RLS',
+       (select count(*)::text from pg_class c
+          join pg_namespace n on n.oid = c.relnamespace
+         where n.nspname='public' and c.relkind='r' and not c.relrowsecurity)
+
+union all
+select 31, 'الحماية', 'عدد سياسات RLS القائمة',
+       (select count(*)::text from pg_policies where schemaname='public')
+
+union all
+select 40, 'المخزن', coalesce(b.id, '—'),
+       case when b.public then '⚠️ عام — سيُحوَّل إلى خاص' else '✅ خاص' end
+  from storage.buckets b
+
+union all
+select 50, 'الأنواع المخصصة القائمة (ENUM)', t.typname,
+       (select string_agg(e.enumlabel, '، ' order by e.enumsortorder)
+          from pg_enum e where e.enumtypid = t.oid)
+  from pg_type t join pg_namespace n on n.oid = t.typnamespace
+ where n.nspname = 'public' and t.typtype = 'e'
+
+order by 1, 3;
+</script>
+<script type="text/plain" id="file-fix">-- =====================================================================
+--  ملف الإصلاح — شغّله فقط إذا أظهر فحص 00-preflight.sql علامة ❌
+--
+--  يحوّل الأعمدة ذات الأنواع المخصصة (ENUM) إلى نصوص، مع الحفاظ الكامل
+--  على القيم القائمة. لا يحذف أي صف ولا أي عمود.
+--
+--  بعد التشغيل سيظهر تقرير:
+--    • «جاهز» → شغّل 01-database.sql
+--    • قيم غير معروفة → أرسل التقرير قبل المتابعة، لأن هذه القيم
+--      ستمنع تطبيق قيود التحقق وتُفشل التنصيب.
+-- =====================================================================
+
+-- جدول مؤقت للتقرير (بلا on commit drop حتى يبقى بين العبارات)
+drop table if exists _fix_report;
+create temp table _fix_report(
+  ترتيب int, القسم text, البند text, النتيجة text
+);
+
+do $$
+declare
+  targets text[][] := array[
+    array['profiles','role'],
+    array['purchase_requests','status'],
+    array['purchase_requests','current_stage'],
+    array['purchase_requests','purchase_type'],
+    array['purchase_requests','priority'],
+    array['locations','kind'],
+    array['approvals','decision'],
+    array['approvals','stage'],
+    array['request_documents','document_type']
+  ];
+  t text; c text; dtype text; i int;
+  converted int := 0;
+begin
+  for i in 1 .. array_length(targets, 1) loop
+    t := targets[i][1];
+    c := targets[i][2];
+
+    select data_type into dtype from information_schema.columns
+     where table_schema = 'public' and table_name = t and column_name = c;
+
+    if dtype is null then
+      continue;                       -- العمود غير موجود بعد، سيُنشئه التنصيب
+    end if;
+
+    if dtype in ('text','character varying') then
+      insert into _fix_report values (10, 'الأعمدة', t || '.' || c, '✅ نصي أصلاً');
+      continue;
+    end if;
+
+    begin
+      -- القيمة الافتراضية تمنع تغيير النوع، فتُزال ثم يعيدها ملف التنصيب
+      execute format('alter table public.%I alter column %I drop default', t, c);
+      execute format('alter table public.%I alter column %I type text using %I::text', t, c, c);
+      converted := converted + 1;
+      insert into _fix_report values
+        (10, 'الأعمدة', t || '.' || c, '🔧 حُوِّل من ' || dtype || ' إلى text');
+    exception
+      when others then
+        insert into _fix_report values
+          (5, 'تعذّر التحويل', t || '.' || c,
+           '❌ ' || sqlerrm || ' — أرسل هذه الرسالة');
+    end;
+  end loop;
+
+  insert into _fix_report values
+    (1, 'الخلاصة', 'أعمدة حُوِّلت إلى نص', converted::text);
+end $$;
+
+-- ---------------------------------------------------------------------
+-- فحص القيم القائمة مقابل المفردات المعتمدة
+-- ---------------------------------------------------------------------
+do $$
+declare
+  checks text[][] := array[
+    array['profiles','role',
+          'super_admin,requester,production_officer,branch_manager,production_manager,procurement,finance'],
+    array['purchase_requests','status',
+          'draft,submitted,pending_production_officer,pending_branch_manager,pending_production_manager,pending_procurement,pending_finance,returned,rejected,completed,cancelled'],
+    array['purchase_requests','current_stage',
+          'production_officer,branch_manager,production_manager,procurement,finance'],
+    array['purchase_requests','purchase_type','operational,direct,emergency'],
+    array['purchase_requests','priority','low,normal,high,urgent'],
+    array['locations','kind','branch,central'],
+    array['approvals','decision','approved,rejected,returned,submitted,cancelled'],
+    array['approvals','stage',
+          'production_officer,branch_manager,production_manager,procurement,finance'],
+    array['request_documents','document_type','supplier_invoice,erp_document,other']
+  ];
+  t text; c text; allowed text; i int; rec record; bad int := 0;
+begin
+  for i in 1 .. array_length(checks, 1) loop
+    t := checks[i][1]; c := checks[i][2]; allowed := checks[i][3];
+
+    if not exists (select 1 from information_schema.columns
+                    where table_schema='public' and table_name=t and column_name=c) then
+      continue;
+    end if;
+
+    for rec in execute format(
+      'select %I::text as val, count(*) as n from public.%I
+        where %I is not null and %I::text <> all (string_to_array(%L, '','')) 
+        group by 1 order by 2 desc limit 20', c, t, c, c, allowed)
+    loop
+      bad := bad + 1;
+      insert into _fix_report values
+        (3, 'قيم غير معروفة', t || '.' || c,
+         format('«%s» في %s صفًا — غير مقبولة', rec.val, rec.n));
+    end loop;
+  end loop;
+
+  if bad = 0 then
+    insert into _fix_report values
+      (2, 'الخلاصة', 'هل يمكن تشغيل 01-database.sql الآن؟', '✅ نعم — جاهز');
+  else
+    insert into _fix_report values
+      (2, 'الخلاصة', 'هل يمكن تشغيل 01-database.sql الآن؟',
+       format('❌ لا — %s قيمة غير معروفة. أرسل هذا التقرير.', bad));
+  end if;
+end $$;
+
+select ترتيب as "#", القسم as "القسم", البند as "البند", النتيجة as "النتيجة"
+  from _fix_report order by ترتيب, البند;
+</script>
+<script type="text/plain" id="file-database">-- =====================================================================
+--  بوابة مشتريات فروع شركة مطاعم الناضج
+--  ملف التنصيب الكامل — الصقه في Supabase SQL Editor واضغط Run
+--
+--  ⚠️  هذا الملف مُولَّد آليًا — لا تعدّله يدويًا.
+--      المصدر: supabase/migrations/*.sql
+--      البناء: ./scripts/build-deploy-bundle.sh
+--
+--  آمن تمامًا على قاعدة بيانات تحتوي بيانات:
+--    • لا يوجد فيه أمر DROP واحد
+--    • لا يحذف أي صف ولا أي عمود
+--    • قابل لإعادة التشغيل أكثر من مرة دون ضرر
+--
+--  في نهاية التنفيذ سيظهر جدول تحقق يبيّن نجاح كل بند.
+-- =====================================================================
+
+
+-- ═══════════════════════════════════════════════════════════════
+--  20260914090000_core_schema.sql
+-- ═══════════════════════════════════════════════════════════════
+
+-- =====================================================================
+-- بوابة مشتريات فروع شركة مطاعم الناضج
+-- 1/4 — المخطط الأساسي (Core schema)
+--
+-- هذه الهجرة *تراكمية وآمنة*: لا تحذف أي جدول أو عمود أو صف قائم.
+-- تستخدم CREATE ... IF NOT EXISTS و ALTER ... ADD COLUMN IF NOT EXISTS
+-- حتى تعمل فوق قاعدة بيانات تحتوي بالفعل على:
+--   locations, profiles, purchase_requests, approvals, activation_tokens
+--
+-- ملاحظة تصميمية: نستخدم text + CHECK بدلاً من ENUM عمدًا، لأن ENUM
+-- قائمًا بقيم مختلفة يصعب ترحيله بأمان، بينما CHECK يمكن استبداله.
+-- =====================================================================
+
+create extension if not exists "pgcrypto";
+
+-- سكيما داخلية غير مكشوفة عبر PostgREST للدوال الحساسة
+create schema if not exists app;
+revoke all on schema app from public, anon, authenticated;
+grant usage on schema app to postgres, service_role;
+
+-- ---------------------------------------------------------------------
+-- قوائم القيم المعتمدة (مرجع واحد للتطبيق وقاعدة البيانات)
+-- ---------------------------------------------------------------------
+create table if not exists public.ref_values (
+  domain      text not null,
+  code        text not null,
+  name_ar     text not null,
+  sort_order  integer not null default 0,
+  primary key (domain, code)
+);
+
+-- ---------------------------------------------------------------------
+-- المواقع
+-- ---------------------------------------------------------------------
+create table if not exists public.locations (
+  id          uuid primary key default gen_random_uuid(),
+  created_at  timestamptz not null default now()
+);
+
+alter table public.locations add column if not exists code       text;
+alter table public.locations add column if not exists name_ar    text;
+alter table public.locations add column if not exists kind       text;
+alter table public.locations add column if not exists sort_order integer;
+alter table public.locations add column if not exists is_active  boolean;
+alter table public.locations add column if not exists updated_at timestamptz;
+
+update public.locations set kind       = coalesce(kind, 'branch');
+update public.locations set is_active  = coalesce(is_active, true);
+update public.locations set sort_order = coalesce(sort_order, 999);
+update public.locations set updated_at = coalesce(updated_at, now());
+
+alter table public.locations alter column kind       set default 'branch';
+alter table public.locations alter column is_active  set default true;
+alter table public.locations alter column sort_order set default 999;
+alter table public.locations alter column updated_at set default now();
+
+do $$ begin
+  alter table public.locations alter column kind      set not null;
+  alter table public.locations alter column is_active set not null;
+exception when others then
+  raise notice 'locations: تعذر فرض NOT NULL — راجع البيانات القائمة (%)', sqlerrm;
+end $$;
+
+do $$ begin
+  alter table public.locations add constraint locations_kind_check
+    check (kind in ('branch','central'));
+exception when duplicate_object then null;
+end $$;
+
+create unique index if not exists locations_code_key on public.locations (code);
+create index if not exists locations_sort_idx on public.locations (sort_order, code);
+
+-- ---------------------------------------------------------------------
+-- ملفات المستخدمين — مرتبطة بـ auth.users
+-- ---------------------------------------------------------------------
+create table if not exists public.profiles (
+  id         uuid primary key references auth.users (id) on delete cascade,
+  created_at timestamptz not null default now()
+);
+
+alter table public.profiles add column if not exists full_name            text;
+alter table public.profiles add column if not exists phone                text;
+alter table public.profiles add column if not exists role                 text;
+alter table public.profiles add column if not exists location_id          uuid;
+alter table public.profiles add column if not exists job_title            text;
+alter table public.profiles add column if not exists is_active            boolean;
+alter table public.profiles add column if not exists must_change_password boolean;
+alter table public.profiles add column if not exists last_login_at        timestamptz;
+alter table public.profiles add column if not exists updated_at           timestamptz;
+
+update public.profiles set role                 = coalesce(role, 'requester');
+update public.profiles set is_active            = coalesce(is_active, true);
+update public.profiles set must_change_password = coalesce(must_change_password, false);
+update public.profiles set updated_at           = coalesce(updated_at, now());
+
+alter table public.profiles alter column role                 set default 'requester';
+alter table public.profiles alter column is_active            set default true;
+alter table public.profiles alter column must_change_password set default false;
+alter table public.profiles alter column updated_at           set default now();
+
+do $$ begin
+  alter table public.profiles add constraint profiles_role_check
+    check (role in ('super_admin','requester','production_officer',
+                    'branch_manager','production_manager','procurement','finance'));
+exception when duplicate_object then null; end $$;
+
+-- رقم الجوال يُخزَّن دائمًا بالصيغة الموحدة 9665XXXXXXXX (12 رقمًا)
+do $$ begin
+  alter table public.profiles add constraint profiles_phone_format_check
+    check (phone is null or phone ~ '^9665[0-9]{8}$');
+exception when duplicate_object then null; end $$;
+
+do $$ begin
+  alter table public.profiles add constraint profiles_location_fk
+    foreign key (location_id) references public.locations (id) on delete restrict;
+exception when duplicate_object then null; end $$;
+
+create unique index if not exists profiles_phone_key on public.profiles (phone);
+create index if not exists profiles_location_idx on public.profiles (location_id);
+create index if not exists profiles_role_idx on public.profiles (role);
+
+-- ---------------------------------------------------------------------
+-- طلبات الشراء
+-- ---------------------------------------------------------------------
+create sequence if not exists public.purchase_request_number_seq;
+
+create table if not exists public.purchase_requests (
+  id         uuid primary key default gen_random_uuid(),
+  created_at timestamptz not null default now()
+);
+
+alter table public.purchase_requests add column if not exists request_number    text;
+alter table public.purchase_requests add column if not exists location_id       uuid;
+alter table public.purchase_requests add column if not exists requester_id      uuid;
+alter table public.purchase_requests add column if not exists status            text;
+alter table public.purchase_requests add column if not exists current_stage     text;
+alter table public.purchase_requests add column if not exists request_date      date;
+alter table public.purchase_requests add column if not exists purchase_date     date;
+alter table public.purchase_requests add column if not exists purchase_type     text;
+alter table public.purchase_requests add column if not exists priority          text;
+alter table public.purchase_requests add column if not exists supplier_name     text;
+alter table public.purchase_requests add column if not exists supplier_vat      text;
+alter table public.purchase_requests add column if not exists invoice_number    text;
+alter table public.purchase_requests add column if not exists invoice_date      date;
+alter table public.purchase_requests add column if not exists amount_before_vat numeric(14,2);
+alter table public.purchase_requests add column if not exists vat_amount        numeric(14,2);
+alter table public.purchase_requests add column if not exists total_amount      numeric(14,2);
+alter table public.purchase_requests add column if not exists category          text;
+alter table public.purchase_requests add column if not exists items_description text;
+alter table public.purchase_requests add column if not exists quantity          numeric(14,3);
+alter table public.purchase_requests add column if not exists unit              text;
+alter table public.purchase_requests add column if not exists justification     text;
+alter table public.purchase_requests add column if not exists notes             text;
+alter table public.purchase_requests add column if not exists admin_note        text;
+alter table public.purchase_requests add column if not exists version           integer;
+alter table public.purchase_requests add column if not exists submitted_at      timestamptz;
+alter table public.purchase_requests add column if not exists completed_at      timestamptz;
+alter table public.purchase_requests add column if not exists updated_at        timestamptz;
+
+update public.purchase_requests set status       = coalesce(status, 'draft');
+update public.purchase_requests set version      = coalesce(version, 1);
+update public.purchase_requests set request_date = coalesce(request_date, current_date);
+update public.purchase_requests set priority     = coalesce(priority, 'normal');
+update public.purchase_requests set updated_at   = coalesce(updated_at, now());
+
+alter table public.purchase_requests alter column status       set default 'draft';
+alter table public.purchase_requests alter column version      set default 1;
+alter table public.purchase_requests alter column request_date set default current_date;
+alter table public.purchase_requests alter column priority     set default 'normal';
+alter table public.purchase_requests alter column updated_at   set default now();
+
+do $$ begin
+  alter table public.purchase_requests add constraint purchase_requests_status_check
+    check (status in ('draft','submitted','pending_production_officer','pending_branch_manager',
+                      'pending_production_manager','pending_procurement','pending_finance',
+                      'returned','rejected','completed','cancelled'));
+exception when duplicate_object then null; end $$;
+
+do $$ begin
+  alter table public.purchase_requests add constraint purchase_requests_stage_check
+    check (current_stage is null or current_stage in
+      ('production_officer','branch_manager','production_manager','procurement','finance'));
+exception when duplicate_object then null; end $$;
+
+do $$ begin
+  alter table public.purchase_requests add constraint purchase_requests_type_check
+    check (purchase_type is null or purchase_type in ('operational','direct','emergency'));
+exception when duplicate_object then null; end $$;
+
+do $$ begin
+  alter table public.purchase_requests add constraint purchase_requests_priority_check
+    check (priority in ('low','normal','high','urgent'));
+exception when duplicate_object then null; end $$;
+
+-- الرقم الضريبي السعودي: 15 رقمًا يبدأ وينتهي بالرقم 3
+do $$ begin
+  alter table public.purchase_requests add constraint purchase_requests_vat_check
+    check (supplier_vat is null or supplier_vat ~ '^3[0-9]{13}3$');
+exception when duplicate_object then null; end $$;
+
+do $$ begin
+  alter table public.purchase_requests add constraint purchase_requests_amounts_check
+    check (
+      (amount_before_vat is null or amount_before_vat >= 0) and
+      (vat_amount        is null or vat_amount        >= 0) and
+      (total_amount      is null or total_amount      >= 0)
+    );
+exception when duplicate_object then null; end $$;
+
+-- الإجمالي يجب أن يطابق (قبل الضريبة + الضريبة) بهامش تقريب هللة واحدة
+do $$ begin
+  alter table public.purchase_requests add constraint purchase_requests_total_consistency_check
+    check (
+      amount_before_vat is null or vat_amount is null or total_amount is null
+      or abs(total_amount - (amount_before_vat + vat_amount)) <= 0.01
+    );
+exception when duplicate_object then null; end $$;
+
+do $$ begin
+  alter table public.purchase_requests add constraint purchase_requests_invoice_date_check
+    check (invoice_date is null or purchase_date is null or invoice_date >= purchase_date - interval '365 days');
+exception when duplicate_object then null; end $$;
+
+do $$ begin
+  alter table public.purchase_requests add constraint purchase_requests_location_fk
+    foreign key (location_id) references public.locations (id) on delete restrict;
+exception when duplicate_object then null; end $$;
+
+do $$ begin
+  alter table public.purchase_requests add constraint purchase_requests_requester_fk
+    foreign key (requester_id) references public.profiles (id) on delete restrict;
+exception when duplicate_object then null; end $$;
+
+create unique index if not exists purchase_requests_number_key
+  on public.purchase_requests (request_number);
+
+-- منع تكرار فاتورة المورد نفسه برقم الفاتورة نفسه (يُتجاهل الملغى والمرفوض)
+create unique index if not exists purchase_requests_supplier_invoice_key
+  on public.purchase_requests (
+    coalesce(nullif(supplier_vat, ''), lower(btrim(coalesce(supplier_name, '')))),
+    upper(btrim(invoice_number))
+  )
+  where invoice_number is not null
+    and btrim(invoice_number) <> ''
+    and status not in ('cancelled','rejected');
+
+create index if not exists purchase_requests_location_idx    on public.purchase_requests (location_id);
+create index if not exists purchase_requests_requester_idx   on public.purchase_requests (requester_id);
+create index if not exists purchase_requests_status_idx      on public.purchase_requests (status);
+create index if not exists purchase_requests_stage_idx       on public.purchase_requests (current_stage)
+  where current_stage is not null;
+create index if not exists purchase_requests_created_idx     on public.purchase_requests (created_at desc);
+create index if not exists purchase_requests_inbox_idx       on public.purchase_requests (current_stage, location_id, created_at desc);
+
+-- ---------------------------------------------------------------------
+-- مرفقات الطلب
+-- ---------------------------------------------------------------------
+create table if not exists public.request_documents (
+  id            uuid primary key default gen_random_uuid(),
+  request_id    uuid not null references public.purchase_requests (id) on delete cascade,
+  location_id   uuid not null references public.locations (id) on delete restrict,
+  document_type text not null,
+  storage_path  text not null,
+  file_name     text not null,
+  mime_type     text not null,
+  file_size     integer not null,
+  uploaded_by   uuid references public.profiles (id) on delete set null,
+  created_at    timestamptz not null default now()
+);
+
+do $$ begin
+  alter table public.request_documents add constraint request_documents_type_check
+    check (document_type in ('supplier_invoice','erp_document','other'));
+exception when duplicate_object then null; end $$;
+
+do $$ begin
+  alter table public.request_documents add constraint request_documents_mime_check
+    check (mime_type in ('application/pdf','image/jpeg','image/jpg','image/png','image/webp'));
+exception when duplicate_object then null; end $$;
+
+-- حد أقصى 10 ميجابايت للملف الواحد (يُفرض أيضًا على الخادم وفي الواجهة)
+do $$ begin
+  alter table public.request_documents add constraint request_documents_size_check
+    check (file_size > 0 and file_size <= 10485760);
+exception when duplicate_object then null; end $$;
+
+create unique index if not exists request_documents_path_key on public.request_documents (storage_path);
+create index if not exists request_documents_request_idx on public.request_documents (request_id, document_type);
+
+-- ---------------------------------------------------------------------
+-- سجل الاعتمادات
+-- ---------------------------------------------------------------------
+create table if not exists public.approvals (
+  id         uuid primary key default gen_random_uuid(),
+  created_at timestamptz not null default now()
+);
+
+alter table public.approvals add column if not exists request_id      uuid;
+alter table public.approvals add column if not exists stage           text;
+alter table public.approvals add column if not exists decision        text;
+alter table public.approvals add column if not exists actor_id        uuid;
+alter table public.approvals add column if not exists actor_name      text;
+alter table public.approvals add column if not exists actor_role      text;
+alter table public.approvals add column if not exists note            text;
+alter table public.approvals add column if not exists previous_status text;
+alter table public.approvals add column if not exists new_status      text;
+alter table public.approvals add column if not exists location_id     uuid;
+alter table public.approvals add column if not exists is_override     boolean;
+alter table public.approvals add column if not exists ip_address      text;
+alter table public.approvals add column if not exists user_agent      text;
+
+update public.approvals set is_override = coalesce(is_override, false);
+alter table public.approvals alter column is_override set default false;
+
+do $$ begin
+  alter table public.approvals add constraint approvals_decision_check
+    check (decision is null or decision in ('approved','rejected','returned','submitted','cancelled'));
+exception when duplicate_object then null; end $$;
+
+do $$ begin
+  alter table public.approvals add constraint approvals_request_fk
+    foreign key (request_id) references public.purchase_requests (id) on delete cascade;
+exception when duplicate_object then null; end $$;
+
+create index if not exists approvals_request_idx on public.approvals (request_id, created_at);
+
+-- منع اعتماد المرحلة نفسها مرتين لنفس الطلب (قرار إيجابي واحد لكل مرحلة)
+create unique index if not exists approvals_single_approval_per_stage
+  on public.approvals (request_id, stage)
+  where decision = 'approved';
+
+-- ---------------------------------------------------------------------
+-- سجل التدقيق — للقراءة فقط
+-- ---------------------------------------------------------------------
+create table if not exists public.audit_logs (
+  id          bigint generated always as identity primary key,
+  actor_id    uuid,
+  actor_name  text,
+  actor_role  text,
+  action      text not null,
+  entity_type text not null,
+  entity_id   text,
+  location_id uuid,
+  details     jsonb not null default '{}'::jsonb,
+  ip_address  text,
+  user_agent  text,
+  created_at  timestamptz not null default now()
+);
+
+create index if not exists audit_logs_created_idx on public.audit_logs (created_at desc);
+create index if not exists audit_logs_entity_idx  on public.audit_logs (entity_type, entity_id);
+create index if not exists audit_logs_actor_idx   on public.audit_logs (actor_id);
+
+-- ---------------------------------------------------------------------
+-- رموز التفعيل — يُخزَّن الهاش فقط، لا الرمز نفسه
+-- ---------------------------------------------------------------------
+create table if not exists public.activation_tokens (
+  id         uuid primary key default gen_random_uuid(),
+  created_at timestamptz not null default now()
+);
+
+alter table public.activation_tokens add column if not exists token_hash    text;
+alter table public.activation_tokens add column if not exists purpose       text;
+alter table public.activation_tokens add column if not exists full_name     text;
+alter table public.activation_tokens add column if not exists phone         text;
+alter table public.activation_tokens add column if not exists role          text;
+alter table public.activation_tokens add column if not exists location_code text;
+alter table public.activation_tokens add column if not exists expires_at    timestamptz;
+alter table public.activation_tokens add column if not exists used_at       timestamptz;
+alter table public.activation_tokens add column if not exists used_by       uuid;
+
+update public.activation_tokens set purpose = coalesce(purpose, 'super_admin_activation');
+alter table public.activation_tokens alter column purpose set default 'super_admin_activation';
+
+create unique index if not exists activation_tokens_hash_key on public.activation_tokens (token_hash);
+create index if not exists activation_tokens_open_idx on public.activation_tokens (expires_at)
+  where used_at is null;
+
+-- ---------------------------------------------------------------------
+-- تحديد معدل الطلبات (Rate limiting) لمسارات الدخول والتفعيل
+-- ---------------------------------------------------------------------
+create table if not exists app.rate_limits (
+  bucket      text not null,
+  identifier  text not null,
+  window_start timestamptz not null,
+  hits        integer not null default 0,
+  primary key (bucket, identifier, window_start)
+);
+
+create index if not exists rate_limits_window_idx on app.rate_limits (window_start);
+
+-- ---------------------------------------------------------------------
+-- updated_at تلقائيًا
+-- ---------------------------------------------------------------------
+create or replace function app.touch_updated_at()
+returns trigger
+language plpgsql
+set search_path = ''
+as $fn$
+begin
+  new.updated_at := now();
+  return new;
+end;
+$fn$;
+
+drop trigger if exists locations_touch_updated_at on public.locations;
+create trigger locations_touch_updated_at before update on public.locations
+  for each row execute function app.touch_updated_at();
+
+drop trigger if exists profiles_touch_updated_at on public.profiles;
+create trigger profiles_touch_updated_at before update on public.profiles
+  for each row execute function app.touch_updated_at();
+
+drop trigger if exists purchase_requests_touch_updated_at on public.purchase_requests;
+create trigger purchase_requests_touch_updated_at before update on public.purchase_requests
+  for each row execute function app.touch_updated_at();
+
+-- ---------------------------------------------------------------------
+-- توليد رقم الطلب تلقائيًا: PR-YYYY-NNNNN
+-- ---------------------------------------------------------------------
+create or replace function app.assign_request_number()
+returns trigger
+language plpgsql
+set search_path = ''
+as $fn$
+begin
+  if new.request_number is null or btrim(new.request_number) = '' then
+    new.request_number := 'PR-' || to_char(now(), 'YYYY') || '-' ||
+      lpad(nextval('public.purchase_request_number_seq')::text, 5, '0');
+  end if;
+  return new;
+end;
+$fn$;
+
+drop trigger if exists purchase_requests_assign_number on public.purchase_requests;
+create trigger purchase_requests_assign_number before insert on public.purchase_requests
+  for each row execute function app.assign_request_number();
+
+-- صلاحية استخدام سلسلة أرقام الطلبات (يستدعيها المشغّل باسم المستخدم)
+grant usage, select on sequence public.purchase_request_number_seq to authenticated;
+
+
+-- ═══════════════════════════════════════════════════════════════
+--  20260914090100_functions.sql
+-- ═══════════════════════════════════════════════════════════════
+
+-- =====================================================================
+-- 2/4 — الدوال الأمنية ومحرك الاعتماد
+--
+-- كل الدوال الحساسة تعيش في سكيما app غير المكشوفة، وتُثبَّت search_path،
+-- وتُسحب صلاحية التنفيذ من PUBLIC. ما يُكشف عبر PostgREST هو أغلفة رفيعة
+-- في public مصرّح بها للدور authenticated فقط.
+-- =====================================================================
+
+-- ---------------------------------------------------------------------
+-- تطبيع رقم الجوال السعودي إلى الصيغة 9665XXXXXXXX
+-- يقبل: 05xxxxxxxx | 5xxxxxxxx | 9665xxxxxxxx | +9665xxxxxxxx | 009665xxxxxxxx
+-- ---------------------------------------------------------------------
+create or replace function app.normalize_saudi_phone(p_input text)
+returns text
+language plpgsql
+immutable
+set search_path = ''
+as $fn$
+declare
+  d text;
+begin
+  if p_input is null then return null; end if;
+
+  -- أرقام عربية-هندية → لاتينية، ثم إزالة كل ما عدا الأرقام
+  d := translate(p_input, '٠١٢٣٤٥٦٧٨٩۰۱۲۳۴۵۶۷۸۹', '01234567890123456789');
+  d := regexp_replace(d, '[^0-9]', '', 'g');
+
+  if d like '00966%' then d := substring(d from 3); end if;
+  if d like '966%'   then d := substring(d from 4);
+  elsif d like '0%'  then d := substring(d from 2);
+  end if;
+
+  -- المتبقي يجب أن يكون 5XXXXXXXX (9 أرقام تبدأ بـ 5)
+  if d ~ '^5[0-9]{8}$' then
+    return '966' || d;
+  end if;
+
+  return null;
+end;
+$fn$;
+
+-- البريد الاصطناعي المستخدم مع Supabase Auth (لا رسائل SMS، لا تكلفة)
+create or replace function app.phone_to_email(p_phone text)
+returns text
+language sql
+immutable
+set search_path = ''
+as $fn$
+  select app.normalize_saudi_phone(p_phone) || '@phone.alnadeg.local';
+$fn$;
+
+-- ---------------------------------------------------------------------
+-- هوية المستخدم الحالي — SECURITY DEFINER لتجاوز RLS ومنع التكرار اللانهائي
+-- ---------------------------------------------------------------------
+create or replace function app.current_profile()
+returns public.profiles
+language sql
+stable
+security definer
+set search_path = ''
+as $fn$
+  select p.* from public.profiles p where p.id = (select auth.uid());
+$fn$;
+
+create or replace function app.current_role()
+returns text
+language sql
+stable
+security definer
+set search_path = ''
+as $fn$
+  select p.role from public.profiles p
+  where p.id = (select auth.uid()) and p.is_active;
+$fn$;
+
+create or replace function app.current_location()
+returns uuid
+language sql
+stable
+security definer
+set search_path = ''
+as $fn$
+  select p.location_id from public.profiles p
+  where p.id = (select auth.uid()) and p.is_active;
+$fn$;
+
+create or replace function app.is_super_admin()
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $fn$
+  select coalesce(
+    (select p.role = 'super_admin' and p.is_active
+     from public.profiles p where p.id = (select auth.uid())),
+    false);
+$fn$;
+
+-- الأدوار ذات النطاق المركزي ترى كل المواقع
+create or replace function app.has_global_scope()
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $fn$
+  select coalesce(
+    (select p.is_active and p.role in
+       ('super_admin','production_manager','procurement','finance')
+     from public.profiles p where p.id = (select auth.uid())),
+    false);
+$fn$;
+
+create or replace function app.can_view_location(p_location uuid)
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $fn$
+  select app.has_global_scope()
+      or coalesce((select p.location_id = p_location and p.is_active
+                   from public.profiles p where p.id = (select auth.uid())), false);
+$fn$;
+
+-- ---------------------------------------------------------------------
+-- خريطة مسار الاعتماد
+-- ---------------------------------------------------------------------
+create or replace function app.stage_role(p_stage text)
+returns text
+language sql
+immutable
+set search_path = ''
+as $fn$
+  select case p_stage
+    when 'production_officer'  then 'production_officer'
+    when 'branch_manager'      then 'branch_manager'
+    when 'production_manager'  then 'production_manager'
+    when 'procurement'         then 'procurement'
+    when 'finance'             then 'finance'
+  end;
+$fn$;
+
+create or replace function app.stage_status(p_stage text)
+returns text
+language sql
+immutable
+set search_path = ''
+as $fn$
+  select case p_stage
+    when 'production_officer'  then 'pending_production_officer'
+    when 'branch_manager'      then 'pending_branch_manager'
+    when 'production_manager'  then 'pending_production_manager'
+    when 'procurement'         then 'pending_procurement'
+    when 'finance'             then 'pending_finance'
+  end;
+$fn$;
+
+create or replace function app.next_stage(p_stage text)
+returns text
+language sql
+immutable
+set search_path = ''
+as $fn$
+  select case p_stage
+    when 'production_officer'  then 'branch_manager'
+    when 'branch_manager'      then 'production_manager'
+    when 'production_manager'  then 'procurement'
+    when 'procurement'         then 'finance'
+    when 'finance'             then null      -- المرحلة الأخيرة
+  end;
+$fn$;
+
+-- ---------------------------------------------------------------------
+-- كتابة سجل التدقيق (يُستدعى فقط من داخل دوال SECURITY DEFINER)
+-- ---------------------------------------------------------------------
+create or replace function app.write_audit(
+  p_action text, p_entity_type text, p_entity_id text,
+  p_location uuid default null, p_details jsonb default '{}'::jsonb
+) returns void
+language plpgsql
+security definer
+set search_path = ''
+as $fn$
+declare
+  me public.profiles;
+begin
+  select * into me from public.profiles where id = (select auth.uid());
+  insert into public.audit_logs
+    (actor_id, actor_name, actor_role, action, entity_type, entity_id, location_id, details)
+  values
+    (me.id, me.full_name, me.role, p_action, p_entity_type, p_entity_id, p_location, coalesce(p_details, '{}'::jsonb));
+end;
+$fn$;
+
+-- ---------------------------------------------------------------------
+-- إرسال الطلب إلى مسار الاعتماد
+-- ---------------------------------------------------------------------
+create or replace function app.submit_request(p_request_id uuid)
+returns public.purchase_requests
+language plpgsql
+security definer
+set search_path = ''
+as $fn$
+declare
+  r  public.purchase_requests;
+  me public.profiles;
+  invoice_count integer;
+begin
+  select * into me from public.profiles where id = (select auth.uid());
+  if me is null or not me.is_active then
+    raise exception 'ACCOUNT_INACTIVE' using hint = 'الحساب غير مفعّل';
+  end if;
+
+  -- قفل الصف لمنع الإرسال المزدوج
+  select * into r from public.purchase_requests where id = p_request_id for update;
+  if r is null then
+    raise exception 'REQUEST_NOT_FOUND' using hint = 'الطلب غير موجود';
+  end if;
+
+  if not (me.role = 'super_admin' or r.requester_id = me.id) then
+    raise exception 'FORBIDDEN' using hint = 'لا تملك صلاحية إرسال هذا الطلب';
+  end if;
+
+  if r.status not in ('draft','returned') then
+    raise exception 'INVALID_STATUS' using hint = 'لا يمكن إرسال الطلب في حالته الحالية';
+  end if;
+
+  -- الحقول الإلزامية قبل الإرسال
+  if r.supplier_name is null or btrim(r.supplier_name) = ''
+     or r.invoice_number is null or btrim(r.invoice_number) = ''
+     or r.amount_before_vat is null or r.total_amount is null
+     or r.purchase_type is null or r.justification is null or btrim(r.justification) = '' then
+    raise exception 'INCOMPLETE_REQUEST' using hint = 'يجب استكمال بيانات الطلب الإلزامية قبل الإرسال';
+  end if;
+
+  -- فاتورة المورد مرفق إلزامي
+  select count(*) into invoice_count from public.request_documents
+   where request_id = r.id and document_type = 'supplier_invoice';
+  if invoice_count = 0 then
+    raise exception 'INVOICE_REQUIRED' using hint = 'يجب إرفاق فاتورة المورد قبل الإرسال';
+  end if;
+
+  update public.purchase_requests
+     set status        = 'pending_production_officer',
+         current_stage = 'production_officer',
+         submitted_at  = coalesce(submitted_at, now()),
+         version       = version + 1
+   where id = r.id
+   returning * into r;
+
+  insert into public.approvals
+    (request_id, stage, decision, actor_id, actor_name, actor_role,
+     note, previous_status, new_status, location_id)
+  values
+    (r.id, null, 'submitted', me.id, me.full_name, me.role,
+     null, 'draft', r.status, r.location_id);
+
+  perform app.write_audit('request.submitted', 'purchase_request', r.id::text, r.location_id,
+                          jsonb_build_object('request_number', r.request_number));
+  return r;
+end;
+$fn$;
+
+-- ---------------------------------------------------------------------
+-- تنفيذ قرار الاعتماد — عملية ذرّية واحدة
+--
+-- يمنع: الاعتماد خارج المرحلة، خارج الموقع، الاعتماد المزدوج (قفل الصف
+-- + شرط المرحلة + فهرس فريد)، والإقفال المالي دون مستند ERP.
+-- ---------------------------------------------------------------------
+create or replace function app.decide_request(
+  p_request_id       uuid,
+  p_decision         text,                 -- approved | rejected | returned
+  p_note             text default null,
+  p_override         boolean default false,
+  p_expected_version integer default null
+) returns public.purchase_requests
+language plpgsql
+security definer
+set search_path = ''
+as $fn$
+declare
+  r             public.purchase_requests;
+  me            public.profiles;
+  required_role text;
+  nxt           text;
+  new_status    text;
+  prev_status   text;
+  acting_stage  text;
+  erp_count     integer;
+  is_override   boolean := false;
+begin
+  if p_decision not in ('approved','rejected','returned') then
+    raise exception 'INVALID_DECISION' using hint = 'قرار غير معروف';
+  end if;
+
+  if p_decision in ('rejected','returned') and (p_note is null or btrim(p_note) = '') then
+    raise exception 'NOTE_REQUIRED' using hint = 'يجب كتابة سبب الرفض أو الإعادة';
+  end if;
+
+  select * into me from public.profiles where id = (select auth.uid());
+  if me is null or not me.is_active then
+    raise exception 'ACCOUNT_INACTIVE' using hint = 'الحساب غير مفعّل';
+  end if;
+
+  -- القفل التشاؤمي يمنع سباق الاعتماد المزدوج
+  select * into r from public.purchase_requests where id = p_request_id for update;
+  if r is null then
+    raise exception 'REQUEST_NOT_FOUND' using hint = 'الطلب غير موجود';
+  end if;
+
+  if p_expected_version is not null and r.version <> p_expected_version then
+    raise exception 'VERSION_CONFLICT' using hint = 'تم تعديل الطلب من مستخدم آخر، أعد تحميل الصفحة';
+  end if;
+
+  if r.current_stage is null then
+    raise exception 'NOT_IN_WORKFLOW' using hint = 'الطلب ليس ضمن مسار اعتماد نشط';
+  end if;
+
+  acting_stage  := r.current_stage;
+  required_role := app.stage_role(acting_stage);
+
+  -- التحقق من الدور: التجاوز حصري لمدير النظام ويُسجَّل
+  if me.role <> required_role then
+    if me.role = 'super_admin' and p_override then
+      if p_note is null or btrim(p_note) = '' then
+        raise exception 'OVERRIDE_NOTE_REQUIRED' using hint = 'يجب تسجيل سبب التجاوز';
+      end if;
+      is_override := true;
+    else
+      raise exception 'WRONG_STAGE_ROLE'
+        using hint = 'لا تملك صلاحية اعتماد هذه المرحلة';
+    end if;
+  end if;
+
+  -- التحقق من الموقع للمراحل الفرعية
+  if not is_override and acting_stage in ('production_officer','branch_manager') then
+    if me.location_id is distinct from r.location_id then
+      raise exception 'WRONG_LOCATION'
+        using hint = 'لا تملك صلاحية على طلبات موقع آخر';
+    end if;
+  end if;
+
+  prev_status := r.status;
+
+  if p_decision = 'approved' then
+    -- شرط الإقفال المالي: وجود مستند إدخال الفاتورة في ERP
+    if acting_stage = 'finance' then
+      select count(*) into erp_count from public.request_documents
+       where request_id = r.id and document_type = 'erp_document';
+      if erp_count = 0 then
+        raise exception 'ERP_DOCUMENT_REQUIRED'
+          using hint = 'لا يمكن الإقفال المالي قبل إرفاق مستند إدخال الفاتورة في ERP';
+      end if;
+    end if;
+
+    nxt := app.next_stage(acting_stage);
+    if nxt is null then
+      new_status := 'completed';
+    else
+      new_status := app.stage_status(nxt);
+    end if;
+
+    update public.purchase_requests
+       set status        = new_status,
+           current_stage = nxt,
+           completed_at  = case when new_status = 'completed' then now() else completed_at end,
+           version       = version + 1
+     where id = r.id and current_stage = acting_stage   -- شرط مانع للاعتماد المزدوج
+     returning * into r;
+
+  elsif p_decision = 'rejected' then
+    new_status := 'rejected';
+    update public.purchase_requests
+       set status = new_status, current_stage = null, version = version + 1
+     where id = r.id and current_stage = acting_stage
+     returning * into r;
+
+  else -- returned
+    new_status := 'returned';
+    update public.purchase_requests
+       set status = new_status, current_stage = null, version = version + 1
+     where id = r.id and current_stage = acting_stage
+     returning * into r;
+  end if;
+
+  if r is null then
+    raise exception 'STAGE_ALREADY_PROCESSED'
+      using hint = 'تمت معالجة هذه المرحلة بالفعل';
+  end if;
+
+  insert into public.approvals
+    (request_id, stage, decision, actor_id, actor_name, actor_role,
+     note, previous_status, new_status, location_id, is_override)
+  values
+    (r.id, acting_stage, p_decision, me.id, me.full_name, me.role,
+     p_note, prev_status, new_status, r.location_id, is_override);
+
+  perform app.write_audit(
+    case when is_override then 'request.stage_overridden' else 'request.' || p_decision end,
+    'purchase_request', r.id::text, r.location_id,
+    jsonb_build_object('request_number', r.request_number, 'stage', acting_stage,
+                       'from', prev_status, 'to', new_status, 'note', p_note,
+                       'override', is_override));
+  return r;
+end;
+$fn$;
+
+-- ---------------------------------------------------------------------
+-- إلغاء الطلب (مقدم الطلب قبل بدء الاعتماد، أو مدير النظام)
+-- ---------------------------------------------------------------------
+create or replace function app.cancel_request(p_request_id uuid, p_note text)
+returns public.purchase_requests
+language plpgsql
+security definer
+set search_path = ''
+as $fn$
+declare
+  r public.purchase_requests; me public.profiles; prev text;
+begin
+  select * into me from public.profiles where id = (select auth.uid());
+  if me is null or not me.is_active then
+    raise exception 'ACCOUNT_INACTIVE' using hint = 'الحساب غير مفعّل';
+  end if;
+
+  select * into r from public.purchase_requests where id = p_request_id for update;
+  if r is null then raise exception 'REQUEST_NOT_FOUND' using hint = 'الطلب غير موجود'; end if;
+
+  if not (me.role = 'super_admin'
+          or (r.requester_id = me.id and r.status in ('draft','returned'))) then
+    raise exception 'FORBIDDEN' using hint = 'لا تملك صلاحية إلغاء هذا الطلب';
+  end if;
+
+  if r.status in ('completed','cancelled') then
+    raise exception 'INVALID_STATUS' using hint = 'لا يمكن إلغاء الطلب في حالته الحالية';
+  end if;
+
+  prev := r.status;
+  update public.purchase_requests
+     set status = 'cancelled', current_stage = null, version = version + 1
+   where id = r.id returning * into r;
+
+  insert into public.approvals
+    (request_id, stage, decision, actor_id, actor_name, actor_role,
+     note, previous_status, new_status, location_id)
+  values (r.id, null, 'cancelled', me.id, me.full_name, me.role,
+          p_note, prev, 'cancelled', r.location_id);
+
+  perform app.write_audit('request.cancelled', 'purchase_request', r.id::text, r.location_id,
+                          jsonb_build_object('note', p_note));
+  return r;
+end;
+$fn$;
+
+-- ---------------------------------------------------------------------
+-- ملاحظة إدارية من مدير النظام
+-- ---------------------------------------------------------------------
+create or replace function app.add_admin_note(p_request_id uuid, p_note text)
+returns public.purchase_requests
+language plpgsql
+security definer
+set search_path = ''
+as $fn$
+declare r public.purchase_requests;
+begin
+  if not app.is_super_admin() then
+    raise exception 'FORBIDDEN' using hint = 'صلاحية مدير النظام مطلوبة';
+  end if;
+  if p_note is null or btrim(p_note) = '' then
+    raise exception 'NOTE_REQUIRED' using hint = 'الملاحظة مطلوبة';
+  end if;
+
+  update public.purchase_requests
+     set admin_note = p_note, version = version + 1
+   where id = p_request_id returning * into r;
+
+  if r is null then raise exception 'REQUEST_NOT_FOUND' using hint = 'الطلب غير موجود'; end if;
+
+  perform app.write_audit('request.admin_note', 'purchase_request', r.id::text, r.location_id,
+                          jsonb_build_object('note', p_note));
+  return r;
+end;
+$fn$;
+
+-- ---------------------------------------------------------------------
+-- مؤشرات لوحة المتابعة — محسوبة على الخادم ضمن نطاق صلاحية المستخدم
+-- ---------------------------------------------------------------------
+create or replace function app.dashboard_metrics()
+returns jsonb
+language plpgsql
+security definer
+set search_path = ''
+as $fn$
+declare
+  scope_all boolean := app.has_global_scope();
+  my_loc    uuid    := app.current_location();
+  result    jsonb;
+begin
+  if app.current_role() is null then
+    raise exception 'ACCOUNT_INACTIVE' using hint = 'الحساب غير مفعّل';
+  end if;
+
+  with visible as (
+    select r.* from public.purchase_requests r
+     where scope_all or r.location_id = my_loc
+  ),
+  missing_erp as (
+    select v.id from visible v
+     where not exists (select 1 from public.request_documents d
+                        where d.request_id = v.id and d.document_type = 'erp_document')
+       and v.status not in ('draft','cancelled','rejected')
+  )
+  select jsonb_build_object(
+    'total',            (select count(*) from visible),
+    'pending',          (select count(*) from visible where current_stage is not null),
+    'completed',        (select count(*) from visible where status = 'completed'),
+    'rejected',         (select count(*) from visible where status = 'rejected'),
+    'returned',         (select count(*) from visible where status = 'returned'),
+    'draft',            (select count(*) from visible where status = 'draft'),
+    'missing_erp',      (select count(*) from missing_erp),
+    'total_amount',     (select coalesce(sum(total_amount), 0) from visible
+                          where status not in ('cancelled','rejected')),
+    'by_location',      (select coalesce(jsonb_agg(x order by x->>'name_ar'), '[]'::jsonb) from (
+                            select jsonb_build_object(
+                              'location_id', l.id, 'name_ar', l.name_ar, 'code', l.code,
+                              'count', count(v.id),
+                              'amount', coalesce(sum(v.total_amount) filter
+                                        (where v.status not in ('cancelled','rejected')), 0)) as x
+                              from public.locations l
+                              join visible v on v.location_id = l.id
+                             group by l.id, l.name_ar, l.code) s),
+    'by_stage',         (select coalesce(jsonb_object_agg(current_stage, c), '{}'::jsonb) from (
+                            select current_stage, count(*) c from visible
+                             where current_stage is not null group by current_stage) s),
+    'by_status',        (select coalesce(jsonb_object_agg(status, c), '{}'::jsonb) from (
+                            select status, count(*) c from visible group by status) s),
+    'by_purchase_type', (select coalesce(jsonb_object_agg(coalesce(purchase_type,'غير محدد'), c), '{}'::jsonb) from (
+                            select purchase_type, count(*) c from visible group by purchase_type) s),
+    'overdue',          (select count(*) from visible
+                          where current_stage is not null
+                            and submitted_at is not null
+                            and submitted_at < now() - interval '3 days')
+  ) into result;
+
+  return result;
+end;
+$fn$;
+
+
+-- ---------------------------------------------------------------------
+-- حماية ملف المستخدم: لا يغيّر المستخدم دوره أو موقعه أو حالة تفعيله
+-- بنفسه. يعمل كمشغّل لأن الاستعلام عن profiles داخل سياسة RLS على
+-- profiles يسبب تكرارًا لانهائيًا.
+-- ---------------------------------------------------------------------
+create or replace function app.guard_profile_self_update()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $fn$
+begin
+  -- لا قيود على مسار الخادم (service_role بلا JWT) ولا على مدير النظام
+  if (select auth.uid()) is null or app.is_super_admin() then
+    return new;
+  end if;
+
+  if new.id is distinct from old.id then
+    raise exception 'FORBIDDEN' using hint = 'لا يمكن تغيير هوية المستخدم';
+  end if;
+
+  -- الحقول الحسّاسة تُعاد إلى قيمتها السابقة بصمت
+  new.role        := old.role;
+  new.location_id := old.location_id;
+  new.is_active   := old.is_active;
+  new.phone       := old.phone;
+  return new;
+end;
+$fn$;
+
+drop trigger if exists profiles_guard_self_update on public.profiles;
+create trigger profiles_guard_self_update before update on public.profiles
+  for each row execute function app.guard_profile_self_update();
+
+-- ---------------------------------------------------------------------
+-- أغلفة public المكشوفة عبر PostgREST — للدور authenticated فقط
+--
+-- الأغلفة SECURITY DEFINER حتى لا يحتاج العميل أي صلاحية على سكيما app،
+-- والتحقق من الهوية يتم داخل الدوال عبر auth.uid() وهي غير متأثرة بذلك.
+-- ---------------------------------------------------------------------
+create or replace function public.submit_purchase_request(p_request_id uuid)
+returns public.purchase_requests
+language plpgsql security definer set search_path = ''
+as $fn$ begin return app.submit_request(p_request_id); end; $fn$;
+
+create or replace function public.decide_purchase_request(
+  p_request_id uuid, p_decision text, p_note text default null,
+  p_override boolean default false, p_expected_version integer default null)
+returns public.purchase_requests
+language plpgsql security definer set search_path = ''
+as $fn$ begin
+  return app.decide_request(p_request_id, p_decision, p_note, p_override, p_expected_version);
+end; $fn$;
+
+create or replace function public.cancel_purchase_request(p_request_id uuid, p_note text default null)
+returns public.purchase_requests
+language plpgsql security definer set search_path = ''
+as $fn$ begin return app.cancel_request(p_request_id, p_note); end; $fn$;
+
+create or replace function public.add_request_admin_note(p_request_id uuid, p_note text)
+returns public.purchase_requests
+language plpgsql security definer set search_path = ''
+as $fn$ begin return app.add_admin_note(p_request_id, p_note); end; $fn$;
+
+create or replace function public.get_dashboard_metrics()
+returns jsonb
+language plpgsql security definer set search_path = ''
+as $fn$ begin return app.dashboard_metrics(); end; $fn$;
+
+-- ---------------------------------------------------------------------
+-- الصلاحيات: المبدأ الافتراضي هو المنع، ثم منح الحد الأدنى
+-- ---------------------------------------------------------------------
+
+-- سكيما app ليست ضمن السكيمات المكشوفة في PostgREST، لكن سياسات RLS
+-- تُقيَّم بصلاحيات المستخدم الحالي، لذا يحتاج authenticated إلى usage
+-- وإلى تنفيذ دوال القراءة المستخدمة داخل السياسات فقط — لا أكثر.
+grant usage on schema app to authenticated;
+
+revoke all on all tables    in schema app from public, anon, authenticated;
+revoke all on all functions in schema app from public, anon, authenticated;
+
+grant execute on function
+  app.current_profile(),
+  app.current_role(),
+  app.current_location(),
+  app.is_super_admin(),
+  app.has_global_scope(),
+  app.can_view_location(uuid),
+  app.normalize_saudi_phone(text)
+to authenticated;
+
+revoke all on function
+  public.submit_purchase_request(uuid),
+  public.decide_purchase_request(uuid, text, text, boolean, integer),
+  public.cancel_purchase_request(uuid, text),
+  public.add_request_admin_note(uuid, text),
+  public.get_dashboard_metrics()
+from public, anon;
+
+grant execute on function
+  public.submit_purchase_request(uuid),
+  public.decide_purchase_request(uuid, text, text, boolean, integer),
+  public.cancel_purchase_request(uuid, text),
+  public.add_request_admin_note(uuid, text),
+  public.get_dashboard_metrics()
+to authenticated;
+
+-- لا تُمنح جداول app تلقائيًا لأي دور مستقبلاً
+alter default privileges in schema app revoke all on tables from public, anon, authenticated;
+
+
+-- ═══════════════════════════════════════════════════════════════
+--  20260914090200_rls.sql
+-- ═══════════════════════════════════════════════════════════════
+
+-- =====================================================================
+-- 3/4 — سياسات أمان الصفوف (RLS)
+--
+-- القاعدة: RLS مفعّلة على كل جدول في public، ولا توجد سياسة تكتفي بـ
+-- TO authenticated دون شرط صلاحية حقيقي. كل سياسات UPDATE تحتوي
+-- USING و WITH CHECK معًا.
+-- =====================================================================
+
+alter table public.locations         enable row level security;
+alter table public.profiles          enable row level security;
+alter table public.purchase_requests enable row level security;
+alter table public.request_documents enable row level security;
+alter table public.approvals         enable row level security;
+alter table public.audit_logs        enable row level security;
+alter table public.activation_tokens enable row level security;
+alter table public.ref_values        enable row level security;
+
+-- منع تجاوز RLS حتى لمالك الجدول عند الاستعلام العادي
+alter table public.audit_logs        force row level security;
+alter table public.activation_tokens force row level security;
+
+-- ---------------------------------------------------------------------
+-- locations — يقرأها كل مستخدم مفعّل، ويديرها مدير النظام وحده
+-- ---------------------------------------------------------------------
+drop policy if exists locations_select on public.locations;
+create policy locations_select on public.locations
+  for select to authenticated
+  using (app.current_role() is not null);
+
+drop policy if exists locations_insert on public.locations;
+create policy locations_insert on public.locations
+  for insert to authenticated
+  with check (app.is_super_admin());
+
+drop policy if exists locations_update on public.locations;
+create policy locations_update on public.locations
+  for update to authenticated
+  using (app.is_super_admin())
+  with check (app.is_super_admin());
+
+-- لا توجد سياسة DELETE: المواقع لا تُحذف، تُعطَّل فقط
+
+-- ---------------------------------------------------------------------
+-- profiles
+-- ---------------------------------------------------------------------
+drop policy if exists profiles_select_self on public.profiles;
+create policy profiles_select_self on public.profiles
+  for select to authenticated
+  using (id = (select auth.uid()));
+
+drop policy if exists profiles_select_scope on public.profiles;
+create policy profiles_select_scope on public.profiles
+  for select to authenticated
+  using (app.has_global_scope() or location_id = app.current_location());
+
+-- ملاحظة: منع تصعيد الصلاحيات يتم عبر مشغّل app.guard_profile_self_update
+-- وليس داخل WITH CHECK، لأن استعلامًا فرعيًا على profiles داخل سياسة
+-- على profiles نفسها يسبب تكرارًا لانهائيًا.
+drop policy if exists profiles_update_self on public.profiles;
+create policy profiles_update_self on public.profiles
+  for update to authenticated
+  using (id = (select auth.uid()))
+  with check (id = (select auth.uid()));
+
+drop policy if exists profiles_admin_update on public.profiles;
+create policy profiles_admin_update on public.profiles
+  for update to authenticated
+  using (app.is_super_admin())
+  with check (app.is_super_admin());
+
+-- الإنشاء يتم حصريًا عبر Edge Function بمفتاح الخدمة، لا من المتصفح.
+-- لا توجد سياسة INSERT ولا DELETE على profiles (التعطيل بديل الحذف).
+
+-- ---------------------------------------------------------------------
+-- purchase_requests
+-- ---------------------------------------------------------------------
+drop policy if exists purchase_requests_select on public.purchase_requests;
+create policy purchase_requests_select on public.purchase_requests
+  for select to authenticated
+  using (
+    app.has_global_scope()
+    or requester_id = (select auth.uid())
+    or location_id  = app.current_location()
+  );
+
+drop policy if exists purchase_requests_insert on public.purchase_requests;
+create policy purchase_requests_insert on public.purchase_requests
+  for insert to authenticated
+  with check (
+    requester_id = (select auth.uid())
+    and app.current_role() in ('requester','production_officer','branch_manager','super_admin')
+    -- الطلب يُنشأ لموقع المستخدم فقط (عدا مدير النظام)
+    and (app.is_super_admin() or location_id = app.current_location())
+    and status = 'draft'
+    and current_stage is null
+  );
+
+drop policy if exists purchase_requests_update_owner on public.purchase_requests;
+create policy purchase_requests_update_owner on public.purchase_requests
+  for update to authenticated
+  using (
+    requester_id = (select auth.uid())
+    and status in ('draft','returned')      -- التعديل قبل بدء الاعتماد فقط
+  )
+  with check (
+    requester_id = (select auth.uid())
+    and status in ('draft','returned')
+    and location_id = app.current_location()
+  );
+
+drop policy if exists purchase_requests_update_admin on public.purchase_requests;
+create policy purchase_requests_update_admin on public.purchase_requests
+  for update to authenticated
+  using (app.is_super_admin())
+  with check (app.is_super_admin());
+
+-- لا توجد سياسة DELETE: الطلبات لا تُحذف، تُلغى عبر cancel_purchase_request
+
+-- ---------------------------------------------------------------------
+-- request_documents — المرفقات تتبع صلاحية الطلب نفسه
+-- ---------------------------------------------------------------------
+drop policy if exists request_documents_select on public.request_documents;
+create policy request_documents_select on public.request_documents
+  for select to authenticated
+  using (exists (
+    select 1 from public.purchase_requests r
+     where r.id = request_id
+       and (app.has_global_scope()
+            or r.requester_id = (select auth.uid())
+            or r.location_id  = app.current_location())));
+
+drop policy if exists request_documents_insert on public.request_documents;
+create policy request_documents_insert on public.request_documents
+  for insert to authenticated
+  with check (exists (
+    select 1 from public.purchase_requests r
+     where r.id = request_id
+       and (
+         -- مقدم الطلب يرفق قبل بدء الاعتماد
+         (r.requester_id = (select auth.uid()) and r.status in ('draft','returned'))
+         -- المالية والمشتريات يرفقان مستند ERP والمستندات الداعمة
+         or (app.current_role() in ('finance','procurement')
+             and document_type in ('erp_document','other'))
+         or app.is_super_admin()
+       )));
+
+drop policy if exists request_documents_delete on public.request_documents;
+create policy request_documents_delete on public.request_documents
+  for delete to authenticated
+  using (exists (
+    select 1 from public.purchase_requests r
+     where r.id = request_id
+       and ((r.requester_id = (select auth.uid()) and r.status in ('draft','returned'))
+            or app.is_super_admin())));
+
+-- ---------------------------------------------------------------------
+-- approvals — للقراءة فقط من الواجهة، الكتابة عبر الدوال المؤمّنة
+-- ---------------------------------------------------------------------
+drop policy if exists approvals_select on public.approvals;
+create policy approvals_select on public.approvals
+  for select to authenticated
+  using (exists (
+    select 1 from public.purchase_requests r
+     where r.id = request_id
+       and (app.has_global_scope()
+            or r.requester_id = (select auth.uid())
+            or r.location_id  = app.current_location())));
+
+-- لا INSERT/UPDATE/DELETE للمستخدمين: app.decide_request هي المسار الوحيد
+
+-- ---------------------------------------------------------------------
+-- audit_logs — قراءة لمدير النظام فقط، ولا تعديل ولا حذف إطلاقًا
+-- ---------------------------------------------------------------------
+drop policy if exists audit_logs_select on public.audit_logs;
+create policy audit_logs_select on public.audit_logs
+  for select to authenticated
+  using (app.is_super_admin());
+
+revoke insert, update, delete, truncate on public.audit_logs from anon, authenticated;
+
+-- ---------------------------------------------------------------------
+-- activation_tokens — لا وصول من المتصفح إطلاقًا (Edge Function فقط)
+-- ---------------------------------------------------------------------
+revoke all on public.activation_tokens from anon, authenticated;
+-- RLS مفعّلة وبلا سياسات ⇒ منع كامل للدورين anon و authenticated
+
+-- ---------------------------------------------------------------------
+-- ref_values — قراءة عامة للمستخدمين المفعّلين
+-- ---------------------------------------------------------------------
+drop policy if exists ref_values_select on public.ref_values;
+create policy ref_values_select on public.ref_values
+  for select to authenticated
+  using (app.current_role() is not null);
+
+revoke insert, update, delete on public.ref_values from anon, authenticated;
+
+-- ---------------------------------------------------------------------
+-- المخزن procurement-documents — خاص، والمسار location_id/request_id/...
+-- ---------------------------------------------------------------------
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('procurement-documents', 'procurement-documents', false, 10485760,
+        array['application/pdf','image/jpeg','image/jpg','image/png','image/webp'])
+on conflict (id) do update
+  set public             = false,
+      file_size_limit    = 10485760,
+      allowed_mime_types = array['application/pdf','image/jpeg','image/jpg','image/png','image/webp'];
+
+drop policy if exists procurement_docs_select on storage.objects;
+create policy procurement_docs_select on storage.objects
+  for select to authenticated
+  using (
+    bucket_id = 'procurement-documents'
+    and app.can_view_location(nullif((storage.foldername(name))[1], '')::uuid)
+  );
+
+drop policy if exists procurement_docs_insert on storage.objects;
+create policy procurement_docs_insert on storage.objects
+  for insert to authenticated
+  with check (
+    bucket_id = 'procurement-documents'
+    and app.can_view_location(nullif((storage.foldername(name))[1], '')::uuid)
+  );
+
+drop policy if exists procurement_docs_delete on storage.objects;
+create policy procurement_docs_delete on storage.objects
+  for delete to authenticated
+  using (
+    bucket_id = 'procurement-documents'
+    and (app.is_super_admin()
+         or (owner_id = (select auth.uid())::text
+             and app.can_view_location(nullif((storage.foldername(name))[1], '')::uuid)))
+  );
+
+-- لا سياسة UPDATE على الكائنات: الملف يُستبدل بالحذف ثم الرفع
+
+-- ---------------------------------------------------------------------
+-- الدور anon: التطبيق لا يتيح أي بيانات للزوار — كل شاشة تتطلب دخولاً.
+-- نمنع الوصول على مستوى الصلاحيات أيضًا، لا على مستوى السياسات فقط.
+-- ---------------------------------------------------------------------
+revoke all on all tables    in schema public from anon;
+revoke all on all sequences in schema public from anon;
+revoke all on all functions in schema public from anon;
+alter default privileges in schema public revoke all on tables    from anon;
+alter default privileges in schema public revoke all on sequences from anon;
+
+
+-- ═══════════════════════════════════════════════════════════════
+--  20260914090300_seed_reference.sql
+-- ═══════════════════════════════════════════════════════════════
+
+-- =====================================================================
+-- 4/4 — بيانات مرجعية: المواقع الـ27 وقوائم القيم
+--
+-- قابلة لإعادة التشغيل دون تكرار: المطابقة بالكود الفريد.
+-- لا تحذف أي موقع قائم؛ تحدّث الاسم والتصنيف والترتيب فقط.
+-- المواقع القائمة بلا كود تُطابَق بالاسم العربي مرة واحدة ثم تُمنح كودها.
+-- =====================================================================
+
+-- 1) منح كود للمواقع القائمة التي تطابق الاسم ولا تحمل كودًا بعد
+with target(code, name_ar) as (values
+  ('BR-01','الشفا'), ('BR-02','العليا'), ('BR-03','الصحافة'), ('BR-04','اشبيلية'),
+  ('BR-05','الربوة'), ('BR-06','العارض'), ('BR-07','غرناطة'), ('BR-08','النرجس'),
+  ('BR-09','العزيزية'), ('BR-10','طريق الدمام - الجنادرية'), ('BR-11','بدر'),
+  ('BR-12','مخرج 24'), ('BR-13','مخرج 28'), ('BR-14','مخرج 18'), ('BR-15','اليرموك'),
+  ('BR-16','الخرج'), ('BR-17','بريدة'), ('BR-18','الأحساء'), ('BR-19','حفر الباطن'),
+  ('BR-20','الطائف'), ('BR-21','المدينة المنورة'),
+  ('CN-01','المعمل المركزي'), ('CN-02','المستودع المركزي'), ('CN-03','قسم الحوش'),
+  ('CN-04','قسم الحفلات'), ('CN-05','قسم الخضار'), ('CN-06','الإدارة المركزية')
+)
+update public.locations l
+   set code = t.code
+  from target t
+ where l.code is null
+   and btrim(l.name_ar) = t.name_ar
+   and not exists (select 1 from public.locations x where x.code = t.code);
+
+-- 2) الإدراج/التحديث النهائي بالكود
+insert into public.locations (code, name_ar, kind, sort_order, is_active) values
+  ('BR-01','الشفا','branch',1,true),
+  ('BR-02','العليا','branch',2,true),
+  ('BR-03','الصحافة','branch',3,true),
+  ('BR-04','اشبيلية','branch',4,true),
+  ('BR-05','الربوة','branch',5,true),
+  ('BR-06','العارض','branch',6,true),
+  ('BR-07','غرناطة','branch',7,true),
+  ('BR-08','النرجس','branch',8,true),
+  ('BR-09','العزيزية','branch',9,true),
+  ('BR-10','طريق الدمام - الجنادرية','branch',10,true),
+  ('BR-11','بدر','branch',11,true),
+  ('BR-12','مخرج 24','branch',12,true),
+  ('BR-13','مخرج 28','branch',13,true),
+  ('BR-14','مخرج 18','branch',14,true),
+  ('BR-15','اليرموك','branch',15,true),
+  ('BR-16','الخرج','branch',16,true),
+  ('BR-17','بريدة','branch',17,true),
+  ('BR-18','الأحساء','branch',18,true),
+  ('BR-19','حفر الباطن','branch',19,true),
+  ('BR-20','الطائف','branch',20,true),
+  ('BR-21','المدينة المنورة','branch',21,true),
+  ('CN-01','المعمل المركزي','central',22,true),
+  ('CN-02','المستودع المركزي','central',23,true),
+  ('CN-03','قسم الحوش','central',24,true),
+  ('CN-04','قسم الحفلات','central',25,true),
+  ('CN-05','قسم الخضار','central',26,true),
+  ('CN-06','الإدارة المركزية','central',27,true)
+on conflict (code) do update
+  set name_ar    = excluded.name_ar,
+      kind       = excluded.kind,
+      sort_order = excluded.sort_order,
+      updated_at = now();
+
+-- 3) دمج المواقع المكررة بالاسم (تبقى النسخة التي تحمل الكود المعتمد)
+do $$
+declare dup record; keeper uuid;
+begin
+  for dup in
+    select btrim(name_ar) as nm, count(*) c
+      from public.locations
+     group by btrim(name_ar) having count(*) > 1
+  loop
+    select id into keeper from public.locations
+     where btrim(name_ar) = dup.nm and code is not null
+     order by sort_order limit 1;
+
+    if keeper is null then continue; end if;
+
+    -- إعادة ربط أي سجلات مرتبطة بالنسخة المكررة قبل تعطيلها
+    update public.purchase_requests set location_id = keeper
+     where location_id in (select id from public.locations
+                            where btrim(name_ar) = dup.nm and id <> keeper);
+    update public.profiles set location_id = keeper
+     where location_id in (select id from public.locations
+                            where btrim(name_ar) = dup.nm and id <> keeper);
+
+    -- لا نحذف: نعطّل النسخة الزائدة ونميّزها
+    update public.locations
+       set is_active = false,
+           code = coalesce(code, 'DUP-' || left(id::text, 8)),
+           name_ar = name_ar || ' (مكرر - معطّل)'
+     where btrim(name_ar) = dup.nm and id <> keeper;
+
+    raise notice 'تم دمج موقع مكرر: %', dup.nm;
+  end loop;
+end $$;
+
+-- ---------------------------------------------------------------------
+-- قوائم القيم المعتمدة
+-- ---------------------------------------------------------------------
+insert into public.ref_values (domain, code, name_ar, sort_order) values
+  ('role','super_admin','مدير النظام',1),
+  ('role','requester','مقدم طلب شراء',2),
+  ('role','production_officer','مسؤول الإنتاج',3),
+  ('role','branch_manager','مدير الفرع',4),
+  ('role','production_manager','مدير الإنتاج',5),
+  ('role','procurement','إدارة المشتريات',6),
+  ('role','finance','الإدارة المالية',7),
+
+  ('status','draft','مسودة',1),
+  ('status','submitted','مرسل',2),
+  ('status','pending_production_officer','بانتظار اعتماد مسؤول الإنتاج',3),
+  ('status','pending_branch_manager','بانتظار اعتماد مدير الفرع',4),
+  ('status','pending_production_manager','بانتظار اعتماد مدير الإنتاج',5),
+  ('status','pending_procurement','بانتظار إدارة المشتريات',6),
+  ('status','pending_finance','بانتظار الإدارة المالية',7),
+  ('status','returned','معاد للتعديل',8),
+  ('status','rejected','مرفوض',9),
+  ('status','completed','مكتمل',10),
+  ('status','cancelled','ملغى',11),
+
+  ('stage','production_officer','مسؤول الإنتاج',1),
+  ('stage','branch_manager','مدير الفرع',2),
+  ('stage','production_manager','مدير الإنتاج',3),
+  ('stage','procurement','إدارة المشتريات',4),
+  ('stage','finance','الإدارة المالية',5),
+
+  ('purchase_type','operational','تشغيلي',1),
+  ('purchase_type','direct','مباشر',2),
+  ('purchase_type','emergency','طارئ',3),
+
+  ('priority','low','منخفضة',1),
+  ('priority','normal','عادية',2),
+  ('priority','high','عالية',3),
+  ('priority','urgent','عاجلة',4),
+
+  ('document_type','supplier_invoice','فاتورة المورد',1),
+  ('document_type','erp_document','مستند إدخال الفاتورة في ERP',2),
+  ('document_type','other','مستند إضافي',3),
+
+  ('category','food','مواد غذائية',1),
+  ('category','packaging','تغليف ومستهلكات',2),
+  ('category','maintenance','صيانة وإصلاح',3),
+  ('category','equipment','معدات وأجهزة',4),
+  ('category','services','خدمات',5),
+  ('category','cleaning','مواد نظافة',6),
+  ('category','transport','نقل وشحن',7),
+  ('category','other','أخرى',8),
+
+  ('unit','piece','حبة',1),
+  ('unit','kg','كيلوجرام',2),
+  ('unit','carton','كرتون',3),
+  ('unit','liter','لتر',4),
+  ('unit','pack','عبوة',5),
+  ('unit','service','خدمة',6)
+on conflict (domain, code) do update
+  set name_ar = excluded.name_ar, sort_order = excluded.sort_order;
+
+-- ---------------------------------------------------------------------
+-- تحقق نهائي: يجب أن تكون المواقع الـ27 المعتمدة كلها نشطة وفريدة
+-- ---------------------------------------------------------------------
+do $$
+declare n integer;
+begin
+  select count(*) into n from public.locations
+   where is_active and code ~ '^(BR|CN)-[0-9]{2}$';
+  if n <> 27 then
+    raise exception 'خطأ في البذرة: عدد المواقع المعتمدة % بدلاً من 27', n;
+  end if;
+  raise notice 'تم التحقق: 27 موقعًا معتمدًا ونشطًا.';
+end $$;
+
+
+-- ═══════════════════════════════════════════════════════════════
+--  20260914090400_admin_functions.sql
+-- ═══════════════════════════════════════════════════════════════
+
+-- =====================================================================
+-- 5/5 — دوال الخادم: التفعيل، تحديد المعدل، تسجيل الدخول
+-- تُستدعى من Edge Functions بمفتاح الخدمة، ولا تُكشف للمتصفح.
+-- =====================================================================
+
+-- ---------------------------------------------------------------------
+-- تحديد معدل الطلبات — نافذة زمنية منزلقة بسيطة
+-- ترجع true إذا كانت المحاولة مسموحة
+-- ---------------------------------------------------------------------
+create or replace function app.rate_limit_hit(
+  p_bucket text, p_identifier text,
+  p_window_seconds integer default 900, p_max_hits integer default 10
+) returns boolean
+language plpgsql
+security definer
+set search_path = ''
+as $fn$
+declare
+  w_start timestamptz := date_trunc('second', now())
+                         - make_interval(secs => (extract(epoch from now())::bigint % p_window_seconds));
+  current_hits integer;
+begin
+  delete from app.rate_limits where window_start < now() - interval '1 day';
+
+  insert into app.rate_limits (bucket, identifier, window_start, hits)
+  values (p_bucket, p_identifier, w_start, 1)
+  on conflict (bucket, identifier, window_start)
+    do update set hits = app.rate_limits.hits + 1
+  returning hits into current_hits;
+
+  return current_hits <= p_max_hits;
+end;
+$fn$;
+
+-- ---------------------------------------------------------------------
+-- إنشاء رمز تفعيل — يُخزَّن الهاش فقط، ولا يُخزَّن الرمز نفسه أبدًا
+-- ---------------------------------------------------------------------
+create or replace function app.create_activation_token(
+  p_token_hash text, p_full_name text, p_phone text,
+  p_role text default 'super_admin', p_location_code text default 'CN-06',
+  p_hours integer default 24
+) returns uuid
+language plpgsql
+security definer
+set search_path = ''
+as $fn$
+declare new_id uuid; norm text;
+begin
+  norm := app.normalize_saudi_phone(p_phone);
+  if norm is null then
+    raise exception 'INVALID_PHONE' using hint = 'رقم الجوال غير صحيح';
+  end if;
+
+  -- إبطال أي رموز مفتوحة سابقة لنفس الغرض والرقم
+  update public.activation_tokens
+     set used_at = now()
+   where phone = norm and used_at is null and purpose = 'super_admin_activation';
+
+  insert into public.activation_tokens
+    (token_hash, purpose, full_name, phone, role, location_code, expires_at)
+  values
+    (p_token_hash, 'super_admin_activation', p_full_name, norm, p_role, p_location_code,
+     now() + make_interval(hours => p_hours))
+  returning id into new_id;
+
+  insert into public.audit_logs (action, entity_type, entity_id, details)
+  values ('activation.token_created', 'activation_token', new_id::text,
+          jsonb_build_object('phone', norm, 'role', p_role, 'expires_hours', p_hours));
+
+  return new_id;
+end;
+$fn$;
+
+-- ---------------------------------------------------------------------
+-- فحص رمز التفعيل دون استهلاكه (لصفحة التفعيل)
+-- ---------------------------------------------------------------------
+create or replace function app.peek_activation_token(p_token_hash text)
+returns table (valid boolean, reason text, full_name text, phone text, role text)
+language plpgsql
+security definer
+set search_path = ''
+as $fn$
+declare t public.activation_tokens;
+begin
+  select * into t from public.activation_tokens where token_hash = p_token_hash;
+
+  if t is null then
+    return query select false, 'NOT_FOUND'::text, null::text, null::text, null::text; return;
+  end if;
+  if t.used_at is not null then
+    return query select false, 'ALREADY_USED'::text, null::text, null::text, null::text; return;
+  end if;
+  if t.expires_at < now() then
+    return query select false, 'EXPIRED'::text, null::text, null::text, null::text; return;
+  end if;
+
+  return query select true, 'OK'::text, t.full_name, t.phone, t.role;
+end;
+$fn$;
+
+-- ---------------------------------------------------------------------
+-- حجز الرمز ذرّيًا — يضمن استخدامًا واحدًا فقط حتى مع طلبات متزامنة
+-- ---------------------------------------------------------------------
+create or replace function app.claim_activation_token(p_token_hash text)
+returns public.activation_tokens
+language plpgsql
+security definer
+set search_path = ''
+as $fn$
+declare t public.activation_tokens;
+begin
+  update public.activation_tokens
+     set used_at = now()
+   where token_hash = p_token_hash
+     and used_at is null
+     and expires_at > now()
+  returning * into t;
+
+  if t is null then
+    raise exception 'TOKEN_INVALID'
+      using hint = 'رابط التفعيل غير صالح أو منتهي الصلاحية أو مستخدم مسبقًا';
+  end if;
+  return t;
+end;
+$fn$;
+
+-- تحرير الحجز إذا فشل إنشاء المستخدم بعد الحجز
+create or replace function app.release_activation_token(p_token_hash text)
+returns void
+language sql
+security definer
+set search_path = ''
+as $fn$
+  update public.activation_tokens set used_at = null
+   where token_hash = p_token_hash and used_by is null;
+$fn$;
+
+-- ---------------------------------------------------------------------
+-- إنهاء التفعيل: ربط الرمز بالمستخدم وإنشاء ملفه
+-- ---------------------------------------------------------------------
+create or replace function app.complete_activation(
+  p_token_hash text, p_user_id uuid, p_full_name text, p_phone text
+) returns public.profiles
+language plpgsql
+security definer
+set search_path = ''
+as $fn$
+declare t public.activation_tokens; lid uuid; p public.profiles;
+begin
+  select * into t from public.activation_tokens where token_hash = p_token_hash;
+  if t is null then
+    raise exception 'TOKEN_INVALID' using hint = 'رمز التفعيل غير صالح';
+  end if;
+
+  select id into lid from public.locations where code = t.location_code;
+  if lid is null then
+    select id into lid from public.locations where name_ar = 'الإدارة المركزية' limit 1;
+  end if;
+
+  insert into public.profiles
+    (id, full_name, phone, role, location_id, job_title, is_active, must_change_password)
+  values
+    (p_user_id, p_full_name, app.normalize_saudi_phone(p_phone), t.role, lid,
+     'مدير النظام', true, false)
+  on conflict (id) do update
+    set full_name = excluded.full_name, phone = excluded.phone,
+        role = excluded.role, location_id = excluded.location_id, is_active = true
+  returning * into p;
+
+  update public.activation_tokens set used_by = p_user_id where id = t.id;
+
+  insert into public.audit_logs (actor_id, actor_name, actor_role, action, entity_type, entity_id, location_id, details)
+  values (p_user_id, p_full_name, t.role, 'activation.completed', 'profile', p_user_id::text, lid,
+          jsonb_build_object('phone', app.normalize_saudi_phone(p_phone), 'role', t.role));
+
+  return p;
+end;
+$fn$;
+
+-- ---------------------------------------------------------------------
+-- تسجيل آخر دخول (يستدعيه العميل بعد نجاح الدخول)
+-- ---------------------------------------------------------------------
+create or replace function app.record_login()
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $fn$
+declare me public.profiles;
+begin
+  update public.profiles set last_login_at = now()
+   where id = (select auth.uid()) returning * into me;
+  if me.id is not null then
+    insert into public.audit_logs (actor_id, actor_name, actor_role, action, entity_type, entity_id, location_id)
+    values (me.id, me.full_name, me.role, 'auth.login', 'profile', me.id::text, me.location_id);
+  end if;
+end;
+$fn$;
+
+create or replace function public.record_login()
+returns void
+language plpgsql security definer set search_path = ''
+as $fn$ begin perform app.record_login(); end; $fn$;
+
+revoke all on function public.record_login() from public, anon;
+grant execute on function public.record_login() to authenticated;
+
+-- ---------------------------------------------------------------------
+-- تسجيل عملية إدارية في سجل التدقيق (من Edge Functions)
+-- ---------------------------------------------------------------------
+create or replace function app.log_admin_action(
+  p_actor uuid, p_action text, p_entity_type text, p_entity_id text,
+  p_details jsonb default '{}'::jsonb, p_ip text default null
+) returns void
+language plpgsql
+security definer
+set search_path = ''
+as $fn$
+declare a public.profiles;
+begin
+  select * into a from public.profiles where id = p_actor;
+  insert into public.audit_logs
+    (actor_id, actor_name, actor_role, action, entity_type, entity_id, location_id, details, ip_address)
+  values (p_actor, a.full_name, a.role, p_action, p_entity_type, p_entity_id,
+          a.location_id, coalesce(p_details, '{}'::jsonb), p_ip);
+end;
+$fn$;
+
+-- هذه الدوال لمفتاح الخدمة فقط — لا تُمنح لأي دور عميل
+revoke all on function
+  app.rate_limit_hit(text, text, integer, integer),
+  app.create_activation_token(text, text, text, text, text, integer),
+  app.peek_activation_token(text),
+  app.claim_activation_token(text),
+  app.release_activation_token(text),
+  app.complete_activation(text, uuid, text, text),
+  app.log_admin_action(uuid, text, text, text, jsonb, text)
+from public, anon, authenticated;
+
+-- ---------------------------------------------------------------------
+-- أغلفة public لمسار مفتاح الخدمة فقط
+-- PostgREST يصل إلى سكيما public وحدها، لذا نكشف أغلفة رفيعة
+-- ونمنحها للدور service_role حصرًا — ممنوعة على anon و authenticated.
+-- ---------------------------------------------------------------------
+create or replace function public.rate_limit_hit(
+  p_bucket text, p_identifier text, p_window_seconds integer, p_max_hits integer)
+returns boolean language plpgsql security definer set search_path = ''
+as $fn$ begin
+  return app.rate_limit_hit(p_bucket, p_identifier, p_window_seconds, p_max_hits);
+end; $fn$;
+
+create or replace function public.peek_activation_token(p_token_hash text)
+returns table (valid boolean, reason text, full_name text, phone text, role text)
+language plpgsql security definer set search_path = ''
+as $fn$ begin
+  return query select * from app.peek_activation_token(p_token_hash);
+end; $fn$;
+
+create or replace function public.claim_activation_token(p_token_hash text)
+returns public.activation_tokens
+language plpgsql security definer set search_path = ''
+as $fn$ begin return app.claim_activation_token(p_token_hash); end; $fn$;
+
+create or replace function public.release_activation_token(p_token_hash text)
+returns void language plpgsql security definer set search_path = ''
+as $fn$ begin perform app.release_activation_token(p_token_hash); end; $fn$;
+
+create or replace function public.complete_activation(
+  p_token_hash text, p_user_id uuid, p_full_name text, p_phone text)
+returns public.profiles
+language plpgsql security definer set search_path = ''
+as $fn$ begin
+  return app.complete_activation(p_token_hash, p_user_id, p_full_name, p_phone);
+end; $fn$;
+
+create or replace function public.create_activation_token(
+  p_token_hash text, p_full_name text, p_phone text,
+  p_role text default 'super_admin', p_location_code text default 'CN-06',
+  p_hours integer default 24)
+returns uuid language plpgsql security definer set search_path = ''
+as $fn$ begin
+  return app.create_activation_token(p_token_hash, p_full_name, p_phone,
+                                     p_role, p_location_code, p_hours);
+end; $fn$;
+
+create or replace function public.log_admin_action(
+  p_actor uuid, p_action text, p_entity_type text, p_entity_id text,
+  p_details jsonb default '{}'::jsonb, p_ip text default null)
+returns void language plpgsql security definer set search_path = ''
+as $fn$ begin
+  perform app.log_admin_action(p_actor, p_action, p_entity_type, p_entity_id, p_details, p_ip);
+end; $fn$;
+
+-- هذه الأغلفة ممنوعة على المتصفح تمامًا
+revoke all on function
+  public.rate_limit_hit(text, text, integer, integer),
+  public.peek_activation_token(text),
+  public.claim_activation_token(text),
+  public.release_activation_token(text),
+  public.complete_activation(text, uuid, text, text),
+  public.create_activation_token(text, text, text, text, text, integer),
+  public.log_admin_action(uuid, text, text, text, jsonb, text)
+from public, anon, authenticated;
+
+grant execute on function
+  public.rate_limit_hit(text, text, integer, integer),
+  public.peek_activation_token(text),
+  public.claim_activation_token(text),
+  public.release_activation_token(text),
+  public.complete_activation(text, uuid, text, text),
+  public.create_activation_token(text, text, text, text, text, integer),
+  public.log_admin_action(uuid, text, text, text, jsonb, text)
+to service_role;
+
+
+-- =====================================================================
+--  تقرير التحقق النهائي
+--  كل بند يجب أن تكون حالته ✅ — أي ❌ يعني وجود مشكلة تحتاج مراجعة.
+-- =====================================================================
+with checks(ترتيب, البند, المتوقع, الفعلي) as (
+  values
+    (1, 'عدد المواقع النشطة المعتمدة', 27,
+        (select count(*)::int from public.locations
+          where is_active and code ~ '^(BR|CN)-[0-9]{2}$')),
+    (2, 'عدد الفروع', 21,
+        (select count(*)::int from public.locations
+          where is_active and kind = 'branch')),
+    (3, 'عدد المواقع التشغيلية والمركزية', 6,
+        (select count(*)::int from public.locations
+          where is_active and kind = 'central')),
+    (4, 'مواقع مكررة بالاسم (يجب أن تكون صفرًا)', 0,
+        (select count(*)::int from (
+           select name_ar from public.locations where is_active
+            group by name_ar having count(*) > 1) d)),
+    (5, 'جداول النظام الأساسية', 8,
+        (select count(*)::int from information_schema.tables
+          where table_schema = 'public'
+            and table_name in ('locations','profiles','purchase_requests',
+                'request_documents','approvals','audit_logs',
+                'activation_tokens','ref_values'))),
+    (6, 'جداول بلا حماية RLS (يجب أن تكون صفرًا)', 0,
+        (select count(*)::int from pg_class c
+           join pg_namespace n on n.oid = c.relnamespace
+          where n.nspname = 'public' and c.relkind = 'r'
+            and not c.relrowsecurity)),
+    (7, 'دوال بلا search_path مثبّت (يجب أن تكون صفرًا)', 0,
+        (select count(*)::int from pg_proc p
+           join pg_namespace n on n.oid = p.pronamespace
+          where n.nspname = 'public' and p.prosecdef
+            and (p.proconfig is null
+                 or not exists (select 1 from unnest(p.proconfig) cfg
+                                 where cfg like 'search_path=%')))),
+    (8, 'وصول الزوار لجدول الطلبات (يجب أن يكون ممنوعًا)', 0,
+        (select case when has_table_privilege('anon','public.purchase_requests','SELECT')
+                     then 1 else 0 end)),
+    (9, 'مخزن المرفقات خاص وليس عامًا', 1,
+        (select case when exists (select 1 from storage.buckets
+                                   where id = 'procurement-documents' and not public)
+                     then 1 else 0 end)),
+    (10, 'حد حجم الملف في المخزن (بايت)', 10485760,
+        (select coalesce(file_size_limit, 0)::int from storage.buckets
+          where id = 'procurement-documents')),
+    (11, 'عدد سياسات الحماية المطبّقة (15 فأكثر)', 15,
+        (select least(count(*), 15)::int from pg_policies
+          where schemaname = 'public')),
+    (12, 'القوائم المرجعية العربية', 47,
+        (select count(*)::int from public.ref_values))
+)
+select
+  ترتيب as "#",
+  البند,
+  المتوقع,
+  الفعلي,
+  case when الفعلي = المتوقع then '✅ سليم' else '❌ يحتاج مراجعة' end as "الحالة"
+from checks
+order by ترتيب;
+</script>
+<script type="text/plain" id="file-edge">// =====================================================================
+//  procurement-portal — بوابة مشتريات فروع شركة مطاعم الناضج
+//
+//  ⚠️  ملف مُولَّد آليًا — لا تعدّله يدويًا.
+//      المصدر: supabase/functions/
+//      البناء: node scripts/build-edge-bundle.mjs
+//
+//  للنشر دون طرفية:
+//    Supabase Dashboard → Edge Functions → Deploy a new function
+//    الاسم: procurement-portal
+//    الصق هذا الملف بالكامل ثم Deploy.
+//
+//  هذه الدالة تخدم JSON فقط ولا تُعيد صفحات HTML إطلاقًا.
+// =====================================================================
+
+import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
+
+// ─────────────────── أدوات HTTP والرسائل العربية ───────────────────
+// أدوات HTTP مشتركة: CORS، الاستجابات، ورسائل الأخطاء العربية
+
+const DEFAULT_DEV_ORIGINS = [
+  "http://localhost:3000",
+  "http://localhost:5173",
+  "http://127.0.0.1:3000",
+];
+
+/** النطاقات المسموح بها تُضبط عبر متغير البيئة ALLOWED_ORIGINS */
+export function allowedOrigins(): string[] {
+  const configured = (Deno.env.get("ALLOWED_ORIGINS") ?? "")
+    .split(",").map((s) => s.trim()).filter(Boolean);
+  return [...configured, ...DEFAULT_DEV_ORIGINS];
+}
+
+export function corsHeaders(origin: string | null): Record<string, string> {
+  const list = allowedOrigins();
+  const allow = origin && list.includes(origin) ? origin : list[0] ?? "";
+  return {
+    "Access-Control-Allow-Origin": allow,
+    "Access-Control-Allow-Headers":
+      "authorization, x-client-info, apikey, content-type",
+    "Access-Control-Allow-Methods": "GET, POST, PATCH, DELETE, OPTIONS",
+    "Access-Control-Max-Age": "86400",
+    "Vary": "Origin",
+  };
+}
+
+export function json(body: unknown, status: number, origin: string | null): Response {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: {
+      ...corsHeaders(origin),
+      "Content-Type": "application/json; charset=utf-8",
+      "Cache-Control": "no-store",
+      "X-Content-Type-Options": "nosniff",
+    },
+  });
+}
+
+/** خطأ يحمل رسالة عربية آمنة للعرض */
+export class AppError extends Error {
+  constructor(
+    public code: string,
+    public arabic: string,
+    public status = 400,
+  ) {
+    super(code);
+  }
+}
+
+/** ترجمة أكواد أخطاء قاعدة البيانات إلى رسائل عربية دون كشف تفاصيل تقنية */
+const DB_ERROR_AR: Record<string, string> = {
+  INVALID_PHONE: "رقم الجوال غير صحيح",
+  TOKEN_INVALID: "رابط التفعيل غير صالح أو منتهي الصلاحية أو مستخدم مسبقًا",
+  ACCOUNT_INACTIVE: "الحساب غير مفعّل، يرجى مراجعة مدير النظام",
+  REQUEST_NOT_FOUND: "الطلب غير موجود",
+  FORBIDDEN: "لا تملك صلاحية تنفيذ هذه العملية",
+  INVALID_STATUS: "لا يمكن تنفيذ العملية في حالة الطلب الحالية",
+  INCOMPLETE_REQUEST: "يجب استكمال بيانات الطلب الإلزامية قبل الإرسال",
+  INVOICE_REQUIRED: "يجب إرفاق فاتورة المورد قبل الإرسال",
+  NOTE_REQUIRED: "يجب كتابة سبب الرفض أو الإعادة",
+  OVERRIDE_NOTE_REQUIRED: "يجب تسجيل سبب التجاوز",
+  WRONG_STAGE_ROLE: "لا تملك صلاحية اعتماد هذه المرحلة",
+  WRONG_LOCATION: "لا تملك صلاحية على طلبات موقع آخر",
+  ERP_DOCUMENT_REQUIRED: "لا يمكن الإقفال المالي قبل إرفاق مستند إدخال الفاتورة في ERP",
+  STAGE_ALREADY_PROCESSED: "تمت معالجة هذه المرحلة بالفعل",
+  VERSION_CONFLICT: "تم تعديل الطلب من مستخدم آخر، يرجى إعادة تحميل الصفحة",
+  NOT_IN_WORKFLOW: "الطلب ليس ضمن مسار اعتماد نشط",
+};
+
+export function arabicFor(raw: string): string {
+  for (const [code, msg] of Object.entries(DB_ERROR_AR)) {
+    if (raw.includes(code)) return msg;
+  }
+  if (raw.includes("duplicate key")) {
+    if (raw.includes("supplier_invoice")) {
+      return "توجد فاتورة مسجّلة مسبقًا لنفس المورد بنفس رقم الفاتورة";
+    }
+    if (raw.includes("phone")) return "رقم الجوال مسجّل مسبقًا لمستخدم آخر";
+    return "القيمة المدخلة مسجّلة مسبقًا";
+  }
+  if (raw.includes("row-level security")) return "لا تملك صلاحية تنفيذ هذه العملية";
+  return "تعذر تنفيذ العملية، يرجى المحاولة لاحقًا";
+}
+
+/** يسجّل التفاصيل التقنية في سجل الخادم ويعيد رسالة عربية فقط للواجهة */
+export function handleError(err: unknown, origin: string | null): Response {
+  if (err instanceof AppError) {
+    console.warn(`[app] ${err.code}`);
+    return json({ error: err.arabic, code: err.code }, err.status, origin);
+  }
+  const raw = err instanceof Error ? err.message : String(err);
+  console.error("[unhandled]", raw);
+  return json({ error: arabicFor(raw), code: "OPERATION_FAILED" }, 400, origin);
+}
+
+export function clientIp(req: Request): string {
+  return req.headers.get("x-forwarded-for")?.split(",")[0].trim() ??
+    req.headers.get("cf-connecting-ip") ?? "unknown";
+}
+
+
+// ─────────────────── التحقق من المدخلات ───────────────────
+// التحقق من المدخلات — مشترك بين الخادم والواجهة
+
+/** تطبيع رقم الجوال السعودي إلى 9665XXXXXXXX */
+export function normalizeSaudiPhone(input: string | null | undefined): string | null {
+  if (!input) return null;
+  const latin = input
+    .replace(/[\u0660-\u0669]/g, (c) => String(c.charCodeAt(0) - 0x0660)) // عربية-هندية
+    .replace(/[\u06F0-\u06F9]/g, (c) => String(c.charCodeAt(0) - 0x06F0)); // فارسية
+  let d = latin.replace(/[^0-9]/g, "");
+  if (d.startsWith("00966")) d = d.slice(2);
+  if (d.startsWith("966")) d = d.slice(3);
+  else if (d.startsWith("0")) d = d.slice(1);
+  return /^5[0-9]{8}$/.test(d) ? `966${d}` : null;
+}
+
+/** الرقم الضريبي السعودي: 15 رقمًا يبدأ وينتهي بـ 3 */
+export function isValidSaudiVat(vat: string | null | undefined): boolean {
+  if (!vat) return false;
+  return /^3[0-9]{13}3$/.test(vat.replace(/\s/g, ""));
+}
+
+export interface PasswordCheck { ok: boolean; problems: string[] }
+
+/** سياسة كلمة المرور: 12 حرفًا على الأقل مع تنوّع في المحارف */
+export function checkPassword(pw: string, phone?: string | null): PasswordCheck {
+  const problems: string[] = [];
+  if (!pw || pw.length < 12) problems.push("يجب ألا تقل كلمة المرور عن 12 حرفًا");
+  if (!/[a-z]/.test(pw)) problems.push("يجب أن تحتوي على حرف إنجليزي صغير");
+  if (!/[A-Z]/.test(pw)) problems.push("يجب أن تحتوي على حرف إنجليزي كبير");
+  if (!/[0-9]/.test(pw)) problems.push("يجب أن تحتوي على رقم واحد على الأقل");
+  if (!/[^A-Za-z0-9]/.test(pw)) problems.push("يجب أن تحتوي على رمز خاص مثل !@#$");
+  if (/(.)\1{3,}/.test(pw)) problems.push("لا يجوز تكرار المحرف نفسه أكثر من ثلاث مرات");
+  const weak = ["password", "123456", "qwerty", "alnadeg", "admin", "welcome"];
+  if (weak.some((w) => pw.toLowerCase().includes(w))) {
+    problems.push("كلمة المرور شائعة جدًا، اختر كلمة أقوى");
+  }
+  if (phone) {
+    const digits = phone.replace(/[^0-9]/g, "");
+    if (digits.length >= 6 && pw.includes(digits.slice(-6))) {
+      problems.push("لا يجوز أن تحتوي كلمة المرور على رقم جوالك");
+    }
+  }
+  return { ok: problems.length === 0, problems };
+}
+
+export const MAX_FILE_BYTES = 10 * 1024 * 1024; // 10MB
+
+export const ALLOWED_MIME: Record<string, string[]> = {
+  "application/pdf": ["pdf"],
+  "image/jpeg": ["jpg", "jpeg"],
+  "image/jpg": ["jpg", "jpeg"],
+  "image/png": ["png"],
+  "image/webp": ["webp"],
+};
+
+export interface FileCheck { ok: boolean; error?: string; ext?: string }
+
+/** يتحقق من النوع والحجم وتطابق الامتداد مع نوع المحتوى */
+export function checkFile(name: string, mime: string, size: number): FileCheck {
+  const exts = ALLOWED_MIME[mime];
+  if (!exts) {
+    return { ok: false, error: "نوع الملف غير مسموح. المسموح: PDF و JPG و PNG و WEBP" };
+  }
+  if (!Number.isFinite(size) || size <= 0) {
+    return { ok: false, error: "حجم الملف غير صحيح" };
+  }
+  if (size > MAX_FILE_BYTES) {
+    return { ok: false, error: "حجم الملف يتجاوز الحد الأقصى 10 ميجابايت" };
+  }
+  const ext = name.split(".").pop()?.toLowerCase() ?? "";
+  if (!exts.includes(ext)) {
+    return { ok: false, error: "امتداد الملف لا يطابق نوعه" };
+  }
+  // منع الامتدادات المزدوجة مثل ملف.pdf.exe
+  const dangerous = /\.(exe|sh|bat|cmd|js|php|jar|msi|scr|com|dll|svg|html?)(\.|$)/i;
+  if (dangerous.test(name)) {
+    return { ok: false, error: "اسم الملف يحتوي على امتداد غير مسموح" };
+  }
+  return { ok: true, ext };
+}
+
+export const DOCUMENT_TYPES = ["supplier_invoice", "erp_document", "other"] as const;
+export type DocumentType = typeof DOCUMENT_TYPES[number];
+
+
+// ─────────────────── الموجّه والمسارات ───────────────────
+// =====================================================================
+// procurement-portal — واجهة برمجية (API) لبوابة مشتريات الناضج
+//
+// ملاحظة مهمة: هذه الدالة تخدم JSON فقط ولا تُعيد صفحات HTML.
+// استضافة الواجهة تتم على منصة Frontend مستقلة، لأن Edge Functions
+// تعيد النص بنوع text/plain مع سياسة CSP تمنع تشغيل JavaScript.
+//
+// المسارات:
+//   GET  /procurement-portal/health
+//   GET  /procurement-portal/activation/verify?token=...
+//   POST /procurement-portal/activate
+//   POST /procurement-portal/admin/users
+//   PATCH/procurement-portal/admin/users/:id
+//   POST /procurement-portal/admin/users/:id/reset-password
+//   POST /procurement-portal/documents/sign-upload
+//   POST /procurement-portal/documents/confirm-upload
+//   POST /procurement-portal/documents/sign-download
+//   POST /procurement-portal/reports/export
+// =====================================================================
+
+
+
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+const BUCKET = "procurement-documents";
+const EMAIL_DOMAIN = "phone.alnadeg.local";
+
+/** عميل بصلاحية الخدمة — لا يُسرَّب مفتاحه أبدًا خارج هذه الدالة */
+function serviceClient(): SupabaseClient {
+  return createClient(SUPABASE_URL, SERVICE_KEY, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
+}
+
+async function sha256Hex(value: string): Promise<string> {
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value));
+  return Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+interface Caller {
+  id: string;
+  role: string;
+  location_id: string | null;
+  full_name: string;
+  is_active: boolean;
+}
+
+/**
+ * يتحقق من هوية المستدعي عبر رمز الدخول، ثم يقرأ دوره من قاعدة البيانات.
+ * لا نعتمد على user_metadata إطلاقًا في قرارات الصلاحية.
+ */
+async function requireCaller(req: Request, svc: SupabaseClient): Promise<Caller> {
+  const auth = req.headers.get("Authorization") ?? "";
+  const token = auth.startsWith("Bearer ") ? auth.slice(7) : "";
+  if (!token) throw new AppError("NO_TOKEN", "يجب تسجيل الدخول أولاً", 401);
+
+  const { data: userData, error } = await svc.auth.getUser(token);
+  if (error || !userData?.user) {
+    throw new AppError("BAD_TOKEN", "انتهت الجلسة، يرجى تسجيل الدخول من جديد", 401);
+  }
+
+  const { data: profile } = await svc.from("profiles")
+    .select("id, role, location_id, full_name, is_active")
+    .eq("id", userData.user.id).single();
+
+  if (!profile) throw new AppError("NO_PROFILE", "لا يوجد ملف مستخدم لهذا الحساب", 403);
+  if (!profile.is_active) {
+    throw new AppError("INACTIVE", "الحساب معطّل، يرجى مراجعة مدير النظام", 403);
+  }
+  return profile as Caller;
+}
+
+function requireSuperAdmin(caller: Caller): void {
+  if (caller.role !== "super_admin") {
+    throw new AppError("FORBIDDEN", "هذه العملية متاحة لمدير النظام فقط", 403);
+  }
+}
+
+async function rateLimit(
+  svc: SupabaseClient, bucket: string, id: string, windowSec: number, max: number,
+): Promise<void> {
+  const { data, error } = await svc.rpc("rate_limit_hit", {
+    p_bucket: bucket, p_identifier: id, p_window_seconds: windowSec, p_max_hits: max,
+  });
+  // في حال تعذّر الفحص لا نمنع الخدمة، لكن نسجّل التحذير
+  if (error) { console.warn("[rate-limit] unavailable:", error.message); return; }
+  if (data === false) {
+    throw new AppError("RATE_LIMITED", "محاولات كثيرة جدًا، يرجى المحاولة بعد قليل", 429);
+  }
+}
+
+/** توليد كلمة مرور مؤقتة قوية تُعرض لمدير النظام مرة واحدة فقط */
+function tempPassword(): string {
+  const lower = "abcdefghijkmnpqrstuvwxyz", upper = "ABCDEFGHJKLMNPQRSTUVWXYZ";
+  const digits = "23456789", symbols = "!@#$%^&*";
+  const all = lower + upper + digits + symbols;
+  const pick = (set: string) => set[crypto.getRandomValues(new Uint32Array(1))[0] % set.length];
+  const chars = [pick(lower), pick(upper), pick(digits), pick(symbols)];
+  while (chars.length < 16) chars.push(pick(all));
+  for (let i = chars.length - 1; i > 0; i--) {
+    const j = crypto.getRandomValues(new Uint32Array(1))[0] % (i + 1);
+    [chars[i], chars[j]] = [chars[j], chars[i]];
+  }
+  return chars.join("");
+}
+
+// =====================================================================
+// المسارات
+// =====================================================================
+
+/** GET /activation/verify?token=... — فحص الرمز دون استهلاكه */
+async function verifyActivation(url: URL, svc: SupabaseClient, ip: string) {
+  await rateLimit(svc, "activation_verify", ip, 900, 30);
+  const token = url.searchParams.get("token") ?? "";
+  if (!token) throw new AppError("NO_TOKEN", "رابط التفعيل غير مكتمل", 400);
+
+  const { data, error } = await svc.rpc("peek_activation_token", {
+    p_token_hash: await sha256Hex(token),
+  });
+  if (error) throw new Error(error.message);
+
+  const row = Array.isArray(data) ? data[0] : data;
+  if (!row?.valid) {
+    const reasons: Record<string, string> = {
+      NOT_FOUND: "رابط التفعيل غير صحيح",
+      ALREADY_USED: "تم استخدام رابط التفعيل مسبقًا",
+      EXPIRED: "انتهت صلاحية رابط التفعيل، اطلب رابطًا جديدًا",
+    };
+    throw new AppError(row?.reason ?? "INVALID",
+      reasons[row?.reason] ?? "رابط التفعيل غير صالح", 400);
+  }
+  // نعيد الاسم ورقم الجوال مقنّعًا لتعبئة النموذج دون كشف كامل
+  return {
+    valid: true,
+    full_name: row.full_name,
+    phone_masked: String(row.phone).replace(/^(966\d{2})\d{4}(\d{2})$/, "$1****$2"),
+    role: row.role,
+  };
+}
+
+/** POST /activate — تفعيل حساب مدير النظام لمرة واحدة */
+async function activate(req: Request, svc: SupabaseClient, ip: string) {
+  await rateLimit(svc, "activate", ip, 900, 10);
+  const body = await req.json().catch(() => ({}));
+  const { token, full_name, phone, password, password_confirm } = body ?? {};
+
+  if (!token) throw new AppError("NO_TOKEN", "رابط التفعيل غير مكتمل", 400);
+  if (!full_name || String(full_name).trim().length < 4) {
+    throw new AppError("BAD_NAME", "يرجى إدخال الاسم الكامل", 400);
+  }
+  if (password !== password_confirm) {
+    throw new AppError("MISMATCH", "كلمة المرور وتأكيدها غير متطابقين", 400);
+  }
+
+  const normalized = normalizeSaudiPhone(phone);
+  if (!normalized) throw new AppError("BAD_PHONE", "رقم الجوال غير صحيح", 400);
+
+  const pw = checkPassword(String(password), normalized);
+  if (!pw.ok) throw new AppError("WEAK_PASSWORD", pw.problems.join("، "), 400);
+
+  const hash = await sha256Hex(String(token));
+
+  // فحص مبدئي: الرمز يجب أن يطابق رقم الجوال المدخل
+  const { data: peek } = await svc.rpc("peek_activation_token", { p_token_hash: hash });
+  const peeked = Array.isArray(peek) ? peek[0] : peek;
+  if (!peeked?.valid) {
+    throw new AppError("TOKEN_INVALID",
+      "رابط التفعيل غير صالح أو منتهي الصلاحية أو مستخدم مسبقًا", 400);
+  }
+  if (peeked.phone !== normalized) {
+    throw new AppError("PHONE_MISMATCH", "رقم الجوال لا يطابق رابط التفعيل", 400);
+  }
+
+  // حجز ذرّي: يضمن أن طلبين متزامنين لا ينشئان حسابين
+  const { error: claimErr } = await svc.rpc("claim_activation_token", { p_token_hash: hash });
+  if (claimErr) {
+    throw new AppError("TOKEN_INVALID",
+      "رابط التفعيل غير صالح أو منتهي الصلاحية أو مستخدم مسبقًا", 400);
+  }
+
+  const email = `${normalized}@${EMAIL_DOMAIN}`;
+  try {
+    const { data: created, error: createErr } = await svc.auth.admin.createUser({
+      email,
+      password: String(password),
+      email_confirm: true,
+      // الدور يُخزَّن في app_metadata (لا يمكن للمستخدم تعديله)
+      app_metadata: { role: peeked.role, provider: "email" },
+      user_metadata: { full_name: String(full_name).trim() },
+    });
+    if (createErr || !created?.user) throw new Error(createErr?.message ?? "create failed");
+
+    const { error: profileErr } = await svc.rpc("complete_activation", {
+      p_token_hash: hash,
+      p_user_id: created.user.id,
+      p_full_name: String(full_name).trim(),
+      p_phone: normalized,
+    });
+    if (profileErr) {
+      await svc.auth.admin.deleteUser(created.user.id).catch(() => {});
+      throw new Error(profileErr.message);
+    }
+
+    return { success: true, message: "تم تفعيل الحساب بنجاح، يمكنك تسجيل الدخول الآن" };
+  } catch (e) {
+    // تحرير الحجز حتى لا يضيع الرمز بسبب فشل تقني
+    await svc.rpc("release_activation_token", { p_token_hash: hash }).catch(() => {});
+    const msg = e instanceof Error ? e.message : String(e);
+    if (msg.includes("already been registered") || msg.includes("duplicate")) {
+      throw new AppError("USER_EXISTS", "يوجد حساب مسجّل بهذا الرقم مسبقًا", 409);
+    }
+    throw e;
+  }
+}
+
+/** POST /admin/users — إنشاء مستخدم بواسطة مدير النظام */
+async function createUser(req: Request, svc: SupabaseClient, caller: Caller, ip: string) {
+  requireSuperAdmin(caller);
+  const b = await req.json().catch(() => ({}));
+  const { full_name, phone, role, location_id, job_title } = b ?? {};
+
+  const VALID_ROLES = ["super_admin", "requester", "production_officer",
+    "branch_manager", "production_manager", "procurement", "finance"];
+  if (!VALID_ROLES.includes(role)) throw new AppError("BAD_ROLE", "الدور المحدد غير صحيح", 400);
+  if (!full_name || String(full_name).trim().length < 4) {
+    throw new AppError("BAD_NAME", "يرجى إدخال الاسم الكامل", 400);
+  }
+
+  const normalized = normalizeSaudiPhone(phone);
+  if (!normalized) throw new AppError("BAD_PHONE", "رقم الجوال غير صحيح", 400);
+
+  if (!location_id) throw new AppError("NO_LOCATION", "يجب تحديد الموقع أو الفرع", 400);
+  const { data: loc } = await svc.from("locations")
+    .select("id, is_active").eq("id", location_id).single();
+  if (!loc || !loc.is_active) throw new AppError("BAD_LOCATION", "الموقع المحدد غير صحيح", 400);
+
+  const { data: existing } = await svc.from("profiles")
+    .select("id").eq("phone", normalized).maybeSingle();
+  if (existing) throw new AppError("PHONE_EXISTS", "رقم الجوال مسجّل مسبقًا لمستخدم آخر", 409);
+
+  const temp = tempPassword();
+  const { data: created, error: createErr } = await svc.auth.admin.createUser({
+    email: `${normalized}@${EMAIL_DOMAIN}`,
+    password: temp,
+    email_confirm: true,
+    app_metadata: { role, provider: "email" },
+    user_metadata: { full_name: String(full_name).trim() },
+  });
+  if (createErr || !created?.user) {
+    if (String(createErr?.message).includes("already been registered")) {
+      throw new AppError("PHONE_EXISTS", "رقم الجوال مسجّل مسبقًا لمستخدم آخر", 409);
+    }
+    throw new Error(createErr?.message ?? "create failed");
+  }
+
+  const { error: profErr } = await svc.from("profiles").insert({
+    id: created.user.id,
+    full_name: String(full_name).trim(),
+    phone: normalized,
+    role,
+    location_id,
+    job_title: job_title ?? null,
+    is_active: true,
+    must_change_password: true, // إجبار تغيير كلمة المرور المؤقتة
+  });
+  if (profErr) {
+    await svc.auth.admin.deleteUser(created.user.id).catch(() => {});
+    throw new Error(profErr.message);
+  }
+
+  await svc.rpc("log_admin_action", {
+    p_actor: caller.id, p_action: "user.created", p_entity_type: "profile",
+    p_entity_id: created.user.id,
+    p_details: { full_name, phone: normalized, role, location_id }, p_ip: ip,
+  });
+
+  // كلمة المرور المؤقتة تُعرض مرة واحدة فقط ولا تُخزَّن في أي مكان
+  return {
+    success: true,
+    user_id: created.user.id,
+    temp_password: temp,
+    message: "تم إنشاء المستخدم. سلّمه كلمة المرور المؤقتة، وسيُطلب منه تغييرها عند أول دخول.",
+  };
+}
+
+/** PATCH /admin/users/:id — تعديل بيانات المستخدم */
+async function updateUser(
+  req: Request, svc: SupabaseClient, caller: Caller, userId: string, ip: string,
+) {
+  requireSuperAdmin(caller);
+  const b = await req.json().catch(() => ({}));
+  const patch: Record<string, unknown> = {};
+
+  if (b.full_name !== undefined) {
+    if (String(b.full_name).trim().length < 4) {
+      throw new AppError("BAD_NAME", "يرجى إدخال الاسم الكامل", 400);
+    }
+    patch.full_name = String(b.full_name).trim();
+  }
+  if (b.role !== undefined) {
+    const VALID_ROLES = ["super_admin", "requester", "production_officer",
+      "branch_manager", "production_manager", "procurement", "finance"];
+    if (!VALID_ROLES.includes(b.role)) throw new AppError("BAD_ROLE", "الدور المحدد غير صحيح", 400);
+    patch.role = b.role;
+  }
+  if (b.location_id !== undefined) patch.location_id = b.location_id;
+  if (b.job_title !== undefined) patch.job_title = b.job_title;
+  if (b.is_active !== undefined) patch.is_active = !!b.is_active;
+
+  if (b.phone !== undefined) {
+    const normalized = normalizeSaudiPhone(b.phone);
+    if (!normalized) throw new AppError("BAD_PHONE", "رقم الجوال غير صحيح", 400);
+    patch.phone = normalized;
+    await svc.auth.admin.updateUserById(userId, { email: `${normalized}@${EMAIL_DOMAIN}` });
+  }
+
+  if (caller.id === userId && patch.is_active === false) {
+    throw new AppError("SELF_DISABLE", "لا يمكنك تعطيل حسابك الخاص", 400);
+  }
+  if (Object.keys(patch).length === 0) {
+    throw new AppError("NO_CHANGES", "لا توجد تغييرات للحفظ", 400);
+  }
+
+  const { error } = await svc.from("profiles").update(patch).eq("id", userId);
+  if (error) throw new Error(error.message);
+
+  // الدور يبقى متزامنًا مع app_metadata
+  if (patch.role) {
+    await svc.auth.admin.updateUserById(userId, { app_metadata: { role: patch.role } });
+  }
+  // تعطيل الحساب يمنع الدخول فورًا عبر حظر المستخدم في Auth
+  if (patch.is_active !== undefined) {
+    await svc.auth.admin.updateUserById(userId, {
+      ban_duration: patch.is_active ? "none" : "876000h",
+    });
+  }
+
+  await svc.rpc("log_admin_action", {
+    p_actor: caller.id, p_action: "user.updated", p_entity_type: "profile",
+    p_entity_id: userId, p_details: patch, p_ip: ip,
+  });
+  return { success: true, message: "تم حفظ التعديلات" };
+}
+
+/** POST /admin/users/:id/reset-password — إعادة تعيين آمنة */
+async function resetPassword(
+  svc: SupabaseClient, caller: Caller, userId: string, ip: string,
+) {
+  requireSuperAdmin(caller);
+  const temp = tempPassword();
+  const { error } = await svc.auth.admin.updateUserById(userId, { password: temp });
+  if (error) throw new Error(error.message);
+
+  await svc.from("profiles").update({ must_change_password: true }).eq("id", userId);
+  await svc.rpc("log_admin_action", {
+    p_actor: caller.id, p_action: "user.password_reset", p_entity_type: "profile",
+    p_entity_id: userId, p_details: {}, p_ip: ip,
+  });
+
+  return {
+    success: true,
+    temp_password: temp,
+    message: "تم إنشاء كلمة مرور مؤقتة. سيُطلب من المستخدم تغييرها عند أول دخول.",
+  };
+}
+
+/** يتأكد أن المستدعي يملك صلاحية على الطلب */
+async function requestForCaller(svc: SupabaseClient, caller: Caller, requestId: string) {
+  const { data: r } = await svc.from("purchase_requests")
+    .select("id, location_id, requester_id, status, current_stage")
+    .eq("id", requestId).single();
+  if (!r) throw new AppError("NOT_FOUND", "الطلب غير موجود", 404);
+
+  const globalScope = ["super_admin", "production_manager", "procurement", "finance"]
+    .includes(caller.role);
+  const allowed = globalScope || r.requester_id === caller.id ||
+    r.location_id === caller.location_id;
+  if (!allowed) throw new AppError("FORBIDDEN", "لا تملك صلاحية على هذا الطلب", 403);
+  return r;
+}
+
+/** POST /documents/sign-upload — رابط رفع موقّع بعد التحقق من الصلاحية والنوع */
+async function signUpload(req: Request, svc: SupabaseClient, caller: Caller) {
+  const b = await req.json().catch(() => ({}));
+  const { request_id, document_type, file_name, mime_type, file_size } = b ?? {};
+
+  if (!DOCUMENT_TYPES.includes(document_type)) {
+    throw new AppError("BAD_TYPE", "نوع المستند غير معروف", 400);
+  }
+  const fc = checkFile(String(file_name ?? ""), String(mime_type ?? ""), Number(file_size));
+  if (!fc.ok) throw new AppError("BAD_FILE", fc.error!, 400);
+
+  const r = await requestForCaller(svc, caller, String(request_id));
+
+  // من يحق له الرفع ومتى
+  const isOwnerEditable = r.requester_id === caller.id &&
+    ["draft", "returned"].includes(r.status);
+  const isBackOffice = ["finance", "procurement"].includes(caller.role) &&
+    ["erp_document", "other"].includes(document_type);
+  if (!(isOwnerEditable || isBackOffice || caller.role === "super_admin")) {
+    throw new AppError("FORBIDDEN", "لا تملك صلاحية إرفاق مستند لهذا الطلب الآن", 403);
+  }
+
+  // المسار لا يعتمد على اسم المستخدم: location_id/request_id/document_type/uuid.ext
+  const path = `${r.location_id}/${r.id}/${document_type}/${crypto.randomUUID()}.${fc.ext}`;
+  const { data, error } = await svc.storage.from(BUCKET).createSignedUploadUrl(path);
+  if (error) throw new Error(error.message);
+
+  return { path, token: data.token, signed_url: data.signedUrl };
+}
+
+/**
+ * POST /documents/confirm-upload — تسجيل المرفق بعد التحقق من الملف فعليًا
+ * على الخادم (الحجم والنوع يُقرآن من المخزن لا من الواجهة).
+ */
+async function confirmUpload(req: Request, svc: SupabaseClient, caller: Caller, ip: string) {
+  const b = await req.json().catch(() => ({}));
+  const { request_id, document_type, path, file_name } = b ?? {};
+  if (!path || typeof path !== "string") throw new AppError("BAD_PATH", "مسار الملف غير صحيح", 400);
+
+  const r = await requestForCaller(svc, caller, String(request_id));
+  if (!path.startsWith(`${r.location_id}/${r.id}/${document_type}/`)) {
+    throw new AppError("BAD_PATH", "مسار الملف لا يطابق الطلب", 400);
+  }
+
+  // التحقق الحقيقي من البيانات الوصفية في المخزن
+  const folder = path.split("/").slice(0, -1).join("/");
+  const fileName = path.split("/").pop()!;
+  const { data: listed, error: listErr } = await svc.storage.from(BUCKET)
+    .list(folder, { search: fileName });
+  if (listErr) throw new Error(listErr.message);
+
+  const obj = listed?.find((o) => o.name === fileName);
+  if (!obj) throw new AppError("NOT_UPLOADED", "لم يتم العثور على الملف المرفوع", 400);
+
+  const size = Number(obj.metadata?.size ?? 0);
+  const mime = String(obj.metadata?.mimetype ?? "");
+  const verified = checkFile(fileName, mime, size);
+  if (!verified.ok) {
+    // ملف مخالف يُحذف فورًا من المخزن
+    await svc.storage.from(BUCKET).remove([path]).catch(() => {});
+    throw new AppError("BAD_FILE", verified.error!, 400);
+  }
+
+  const { data: doc, error } = await svc.from("request_documents").insert({
+    request_id: r.id,
+    location_id: r.location_id,
+    document_type,
+    storage_path: path,
+    file_name: String(file_name ?? fileName).slice(0, 200),
+    mime_type: mime,
+    file_size: size,
+    uploaded_by: caller.id,
+  }).select().single();
+  if (error) {
+    await svc.storage.from(BUCKET).remove([path]).catch(() => {});
+    throw new Error(error.message);
+  }
+
+  await svc.rpc("log_admin_action", {
+    p_actor: caller.id, p_action: "document.uploaded", p_entity_type: "request_document",
+    p_entity_id: doc.id, p_details: { request_id: r.id, document_type, size }, p_ip: ip,
+  });
+  return { success: true, document: doc };
+}
+
+/** POST /documents/sign-download — رابط معاينة قصير الصلاحية */
+async function signDownload(req: Request, svc: SupabaseClient, caller: Caller) {
+  const b = await req.json().catch(() => ({}));
+  const { document_id } = b ?? {};
+
+  const { data: doc } = await svc.from("request_documents")
+    .select("id, request_id, storage_path, file_name").eq("id", document_id).single();
+  if (!doc) throw new AppError("NOT_FOUND", "المستند غير موجود", 404);
+
+  await requestForCaller(svc, caller, doc.request_id);
+
+  // صلاحية 60 ثانية فقط — لا روابط عامة دائمة
+  const { data, error } = await svc.storage.from(BUCKET)
+    .createSignedUrl(doc.storage_path, 60, { download: false });
+  if (error) throw new Error(error.message);
+
+  return { signed_url: data.signedUrl, expires_in: 60, file_name: doc.file_name };
+}
+
+/** POST /reports/export — تصدير CSV ضمن نطاق صلاحية المستدعي */
+async function exportReport(req: Request, svc: SupabaseClient, caller: Caller, ip: string) {
+  const b = await req.json().catch(() => ({}));
+  const { status, location_id, date_from, date_to } = b ?? {};
+
+  let q = svc.from("purchase_requests").select(
+    `request_number, status, current_stage, request_date, purchase_date, purchase_type,
+     priority, supplier_name, supplier_vat, invoice_number, invoice_date,
+     amount_before_vat, vat_amount, total_amount, category, items_description,
+     justification, locations(name_ar), profiles!purchase_requests_requester_fk(full_name)`,
+  ).order("created_at", { ascending: false }).limit(5000);
+
+  const globalScope = ["super_admin", "production_manager", "procurement", "finance"]
+    .includes(caller.role);
+  if (!globalScope) q = q.eq("location_id", caller.location_id!);
+  else if (location_id) q = q.eq("location_id", location_id);
+
+  if (status) q = q.eq("status", status);
+  if (date_from) q = q.gte("request_date", date_from);
+  if (date_to) q = q.lte("request_date", date_to);
+
+  const { data, error } = await q;
+  if (error) throw new Error(error.message);
+
+  const headers = [
+    "رقم الطلب", "الحالة", "المرحلة", "تاريخ الطلب", "تاريخ الشراء", "نوع الشراء",
+    "الأولوية", "الموقع", "مقدم الطلب", "المورد", "الرقم الضريبي", "رقم الفاتورة",
+    "تاريخ الفاتورة", "قبل الضريبة", "الضريبة", "الإجمالي", "الفئة", "الوصف", "المبرر",
+  ];
+  const esc = (v: unknown) => {
+    const s = v === null || v === undefined ? "" : String(v);
+    return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  };
+  const rows = (data ?? []).map((r: Record<string, any>) => [
+    r.request_number, r.status, r.current_stage, r.request_date, r.purchase_date,
+    r.purchase_type, r.priority, r.locations?.name_ar, r.profiles?.full_name,
+    r.supplier_name, r.supplier_vat, r.invoice_number, r.invoice_date,
+    r.amount_before_vat, r.vat_amount, r.total_amount, r.category,
+    r.items_description, r.justification,
+  ].map(esc).join(","));
+
+  await svc.rpc("log_admin_action", {
+    p_actor: caller.id, p_action: "report.exported", p_entity_type: "report",
+    p_entity_id: "purchase_requests", p_details: { count: rows.length }, p_ip: ip,
+  });
+
+  // BOM لضمان قراءة العربية بشكل صحيح في Excel
+  return "﻿" + [headers.join(","), ...rows].join("\n");
+}
+
+// =====================================================================
+// الموجّه الرئيسي
+// =====================================================================
+Deno.serve(async (req: Request): Promise<Response> => {
+  const origin = req.headers.get("Origin");
+
+  if (req.method === "OPTIONS") {
+    return new Response(null, { status: 204, headers: corsHeaders(origin) });
+  }
+
+  try {
+    const url = new URL(req.url);
+    const parts = url.pathname.split("/").filter(Boolean);
+    // إسقاط اسم الدالة من المسار
+    if (parts[0] === "procurement-portal") parts.shift();
+    const route = parts.join("/");
+    const svc = serviceClient();
+    const ip = clientIp(req);
+
+    // --- مسارات عامة (بلا تسجيل دخول) ---
+    if (route === "health" && req.method === "GET") {
+      return json({ ok: true, service: "procurement-portal" }, 200, origin);
+    }
+    if (route === "activation/verify" && req.method === "GET") {
+      return json(await verifyActivation(url, svc, ip), 200, origin);
+    }
+    if (route === "activate" && req.method === "POST") {
+      return json(await activate(req, svc, ip), 200, origin);
+    }
+
+    // --- ما بعده يتطلب تسجيل دخول ---
+    const caller = await requireCaller(req, svc);
+
+    if (route === "admin/users" && req.method === "POST") {
+      return json(await createUser(req, svc, caller, ip), 200, origin);
+    }
+    if (parts[0] === "admin" && parts[1] === "users" && parts[2]) {
+      if (parts[3] === "reset-password" && req.method === "POST") {
+        return json(await resetPassword(svc, caller, parts[2], ip), 200, origin);
+      }
+      if (!parts[3] && req.method === "PATCH") {
+        return json(await updateUser(req, svc, caller, parts[2], ip), 200, origin);
+      }
+    }
+    if (route === "documents/sign-upload" && req.method === "POST") {
+      return json(await signUpload(req, svc, caller), 200, origin);
+    }
+    if (route === "documents/confirm-upload" && req.method === "POST") {
+      return json(await confirmUpload(req, svc, caller, ip), 200, origin);
+    }
+    if (route === "documents/sign-download" && req.method === "POST") {
+      return json(await signDownload(req, svc, caller), 200, origin);
+    }
+    if (route === "reports/export" && req.method === "POST") {
+      const csv = await exportReport(req, svc, caller, ip);
+      return new Response(csv, {
+        status: 200,
+        headers: {
+          ...corsHeaders(origin),
+          "Content-Type": "text/csv; charset=utf-8",
+          "Content-Disposition": `attachment; filename="purchase-requests.csv"`,
+        },
+      });
+    }
+
+    return json({ error: "المسار غير موجود", code: "NOT_FOUND" }, 404, origin);
+  } catch (err) {
+    return handleError(err, origin);
+  }
+});
+
+</script>
+<script type="text/plain" id="file-activation">-- =====================================================================
+--  توليد رابط تفعيل حساب مدير النظام
+--
+--  شغّله في Supabase SQL Editor بعد نشر الواجهة.
+--
+--  عنوان الواجهة مضبوط مسبقًا على رابط GitHub Pages الخاص بك.
+--  غيّره فقط إن نشرت الواجهة على نطاق آخر.
+--
+--  النتيجة تحتوي عمود «الرابط الكامل» — افتحه في المتصفح مباشرة.
+--
+--  الرابط صالح 24 ساعة ويُستخدم مرة واحدة فقط. الرمز نفسه لا يُخزَّن
+--  في قاعدة البيانات — يُخزَّن هاش SHA-256 فقط. تشغيل هذا الملف مرة
+--  أخرى يُبطل الرابط السابق تلقائيًا.
+-- =====================================================================
+with إعدادات as (
+  select
+    'https://oolong2006-ship-it.github.io/codex' as عنوان_الواجهة,
+    'محمد صالح باعمر'                 as الاسم,
+    '0559847714'                      as رقم_الجوال,
+    'CN-06'                           as كود_الموقع,      -- الإدارة المركزية
+    24                                as ساعات_الصلاحية
+),
+رمز as (
+  select encode(gen_random_bytes(32), 'hex') as raw_token, * from إعدادات
+)
+select
+  rtrim(عنوان_الواجهة, '/') || '/activate/?token=' || raw_token
+    as "الرابط الكامل — افتحه الآن",
+  app.create_activation_token(
+    encode(digest(raw_token, 'sha256'), 'hex'),
+    الاسم, رقم_الجوال, 'super_admin', كود_الموقع, ساعات_الصلاحية
+  ) as "معرّف الرمز",
+  (now() + make_interval(hours => ساعات_الصلاحية)) as "ينتهي في"
+from رمز;
+</script>
+
+<script>
+(function(){
+  var KEY="alnadeg-install-progress-v2";
+
+  function load(){
+    try{ return JSON.parse(localStorage.getItem(KEY)||"{}"); }catch(e){ return {}; }
+  }
+  function save(s){ try{ localStorage.setItem(KEY,JSON.stringify(s)); }catch(e){} }
+
+  var state=load();
+
+  function paint(){
+    var n=0;
+    for(var i=1;i<=4;i++){
+      var box=document.getElementById("s"+i);
+      var step=document.querySelector('.step[data-step="'+i+'"]');
+      var on=!!state["s"+i];
+      if(box) box.checked=on;
+      if(step) step.classList.toggle("done",on);
+      if(on) n++;
+    }
+    document.getElementById("count").textContent=String(n);
+    document.getElementById("bar").style.width=(n/4*100)+"%";
+  }
+
+  for(var i=1;i<=4;i++){
+    (function(k){
+      var box=document.getElementById("s"+k);
+      if(!box) return;
+      box.addEventListener("change",function(){
+        state["s"+k]=box.checked; save(state); paint();
+      });
+    })(i);
+  }
+  paint();
+
+  // أزرار النسخ — تعرض حجم كل ملف وتؤكد النسخ
+  function size(t){
+    var kb=new Blob([t]).size/1024;
+    return kb<1000 ? Math.round(kb)+" كيلوبايت" : (kb/1024).toFixed(1)+" ميجابايت";
+  }
+
+  Array.prototype.forEach.call(document.querySelectorAll(".copy"),function(btn){
+    var el=document.getElementById("file-"+btn.dataset.file);
+    if(!el) return;
+    var text=el.textContent;
+    var szEl=btn.querySelector(".sz");
+    if(szEl) szEl.textContent="· "+size(text);
+    var label=btn.childNodes[0].nodeValue;
+
+    btn.addEventListener("click",function(){
+      function done(ok){
+        btn.childNodes[0].nodeValue = ok ? "تم النسخ ✓ " : "تعذر النسخ — حدّد يدويًا ";
+        setTimeout(function(){ btn.childNodes[0].nodeValue=label; },2200);
+      }
+      if(navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(text).then(function(){done(true);},function(){done(false);});
+      } else {
+        try{
+          var ta=document.createElement("textarea");
+          ta.value=text; ta.setAttribute("readonly","");
+          ta.style.position="fixed"; ta.style.opacity="0";
+          document.body.appendChild(ta); ta.select();
+          var ok=document.execCommand("copy");
+          document.body.removeChild(ta); done(ok);
+        }catch(e){ done(false); }
+      }
+    });
+  });
+})();
+</script>
