@@ -1,0 +1,43 @@
+{
+  "name": "alnadeg-procurement",
+  "version": "1.0.0",
+  "private": true,
+  "description": "بوابة مشتريات فروع شركة مطاعم الناضج",
+  "scripts": {
+    "dev": "next dev -p 3000",
+    "build": "next build",
+    "start": "npx serve out -l 3000",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "db:test": "./scripts/db-test.sh",
+    "db:inspect": "./scripts/inspect-schema.sh",
+    "db:push": "supabase db push",
+    "activation:create": "node scripts/create-activation-link.mjs",
+    "acceptance": "node scripts/acceptance.mjs",
+    "verify": "npm run typecheck && npm run test && npm run build"
+  },
+  "dependencies": {
+    "@hookform/resolvers": "3.9.1",
+    "@supabase/supabase-js": "2.45.4",
+    "next": "15.1.6",
+    "react": "19.0.0",
+    "react-dom": "19.0.0",
+    "react-hook-form": "7.54.2",
+    "zod": "3.24.1"
+  },
+  "devDependencies": {
+    "@types/node": "22.10.5",
+    "@types/react": "19.0.7",
+    "@types/react-dom": "19.0.3",
+    "autoprefixer": "10.4.20",
+    "postcss": "8.4.49",
+    "tailwindcss": "3.4.17",
+    "typescript": "5.7.3",
+    "vitest": "2.1.8"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
