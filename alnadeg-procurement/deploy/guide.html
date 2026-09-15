@@ -213,11 +213,11 @@ footer{
     <span class="mark">ن</span>
     <div>
       <h1>تنصيب بوابة مشتريات الناضج</h1>
-      <p>أربع خطوات — GitHub ينفّذ النشر عنك</p>
+      <p>ثلاث خطوات — بلا مفاتيح وبلا طرفية</p>
     </div>
     <div class="prog">
       <span class="bar"><i id="bar"></i></span>
-      <b><span id="count">0</span>‏/4</b>
+      <b><span id="count">0</span>‏/3</b>
     </div>
   </div>
 </header>
@@ -225,12 +225,12 @@ footer{
 <div class="wrap">
 
   <section class="lede">
-    <h2>GitHub سيتولّى النشر نيابة عنك</h2>
+    <h2>ثلاث خطوات، ولا مفتاح واحد</h2>
     <p class="sub">
-      خوادم GitHub متصلة بالإنترنت وتستطيع الوصول إلى Supabase. أعددت لك
-      ثلاثة سيور عمل جاهزة: تلصق ثلاثة مفاتيح مرة واحدة، تضغط زر تشغيل،
-      ويتولّى GitHub الباقي — تطبيق قاعدة البيانات، ونشر الخدمة، ونشر الموقع.
-      هذه الصفحة تحفظ تقدّمك، فأغلقها وعُد إليها متى شئت.
+      أعدت تصميم المسار ليزيل كل ما يتطلب مفاتيح أو أدوات: لا أسرار في
+      GitHub، ولا رمز وصول، ولا Edge Function، ولا طرفية. نقرة واحدة منك
+      لتفعيل الاستضافة، ثم لصقتان داخل حسابك على Supabase. هذه الصفحة
+      تحفظ تقدّمك، فأغلقها وعُد إليها متى شئت.
     </p>
 
     <div class="facts">
@@ -247,7 +247,7 @@ footer{
       <ul>
         <li>حسابك في <b>Supabase</b> ومشروع <code>alnadeg-procurement</code> مفتوح أمامك.</li>
         <li>مستودعك على GitHub: <code>oolong2006-ship-it/codex</code> — لا تحتاج حسابًا جديدًا.</li>
-        <li>نحو <b>٢٠ دقيقة</b> دون مقاطعة.</li>
+        <li>نحو <b>١٢ دقيقة</b> دون مقاطعة.</li>
       </ul>
     </div>
   </section>
@@ -258,42 +258,30 @@ footer{
     <section class="step" data-step="1">
       <div class="rail"><span class="num">١</span></div>
       <div class="body">
-        <div class="head"><h3>أضف المفاتيح الثلاثة</h3><span class="time">٧ دقائق</span></div>
+        <div class="head"><h3>فعّل الاستضافة</h3><span class="time">نقرة واحدة</span></div>
         <p>
-          هذه المفاتيح تُخزَّن مشفّرة في GitHub ولا تظهر في أي سجل.
-          افتح مستودعك ثم:
-          <kbd>Settings</kbd> ← <kbd>Secrets and variables</kbd> ← <kbd>Actions</kbd>
-          ← <kbd>New repository secret</kbd>، وكرّر ثلاث مرات.
+          هذه الخطوة الوحيدة التي لا أستطيع تنفيذها عنك: إنشاء موقع
+          GitHub Pages أول مرة محصور بمالك المستودع — قيد من GitHub نفسه.
+          كل ما عداها جاهز ومختبَر.
         </p>
+        <ol>
+          <li>افتح <kbd>Settings</kbd> ← <kbd>Pages</kbd> في مستودعك.</li>
+          <li>تحت <b>Source</b> اختر <b>GitHub Actions</b>.</li>
+          <li>لا حفظ ولا إعداد آخر — هذا كل شيء.</li>
+        </ol>
 
-        <div class="tw"><table>
-          <tr><th>اسم السر</th><th>من أين تنسخه</th></tr>
-          <tr>
-            <td><code>NEXT_PUBLIC_SUPABASE_ANON_KEY</code></td>
-            <td>Supabase ← <kbd>Project Settings</kbd> ← <kbd>API</kbd> ← مفتاح <b>anon public</b></td>
-          </tr>
-          <tr>
-            <td><code>SUPABASE_DB_URL</code></td>
-            <td>Supabase ← <kbd>Project Settings</kbd> ← <kbd>Database</kbd> ← <b>Connection string</b> ← تبويب <b>URI</b></td>
-          </tr>
-          <tr>
-            <td><code>SUPABASE_ACCESS_TOKEN</code></td>
-            <td><code>supabase.com/dashboard/account/tokens</code> ← <kbd>Generate new token</kbd></td>
-          </tr>
-        </table></div>
-
-        <div class="note stop">
-          <b>لا تستخدم مفتاح <code>service_role</code> في الأول</b>
-          المطلوب هو <code>anon public</code>. مفتاح <code>service_role</code> لا
-          يلزم في هذه الخطوات إطلاقًا.
+        <div class="note ok">
+          <b>ثم أخبرني «تم»</b>
+          وأشغّل النشر بنفسي وأرسل لك رابط بوابتك. لن تحتاج فعل شيء آخر هنا.
         </div>
         <div class="note warn">
-          <b>في <code>SUPABASE_DB_URL</code></b>
-          استبدل <code>[YOUR-PASSWORD]</code> بكلمة مرور قاعدة البيانات الفعلية.
-          إن نسيتها، أعد ضبطها من نفس الصفحة.
+          <b>إن فشل النشر برسالة «Branch is not allowed to deploy»</b>
+          افتح <kbd>Settings</kbd> ← <kbd>Environments</kbd> ← <kbd>github-pages</kbd>
+          ← <b>Deployment branches</b>، وأضف الفرع
+          <code>claude/alnadeg-procurement-portal-6urp3o</code>.
         </div>
 
-        <div class="mark-done"><label><input type="checkbox" id="s1"> أضفت المفاتيح الثلاثة</label></div>
+        <div class="mark-done"><label><input type="checkbox" id="s1"> فعّلت الاستضافة</label></div>
       </div>
     </section>
 
@@ -301,33 +289,29 @@ footer{
     <section class="step" data-step="2">
       <div class="rail"><span class="num">٢</span></div>
       <div class="body">
-        <div class="head"><h3>شغّل تهيئة قاعدة البيانات</h3><span class="time">٥ دقائق</span></div>
+        <div class="head"><h3>جهّز قاعدة البيانات</h3><span class="time">٦ دقائق</span></div>
         <p>
-          يفحص قاعدتك، ثم يطبّق الجداول والصلاحيات والمواقع الـ27،
-          ثم ينشر الخدمة ويضبط النطاق المسموح — كل ذلك في تشغيل واحد.
+          في Supabase ← <kbd>SQL Editor</kbd> ← <kbd>New query</kbd>. الصق كل ملف
+          واضغط <kbd>Run</kbd>. لا يحتوي أي منها أمر حذف، ويمكن تشغيلها أكثر من مرة.
         </p>
-        <ol>
-          <li>في مستودعك افتح تبويب <kbd>Actions</kbd>.</li>
-          <li>من القائمة اليمنى اختر <b>«تهيئة قاعدة البيانات والخدمة»</b>.</li>
-          <li>اضغط <kbd>Run workflow</kbd>، واختر الفرع
-            <code>claude/alnadeg-procurement-portal-6urp3o</code>، ثم <kbd>Run workflow</kbd>.</li>
-          <li>انتظر حتى تظهر علامة ✅ خضراء، ثم افتح التشغيل واقرأ <b>الملخص</b>.</li>
-        </ol>
 
-        <div class="note ok">
-          <b>المطلوب في الملخص</b>
-          جدول من ١٢ بندًا كلها ✅ سليم، ثم «تم نشر الواجهة البرمجية»
-          و«الخدمة تعمل».
-        </div>
+        <p><b>أ · افحص قاعدتك</b> — قراءة فقط، ينتهي بحكم ✅ أو ❌:</p>
+        <button class="copy" data-file="preflight">نسخ ملف الفحص <span class="sz"></span></button>
         <div class="note warn">
-          <b>إن توقّف عند الفحص برسالة تعارض</b>
-          قاعدتك تستخدم أنواعًا قديمة. انسخ ملف الإصلاح أدناه، والصقه في
-          Supabase ← <kbd>SQL Editor</kbd> ← <kbd>Run</kbd>، ثم أعد تشغيل سير العمل.
-          الإصلاح يحافظ على كل بياناتك.
+          <b>إن ظهر ❌</b>
+          شغّل ملف الإصلاح ثم أعد الفحص. يحافظ على كل بياناتك.
         </div>
         <button class="copy" data-file="fix">نسخ ملف الإصلاح <span class="sz"></span></button>
 
-        <div class="mark-done"><label><input type="checkbox" id="s2"> اكتملت التهيئة بنجاح</label></div>
+        <p style="margin-top:18px"><b>ب · نصّب النظام</b> — ينتهي بجدول من ١٢ بندًا يجب أن تكون كلها ✅:</p>
+        <button class="copy" data-file="database">نسخ ملف قاعدة البيانات <span class="sz"></span></button>
+
+        <div class="note stop">
+          <b>إن ظهر أي ❌ في الجدول</b>
+          توقّف وأرسل لي صورته. البند الفاشل يحدد السبب بدقة.
+        </div>
+
+        <div class="mark-done"><label><input type="checkbox" id="s2"> البنود الـ12 كلها سليمة</label></div>
       </div>
     </section>
 
@@ -335,58 +319,40 @@ footer{
     <section class="step" data-step="3">
       <div class="rail"><span class="num">٣</span></div>
       <div class="body">
-        <div class="head"><h3>تأكّد من نشر الموقع</h3><span class="time">٣ دقائق</span></div>
-        <p>
-          نشر الواجهة يبدأ تلقائيًا. تحقق منه في <kbd>Actions</kbd> ←
-          <b>«نشر الواجهة — بوابة المشتريات»</b>. إن لم يكن قد عمل، شغّله
-          بنفس طريقة الخطوة السابقة.
-        </p>
-        <p>عند نجاحه سيكون رابط بوابتك:</p>
-        <div class="tw"><table>
-          <tr><th>الرابط</th></tr>
-          <tr><td><code>https://oolong2006-ship-it.github.io/codex/</code></td></tr>
-        </table></div>
+        <div class="head"><h3>أنشئ حسابك وادخل</h3><span class="time">٤ دقائق</span></div>
 
-        <div class="note warn">
-          <b>إن فشل النشر برسالة «Branch is not allowed to deploy»</b>
-          افتح <kbd>Settings</kbd> ← <kbd>Environments</kbd> ← <kbd>github-pages</kbd>
-          ← <b>Deployment branches</b>، وأضف الفرع
-          <code>claude/alnadeg-procurement-portal-6urp3o</code>، ثم أعد التشغيل.
-        </div>
-
-        <div class="mark-done"><label><input type="checkbox" id="s3"> الموقع يفتح ويظهر صفحة الدخول</label></div>
-      </div>
-    </section>
-
-    <!-- 4 -->
-    <section class="step" data-step="4">
-      <div class="rail"><span class="num">٤</span></div>
-      <div class="body">
-        <div class="head"><h3>فعّل حسابك</h3><span class="time">دقيقتان</span></div>
-
-        <div class="note stop">
-          <b>هذه الخطوة خارج GitHub عمدًا</b>
-          مستودعك <b>عام</b>، وسجلات GitHub فيه مكشوفة للجميع. لو ولّدنا رمز
-          التفعيل هناك لأصبح متاحًا للعالم ٢٤ ساعة. لذلك يُولَّد داخل حساب
-          Supabase الخاص بك وحدك.
-        </div>
-
+        <p><b>أ · أنشئ الحساب من لوحة Supabase</b></p>
         <ol>
-          <li>انسخ الملف أدناه والصقه في Supabase ← <kbd>SQL Editor</kbd>.</li>
-          <li>اضغط <kbd>Run</kbd> — الرابط مضبوط مسبقًا على عنوان بوابتك.</li>
-          <li>انسخ قيمة <b>«الرابط الكامل»</b> وافتحها في المتصفح.</li>
-          <li>اختر كلمة مرورك: ١٢ حرفًا على الأقل، بحروف كبيرة وصغيرة ورقم ورمز.</li>
+          <li><kbd>Authentication</kbd> ← <kbd>Users</kbd> ← <kbd>Add user</kbd>
+            ← <kbd>Create new user</kbd></li>
+          <li>البريد: <code>966559847714@phone.alnadeg.local</code></li>
+          <li>كلمة المرور: اخترها أنت — ١٢ حرفًا فأكثر بحروف كبيرة وصغيرة ورقم ورمز</li>
+          <li><b>فعّل <span dir="ltr">Auto Confirm User</span></b> ← مهم، وإلا تعذّر الدخول</li>
         </ol>
-        <button class="copy" data-file="activation">نسخ ملف التفعيل <span class="sz"></span></button>
 
         <div class="note stop">
           <b>كلمة المرور لك وحدك</b>
-          اكتبها داخل صفحة التفعيل فقط. لا ترسلها لي ولا لأحد، ولا تكتبها في
-          أي ملف. الرابط صالح ٢٤ ساعة ويُستخدم مرة واحدة، وتشغيل الملف مجددًا
-          يُصدر رابطًا جديدًا ويُبطل السابق.
+          اكتبها في لوحة Supabase فقط. لا ترسلها لي ولا لأحد.
         </div>
 
-        <div class="mark-done"><label><input type="checkbox" id="s4"> فعّلت حسابي</label></div>
+        <p style="margin-top:18px"><b>ب · رقّ الحساب إلى مدير نظام</b> — في SQL Editor:</p>
+        <button class="copy" data-file="admin">نسخ ملف الترقية <span class="sz"></span></button>
+        <div class="note ok">
+          <b>النتيجة المتوقعة</b>
+          سطر يقول: <span dir="ltr">✅ جاهز لتسجيل الدخول</span>. إن قال
+          «فعّل Auto Confirm» فارجع للوحة المستخدمين وأكّد الحساب.
+        </div>
+
+        <p style="margin-top:18px"><b>ج · افتح بوابتك</b></p>
+        <p>
+          عند أول فتح ستظهر <b>شاشة ربط</b>. الصق فيها القيمتين من
+          Supabase ← <kbd>Project Settings</kbd> ← <kbd>API</kbd>:
+          <b>Project URL</b> ومفتاح <b>anon public</b>. البوابة تتحقق من
+          المفتاح قبل قبوله، وترفض المفتاح السرّي إن أخطأت.
+        </p>
+        <p>ثم سجّل دخولك برقم جوالك وكلمة المرور التي اخترتها.</p>
+
+        <div class="mark-done"><label><input type="checkbox" id="s3"> دخلت البوابة</label></div>
       </div>
     </section>
   </div>
@@ -402,7 +368,7 @@ footer{
       <span>إدارة المستخدمين ← إضافة مستخدم</span>
       <span>كلمة مرور مؤقتة تظهر مرة واحدة</span>
       <span>طلب شراء جديد ← أرفق الفاتورة ← أرسل</span>
-      <span>Actions ← «اختبارات القبول» لتقرير موثّق</span>
+      <span>Edge Function تُنشر لاحقًا لإنشاء بقية المستخدمين</span>
     </div>
   </section>
 
@@ -3471,10 +3437,97 @@ select
   (now() + make_interval(hours => ساعات_الصلاحية)) as "ينتهي في"
 from رمز;
 </script>
+<script type="text/plain" id="file-admin">-- =====================================================================
+--  ترقية حسابك إلى مدير النظام
+--
+--  يُستخدم بعد إنشاء الحساب من لوحة Supabase مباشرة:
+--    Authentication ← Users ← Add user ← Create new user
+--      Email          : 966559847714@phone.alnadeg.local
+--      Password       : اختر كلمة مرور قوية (١٢ حرفًا فأكثر)
+--      Auto Confirm   : ✅ مفعّل  ← مهم جدًا وإلا تعذّر الدخول
+--
+--  ثم شغّل هذا الملف. لا يحتاج أي مفتاح ولا أي خدمة خارجية.
+--
+--  إن أردت رقمًا آخر، غيّر السطر الأول فقط.
+-- =====================================================================
+do $$
+declare
+  v_phone_input text := '0559847714';          -- ← رقم الجوال
+  v_full_name   text := 'محمد صالح باعمر';      -- ← الاسم الكامل
+  v_location    text := 'CN-06';               -- ← الإدارة المركزية
+
+  v_phone text;
+  v_email text;
+  v_user  uuid;
+  v_loc   uuid;
+begin
+  v_phone := app.normalize_saudi_phone(v_phone_input);
+  if v_phone is null then
+    raise exception 'رقم الجوال غير صحيح: %', v_phone_input;
+  end if;
+  v_email := v_phone || '@phone.alnadeg.local';
+
+  select id into v_user from auth.users where lower(email) = lower(v_email);
+  if v_user is null then
+    raise exception E'لم يُعثر على حساب بالبريد %.\n'
+      'أنشئه أولًا من: Authentication ← Users ← Add user\n'
+      'مع تفعيل خيار Auto Confirm User.', v_email;
+  end if;
+
+  select id into v_loc from public.locations where code = v_location;
+  if v_loc is null then
+    select id into v_loc from public.locations where name_ar = 'الإدارة المركزية' limit 1;
+  end if;
+  if v_loc is null then
+    raise exception 'لم يُعثر على الموقع الإداري — شغّل ملف 01-database.sql أولًا.';
+  end if;
+
+  insert into public.profiles
+    (id, full_name, phone, role, location_id, job_title, is_active, must_change_password)
+  values
+    (v_user, v_full_name, v_phone, 'super_admin', v_loc, 'مدير النظام', true, false)
+  on conflict (id) do update
+    set full_name   = excluded.full_name,
+        phone       = excluded.phone,
+        role        = 'super_admin',
+        location_id = excluded.location_id,
+        is_active   = true;
+
+  -- الدور يُخزَّن في app_metadata أيضًا لاتساق الجلسة
+  update auth.users
+     set raw_app_meta_data =
+           coalesce(raw_app_meta_data, '{}'::jsonb) || '{"role":"super_admin"}'::jsonb
+   where id = v_user;
+
+  insert into public.audit_logs
+    (actor_id, actor_name, actor_role, action, entity_type, entity_id, location_id, details)
+  values
+    (v_user, v_full_name, 'super_admin', 'admin.bootstrapped', 'profile', v_user::text, v_loc,
+     jsonb_build_object('phone', v_phone, 'method', 'dashboard'));
+
+  raise notice 'تم: % — مدير نظام مفعّل برقم %', v_full_name, v_phone;
+end $$;
+
+-- تقرير التأكيد
+select
+  p.full_name            as "الاسم",
+  p.phone                as "رقم الجوال",
+  p.role                 as "الدور",
+  l.name_ar              as "الموقع",
+  p.is_active            as "نشط",
+  u.email_confirmed_at is not null as "الحساب مؤكَّد",
+  case when u.email_confirmed_at is null
+       then '⚠️ فعّل Auto Confirm من لوحة Supabase وإلا تعذّر الدخول'
+       else '✅ جاهز لتسجيل الدخول' end as "الحالة"
+from public.profiles p
+join auth.users u on u.id = p.id
+left join public.locations l on l.id = p.location_id
+where p.role = 'super_admin' and p.is_active;
+</script>
 
 <script>
 (function(){
-  var KEY="alnadeg-install-progress-v2";
+  var KEY="alnadeg-install-progress-v3";
 
   function load(){
     try{ return JSON.parse(localStorage.getItem(KEY)||"{}"); }catch(e){ return {}; }
@@ -3485,7 +3538,7 @@ from رمز;
 
   function paint(){
     var n=0;
-    for(var i=1;i<=4;i++){
+    for(var i=1;i<=3;i++){
       var box=document.getElementById("s"+i);
       var step=document.querySelector('.step[data-step="'+i+'"]');
       var on=!!state["s"+i];
@@ -3494,10 +3547,10 @@ from رمز;
       if(on) n++;
     }
     document.getElementById("count").textContent=String(n);
-    document.getElementById("bar").style.width=(n/4*100)+"%";
+    document.getElementById("bar").style.width=(n/3*100)+"%";
   }
 
-  for(var i=1;i<=4;i++){
+  for(var i=1;i<=3;i++){
     (function(k){
       var box=document.getElementById("s"+k);
       if(!box) return;
