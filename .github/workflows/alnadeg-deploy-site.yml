@@ -36,28 +36,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: التحقق من وجود المفاتيح
+      - name: حالة الربط
+        id: cfg
         env:
           ANON: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
         run: |
+          # غياب المفتاح لم يعد يمنع النشر: الموقع يُنشر ويعرض شاشة ربط
+          # يضع فيها المدير القيمتين بنفسه. وجود المفتاح يجعل الربط تلقائيًا.
           if [ -z "$ANON" ]; then
-            {
-              echo "## ❌ المفتاح العام غير مضبوط"
-              echo ""
-              echo "أضف السر التالي ثم أعد تشغيل سير العمل:"
-              echo ""
-              echo "| اسم السر | من أين تأخذه |"
-              echo "|---|---|"
-              echo "| \`NEXT_PUBLIC_SUPABASE_ANON_KEY\` | Supabase → Project Settings → API → مفتاح **anon public** |"
-              echo ""
-              echo "> ⚠️ لا تستخدم مفتاح \`service_role\` هنا إطلاقًا."
-              echo ""
-              echo "المسار: **Settings → Secrets and variables → Actions → New repository secret**"
-            } >> "$GITHUB_STEP_SUMMARY"
-            echo "::error::المفتاح NEXT_PUBLIC_SUPABASE_ANON_KEY غير مضبوط"
-            exit 1
+            echo "linked=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::المفتاح العام غير مضبوط — سيُنشر الموقع بشاشة ربط يدوي"
+          else
+            echo "linked=true" >> "$GITHUB_OUTPUT"
+            echo "✅ المفتاح موجود — سيُربط الموقع تلقائيًا"
           fi
-          echo "✅ المفتاح موجود"
 
       - uses: actions/setup-node@v4
         with:
@@ -84,13 +76,8 @@ jobs:
       - name: تعطيل معالجة Jekyll لمجلد _next
         run: touch out/.nojekyll
 
-      - name: التأكد من خلو المخرجات من مفاتيح الخادم
-        run: |
-          if grep -rlE 'service_role|SUPABASE_SERVICE_ROLE' out/ 2>/dev/null; then
-            echo "::error::عُثر على مرجع لمفتاح الخدمة في مخرجات الواجهة"
-            exit 1
-          fi
-          echo "✅ لا مفاتيح خادم في الحزمة النهائية"
+      - name: فحص الحزمة من تسرّب مفاتيح الخادم
+        run: node scripts/scan-bundle.mjs out
 
       - uses: actions/configure-pages@v5
         with:
@@ -121,4 +108,7 @@ jobs:
             echo ""
             echo "### الخطوة التالية"
             echo "شغّل سير العمل **«تهيئة قاعدة البيانات والخدمة»** من تبويب Actions."
+            echo ""
+            echo "إن ظهرت شاشة «ربط البوابة» عند الفتح، فذلك متوقع: الصق فيها"
+            echo "عنوان المشروع والمفتاح العام من Supabase وستعمل البوابة فورًا."
           } >> "$GITHUB_STEP_SUMMARY"

@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Cairo } from "next/font/google";
 import { AuthProvider } from "@/lib/auth-context";
+import { ConfigGate } from "@/components/ConfigGate";
 import "./globals.css";
 
 const arabic = Cairo({
@@ -26,7 +27,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="ar" dir="rtl" className={arabic.variable}>
       <body className="min-h-screen font-sans">
         <a href="#main" className="skip-link">تخطي إلى المحتوى</a>
-        <AuthProvider>{children}</AuthProvider>
+        <ConfigGate>
+          <AuthProvider>{children}</AuthProvider>
+        </ConfigGate>
       </body>
     </html>
   );

@@ -1,5 +1,5 @@
 "use client";
-import { API_BASE, supabase } from "./supabase";
+import { apiBase, supabase } from "./supabase";
 
 /** خطأ يحمل رسالة عربية جاهزة للعرض */
 export class ApiError extends Error {
@@ -25,7 +25,7 @@ export async function callApi<T>(
 
   let res: Response;
   try {
-    res = await fetch(`${API_BASE}/${path}`, {
+    res = await fetch(`${apiBase()}/${path}`, {
       method,
       headers,
       body: body === undefined ? undefined : JSON.stringify(body),
