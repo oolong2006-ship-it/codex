@@ -79,9 +79,41 @@ jobs:
       - name: فحص الحزمة من تسرّب مفاتيح الخادم
         run: node scripts/scan-bundle.mjs out
 
+      # تفعيل Pages أول مرة يتطلب صلاحية لا يملكها رمز سير العمل،
+      # لذا لا نُفشل التشغيل هنا بل نوضّح النقرة المطلوبة بدقة.
       - uses: actions/configure-pages@v5
+        id: pages
+        continue-on-error: true
         with:
           enablement: true
+
+      - name: التحقق من تفعيل GitHub Pages
+        if: steps.pages.outcome == 'failure'
+        run: |
+          {
+            echo "## ⚠️ خطوة واحدة مطلوبة منك — نقرة واحدة"
+            echo ""
+            echo "**كل شيء آخر نجح:** التثبيت، فحص الأنواع، الاختبارات،"
+            echo "البناء، وفحص تسرّب المفاتيح. المتبقي هو تفعيل الاستضافة."
+            echo ""
+            echo "### ما تفعله"
+            echo ""
+            echo "1. افتح: **Settings ← Pages**"
+            echo "   https://github.com/${{ github.repository }}/settings/pages"
+            echo "2. تحت **Source** اختر: **GitHub Actions**"
+            echo "3. هذا كل شيء — لا تحتاج حفظًا ولا إعدادًا آخر."
+            echo ""
+            echo "### لماذا لا أستطيع فعلها عنك"
+            echo ""
+            echo "إنشاء موقع Pages أول مرة يتطلب صلاحية مالك المستودع،"
+            echo "ورمز سير العمل لا يملكها — وهذا قيد من GitHub نفسه لا خلل"
+            echo "في الإعداد. بعد هذه النقرة الواحدة يتولى سير العمل كل"
+            echo "عمليات النشر تلقائيًا إلى الأبد."
+            echo ""
+            echo "بعدها أعد تشغيل سير العمل هذا وسيكتمل النشر."
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "::error::GitHub Pages غير مفعّلة — افتح Settings ← Pages واختر GitHub Actions"
+          exit 1
 
       - uses: actions/upload-pages-artifact@v3
         with:
