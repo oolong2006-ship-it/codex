@@ -1,0 +1,468 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>مَورِد — دليل موردي الهوريكا</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Reem+Kufi:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F3F5F2; --surface:#FFFFFF; --ink:#16241D; --muted:#5B6B62; --line:#D9E0DA;
+  --brand:#1F4D3A; --brand-ink:#FFFFFF; --accent:#D9971E; --accent-soft:#FBF0DA;
+  --ok:#2E7D4F; --ok-soft:#E3F2E8; --warn:#9A6414; --warn-soft:#FBEFD9; --danger:#B3261E;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0F1713; --surface:#17221C; --ink:#E6ECE8; --muted:#9AABA1; --line:#2A3A31;
+    --brand:#7CC4A0; --brand-ink:#0F1713; --accent:#E8B04A; --accent-soft:#3A2E17;
+    --ok:#7CC4A0; --ok-soft:#1C3328; --warn:#E8B04A; --warn-soft:#3A2E17; --danger:#F2A09A;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0F1713; --surface:#17221C; --ink:#E6ECE8; --muted:#9AABA1; --line:#2A3A31;
+  --brand:#7CC4A0; --brand-ink:#0F1713; --accent:#E8B04A; --accent-soft:#3A2E17;
+  --ok:#7CC4A0; --ok-soft:#1C3328; --warn:#E8B04A; --warn-soft:#3A2E17; --danger:#F2A09A;
+}
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"IBM Plex Sans Arabic",Tahoma,"Segoe UI",sans-serif;font-size:16px;line-height:1.6}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.wrap{max-width:1180px;margin:0 auto;padding:0 16px}
+
+header.top{background:var(--brand);color:var(--brand-ink)}
+header.top .wrap{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;padding-top:28px;padding-bottom:22px;flex-wrap:wrap}
+.brand h1{font-family:"Reem Kufi","IBM Plex Sans Arabic",sans-serif;font-size:clamp(34px,6vw,52px);line-height:1;margin:0;letter-spacing:0}
+.brand p{margin:8px 0 0;opacity:.85;font-size:15px}
+.btn{border:0;border-radius:10px;padding:10px 16px;cursor:pointer;font-weight:600;background:var(--surface);color:var(--ink);border:1px solid var(--line)}
+.btn.primary{background:var(--accent);color:#1b1305;border-color:transparent}
+.btn.ghost{background:transparent}
+.btn.danger{color:var(--danger)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+
+.search{margin-top:-1px;background:var(--brand);padding-bottom:18px}
+.search input{width:100%;border:0;border-radius:12px;padding:14px 16px;font-size:17px;background:var(--surface)}
+.cats{display:flex;gap:8px;overflow-x:auto;padding:14px 0 6px;scrollbar-width:thin}
+.chip{flex:0 0 auto;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 14px;cursor:pointer;font-size:14px;white-space:nowrap}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.chip .n{opacity:.6;margin-inline-start:6px;font-size:12px}
+
+.filters{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:8px 0 14px}
+.filters select{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:8px 10px;font-size:14px}
+.filters .count{margin-inline-start:auto;color:var(--muted);font-size:14px}
+
+.status{padding:10px 14px;border-radius:10px;background:var(--warn-soft);color:var(--warn);font-size:14px;margin-bottom:12px;display:none}
+.status.show{display:block}
+
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;padding-bottom:120px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:10px}
+.card h3{margin:0;font-size:18px;line-height:1.35}
+.card .sub{color:var(--muted);font-size:14px;margin:0}
+.tags{display:flex;flex-wrap:wrap;gap:6px}
+.tag{font-size:12px;padding:2px 9px;border-radius:6px;background:var(--bg);border:1px solid var(--line)}
+.badge{font-size:12px;padding:2px 9px;border-radius:6px;font-weight:600}
+.badge.ok{background:var(--ok-soft);color:var(--ok)}
+.badge.warn{background:var(--warn-soft);color:var(--warn)}
+.badge.demo{background:var(--accent-soft);color:var(--warn)}
+.card .row{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.facts{display:grid;grid-template-columns:1fr 1fr;gap:4px 12px;font-size:13px;color:var(--muted)}
+.facts b{color:var(--ink);font-weight:600}
+.card .actions{display:flex;gap:8px;margin-top:auto}
+.card .actions .btn{flex:1;padding:8px}
+.cmp{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted);cursor:pointer}
+.stars{color:var(--accent);letter-spacing:1px}
+
+.empty{grid-column:1/-1;text-align:center;padding:48px 16px;color:var(--muted)}
+
+.tray{position:fixed;bottom:0;inset-inline:0;background:var(--ink);color:var(--bg);padding:12px 16px calc(12px + env(safe-area-inset-bottom,0px));display:none;align-items:center;justify-content:space-between;gap:12px;z-index:5}
+.tray.show{display:flex}
+.tray .btn{background:var(--accent);color:#1b1305;border:0}
+
+dialog{border:0;border-radius:16px;padding:0;width:min(760px,96vw);max-height:92vh;background:var(--surface);color:var(--ink)}
+dialog::backdrop{background:rgba(10,20,15,.55)}
+.dlg-head{position:sticky;top:0;background:var(--surface);border-bottom:1px solid var(--line);padding:14px 18px;display:flex;justify-content:space-between;align-items:center;gap:12px;z-index:1}
+.dlg-head h2{margin:0;font-size:20px}
+.dlg-body{padding:18px}
+.dlg-foot{position:sticky;bottom:0;background:var(--surface);border-top:1px solid var(--line);padding:12px 18px;display:flex;gap:8px;justify-content:flex-start;flex-wrap:wrap}
+.x{background:none;border:0;font-size:26px;line-height:1;cursor:pointer;color:var(--muted)}
+
+.section{margin-bottom:20px}
+.section h4{margin:0 0 8px;font-size:15px;color:var(--brand)}
+.kv{display:grid;grid-template-columns:150px 1fr;gap:6px 12px;font-size:15px}
+.kv dt{color:var(--muted)}
+.kv dd{margin:0;word-break:break-word}
+.kv a{color:var(--brand)}
+
+form .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+form label.f{display:flex;flex-direction:column;gap:4px;font-size:14px;color:var(--muted)}
+form input[type=text],form input[type=tel],form input[type=email],form input[type=url],form input[type=number],form select,form textarea{border:1px solid var(--line);background:var(--bg);border-radius:10px;padding:9px 11px;font-size:15px;color:var(--ink);width:100%}
+form textarea{min-height:70px;resize:vertical}
+fieldset{border:1px solid var(--line);border-radius:12px;padding:12px;margin:0 0 14px}
+legend{padding:0 6px;font-weight:600;color:var(--brand)}
+.checks{display:flex;flex-wrap:wrap;gap:6px}
+.checks label{display:flex;align-items:center;gap:5px;font-size:14px;border:1px solid var(--line);border-radius:8px;padding:4px 9px;cursor:pointer;background:var(--bg)}
+.req{color:var(--danger)}
+
+.tbl-wrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:14px;min-width:520px}
+th,td{border-bottom:1px solid var(--line);padding:8px 10px;text-align:start;vertical-align:top}
+th{color:var(--muted);font-weight:500;width:130px}
+thead th{color:var(--ink);font-weight:700}
+
+.toast{position:fixed;top:calc(16px + env(safe-area-inset-top,0px));inset-inline:16px;margin:auto;max-width:420px;background:var(--ink);color:var(--bg);padding:12px 16px;border-radius:10px;z-index:50;display:none;text-align:center}
+.toast.show{display:block}
+
+@media (max-width:600px){
+  form .grid2{grid-template-columns:1fr}
+  .kv{grid-template-columns:1fr;gap:0 0}
+  .kv dt{margin-top:8px}
+  .filters select{flex:1 1 45%}
+  .filters .count{width:100%;margin:0}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <div class="brand">
+      <h1>مَورِد</h1>
+      <p>دليل موردي الهوريكا في المملكة — كل مورد ببياناته النظامية وشروطه وتغطيته</p>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn ghost" id="exportBtn" style="color:var(--brand-ink);border-color:rgba(255,255,255,.35)" hidden>تصدير Excel</button>
+      <button class="btn ghost" id="importBtn" style="color:var(--brand-ink);border-color:rgba(255,255,255,.35)">استيراد من Excel</button>
+      <button class="btn primary" id="addBtn">إضافة مورد</button>
+    </div>
+  </div>
+</header>
+<div class="search">
+  <div class="wrap">
+    <input id="q" type="search" placeholder="ابحث باسم المورد، منتج، مدينة، سجل تجاري…" aria-label="بحث">
+  </div>
+</div>
+
+<main class="wrap">
+  <nav class="cats" id="cats" aria-label="التصنيفات"></nav>
+  <div class="filters">
+    <select id="fCity" aria-label="المدينة"><option value="">كل المدن</option></select>
+    <select id="fPay" aria-label="شروط الدفع">
+      <option value="">كل شروط الدفع</option><option value="آجل">يقبل الآجل</option><option value="نقدي">نقدي فقط</option>
+    </select>
+    <select id="fCert" aria-label="الشهادات"><option value="">كل الشهادات</option></select>
+    <select id="fStatus" aria-label="حالة التوثيق">
+      <option value="">كل الحالات</option><option>موثّق</option><option>قيد التحقق</option><option>غير موثّق</option>
+    </select>
+    <select id="fSort" aria-label="الترتيب">
+      <option value="name">ترتيب: الاسم</option><option value="rating">ترتيب: التقييم</option><option value="updated">ترتيب: آخر تحديث</option>
+    </select>
+    <span class="count" id="count"></span>
+  </div>
+  <div class="status" id="status"></div>
+  <div class="status show" id="demoBar" style="display:none;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><span id="demoTxt"></span><button class="btn" id="delDemo">حذف البيانات التجريبية</button></div>
+  <section class="grid" id="grid" aria-live="polite"></section>
+</main>
+
+<div class="tray" id="tray">
+  <span id="trayTxt"></span>
+  <div style="display:flex;gap:8px">
+    <button class="btn ghost" id="clearCmp" style="color:var(--bg);border-color:rgba(255,255,255,.3)">إلغاء</button>
+    <button class="btn" id="openCmp">قارن الآن</button>
+  </div>
+</div>
+
+<dialog id="dView"><div class="dlg-head"><h2 id="vTitle"></h2><button class="x" data-close aria-label="إغلاق">×</button></div><div class="dlg-body" id="vBody"></div><div class="dlg-foot" id="vFoot"></div></dialog>
+
+<dialog id="dForm">
+  <form id="form" method="dialog" novalidate>
+    <div class="dlg-head"><h2 id="fTitle">إضافة مورد</h2><button type="button" class="x" data-close aria-label="إغلاق">×</button></div>
+    <div class="dlg-body">
+      <fieldset><legend>البيانات الأساسية</legend>
+        <div class="grid2">
+          <label class="f">الاسم التجاري <span class="req">*</span><input type="text" name="name" required></label>
+          <label class="f">الاسم النظامي (حسب السجل)<input type="text" name="legalName"></label>
+          <label class="f">رقم السجل التجاري<input type="text" name="cr" inputmode="numeric"></label>
+          <label class="f">الرقم الضريبي<input type="text" name="vat" inputmode="numeric"></label>
+          <label class="f">المدينة الرئيسية <span class="req">*</span><select name="city" id="formCity" required></select></label>
+          <label class="f">الحي<input type="text" name="district"></label>
+          <label class="f" style="grid-column:1/-1">العنوان الوطني<input type="text" name="nationalAddress" placeholder="مثال: RRRD2929"></label>
+        </div>
+      </fieldset>
+      <fieldset><legend>التواصل</legend>
+        <div class="grid2">
+          <label class="f">مسؤول المبيعات<input type="text" name="contactName"></label>
+          <label class="f">المسمى<input type="text" name="contactRole"></label>
+          <label class="f">الجوال<input type="tel" name="phone" dir="ltr"></label>
+          <label class="f">واتساب<input type="tel" name="whatsapp" dir="ltr"></label>
+          <label class="f">البريد<input type="email" name="email" dir="ltr"></label>
+          <label class="f">الموقع الإلكتروني<input type="url" name="website" dir="ltr"></label>
+        </div>
+      </fieldset>
+      <fieldset><legend>التصنيفات <span class="req">*</span></legend><div class="checks" id="formCats"></div></fieldset>
+      <label class="f" style="margin-bottom:14px">أهم المنتجات والعلامات (افصل بفاصلة)<textarea name="products"></textarea></label>
+      <fieldset><legend>التغطية والتوريد</legend>
+        <div class="checks" id="formCover" style="margin-bottom:10px"></div>
+        <div class="checks" id="formDays" style="margin-bottom:10px"></div>
+        <div class="grid2">
+          <label class="f">مدة التوريد<input type="text" name="leadTime" placeholder="مثال: 24 ساعة"></label>
+          <label class="f">الحد الأدنى للطلب<input type="text" name="moq" placeholder="مثال: 1,500 ريال"></label>
+        </div>
+      </fieldset>
+      <fieldset><legend>الشروط التجارية</legend>
+        <div class="grid2">
+          <label class="f">شروط الدفع<select name="payment"><option>نقدي</option><option>آجل</option><option>نقدي وآجل</option></select></label>
+          <label class="f">مدة الآجل (يوم)<input type="number" name="creditDays" min="0" step="15"></label>
+        </div>
+      </fieldset>
+      <fieldset><legend>الجودة والتوثيق</legend>
+        <div class="checks" id="formCerts" style="margin-bottom:10px"></div>
+        <div class="grid2">
+          <label class="f">رقم ترخيص الغذاء والدواء<input type="text" name="sfdaLicense"></label>
+          <label class="f">حالة التوثيق<select name="status"><option>غير موثّق</option><option>قيد التحقق</option><option>موثّق</option></select></label>
+          <label class="f">تقييمنا للمورد<select name="rating"><option value="0">بدون تقييم</option><option value="5">5 ممتاز</option><option value="4">4 جيد جداً</option><option value="3">3 جيد</option><option value="2">2 ضعيف</option><option value="1">1 سيئ</option></select></label>
+        </div>
+      </fieldset>
+      <label class="f">ملاحظات المشتريات<textarea name="notes"></textarea></label>
+    </div>
+    <div class="dlg-foot">
+      <button type="submit" class="btn primary" id="saveBtn">حفظ المورد</button>
+      <button type="button" class="btn" data-close>إلغاء</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="dCmp"><div class="dlg-head"><h2>مقارنة الموردين</h2><button class="x" data-close aria-label="إغلاق">×</button></div><div class="dlg-body"><div class="tbl-wrap" id="cmpBody"></div></div></dialog>
+
+<dialog id="dImp"><div class="dlg-head"><h2>استيراد موردين دفعة واحدة</h2><button class="x" data-close aria-label="إغلاق">×</button></div>
+<div class="dlg-body">
+  <p style="margin-top:0">ارفع ملف Excel أو CSV بنفس أعمدة القالب. المورد الذي يتكرر رقم سجله التجاري يُحدَّث ولا يُكرَّر.</p>
+  <p style="color:var(--muted);font-size:14px">الأعمدة المتعددة (التصنيفات، التغطية، أيام التوريد، الشهادات) افصل قيمها بـ | أو فاصلة. الحقول الإلزامية: الاسم التجاري والمدينة.</p>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin:14px 0">
+    <button class="btn" id="tplBtn">تحميل القالب الفارغ</button>
+    <label class="btn primary" style="cursor:pointer">اختيار الملف<input type="file" id="impFile" accept=".xlsx,.xls,.csv" hidden></label>
+  </div>
+  <div id="impOut" style="font-size:15px"></div>
+</div>
+<div class="dlg-foot"><button class="btn primary" id="impGo" hidden>استيراد</button><button class="btn" data-close>إغلاق</button></div></dialog>
+
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+const CATS=["لحوم ودواجن","أسماك وبحريات","خضار وفواكه","ألبان وأجبان","بقالة جافة","زيوت وسمن","مجمدات","مخبوزات وحلويات","مشروبات وقهوة","بهارات وصوصات","تغليف واستهلاكيات","منظفات وكيماويات","معدات مطابخ","صيانة وخدمات فنية","زي موحد","غاز وطاقة"];
+const CITIES=["الرياض","جدة","مكة المكرمة","المدينة المنورة","الدمام","الخبر","الأحساء","القصيم","أبها","خميس مشيط","تبوك","حائل","جازان","نجران","الطائف","ينبع"];
+const DAYS=["الأحد","الاثنين","الثلاثاء","الأربعاء","الخميس","الجمعة","السبت"];
+const CERTS=["ترخيص الغذاء والدواء","HACCP","ISO 22000","ISO 9001","FSSC 22000","شهادة حلال","مصنع وطني"];
+
+const S={all:[],q:"",cat:"",city:"",pay:"",cert:"",status:"",sort:"name",cmp:new Set(),db:null,col:null,dl:null,editing:null};
+const $=s=>document.querySelector(s);
+const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const norm=t=>String(t??"").toLowerCase().replace(/[\u064B-\u0652\u0640]/g,"").replace(/[أإآ]/g,"ا").replace(/ة/g,"ه").replace(/ى/g,"ي");
+const arr=v=>Array.isArray(v)?v:[];
+function toast(m){const t=$("#toast");t.textContent=m;t.classList.add("show");clearTimeout(toast.h);toast.h=setTimeout(()=>t.classList.remove("show"),3200)}
+function status(m){const s=$("#status");s.textContent=m||"";s.classList.toggle("show",!!m)}
+
+// build static controls
+$("#fCity").insertAdjacentHTML("beforeend",CITIES.map(c=>`<option>${c}</option>`).join(""));
+$("#fCert").insertAdjacentHTML("beforeend",CERTS.map(c=>`<option>${c}</option>`).join(""));
+$("#formCity").innerHTML=CITIES.map(c=>`<option>${c}</option>`).join("");
+const checks=(name,list)=>list.map(v=>`<label><input type="checkbox" name="${name}" value="${esc(v)}">${esc(v)}</label>`).join("");
+$("#formCats").innerHTML=checks("categories",CATS);
+$("#formCover").innerHTML=`<span style="width:100%;font-size:13px;color:var(--muted)">مدن التغطية</span>`+checks("coverage",CITIES);
+$("#formDays").innerHTML=`<span style="width:100%;font-size:13px;color:var(--muted)">أيام التوريد</span>`+checks("deliveryDays",DAYS);
+$("#formCerts").innerHTML=checks("certificates",CERTS);
+
+function renderCats(){
+  const counts={};S.all.forEach(s=>arr(s.categories).forEach(c=>counts[c]=(counts[c]||0)+1));
+  $("#cats").innerHTML=`<button class="chip" data-cat="" aria-pressed="${!S.cat}">الكل<span class="n">${S.all.length}</span></button>`+
+    CATS.map(c=>`<button class="chip" data-cat="${esc(c)}" aria-pressed="${S.cat===c}">${esc(c)}<span class="n">${counts[c]||0}</span></button>`).join("");
+}
+function filtered(){
+  const q=norm(S.q).trim();
+  let r=S.all.filter(s=>{
+    if(S.cat&&!arr(s.categories).includes(S.cat))return false;
+    if(S.city&&s.city!==S.city&&!arr(s.coverage).includes(S.city))return false;
+    if(S.pay==="آجل"&&!String(s.payment||"").includes("آجل"))return false;
+    if(S.pay==="نقدي"&&s.payment!=="نقدي")return false;
+    if(S.cert&&!arr(s.certificates).includes(S.cert))return false;
+    if(S.status&&s.status!==S.status)return false;
+    if(q){const hay=norm([s.name,s.legalName,s.cr,s.vat,s.city,s.district,s.products,s.contactName,arr(s.categories).join(" "),arr(s.coverage).join(" ")].join(" "));
+      if(!q.split(/\s+/).every(w=>hay.includes(w)))return false}
+    return true});
+  const by={name:(a,b)=>String(a.name).localeCompare(String(b.name),"ar"),rating:(a,b)=>(+b.rating||0)-(+a.rating||0),updated:(a,b)=>String(b.updatedAt||"").localeCompare(String(a.updatedAt||""))};
+  return r.sort(by[S.sort]);
+}
+const stars=n=>n>0?`<span class="stars" aria-label="${n} من 5">${"★".repeat(n)}${"☆".repeat(5-n)}</span>`:`<span style="color:var(--muted);font-size:13px">بدون تقييم</span>`;
+const stBadge=s=>s.status==="موثّق"?`<span class="badge ok">موثّق</span>`:s.status==="قيد التحقق"?`<span class="badge warn">قيد التحقق</span>`:`<span class="badge warn">غير موثّق</span>`;
+const demo=s=>s.demo?`<span class="badge demo">تجريبي</span>`:"";
+
+function render(){
+  renderCats();
+  const list=filtered();
+  $("#count").textContent=`${list.length} مورد`;
+  $("#grid").innerHTML=list.length?list.map(s=>`
+    <article class="card">
+      <div class="row"><div style="display:flex;gap:6px;flex-wrap:wrap">${stBadge(s)}${demo(s)}</div>${stars(+s.rating||0)}</div>
+      <div><h3>${esc(s.name)}</h3><p class="sub">${esc(s.city||"")}${s.district?" – "+esc(s.district):""}</p></div>
+      <div class="tags">${arr(s.categories).slice(0,4).map(c=>`<span class="tag">${esc(c)}</span>`).join("")}</div>
+      <div class="facts">
+        <span>الدفع: <b>${esc(s.payment||"—")}${s.creditDays?` ${+s.creditDays} يوم`:""}</b></span>
+        <span>الحد الأدنى: <b>${esc(s.moq||"—")}</b></span>
+        <span>التوريد: <b>${esc(s.leadTime||"—")}</b></span>
+        <span>التغطية: <b>${arr(s.coverage).length||0} مدينة</b></span>
+      </div>
+      <label class="cmp"><input type="checkbox" data-cmp="${esc(s.id)}" ${S.cmp.has(s.id)?"checked":""}> أضف للمقارنة</label>
+      <div class="actions"><button class="btn" data-view="${esc(s.id)}">التفاصيل</button>${s.phone?`<a class="btn" style="text-align:center;text-decoration:none" href="tel:${esc(s.phone)}">اتصال</a>`:""}</div>
+    </article>`).join("")
+    :`<div class="empty">${S.all.length?"لا يوجد مورد يطابق البحث. جرّب تصنيفاً أو مدينة أخرى.":"لا يوجد موردون بعد. ابدأ بإضافة أول مورد."}</div>`;
+  const dn=S.all.filter(x=>x.demo).length;$("#demoBar").style.display=dn&&S.col?"flex":"none";$("#demoTxt").textContent=`يوجد ${dn} مورد تجريبي للعرض فقط.`;
+  const n=S.cmp.size;$("#tray").classList.toggle("show",n>0);$("#trayTxt").textContent=`${n} من 3 للمقارنة`;$("#openCmp").disabled=n<2;
+}
+
+const link=(v,href)=>v?`<a href="${esc(href)}" dir="ltr" target="_blank" rel="noopener">${esc(v)}</a>`:"—";
+function kv(rows){return `<dl class="kv">${rows.map(([k,v])=>`<dt>${k}</dt><dd>${v||"—"}</dd>`).join("")}</dl>`}
+function view(id){
+  const s=S.all.find(x=>x.id===id);if(!s)return;
+  $("#vTitle").textContent=s.name;
+  const wa=String(s.whatsapp||"").replace(/\D/g,"");
+  $("#vBody").innerHTML=`
+    <div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap">${stBadge(s)}${demo(s)}${stars(+s.rating||0)}</div>
+    <div class="section"><h4>البيانات النظامية</h4>${kv([["الاسم النظامي",esc(s.legalName)],["السجل التجاري",esc(s.cr)],["الرقم الضريبي",esc(s.vat)],["ترخيص الغذاء والدواء",esc(s.sfdaLicense)],["المدينة",esc(s.city)+(s.district?" – "+esc(s.district):"")],["العنوان الوطني",esc(s.nationalAddress)]])}</div>
+    <div class="section"><h4>التواصل</h4>${kv([["مسؤول المبيعات",esc(s.contactName)+(s.contactRole?` (${esc(s.contactRole)})`:"")],["الجوال",link(s.phone,"tel:"+s.phone)],["واتساب",wa?link(s.whatsapp,"https://wa.me/"+wa):""],["البريد",link(s.email,"mailto:"+s.email)],["الموقع",link(s.website,s.website)]])}</div>
+    <div class="section"><h4>المنتجات والتصنيفات</h4>${kv([["التصنيفات",arr(s.categories).map(esc).join("، ")],["أهم المنتجات",esc(s.products)]])}</div>
+    <div class="section"><h4>التوريد والشروط</h4>${kv([["مدن التغطية",arr(s.coverage).map(esc).join("، ")],["أيام التوريد",arr(s.deliveryDays).map(esc).join("، ")],["مدة التوريد",esc(s.leadTime)],["الحد الأدنى للطلب",esc(s.moq)],["شروط الدفع",esc(s.payment)+(s.creditDays?` – ${+s.creditDays} يوم`:"")]])}</div>
+    <div class="section"><h4>الجودة</h4>${kv([["الشهادات",arr(s.certificates).map(esc).join("، ")],["ملاحظات المشتريات",esc(s.notes)]])}</div>
+    <p style="color:var(--muted);font-size:13px;margin:0">آخر تحديث: ${s.updatedAt?new Date(s.updatedAt).toLocaleDateString("ar-SA"):"—"}</p>`;
+  $("#vFoot").innerHTML=S.col?`<button class="btn primary" data-edit="${esc(s.id)}">تعديل</button><button class="btn danger" data-del="${esc(s.id)}">حذف</button>`:"";
+  $("#dView").showModal();
+}
+
+function openForm(id){
+  const f=$("#form");f.reset();S.editing=id||null;
+  $("#fTitle").textContent=id?"تعديل مورد":"إضافة مورد";
+  if(id){const s=S.all.find(x=>x.id===id);
+    for(const el of f.elements){if(!el.name)continue;
+      if(el.type==="checkbox")el.checked=arr(s[el.name]).includes(el.value);
+      else el.value=s[el.name]??(el.name==="rating"?"0":"")}}
+  $("#dView").open&&$("#dView").close();$("#dForm").showModal();
+}
+$("#form").addEventListener("submit",async e=>{
+  e.preventDefault();const f=e.target,fd=new FormData(f);
+  const body={};["name","legalName","cr","vat","city","district","nationalAddress","contactName","contactRole","phone","whatsapp","email","website","products","leadTime","moq","payment","sfdaLicense","status","notes"].forEach(k=>body[k]=String(fd.get(k)||"").trim());
+  ["categories","coverage","deliveryDays","certificates"].forEach(k=>body[k]=fd.getAll(k));
+  body.creditDays=Number(fd.get("creditDays"))||0;body.rating=Number(fd.get("rating"))||0;body.updatedAt=new Date().toISOString();
+  if(!body.name){toast("اكتب الاسم التجاري للمورد");f.name.focus();return}
+  if(!body.categories.length){toast("اختر تصنيفاً واحداً على الأقل");return}
+  if(!S.col){toast("الحفظ غير متاح في هذا العرض");return}
+  const btn=$("#saveBtn");btn.disabled=true;
+  try{
+    if(S.editing){const old=S.all.find(x=>x.id===S.editing)||{};body.createdAt=old.createdAt||body.updatedAt;await S.col.doc(S.editing).set(body)}
+    else{body.createdAt=body.updatedAt;await S.col.doc().set(body)}
+    $("#dForm").close();toast("تم حفظ المورد");
+  }catch(err){toast(err&&err.code==="quota_exceeded"?"امتلأت قاعدة البيانات، احذف موردين غير مستخدمين":err&&err.code==="invalid_argument"?"ليس لديك صلاحية الحفظ":"تعذر الحفظ، حاول مرة أخرى")}
+  finally{btn.disabled=false}
+});
+
+function compare(){
+  const list=[...S.cmp].map(id=>S.all.find(x=>x.id===id)).filter(Boolean);
+  const rows=[["المدينة",s=>esc(s.city)],["التوثيق",s=>esc(s.status)],["التقييم",s=>stars(+s.rating||0)],["التصنيفات",s=>arr(s.categories).map(esc).join("، ")],["الدفع",s=>esc(s.payment)+(s.creditDays?` – ${+s.creditDays} يوم`:"")],["الحد الأدنى",s=>esc(s.moq)],["مدة التوريد",s=>esc(s.leadTime)],["أيام التوريد",s=>arr(s.deliveryDays).map(esc).join("، ")],["التغطية",s=>arr(s.coverage).map(esc).join("، ")],["الشهادات",s=>arr(s.certificates).map(esc).join("، ")],["التواصل",s=>esc(s.contactName)+" "+esc(s.phone)]];
+  $("#cmpBody").innerHTML=`<table><thead><tr><th></th>${list.map(s=>`<th>${esc(s.name)}</th>`).join("")}</tr></thead><tbody>${rows.map(([k,fn])=>`<tr><th>${k}</th>${list.map(s=>`<td>${fn(s)||"—"}</td>`).join("")}</tr>`).join("")}</tbody></table>`;
+  $("#dCmp").showModal();
+}
+
+async function exportCsv(){return saveCsv("موردين-الهوريكا.csv",filtered())}
+
+
+const COLS=[["name","الاسم التجاري"],["legalName","الاسم النظامي"],["cr","السجل التجاري"],["vat","الرقم الضريبي"],["city","المدينة"],["district","الحي"],["nationalAddress","العنوان الوطني"],["contactName","مسؤول المبيعات"],["contactRole","المسمى"],["phone","الجوال"],["whatsapp","واتساب"],["email","البريد"],["website","الموقع"],["categories","التصنيفات"],["products","المنتجات"],["coverage","التغطية"],["deliveryDays","أيام التوريد"],["leadTime","مدة التوريد"],["moq","الحد الأدنى"],["payment","الدفع"],["creditDays","أيام الآجل"],["certificates","الشهادات"],["sfdaLicense","ترخيص الغذاء والدواء"],["status","التوثيق"],["rating","التقييم"],["notes","ملاحظات"]];
+const MULTI=new Set(["categories","coverage","deliveryDays","certificates"]);
+const HMAP={};COLS.forEach(([k,a])=>{HMAP[norm(a).replace(/\s/g,"")]=k;HMAP[k.toLowerCase()]=k});
+let IMP=[];
+function docIdFor(r){const cr=String(r.cr||"").replace(/\D/g,"");if(cr.length>=7)return "cr-"+cr;
+  let h=0;const t=norm(r.name+"|"+r.city);for(let i=0;i<t.length;i++)h=(h*31+t.charCodeAt(i))>>>0;return "n-"+h.toString(36)}
+function rowToSupplier(raw){
+  const r={};for(const [h,v] of Object.entries(raw)){const k=HMAP[norm(h).replace(/\s/g,"")]||HMAP[String(h).toLowerCase().trim()];if(k)r[k]=v}
+  const o={};COLS.forEach(([k])=>{let v=r[k];
+    if(MULTI.has(k))o[k]=String(v??"").split(/[|،,;\n]/).map(x=>x.trim()).filter(Boolean);
+    else if(k==="creditDays"||k==="rating")o[k]=Number(String(v??"").replace(/[^\d.]/g,""))||0;
+    else o[k]=String(v??"").trim()});
+  if(o.rating>5)o.rating=5;
+  if(!["موثّق","قيد التحقق","غير موثّق"].includes(o.status))o.status=/موثق/.test(norm(o.status))&&!/غير/.test(o.status)?"موثّق":"قيد التحقق";
+  o.city=o.city||"";return o}
+$("#impFile").addEventListener("change",async e=>{
+  const f=e.target.files[0];if(!f)return;const out=$("#impOut");$("#impGo").hidden=true;
+  if(!window.XLSX){out.textContent="تعذر تحميل قارئ ملفات Excel. أعد تحميل الصفحة.";return}
+  try{const wb=XLSX.read(await f.arrayBuffer(),{type:"array"});const rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{defval:""});
+    const seen=new Map();let bad=0;
+    rows.map(rowToSupplier).forEach(s=>{if(!s.name||!s.city){bad++;return}seen.set(docIdFor(s),s)});
+    IMP=[...seen.entries()];
+    const exist=IMP.filter(([id])=>S.all.some(x=>x.id===id)).length;
+    out.innerHTML=`<b>${IMP.length}</b> مورد جاهز للاستيراد — ${IMP.length-exist} جديد، ${exist} تحديث لموجود.${bad?`<br><span style="color:var(--danger)">${bad} صف بدون اسم أو مدينة سيتم تجاهله.</span>`:""}${rows.length-bad>IMP.length?`<br>${rows.length-bad-IMP.length} صف مكرر تم دمجه.`:""}`;
+    $("#impGo").hidden=!IMP.length;
+  }catch(err){out.textContent="تعذرت قراءة الملف. تأكد أنه Excel أو CSV."}
+  e.target.value="";
+});
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+$("#impGo").addEventListener("click",async()=>{
+  if(!S.col||!IMP.length)return;const btn=$("#impGo"),out=$("#impOut");btn.disabled=true;
+  let ok=0,fail=0;const now=new Date().toISOString();
+  for(const [id,s] of IMP){
+    const old=S.all.find(x=>x.id===id);const body={...s,updatedAt:now,createdAt:old&&old.createdAt||now,imported:true};
+    let tries=0;
+    while(true){try{await S.col.doc(id).set(body);ok++;break}
+      catch(err){const c=err&&err.code;
+        if((c==="resource_exhausted"||c==="unavailable")&&tries<5){tries++;await sleep(800*tries+Math.random()*400);continue}
+        fail++;if(c==="quota_exceeded"){out.innerHTML+=`<br>امتلأت قاعدة البيانات عند ${ok} مورد.`;IMP=[];}break}}
+    if(!IMP.length)break;
+    if((ok+fail)%20===0){out.innerHTML=`جاري الاستيراد… ${ok+fail} من ${IMP.length}`;await sleep(150)}
+  }
+  out.innerHTML=`تم استيراد <b>${ok}</b> مورد.${fail?` تعذر ${fail}.`:""}`;btn.hidden=true;btn.disabled=false;IMP=[];toast(`تم استيراد ${ok} مورد`);
+});
+async function saveCsv(name,rows){
+  if(!S.dl){toast("التنزيل غير متاح في هذا العرض");return}
+  const cell=v=>`"${(Array.isArray(v)?v.join(" | "):String(v??"")).replace(/"/g,'""')}"`;
+  const csv="\uFEFF"+[COLS.map(c=>cell(c[1])).join(","),...rows.map(s=>COLS.map(c=>cell(s[c[0]])).join(","))].join("\r\n");
+  try{await S.dl.save({filename:name,data:new Blob([csv],{type:"text/csv;charset=utf-8"})})}catch(e){toast("لم يكتمل التنزيل")}
+}
+$("#tplBtn").addEventListener("click",()=>saveCsv("قالب-استيراد-الموردين.csv",[{name:"مثال: مؤسسة الأمثلة التجارية",city:"الرياض",categories:["لحوم ودواجن","مجمدات"],coverage:["الرياض","القصيم"],deliveryDays:["الأحد","الخميس"],payment:"آجل",creditDays:30,certificates:["HACCP"],status:"قيد التحقق"}]));
+$("#importBtn").addEventListener("click",()=>{$("#impOut").textContent="";$("#impGo").hidden=true;$("#dImp").showModal()});
+$("#delDemo").addEventListener("click",async()=>{
+  const d=S.all.filter(x=>x.demo);if(!d.length||!confirm(`حذف ${d.length} مورد تجريبي؟`))return;
+  for(const s of d){try{await S.col.doc(s.id).delete()}catch(e){}}toast("تم حذف البيانات التجريبية")});
+
+// events
+$("#q").addEventListener("input",e=>{S.q=e.target.value;render()});
+[["#fCity","city"],["#fPay","pay"],["#fCert","cert"],["#fStatus","status"],["#fSort","sort"]].forEach(([s,k])=>$(s).addEventListener("change",e=>{S[k]=e.target.value;render()}));
+document.addEventListener("click",e=>{
+  const t=e.target.closest("[data-cat],[data-view],[data-edit],[data-del],[data-close]");if(!t)return;
+  if(t.hasAttribute("data-close")){t.closest("dialog").close();return}
+  if(t.dataset.cat!==undefined){S.cat=t.dataset.cat;render();return}
+  if(t.dataset.view){view(t.dataset.view);return}
+  if(t.dataset.edit){openForm(t.dataset.edit);return}
+  if(t.dataset.del){const s=S.all.find(x=>x.id===t.dataset.del);
+    if(s&&confirm(`حذف المورد "${s.name}" نهائياً؟`)){S.col.doc(s.id).delete().then(()=>{S.cmp.delete(s.id);$("#dView").close();toast("تم حذف المورد")}).catch(()=>toast("تعذر الحذف"))}}
+});
+document.addEventListener("change",e=>{const id=e.target.dataset&&e.target.dataset.cmp;if(!id)return;
+  if(e.target.checked){if(S.cmp.size>=3){e.target.checked=false;toast("يمكن مقارنة 3 موردين كحد أقصى");return}S.cmp.add(id)}else S.cmp.delete(id);render()});
+$("#addBtn").addEventListener("click",()=>openForm());
+$("#openCmp").addEventListener("click",compare);
+$("#clearCmp").addEventListener("click",()=>{S.cmp.clear();render()});
+$("#exportBtn").addEventListener("click",exportCsv);
+
+render();
+status("جاري تحميل الموردين…");
+(async()=>{
+  const db=window.claude&&window.claude.use?await window.claude.use("db"):null;
+  if(!db){status("قاعدة البيانات غير متاحة في هذا العرض. افتح الرابط من داخل Claude لعرض الموردين وإضافتهم.");$("#addBtn").disabled=true;$("#importBtn").disabled=true;return}
+  S.db=db;S.col=db.collection("suppliers");
+  S.col.limit(1000).onSnapshot(snap=>{S.all=snap.docs.map(d=>({id:d.id,...d.data()}));status("");render()},
+    err=>{status(err&&err.code==="revoked"?"انتهت صلاحية الوصول لهذه الصفحة.":"انقطع الاتصال بقاعدة البيانات. أعد تحميل الصفحة.")});
+  const dl=window.claude.use?await window.claude.use("downloads"):null;
+  if(dl){S.dl=dl;$("#exportBtn").hidden=false}
+})();
+</script>
+</body>
+</html>
