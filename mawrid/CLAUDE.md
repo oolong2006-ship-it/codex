@@ -10,6 +10,9 @@
 ## الوضع الحالي
 - `prototype/horeca-suppliers.html`: نموذج أولي يعمل (MVP) بصفحة HTML واحدة — بحث، فلترة، ملف المورد، إضافة/تعديل،
   مقارنة 3 موردين، تصدير CSV، استيراد جماعي من Excel/CSV مع منع التكرار. يُستخدم كمرجع للواجهة والحقول فقط.
+- `web/`: الإصدار الإنتاجي — **السبرنت 1 مُنفَّذ** (بانتظار الربط بمشروع Supabase الفعلي): Next.js + Supabase بنفس ميزات النموذج، دخول بالبريد،
+  صلاحيات (admin/editor/viewer) عبر RLS، بحث عربي مطبّع في Postgres. التشغيل والاختبارات في `web/README.md`.
+  قبل أي دفع: `npm run typecheck && npm test && npm run db:test && npm run build` داخل `web/`.
 
 ## التقنية المعتمدة للإصدار الإنتاجي
 - Next.js (App Router) + TypeScript + Tailwind، واجهة RTL عربية أولاً، خط IBM Plex Sans Arabic.
