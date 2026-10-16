@@ -290,3 +290,15 @@ export async function requestDocumentGeneration(ctx: TenantCtx, projectId: strin
     return jobId;
   });
 }
+
+export async function standardsRegistry(ctx: TenantCtx) {
+  return tx(ctx, "read", async (db) => {
+    const editions = (
+      await db.query(
+        `SELECT s.code, s.title_ar, s.title_en, e.* FROM standard_editions e JOIN standards s ON s.id = e.standard_id ORDER BY s.code, e.edition_label DESC`,
+      )
+    ).rows;
+    const grants = (await db.query("SELECT standard_edition_id, licensor, scope, ai_processing_allowed, status, valid_from, valid_to FROM license_grants")).rows;
+    return editions.map((e) => ({ ...e, grants: grants.filter((g) => g.standard_edition_id === e.id) }));
+  });
+}
