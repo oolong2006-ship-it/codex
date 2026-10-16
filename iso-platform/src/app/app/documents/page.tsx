@@ -18,6 +18,18 @@ export default async function Documents({ searchParams }: { searchParams: SP }) 
   return (
     <>
       <PageHeader title="الوثائق المضبوطة" subtitle="قائمة الوثائق الرئيسية (Master Document List): رمز فريد، إصدارات، حالة، وتصنيف إلزام شفاف." />
+      {project && docs.length > 0 && (
+        <div className="card mb-4 flex flex-wrap items-center justify-between gap-3">
+          <div className="text-sm">
+            <p className="font-semibold">حزمة التسليم</p>
+            <p className="text-xs text-slate-500">كل الوثائق (Word + PDF)، قائمة الوثائق الرئيسية، سجل النواقص، خطة التطبيق.</p>
+          </div>
+          <div className="flex gap-2">
+            <a className="btn-primary" href={`/api/projects/${project}/package`}>تنزيل ZIP</a>
+            <a className="btn-ghost" href={`/api/projects/${project}/package?pdf=0`}>ZIP بدون PDF (أسرع)</a>
+          </div>
+        </div>
+      )}
       <form className="mb-4 flex gap-2">
         {project && <input type="hidden" name="project" value={project} />}
         <input name="q" defaultValue={q} className="input max-w-sm" placeholder="بحث بالعنوان أو الرمز" />

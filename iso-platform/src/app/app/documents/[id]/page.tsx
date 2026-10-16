@@ -101,7 +101,13 @@ export default async function DocumentPage({ params, searchParams }: { params: P
       <PageHeader
         title={d.title}
         subtitle={<span className="flex flex-wrap items-center gap-2"><span className="font-mono" dir="ltr">{d.code}</span> v{latest.version_no} <StatusBadge status={latest.status} /> <StatusBadge status={d.classification} /></span>}
-        actions={<a className="btn-ghost" href={`/api/versions/${latest.id}/docx`}>تنزيل Word</a>}
+        actions={
+          <>
+            <a className="btn-ghost" href={`/api/versions/${latest.id}/docx`}>تنزيل Word</a>
+            <a className="btn-ghost" href={`/api/versions/${latest.id}/pdf`}>تنزيل PDF</a>
+            <Link className="btn-ghost" href={`/app/documents?project=${d.project_id}`}>حزمة المشروع</Link>
+          </>
+        }
       />
       <Flash {...f} />
       <p className="mb-4 text-xs text-slate-500">أساس التصنيف: {d.classification_basis}</p>
@@ -189,6 +195,7 @@ export default async function DocumentPage({ params, searchParams }: { params: P
                     <span className="flex gap-2 text-xs">
                       {v.id !== latest.id && <Link href={`?compare=${v.id}`}>مقارنة</Link>}
                       <a href={`/api/versions/${v.id}/docx`}>Word</a>
+                      <a href={`/api/versions/${v.id}/pdf`}>PDF</a>
                     </span>
                   </div>
                   <p className="text-xs text-slate-500">{v.change_summary} — {v.author_name}{v.approver_name && ` — اعتمدها ${v.approver_name}`}</p>

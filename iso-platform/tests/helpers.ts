@@ -29,3 +29,28 @@ export async function ownerQuery<T = any>(sql: string, params: unknown[] = []): 
     await c.end();
   }
 }
+
+/** Builds an org with a QM, a completed ISO 9001 project and generated documents (domain-level, no UI). */
+export async function seedProjectWithDocuments(industry: keyof typeof import("./golden").GOLDEN = "restaurantChain") {
+  const { GOLDEN } = await import("./golden");
+  const { addMember } = await import("@/server/domain/orgs");
+  const P = await import("@/server/domain/projects");
+  const { drainJobs } = await import("@/server/domain/jobs");
+  await import("@/server/domain/documents");
+  const g = GOLDEN[industry];
+  const o = await newOrg(g.industry, `منشأة ${industry}`);
+  const q = await addMember(o.ctx, { email: `qm-${randomUUID().slice(0, 8)}@test.local`, fullName: "مدير الجودة", role: "QUALITY_MANAGER" });
+  const qm = await resolveCtx(q.userId, o.orgId);
+  const [hq] = await ownerQuery("SELECT id FROM sites WHERE org_id = $1", [o.orgId]);
+  const projectId = await P.createProject(o.ctx, { title: "مشروع اختبار", siteIds: [hq.id] });
+  for (let i = 0; i < 100; i++) {
+    const st = await P.getIntakeState(o.ctx, projectId);
+    if (!st.next) break;
+    await P.answerQuestion(o.ctx, projectId, st.next.id, g.answers[st.next.id]);
+  }
+  await P.generateBlueprint(o.ctx, projectId);
+  await P.approveScope(o.ctx, projectId, "يشمل نظام إدارة الجودة الأنشطة الموصوفة في المقر الرئيسي للمنشأة.");
+  await P.requestDocumentGeneration(o.ctx, projectId);
+  await drainJobs();
+  return { ...o, qm, projectId };
+}

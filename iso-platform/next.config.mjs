@@ -7,7 +7,7 @@ const securityHeaders = [
 ];
 export default {
   poweredByHeader: false,
-  serverExternalPackages: ["pg"],
+  serverExternalPackages: ["pg", "playwright-core"],
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
   },

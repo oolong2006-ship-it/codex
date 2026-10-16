@@ -20,36 +20,11 @@ import {
   WidthType,
 } from "docx";
 import type { DocContent } from "./writer";
+import { STATUS_AR, controlRows, type RenderMeta } from "./labels";
 
-export interface RenderMeta {
-  orgName: string;
-  code: string;
-  title: string;
-  versionNo: number;
-  status: string;
-  classification: string;
-  author: string;
-  approver: string | null;
-  approvedAt: string | null;
-  effectiveAt: string | null;
-  history: { versionNo: number; status: string; summary: string; date: string }[];
-}
+export type { RenderMeta };
 
 const FONT = "Arial";
-const STATUS_AR: Record<string, string> = {
-  DRAFT: "مسودة",
-  IN_REVIEW: "قيد المراجعة",
-  APPROVED: "معتمدة",
-  EFFECTIVE: "سارية",
-  SUPERSEDED: "ملغاة بإصدار أحدث",
-  REJECTED: "مرفوضة",
-};
-const CLASS_AR: Record<string, string> = {
-  REQUIRED_VERIFIED: "مطلوبة (متحقق منها بمرجع مرخّص)",
-  REQUIRED_UNVERIFIED: "مطلوبة (بانتظار التحقق بمرجع مرخّص)",
-  SUGGESTED: "وسيلة تطبيق مقترحة",
-  OPTIONAL: "اختيارية",
-};
 
 const run = (text: string, opts: { bold?: boolean; size?: number; color?: string } = {}) =>
   new TextRun({ text, rightToLeft: true, font: { name: FONT, hint: "cs" }, bold: opts.bold, boldComplexScript: opts.bold, size: opts.size ?? 22, sizeComplexScript: opts.size ?? 22, color: opts.color });
@@ -83,19 +58,7 @@ function table(headers: string[], rows: string[][]) {
 }
 
 export async function renderDocx(content: DocContent, meta: RenderMeta): Promise<Buffer> {
-  const control = table(
-    ["البند", "القيمة"],
-    [
-      ["رمز الوثيقة", meta.code],
-      ["رقم الإصدار", String(meta.versionNo)],
-      ["الحالة", STATUS_AR[meta.status] ?? meta.status],
-      ["التصنيف", CLASS_AR[meta.classification] ?? meta.classification],
-      ["أعدّها", meta.author],
-      ["اعتمدها", meta.approver ?? "— لم تُعتمد بعد —"],
-      ["تاريخ الاعتماد", meta.approvedAt ?? "—"],
-      ["تاريخ السريان", meta.effectiveAt ?? "—"],
-    ],
-  );
+  const control = table(["البند", "القيمة"], controlRows(meta));
 
   const body = content.sections.flatMap((s) => [
     para(s.heading, { heading: HeadingLevel.HEADING_2, bold: true, size: 26, color: "1F3A5F" }),

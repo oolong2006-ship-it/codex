@@ -278,3 +278,71 @@ export async function suggestSectionRewrite(ctx: TenantCtx, versionId: string, s
     return out;
   });
 }
+
+// ───────────── Rendering input (shared by DOCX / PDF / ZIP) ─────────────
+
+const isoDay = (d: Date | string | null) => (d ? new Date(d).toISOString().slice(0, 10) : null);
+
+export interface Renderable {
+  content: DocContent;
+  meta: import("../docs/labels").RenderMeta;
+  fileBase: string;
+}
+
+/** Loads a version and its document under tenant RLS. Throws NOT_FOUND for foreign/unknown ids. */
+export async function loadRenderable(ctx: TenantCtx, versionId: string): Promise<Renderable> {
+  if (!/^[0-9a-f-]{36}$/i.test(versionId)) throw new DomainError("NOT_FOUND", "الإصدار غير موجود");
+  const docId = await tx(ctx, "read", async (db) => (await db.query("SELECT document_id FROM document_versions WHERE id = $1", [versionId])).rows[0]?.document_id);
+  if (!docId) throw new DomainError("NOT_FOUND", "الإصدار غير موجود");
+  const { document: d, versions, org } = await getDocument(ctx, docId);
+  return renderableFrom(d, versions, org, versionId);
+}
+
+function renderableFrom(
+  d: { code: string; title: string; classification: string },
+  versions: { id: string; version_no: number; status: string; change_summary: string; created_at: Date; content: DocContent; author_name: string; approver_name: string | null; approved_at: Date | null; effective_at: Date | null }[],
+  org: { name: string },
+  versionId: string,
+): Renderable {
+  const v = versions.find((x) => x.id === versionId)!;
+  return {
+    content: v.content,
+    fileBase: `${d.code}-v${v.version_no}`,
+    meta: {
+      orgName: org.name,
+      code: d.code,
+      title: d.title,
+      versionNo: v.version_no,
+      status: v.status,
+      classification: d.classification,
+      author: v.author_name,
+      approver: v.approver_name,
+      approvedAt: isoDay(v.approved_at),
+      effectiveAt: isoDay(v.effective_at),
+      history: [...versions]
+        .reverse()
+        .filter((x) => x.version_no <= v.version_no)
+        .map((x) => ({ versionNo: x.version_no, status: x.status, summary: x.change_summary, date: isoDay(x.created_at)! })),
+    },
+  };
+}
+
+/** For packaging: the effective version if one exists, otherwise the latest version. */
+export async function packagingSet(ctx: TenantCtx, projectId: string) {
+  const docs = await listDocuments(ctx, projectId);
+  const out: (Renderable & { documentId: string; docType: string; classification: string; basis: string; isEffective: boolean; latestStatus: string })[] = [];
+  for (const d of docs) {
+    const { document, versions, org } = await getDocument(ctx, d.id);
+    const chosen = versions.find((v) => v.status === "EFFECTIVE") ?? versions[0];
+    out.push({
+      ...renderableFrom(document, versions, org, chosen.id),
+      documentId: d.id,
+      docType: d.doc_type,
+      classification: d.classification,
+      basis: d.classification_basis,
+      isEffective: chosen.status === "EFFECTIVE",
+      latestStatus: versions[0].status,
+    });
+  }
+  return out;
+}
