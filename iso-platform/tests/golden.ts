@@ -1,0 +1,107 @@
+/** Golden dataset — representative clients per sector (charter §18). */
+import type { Answers } from "@/server/packs";
+
+const base = (o: Answers): Answers => ({
+  "core.customer_types": ["individuals"],
+  "core.outsourced": "لا يوجد",
+  "core.critical_suppliers": 12,
+  "core.measuring_equipment": true,
+  "core.licenses": "سجل تجاري ورخصة بلدية",
+  "core.complaints_channel": "informal",
+  "core.has_quality_lead": false,
+  "core.existing_certs": ["none"],
+  "core.existing_docs": "some",
+  ...o,
+});
+
+export const GOLDEN: Record<string, { industry: string; answers: Answers }> = {
+  restaurantChain: {
+    industry: "FOOD_SERVICE",
+    answers: base({
+      "core.products_services": "تحضير وتقديم الوجبات السريعة في صالات الطعام والتوصيل",
+      "core.sites_count": 6,
+      "core.multi_site_same_activities": true,
+      "core.headcount": 140,
+      "core.design_dev": true,
+      "fs.service_model": ["dine_in", "delivery", "central_kitchen"],
+      "fs.delivery_channel": "aggregators",
+      "fs.food_safety_scheme": "haccp",
+      "fs.menu_changes": "seasonal",
+    }),
+  },
+  factory: {
+    industry: "MANUFACTURING",
+    answers: base({
+      "core.customer_types": ["businesses"],
+      "core.products_services": "تصنيع عبوات بلاستيكية للمصانع الغذائية",
+      "core.sites_count": 1,
+      "core.headcount": 85,
+      "core.design_dev": false,
+      "core.design_dev_justification": "التصنيع يتم وفق رسومات ومواصفات العملاء بالكامل",
+      "mf.production_type": "batch",
+      "mf.make_to_spec": true,
+      "mf.traceability": true,
+      "mf.inspection_stages": ["incoming", "final"],
+    }),
+  },
+  contractor: {
+    industry: "CONSTRUCTION",
+    answers: base({
+      "core.customer_types": ["businesses", "government"],
+      "core.products_services": "تنفيذ أعمال المباني السكنية والتجارية",
+      "core.sites_count": 3,
+      "core.multi_site_same_activities": false,
+      "core.headcount": 220,
+      "core.design_dev": false,
+      "core.design_dev_justification": "ننفذ وفق مخططات الاستشاري المعتمدة",
+      "core.measuring_equipment": true,
+      "cn.project_types": ["buildings"],
+      "cn.subcontracting": true,
+      "cn.design_build": false,
+      "cn.concurrent_projects": 4,
+    }),
+  },
+  softwareCo: {
+    industry: "SOFTWARE",
+    answers: base({
+      "core.customer_types": ["businesses"],
+      "core.products_services": "تطوير وتشغيل منصة SaaS للموارد البشرية",
+      "core.sites_count": 1,
+      "core.headcount": 40,
+      "core.design_dev": true,
+      "core.measuring_equipment": false,
+      "core.critical_suppliers": 3,
+      "sw.delivery_model": ["saas"],
+      "sw.methodology": "agile",
+      "sw.support_sla": true,
+    }),
+  },
+  servicesFirm: {
+    industry: "PROFESSIONAL_SERVICES",
+    answers: base({
+      "core.customer_types": ["businesses"],
+      "core.products_services": "استشارات مالية ومحاسبية",
+      "core.sites_count": 1,
+      "core.headcount": 15,
+      "core.design_dev": false,
+      "core.design_dev_justification": "خدمات قياسية دون تصميم خدمات جديدة",
+      "core.measuring_equipment": false,
+      "ps.service_lines": "مسك الدفاتر، إعداد القوائم المالية، الاستشارات الضريبية",
+      "ps.deliverable_review": true,
+    }),
+  },
+  trainingCenter: {
+    industry: "EDUCATION",
+    answers: base({
+      "core.products_services": "دورات تدريبية مهنية حضورية وعن بعد",
+      "core.sites_count": 2,
+      "core.multi_site_same_activities": true,
+      "core.headcount": 30,
+      "core.design_dev": true,
+      "core.measuring_equipment": false,
+      "ed.programs": ["courses", "elearning"],
+      "ed.own_curricula": true,
+      "ed.external_accreditation": false,
+    }),
+  },
+};
