@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { capaMetrics } from "@/server/domain/capa";
 import { listDocuments } from "@/server/domain/documents";
 import { listProjects } from "@/server/domain/projects";
 import { requireCtx } from "@/server/web";
@@ -16,7 +17,7 @@ function Metric({ label, value, note }: { label: string; value: string; note: st
 
 export default async function Dashboard() {
   const { ctx } = await requireCtx();
-  const [projects, docs] = await Promise.all([listProjects(ctx), listDocuments(ctx)]);
+  const [projects, docs, capa] = await Promise.all([listProjects(ctx), listDocuments(ctx), capaMetrics(ctx)]);
   const total = docs.length;
   const approved = docs.filter((d) => d.effective_version || d.latest_status === "APPROVED").length;
   const effective = docs.filter((d) => d.effective_version).length;
@@ -32,7 +33,11 @@ export default async function Dashboard() {
       </div>
       <div className="mt-4 grid gap-4 sm:grid-cols-3">
         <Metric label="التدقيق الداخلي" value="لم يُنفذ" note="لا يُحتسب قبل تنفيذ تدقيق فعلي" />
-        <Metric label="الإجراءات التصحيحية" value="—" note="تُغلق فقط بعد التحقق من الفاعلية" />
+        <Metric
+          label="الإجراءات التصحيحية"
+          value={`${capa.open} مفتوحة`}
+          note={`${capa.closed_effective} مغلقة بعد تحقق الفاعلية · ${capa.reopened} أُعيد فتحها · ${capa.overdue_actions} إجراء متأخر`}
+        />
         <Metric label="الجاهزية للتدقيق الخارجي" value="غير مقيّمة" note="تتطلب تطبيقاً فعلياً وأدلة ودورة تدقيق ومراجعة إدارة" />
       </div>
       <div className="card mt-6">

@@ -15,6 +15,9 @@
 | ترويسات الأمان | nosniff، X-Frame-Options DENY، Referrer-Policy، Permissions-Policy، إخفاء X-Powered-By | البناء |
 | حقن التعليمات | تغليف بيانات العميل + مدقق مستقل + لا حفظ تلقائي | `ai.test.ts` |
 | CSRF | Server Actions تتحقق من Origin؛ تسجيل الخروج POST | — |
+| تصيير PDF | HTML مُهرَّب بالكامل، JavaScript معطل، كل طلبات الشبكة محجوبة عدا الخطوط المضمنة | `exports.test.ts` |
+| ملفات CSV | تحييد حقن الصيغ (= + - @) وBOM لـ Excel | `exports.test.ts` |
+| سجلات CAPA | تواريخ التنفيذ والتحقق من الخادم فقط؛ تحليل وتحقق إلحاقيان؛ الحالة المغلقة غير قابلة للتعديل؛ فصل المنفذ عن المتحقق | `capa.test.ts` |
 | الاعتماديات | `npm audit --omit=dev` = 0 ثغرات؛ في CI | CI |
 
 ## فجوات معروفة (مخططة قبل الإنتاج)

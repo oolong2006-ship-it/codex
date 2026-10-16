@@ -7,6 +7,7 @@
 | الهجرات | `npm run db:migrate` | بـ `MIGRATION_DATABASE_URL`؛ تفشل إن عُدّل ملف مطبَّق |
 | الويب | `npm run build && npm start` | `DATABASE_URL` بدور `iso_app` فقط؛ `COOKIE_SECURE=true` خلف HTTPS |
 | العامل | `npm run worker` | خدمة دائمة؛ يتوقف بأمان على SIGTERM |
+| Chromium | `npx playwright-core install --with-deps chromium` أو `CHROMIUM_PATH` | مطلوب لتصدير PDF/ZIP في خادم الويب والعامل (ليس serverless edge) |
 
 ## متغيرات البيئة
 انظر `.env.example`. الأسرار (كلمات مرور قاعدة البيانات، `ANTHROPIC_API_KEY`) في مدير أسرار المنصة السحابية، لا في المستودع.

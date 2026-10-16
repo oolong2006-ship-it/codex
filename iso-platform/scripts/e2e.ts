@@ -221,6 +221,63 @@ async function answerInterview(page: Page, answers: Record<string, unknown>) {
     const anon = await (await browser.newContext()).request.get(`${BASE}${href}`);
     check("anonymous DOCX download blocked", anon.status() === 401);
 
+    // 14a. PDF + ZIP exports
+    await page.goto(docUrl);
+    const pdfHref = await page.getByRole("link", { name: "تنزيل PDF" }).getAttribute("href");
+    const pdfRes = await page.request.get(`${BASE}${pdfHref}`);
+    const pdfBuf = await pdfRes.body();
+    check("PDF downloads", pdfRes.status() === 200 && pdfBuf.subarray(0, 5).toString() === "%PDF-", `${pdfBuf.length} bytes`);
+    const projectId = projectUrl.split("/").pop()!;
+    const zipRes = await page.request.get(`${BASE}/api/projects/${projectId}/package`, { timeout: 120000 });
+    const zipBuf = await zipRes.body();
+    const JSZip = (await import("jszip")).default;
+    const zipNames = Object.keys((await JSZip.loadAsync(zipBuf)).files);
+    check("ZIP package downloads with DOCX+PDF and control files", zipRes.status() === 200 && zipNames.some((n) => n.endsWith("00_Master_Document_List.csv")) && zipNames.filter((n) => n.endsWith(".pdf")).length >= 20, `${zipNames.length} entries, ${zipBuf.length} bytes`);
+    check("cross-tenant ZIP blocked", (await op.request.get(`${BASE}/api/projects/${projectId}/package?pdf=0`)).status() === 404);
+
+    // 14b. CAPA: report → contain → analyse → action (QM) → QM completes → QM cannot verify → owner verifies → closed
+    await page.goto(`${BASE}/app/capa`);
+    await page.fill('input[name="title"]', "استلام شحنة دجاج بحرارة مرتفعة");
+    await page.fill('textarea[name="description"]', "استُلمت شحنة بدرجة 9 مئوية في فرع العليا دون رفضها عند الاستلام.");
+    await page.selectOption('select[name="source"]', "INSPECTION");
+    await page.selectOption('select[name="severity"]', "MAJOR");
+    await page.selectOption('select[name="processCode"]', "FS-02");
+    await submitAndWait(page, page.getByRole("button", { name: "تسجيل", exact: true }));
+    check("NC reported", (await flashText(page)).includes("تم تسجيل الحالة") && /\/app\/capa\/[0-9a-f-]{36}/.test(page.url()));
+    const ncUrl = page.url().split("?")[0];
+    await page.fill('textarea[name="containment"]', "عزل الشحنة وإتلافها وإبلاغ المورد كتابياً.");
+    await submitAndWait(page, page.getByRole("button", { name: "تسجيل الاحتواء" }));
+    check("containment recorded", (await flashText(page)).includes("سُجّل الاحتواء"));
+    const whys = page.locator('input[name="why"]');
+    await whys.nth(0).fill("لم تُقس الحرارة عند الاستلام");
+    await whys.nth(1).fill("لا يوجد مقياس في منطقة الاستلام");
+    await page.fill('textarea[name="rootCause"]', "قائمة فحص الاستلام لا تتضمن قياس الحرارة ولا يتوفر مقياس في نقطة الاستلام.");
+    await submitAndWait(page, page.getByRole("button", { name: "تسجيل التحليل" }));
+    check("root cause recorded", (await flashText(page)).includes("سُجّل تحليل السبب الجذري"));
+    await page.fill('input[name="description"]', "إضافة قياس الحرارة لقائمة فحص الاستلام وتوفير مقياس");
+    await page.selectOption('select[name="ownerId"]', { label: "خالد مدير الجودة" });
+    await page.fill('input[name="dueOn"]', new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10));
+    await submitAndWait(page, page.getByRole("button", { name: "إضافة إجراء" }));
+    check("corrective action planned", (await flashText(page)).includes("أُضيف الإجراء التصحيحي"));
+    await qm.goto(ncUrl);
+    await qm.locator("summary", { hasText: "تسجيل التنفيذ" }).click();
+    await qm.fill('input[name="note"]', "حُدثت قائمة الفحص ووُضع مقياس مثبت في نقطة الاستلام.");
+    await submitAndWait(qm, qm.getByRole("button", { name: "تم التنفيذ" }));
+    check("action owner recorded completion (mobile)", (await flashText(qm)).includes("سُجّل تنفيذ الإجراء"));
+    await qm.fill('input[name="method"]', "مراجعة سجلات الاستلام");
+    await qm.fill('textarea[name="evidence"]', "مراجعة 14 سجل استلام تتضمن قياس الحرارة.");
+    await submitAndWait(qm, qm.getByRole("button", { name: "فعّال — إغلاق" }));
+    check("implementer cannot verify own action (segregation)", (await flashText(qm)).includes("لا يجوز لمنفذ الإجراء"));
+    await page.goto(ncUrl);
+    await page.fill('input[name="method"]', "مراجعة سجلات الاستلام لأسبوعين");
+    await page.fill('textarea[name="evidence"]', "14 سجل استلام تتضمن قياس الحرارة ورُفضت شحنتان مخالفتان.");
+    await submitAndWait(page, page.getByRole("button", { name: "فعّال — إغلاق" }));
+    check("independent verification closes the case", (await flashText(page)).includes("أُغلقت الحالة"));
+    await page.screenshot({ path: `${OUT}/09-capa-closed.png`, fullPage: true });
+    const repRes = await page.request.get(`${BASE}${await page.getByRole("link", { name: "تقرير PDF" }).getAttribute("href")}`);
+    check("CAPA PDF report downloads", repRes.status() === 200 && (await repRes.body()).subarray(0, 5).toString() === "%PDF-");
+    check("cross-tenant CAPA page is 404", (await op.goto(ncUrl))!.status() === 404);
+
     // 14. Dashboard separates metrics
     await page.goto(`${BASE}/app`);
     const dash = await page.textContent("body");

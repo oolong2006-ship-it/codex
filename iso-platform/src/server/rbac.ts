@@ -16,6 +16,9 @@ export const PERMISSIONS = [
   "document.approve",
   "document.make_effective",
   "audit_log.read",
+  "nc.report",
+  "nc.manage",
+  "capa.verify",
   "read",
 ] as const;
 export type Permission = (typeof PERMISSIONS)[number];
@@ -32,10 +35,13 @@ const MATRIX: Record<Role, readonly Permission[]> = {
     "document.approve",
     "document.make_effective",
     "audit_log.read",
+    "nc.report",
+    "nc.manage",
+    "capa.verify",
     "read",
   ],
-  CONTRIBUTOR: ["intake.answer", "document.edit", "document.submit", "read"],
-  AUDITOR: ["audit_log.read", "read"],
+  CONTRIBUTOR: ["intake.answer", "document.edit", "document.submit", "nc.report", "read"],
+  AUDITOR: ["audit_log.read", "nc.report", "capa.verify", "read"],
   VIEWER: ["read"],
 };
 

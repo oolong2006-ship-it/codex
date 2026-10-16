@@ -6,7 +6,7 @@
 - **Data:** PostgreSQL 16، SQL migrations صريحة مع تحقق SHA-256 من عدم تعديل المطبَّق.
 - **Isolation:** Row-Level Security على كل جداول المستأجر. التطبيق يتصل بدور `iso_app` (NOBYPASSRLS، غير مالك). كل طلب = معاملة بـ `SET LOCAL app.org_id / app.user_id`.
 - **Jobs:** طابور دائم في Postgres (`FOR UPDATE SKIP LOCKED`) عبر دالة `claim_next_job()` (SECURITY DEFINER تعيد المعرّف فقط)؛ التنفيذ تحت RLS. يعمل داخل الويب بعد الاستجابة (`after()`) وكعامل مستقل `npm run worker`.
-- **Docs:** `docx` لتوليد Word أصلي RTL. (PDF: Chromium/LibreOffice في العامل — مخطط).
+- **Docs:** `docx` لتوليد Word أصلي RTL؛ PDF عبر Chromium (playwright-core) من HTML مُهرَّب بخط عربي مضمّن؛ ZIP عبر JSZip.
 - **AI Gateway:** واجهة `AiProvider` مستقلة عن المزود؛ مزود Anthropic عبر SDK الرسمي (`claude-opus-5-5`، مع fallback). المحرك الحتمي `rules:v1` هو المسار الافتراضي ولا يحتاج AI.
 
 ## الطبقات المعرفية الأربع (الميثاق §12)
@@ -37,15 +37,15 @@ Intake (answers) ─► facts (provenance) ─► gate (critical+conflicts) ─�
 ## هيكل الملفات
 ```
 iso-platform/
-  db/migrations/          0001_core.sql, 0002_grants_and_reference.sql
+  db/migrations/          0001_core, 0002_grants_and_reference, 0003_capa
   scripts/                db-setup.sh, migrate.ts, worker.ts, e2e.ts, render-sample.ts
   src/server/             db.ts, rbac.ts, errors.ts, web.ts
-    domain/               auth, tenant, orgs, projects, blueprint-engine, documents, jobs
+    domain/               auth, tenant, orgs, projects, blueprint-engine, documents, jobs, capa
     packs/                types, core, industries, index
-    docs/                 writer (rules:v1), docx
+    docs/                 writer (rules:v1), labels, docx, pdf, package (ZIP)
     ai/                   gateway
   src/app/                الصفحات (تسويق، دخول، تهيئة، /app/...)
-  tests/                  engine, auth-rbac, isolation, flow, ai (+ golden dataset)
+  tests/                  engine, auth-rbac, isolation, flow, ai, exports, capa (+ golden dataset)
   docs/                   وثائق P0
 ```
 

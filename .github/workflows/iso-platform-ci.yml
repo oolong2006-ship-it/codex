@@ -34,8 +34,9 @@ jobs:
           node-version: 22
           cache: npm
           cache-dependency-path: iso-platform/package-lock.json
-      - run: sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client
+      - run: sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client poppler-utils
       - run: npm ci
+      - run: npx playwright-core install --with-deps chromium
       - run: bash scripts/db-setup.sh
       - run: npm run db:migrate
       - run: npm run typecheck

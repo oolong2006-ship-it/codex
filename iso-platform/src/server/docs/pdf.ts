@@ -3,7 +3,7 @@
  * bundled OFL package so output is identical across environments. Long-running PDF work belongs
  * in the worker or a route handler, never in a serverless edge function.
  */
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { dirname, join } from "node:path";
 import { chromium, type Browser } from "playwright-core";
@@ -69,11 +69,18 @@ ${body}
 </body></html>`;
 }
 
+const LOCAL_CHROMIUM = "/opt/pw-browsers/chromium-1194/chrome-linux/chrome";
+/** CHROMIUM_PATH, else a known local install, else the browser installed by `playwright-core install chromium`. */
+function chromiumPath(): string | undefined {
+  if (process.env.CHROMIUM_PATH) return process.env.CHROMIUM_PATH;
+  return existsSync(LOCAL_CHROMIUM) ? LOCAL_CHROMIUM : undefined;
+}
+
 let browserPromise: Promise<Browser> | null = null;
 function browser(): Promise<Browser> {
   if (!browserPromise) {
     browserPromise = chromium
-      .launch({ executablePath: process.env.CHROMIUM_PATH || "/opt/pw-browsers/chromium-1194/chrome-linux/chrome", args: ["--no-sandbox"] })
+      .launch({ executablePath: chromiumPath(), args: ["--no-sandbox"] })
       .catch((e) => {
         browserPromise = null;
         throw e;

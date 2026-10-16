@@ -12,6 +12,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     { href: "/app", label: "لوحة القيادة" },
     { href: "/app/projects", label: "مشاريع أنظمة الإدارة" },
     { href: "/app/documents", label: "الوثائق المضبوطة" },
+    { href: "/app/capa", label: "عدم المطابقة والتصحيح" },
     { href: "/app/org", label: "المنشأة والمواقع" },
     { href: "/app/members", label: "الفريق والصلاحيات" },
     ...(can(ctx.role, "audit_log.read") ? [{ href: "/app/audit", label: "سجل الأحداث" }] : []),
