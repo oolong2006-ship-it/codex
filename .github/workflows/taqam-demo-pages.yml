@@ -1,0 +1,89 @@
+# =====================================================================
+#  نشر النسخة التجريبية من «طاقم» على GitHub Pages
+#  تعمل المنصة كاملة داخل المتصفح (بيانات وهمية) — بلا خادم.
+#
+#  مرة واحدة فقط: Settings → Pages → Source: GitHub Actions
+# =====================================================================
+name: نشر النسخة التجريبية — طاقم
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [claude/great-hawking-bm4a83]
+    paths:
+      - 'taqam/apps/web/**'
+      - 'taqam/packages/core/**'
+      - '.github/workflows/taqam-demo-pages.yml'
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: taqam-pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: بناء النسخة التجريبية
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+
+      - name: بناء محرك الاحتساب
+        working-directory: taqam/packages/core
+        run: npm ci && npm run build
+
+      - name: تثبيت حزم الواجهة
+        working-directory: taqam/apps/web
+        run: npm ci
+
+      - name: بناء الواجهة (تصدير ثابت بوضع العرض)
+        working-directory: taqam/apps/web
+        env:
+          NEXT_PUBLIC_DEMO: '1'
+          NEXT_PUBLIC_BASE_PATH: /${{ github.event.repository.name }}
+          NEXT_TELEMETRY_DISABLED: '1'
+        run: npx next build && touch out/.nojekyll
+
+      - name: تفعيل GitHub Pages
+        id: pages
+        continue-on-error: true
+        uses: actions/configure-pages@v5
+
+      - name: تنبيه إن لم تُفعَّل Pages
+        if: steps.pages.outcome == 'failure'
+        run: |
+          {
+            echo "## ⚠️ يلزم تفعيل GitHub Pages مرة واحدة"
+            echo ""
+            echo "افتح: **Settings → Pages → Build and deployment → Source** واختر **GitHub Actions**، ثم أعد تشغيل سير العمل."
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "::error::GitHub Pages غير مفعّل — Settings → Pages → Source: GitHub Actions"
+          exit 1
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: taqam/apps/web/out
+
+  deploy:
+    name: النشر
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
+      - run: |
+          {
+            echo "## ✅ تم نشر النسخة التجريبية"
+            echo ""
+            echo "**الرابط:** ${{ steps.deployment.outputs.page_url }}"
+            echo ""
+            echo "كلمة المرور لجميع الحسابات التجريبية: \`Taqam@2026\`"
+          } >> "$GITHUB_STEP_SUMMARY"
