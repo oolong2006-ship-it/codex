@@ -1,0 +1,182 @@
+/** In-memory demo database (mirrors apps/api/prisma/schema.prisma), persisted to localStorage. */
+export type Role = 'OWNER' | 'HR_ADMIN' | 'PAYROLL' | 'BRANCH_MANAGER' | 'EMPLOYEE';
+export type Approval = 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED';
+
+export interface Company {
+  id: string; nameAr: string; nameEn: string | null; crNumber: string | null; establishmentId: string | null; gosiNumber: string | null;
+  vatNumber: string | null; sector: string | null; city: string | null; iban: string | null; bankCode: string | null;
+  weekendDays: number[]; payrollDay: number; employeesCount: number | null; createdAt: string; updatedAt: string;
+}
+export interface Branch {
+  id: string; companyId: string; nameAr: string; nameEn: string | null; city: string; address: string | null; lat: number; lng: number;
+  radiusMeters: number; managerEmployeeId: string | null; createdAt: string; updatedAt: string;
+}
+export interface Department { id: string; companyId: string; name: string; parentId: string | null; createdAt: string }
+export interface User {
+  id: string; companyId: string; email: string; password: string; name: string; role: Role; employeeId: string | null;
+  isActive: boolean; lastLoginAt: string | null; createdAt: string; updatedAt: string;
+}
+export interface Employee {
+  id: string; companyId: string; employeeNumber: string; firstNameAr: string; lastNameAr: string; fullNameEn: string | null;
+  nationality: string; isSaudi: boolean; gender: 'MALE' | 'FEMALE'; birthDate: string | null; maritalStatus: string | null;
+  nationalId: string; idExpiry: string | null; passportNumber: string | null; passportExpiry: string | null; phone: string | null;
+  email: string | null; branchId: string | null; departmentId: string | null; managerId: string | null; jobTitle: string | null;
+  hireDate: string; contractType: 'UNLIMITED' | 'FIXED'; contractEndDate: string | null; probationEndDate: string | null;
+  status: 'ACTIVE' | 'ON_LEAVE' | 'TERMINATED'; terminationDate: string | null; terminationReason: string | null;
+  basicSalary: number; housingAllowance: number; transportAllowance: number; otherAllowances: number; iban: string | null;
+  bankCode: string | null; gosiRegistered: boolean; hoursPerDay: number; avatarColor: string; annualLeaveCarryOver: number;
+  createdAt: string; updatedAt: string;
+}
+export interface EmployeeDocument {
+  id: string; companyId: string; employeeId: string; type: string; number: string | null; issueDate: string | null;
+  expiryDate: string | null; note: string | null; createdAt: string;
+}
+export interface Shift {
+  id: string; companyId: string; branchId: string; name: string; startTime: string; endTime: string; breakMinutes: number;
+  graceMinutes: number; days: number[]; color: string; createdAt: string;
+}
+export interface ShiftAssignment { id: string; companyId: string; employeeId: string; shiftId: string; date: string }
+export interface AttendanceRecord {
+  id: string; companyId: string; employeeId: string; date: string; shiftId: string | null; checkIn: string | null; checkOut: string | null;
+  checkInLat: number | null; checkInLng: number | null; checkOutLat: number | null; checkOutLng: number | null;
+  workedMinutes: number; lateMinutes: number; earlyLeaveMinutes: number; overtimeMinutes: number; status: string; source: string;
+  note: string | null; createdAt: string; updatedAt: string;
+}
+export interface LeaveType { id: string; companyId: string; code: string; nameAr: string; nameEn: string; paid: boolean; maxDaysPerYear: number | null; createdAt: string }
+export interface LeaveRequest {
+  id: string; companyId: string; employeeId: string; leaveTypeId: string; startDate: string; endDate: string; days: number;
+  reason: string | null; status: Approval; approverId: string | null; approverName: string | null; decidedAt: string | null;
+  comment: string | null; createdAt: string;
+}
+export interface EmployeeRequest {
+  id: string; companyId: string; employeeId: string; type: string; title: string; details: string | null; amount: number | null;
+  payload: Record<string, unknown> | null; status: Approval; approverId: string | null; approverName: string | null;
+  decidedAt: string | null; comment: string | null; createdAt: string;
+}
+export interface Loan {
+  id: string; companyId: string; employeeId: string; amount: number; monthlyDeduction: number; remaining: number; startPeriod: string;
+  status: 'ACTIVE' | 'PAID' | 'CANCELLED'; note: string | null; requestId: string | null; createdAt: string; updatedAt: string;
+}
+export interface PayrollRun {
+  id: string; companyId: string; period: string; status: 'DRAFT' | 'CALCULATED' | 'APPROVED' | 'PAID'; employeesCount: number;
+  totalGross: number; totalDeductions: number; totalNet: number; totalGosiEmployer: number; totalEmployerCost: number;
+  calculatedAt: string | null; approvedAt: string | null; approvedById: string | null; approvedByName: string | null;
+  paidAt: string | null; createdAt: string; updatedAt: string;
+}
+export interface PayLine { code: string; labelAr: string; labelEn: string; amount: number }
+export interface Payslip {
+  id: string; companyId: string; payrollRunId: string; employeeId: string; period: string; payableDays: number;
+  earnings: PayLine[]; deductions: PayLine[]; gross: number; totalDeductions: number; net: number; gosiEmployee: number;
+  gosiEmployer: number; employerCost: number; loanDeductions: { loanId: string; amount: number }[]; inputs: unknown;
+  notes: string[]; createdAt: string;
+}
+export interface PayrollAdjustment {
+  id: string; companyId: string; employeeId: string; period: string; type: 'BONUS' | 'COMMISSION' | 'ALLOWANCE' | 'DEDUCTION' | 'PENALTY';
+  amount: number; note: string | null; createdById: string | null; createdAt: string;
+}
+export interface PublicHoliday { id: string; companyId: string; date: string; nameAr: string; nameEn: string | null; createdAt: string }
+export interface Announcement {
+  id: string; companyId: string; title: string; body: string; branchId: string | null; authorId: string | null; authorName: string | null; createdAt: string;
+}
+export interface Notification {
+  id: string; companyId: string; userId: string; title: string; body: string | null; link: string | null; readAt: string | null; createdAt: string;
+}
+export interface AuditLog {
+  id: string; companyId: string; userId: string | null; userName: string | null; action: string; entity: string; entityId: string | null;
+  data: unknown; createdAt: string;
+}
+export interface ReviewCycle { id: string; companyId: string; name: string; startDate: string; endDate: string; status: 'DRAFT' | 'ACTIVE' | 'CLOSED'; createdAt: string }
+export interface Goal { title: string; weight: number; score: number | null }
+export interface PerformanceReview {
+  id: string; companyId: string; cycleId: string; employeeId: string; reviewerId: string | null; goals: Goal[]; overallScore: number | null;
+  comments: string | null; status: 'PENDING' | 'SUBMITTED'; submittedAt: string | null; createdAt: string; updatedAt: string;
+}
+export interface JobOpening {
+  id: string; companyId: string; title: string; branchId: string | null; departmentId: string | null; employmentType: string;
+  description: string | null; status: 'OPEN' | 'CLOSED'; createdAt: string; updatedAt: string;
+}
+export interface Candidate {
+  id: string; companyId: string; jobId: string; name: string; email: string | null; phone: string | null; nationality: string | null;
+  expectedSalary: number | null; notes: string | null; stage: string; createdAt: string; updatedAt: string;
+}
+export interface Lead { id: string; name: string; company: string; email: string; phone: string; employeesCount: number | null; sector: string | null; message: string | null; createdAt: string }
+
+export interface DB {
+  version: number;
+  seededOn: string;
+  seq: number;
+  newEmployeeUsed: number;
+  jobUsed: number;
+  companies: Company[];
+  branches: Branch[];
+  departments: Department[];
+  users: User[];
+  employees: Employee[];
+  documents: EmployeeDocument[];
+  shifts: Shift[];
+  assignments: ShiftAssignment[];
+  attendance: AttendanceRecord[];
+  leaveTypes: LeaveType[];
+  leaves: LeaveRequest[];
+  requests: EmployeeRequest[];
+  loans: Loan[];
+  runs: PayrollRun[];
+  payslips: Payslip[];
+  adjustments: PayrollAdjustment[];
+  holidays: PublicHoliday[];
+  announcements: Announcement[];
+  notifications: Notification[];
+  audit: AuditLog[];
+  cycles: ReviewCycle[];
+  reviews: PerformanceReview[];
+  jobs: JobOpening[];
+  candidates: Candidate[];
+  leads: Lead[];
+}
+
+export const STORAGE_KEY = 'taqam.demo.v1';
+export const DB_VERSION = 1;
+/** Seeded data is relative to "today"; a snapshot older than this is re-seeded so attendance and payroll stay current. */
+export const MAX_AGE_DAYS = 7;
+
+export function emptyDb(seededOn: string): DB {
+  return {
+    version: DB_VERSION, seededOn, seq: 0, newEmployeeUsed: 0, jobUsed: 0,
+    companies: [], branches: [], departments: [], users: [], employees: [], documents: [], shifts: [], assignments: [], attendance: [],
+    leaveTypes: [], leaves: [], requests: [], loans: [], runs: [], payslips: [], adjustments: [], holidays: [], announcements: [],
+    notifications: [], audit: [], cycles: [], reviews: [], jobs: [], candidates: [], leads: [],
+  };
+}
+
+/** Sequential id with a readable prefix ("lv-0042"). */
+export function nextId(db: DB, prefix: string): string {
+  db.seq += 1;
+  return `${prefix}-${db.seq.toString(36).padStart(4, '0')}`;
+}
+
+export function loadDb(): DB | null {
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    const db = JSON.parse(raw) as DB;
+    return db && db.version === DB_VERSION ? db : null;
+  } catch {
+    return null;
+  }
+}
+
+export function saveDb(db: DB) {
+  try {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(db));
+  } catch {
+    /* quota exceeded or storage unavailable — keep working in memory */
+  }
+}
+
+export function clearDb() {
+  try {
+    window.localStorage.removeItem(STORAGE_KEY);
+  } catch {
+    /* storage unavailable */
+  }
+}
