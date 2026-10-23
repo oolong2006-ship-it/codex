@@ -34,7 +34,7 @@ export function Pagination({ page, pageSize, total, onChange }: { page: number; 
   return (
     <div className="flex items-center justify-between px-4 py-3 text-sm text-ink-muted">
       <span className="num">{total}</span>
-      <div className="flex gap-1">
+      <div className="flex gap-1" dir="ltr">
         <button className="rounded-lg px-3 py-1 hover:bg-sand disabled:opacity-40" disabled={page <= 1} onClick={() => onChange(page - 1)}>‹</button>
         <span className="num px-2 py-1">{page} / {pages}</span>
         <button className="rounded-lg px-3 py-1 hover:bg-sand disabled:opacity-40" disabled={page >= pages} onClick={() => onChange(page + 1)}>›</button>
