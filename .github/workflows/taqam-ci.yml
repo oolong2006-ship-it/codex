@@ -1,0 +1,82 @@
+name: Taqam CI
+
+on:
+  push:
+    paths: ['taqam/**', '.github/workflows/taqam-ci.yml']
+  pull_request:
+    paths: ['taqam/**', '.github/workflows/taqam-ci.yml']
+
+jobs:
+  core:
+    name: Core engine (typecheck, test, build)
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: taqam/packages/core } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+
+  api:
+    name: API (typecheck, unit, e2e, build)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: taqam
+          POSTGRES_PASSWORD: taqam_dev
+          POSTGRES_DB: taqam
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U taqam"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgresql://taqam:taqam_dev@localhost:5432/taqam?schema=public
+      DATABASE_URL_TEST: postgresql://taqam:taqam_dev@localhost:5432/taqam_test?schema=public
+      JWT_SECRET: ci-secret
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: Build core
+        working-directory: taqam/packages/core
+        run: npm ci && npm run build
+      - name: Install
+        working-directory: taqam/apps/api
+        run: npm ci
+      - working-directory: taqam/apps/api
+        run: npx prisma generate
+      - working-directory: taqam/apps/api
+        run: npm run typecheck
+      - working-directory: taqam/apps/api
+        run: npm test
+      - working-directory: taqam/apps/api
+        run: npm run test:e2e
+      - working-directory: taqam/apps/api
+        run: npm run build
+      - name: Migrate & seed
+        working-directory: taqam/apps/api
+        run: npm run db:migrate && npm run db:seed
+
+  web:
+    name: Web (typecheck, build)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: Build core
+        working-directory: taqam/packages/core
+        run: npm ci && npm run build
+      - working-directory: taqam/apps/web
+        run: npm ci
+      - working-directory: taqam/apps/web
+        run: npx tsc --noEmit
+      - working-directory: taqam/apps/web
+        run: npm run build
+        env:
+          NEXT_PUBLIC_API_URL: http://localhost:4100/api
