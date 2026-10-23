@@ -130,7 +130,7 @@ export function NewRequestSheet({ open, onClose, onCreated, initialType }:
                     <button key={m} type="button" onClick={() => setF((s) => ({ ...s, months: String(m) }))}
                       className={clsx('num h-11 min-w-[56px] rounded-xl border px-3 text-sm font-semibold', String(m) === f.months ? 'border-primary bg-primary text-white' : 'border-line bg-white text-ink')}>{m}</button>
                   ))}
-                  <Input type="number" inputMode="numeric" min={1} max={24} value={f.months} onChange={set('months')} className="num h-11 w-20 text-center" />
+                  <div className="w-20"><Input type="number" inputMode="numeric" min={1} max={24} value={f.months} onChange={set('months')} className="num h-11 text-center" aria-label="months" /></div>
                 </div>
               </Field>
               {amountNum > 0 && monthsNum > 0 && (

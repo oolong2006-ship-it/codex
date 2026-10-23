@@ -53,7 +53,7 @@ export default function PayslipDetailPage() {
 
           {/* Net hero */}
           <div className="relative overflow-hidden rounded-[28px] bg-primary p-5 text-white shadow-lift print:rounded-xl print:border print:border-line print:bg-white print:text-ink print:shadow-none">
-            <div className="taqam-pattern pointer-events-none absolute inset-0 opacity-50 print:hidden" aria-hidden />
+            <div className="taqam-pattern pointer-events-none absolute inset-0 opacity-30 print:hidden" aria-hidden />
             <div className="relative">
               <p className="text-sm text-white/70 print:text-ink-muted">{t('صافي الراتب', 'Net salary')} · {fmtPeriod(p.period, lang)}</p>
               <p className="num mt-1 text-4xl font-bold print:text-3xl print:text-primary">{money(p.net, { currency: false })} <span className="text-base font-medium text-accent print:text-ink-muted">{t('ر.س', 'SAR')}</span></p>

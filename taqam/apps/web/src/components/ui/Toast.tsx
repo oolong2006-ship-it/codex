@@ -16,7 +16,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   return (
     <Ctx.Provider value={push}>
       {children}
-      <div className="pointer-events-none fixed inset-x-0 bottom-4 z-[60] flex flex-col items-center gap-2 px-4">
+      <div className="pointer-events-none fixed inset-x-0 bottom-24 z-[60] flex flex-col items-center gap-2 px-4">
         {items.map((i) => (
           <div key={i.id} className={clsx('pointer-events-auto rounded-xl px-4 py-3 text-sm text-white shadow-lift',
             i.kind === 'success' && 'bg-primary', i.kind === 'error' && 'bg-danger', i.kind === 'info' && 'bg-info')}>

@@ -30,7 +30,7 @@ export default function MyPayslipsPage() {
       ) : (
         <>
           <Link href={`/me/payslips/${latest.id}`} className="relative block overflow-hidden rounded-[28px] bg-primary p-5 text-white shadow-lift active:scale-[.99]">
-            <div className="taqam-pattern pointer-events-none absolute inset-0 opacity-50" aria-hidden />
+            <div className="taqam-pattern pointer-events-none absolute inset-0 opacity-30" aria-hidden />
             <div className="relative">
               <p className="text-sm text-white/70">{t('آخر راتب', 'Latest pay')} · {fmtPeriod(latest.period, lang)}</p>
               <p className="num mt-2 text-4xl font-bold">{money(latest.net, { currency: false })} <span className="text-base font-medium text-accent">{t('ر.س', 'SAR')}</span></p>

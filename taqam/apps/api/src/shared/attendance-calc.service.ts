@@ -88,12 +88,13 @@ export class AttendanceCalcService {
     const recMap = new Map(records.map((r) => [r.employeeId, r]));
     const asgMap = new Map(assignments.map((a) => [a.employeeId, a.shift]));
     const onLeave = new Set(leaves.map((l) => l.employeeId));
-    const hasRoster = assignments.length > 0;
+    const empBranch = new Map(employees.map((e) => [e.id, e.branchId]));
+    const rosterBranches = new Set(assignments.map((a) => empBranch.get(a.employeeId)));
 
     return employees.map((e) => {
       const rec = recMap.get(e.id);
       let shift: Shift | null = asgMap.get(e.id) ?? rec?.shift ?? null;
-      if (!shift && !hasRoster) shift = branchShifts.find((s) => s.branchId === e.branchId && s.days.includes(wd)) ?? null;
+      if (!shift && !rosterBranches.has(e.branchId)) shift = branchShifts.find((s) => s.branchId === e.branchId && s.days.includes(wd)) ?? null;
       let status: BoardStatus;
       if (rec) {
         status = rec.status as BoardStatus;
