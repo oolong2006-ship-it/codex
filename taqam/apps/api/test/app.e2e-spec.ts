@@ -276,7 +276,7 @@ describe('Taqam API (e2e)', () => {
     expect(rec).toMatchObject({ lateMinutes: 20, status: 'LATE' });
 
     const eosb = await http.get(`/api/employees/${other.body.id}/eosb?reason=RESIGNATION&endDate=2026-05-01`).set(auth(tokenA)).expect(200);
-    expect(eosb.body.factor).toBeCloseTo(1 / 3); // 5 years of service, resignation
+    expect(eosb.body.factor).toBeCloseTo(2 / 3); // exactly 5 years of service, resignation (Art. 85)
     const term = await http.post(`/api/employees/${other.body.id}/terminate`).set(auth(tokenA)).send({ terminationDate: dayStr(todayStr()), reason: 'EMPLOYER_TERMINATION' }).expect(201);
     expect(term.body.employee.status).toBe('TERMINATED');
     expect(term.body.eosb.total).toBeGreaterThan(0);
