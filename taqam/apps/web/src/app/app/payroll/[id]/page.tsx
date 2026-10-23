@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
-import { ArrowRight, BadgeCheck, Calculator, CheckCircle2, Download, FileCheck2, RefreshCw, Trash2, AlertTriangle, Banknote } from 'lucide-react';
+import { ArrowRight, BadgeCheck, Calculator, CheckCircle2, Download, FileCheck2, RefreshCw, Trash2, AlertTriangle, Banknote, Info } from 'lucide-react';
 import { Button, Card, CardBody, EmptyState, Modal, PageHeader, Select, StatCard, Table, useToast, type Column } from '@/components/ui';
 import { Async, ConfirmModal, FilterBar, SearchInput, StatusBadge, Stepper } from '@/components/app/primitives';
 import { PayslipModal } from '@/components/app/PayslipModal';
@@ -71,7 +71,7 @@ export default function PayrollRunPage() {
     { key: 'ded', header: t('الاستقطاعات', 'Deductions'), render: (p) => <span className="num text-danger">{money(p.totalDeductions)}</span> },
     { key: 'net', header: t('الصافي', 'Net'), render: (p) => <span className="num font-semibold text-primary">{money(p.net)}</span> },
     { key: 'iban', header: 'IBAN', render: (p) => p.employee.iban ? <span className="num text-xs text-ink-soft" dir="ltr">…{p.employee.iban.slice(-6)}</span> : <span className="text-xs text-danger">{t('مفقود', 'Missing')}</span> },
-    { key: 'notes', header: '', render: (p) => p.notes?.length ? <span title={p.notes.join('\n')}><AlertTriangle className="h-4 w-4 text-warning" /></span> : null },
+    { key: 'notes', header: '', render: (p) => p.notes?.length ? <span title={p.notes.join("\n")}><Info className="h-4 w-4 text-info" /></span> : null },
   ];
 
   const steps = [

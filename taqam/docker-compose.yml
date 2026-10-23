@@ -23,9 +23,23 @@ services:
       JWT_SECRET: ${JWT_SECRET:-change-me-in-production}
       CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3100}
       PORT: 4100
-      SEED_DEMO: ${SEED_DEMO:-true}
     ports:
       - "4100:4100"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # بيانات تجريبية (اختياري): docker compose --profile demo up --build
+  seed:
+    profiles: ["demo"]
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+      target: build
+    working_dir: /repo/apps/api
+    command: sh -c "npx prisma migrate deploy && npm run db:seed"
+    environment:
+      DATABASE_URL: postgresql://taqam:${POSTGRES_PASSWORD:-taqam_dev}@db:5432/taqam?schema=public
     depends_on:
       db:
         condition: service_healthy

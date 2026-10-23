@@ -18,7 +18,11 @@ WORKDIR /repo/apps/api
 COPY apps/api/package.json apps/api/package-lock.json ./
 RUN npm ci --no-audit --no-fund
 COPY apps/api/ ./
-RUN npx prisma generate && npm run build && npm prune --omit=dev
+RUN npx prisma generate && npm run build
+# (the `build` stage keeps dev deps so docker-compose's demo `seed` service can run ts-node)
+
+FROM build AS prod-deps
+RUN npm prune --omit=dev
 
 # ---- 3. runtime ----
 FROM node:22-alpine AS runtime
@@ -29,7 +33,7 @@ COPY --from=core /repo/packages/core/package.json packages/core/package.json
 COPY --from=core /repo/packages/core/dist packages/core/dist
 WORKDIR /repo/apps/api
 COPY --from=build /repo/apps/api/package.json ./package.json
-COPY --from=build /repo/apps/api/node_modules ./node_modules
+COPY --from=prod-deps /repo/apps/api/node_modules ./node_modules
 COPY --from=build /repo/apps/api/dist ./dist
 COPY --from=build /repo/apps/api/prisma ./prisma
 EXPOSE 4100
