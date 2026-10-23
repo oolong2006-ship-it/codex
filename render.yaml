@@ -1,0 +1,38 @@
+# Render Blueprint — demo deployment of iso-platform (Global ISO AI Platform).
+# Render → New → Blueprint → select this repository and branch. See iso-platform/docs/DEPLOYMENT.md.
+services:
+  - type: web
+    name: iso-platform
+    runtime: docker
+    plan: free
+    region: frankfurt
+    branch: claude/global-iso-platform-p0-p1
+    dockerfilePath: ./iso-platform/Dockerfile
+    dockerContext: ./iso-platform
+    healthCheckPath: /api/health
+    autoDeploy: true
+    buildFilter:
+      paths:
+        - iso-platform/**
+        - render.yaml
+    envVars:
+      - key: DATABASE_OWNER_URL
+        fromDatabase:
+          name: iso-platform-db
+          property: connectionString
+      - key: APP_DB_PASSWORD
+        generateValue: true
+      - key: COOKIE_SECURE
+        value: "true"
+      - key: DEMO_MODE
+        value: "true"
+      - key: AI_MONTHLY_BUDGET_USD
+        value: "0"
+
+databases:
+  - name: iso-platform-db
+    plan: free
+    region: frankfurt
+    databaseName: iso_platform
+    user: iso_owner
+    postgresMajorVersion: "16"

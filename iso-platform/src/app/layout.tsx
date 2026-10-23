@@ -6,6 +6,8 @@ export const metadata: Metadata = {
   description: "منصة استشارات وتشغيل أنظمة الإدارة — ISO 9001:2026 أولاً",
 };
 
+export const dynamic = "force-dynamic";
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ar" dir="rtl">
@@ -13,7 +15,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" />
       </head>
-      <body className="min-h-screen font-sans">{children}</body>
+      <body className="min-h-screen font-sans">
+        {process.env.DEMO_MODE === "true" && (
+          <div role="note" className="bg-amber-100 px-4 py-2 text-center text-xs text-amber-900">
+            بيئة عرض تجريبية — لا تُدخل بيانات حقيقية أو شخصية؛ قد تُحذف البيانات في أي وقت.
+          </div>
+        )}
+        {children}
+      </body>
     </html>
   );
 }

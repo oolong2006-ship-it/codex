@@ -41,10 +41,14 @@ describe("PDF export", () => {
     const fonts = execFileSync("pdffonts", [f]).toString();
     expect(fonts).toMatch(/IBMPlexSansArabic/);
     expect(fonts).not.toMatch(/\bno\s+no\b/); // all fonts embedded
-    const text = execFileSync("pdftotext", ["-layout", f, "-"]).toString();
+    // Strip bidi control characters that pdftotext inserts around embedded LTR runs.
+    const text = execFileSync("pdftotext", ["-layout", f, "-"]).toString().replace(/[\u200e\u200f\u202a-\u202e\u2066-\u2069]/g, "");
     expect(text).toContain("QM-POL-001");
-    expect(text).toMatch(/1\s*\S*\s*1/); // "صفحة 1 من 1" (bidi order varies in extraction)
-    expect(execFileSync("pdfinfo", [f]).toString()).toMatch(/A4/);
+    const info = execFileSync("pdfinfo", [f]).toString();
+    const pages = Number(info.match(/Pages:\s+(\d+)/)![1]);
+    expect(text).toMatch(/صفحة\s*1\s*من/); // footer "صفحة X من Y" on every page
+    expect(text.match(/صفحة\s*\d+\s*من/g)!.length).toBe(pages);
+    expect(info).toMatch(/A4/);
   });
 
   it("escapes document content — markup in client text cannot become HTML", () => {
