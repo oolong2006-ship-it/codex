@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import { IBM_Plex_Sans_Arabic } from 'next/font/google';
 import './globals.css';
 import { Providers } from './providers';
+import { withBase } from '@/lib/paths';
 
 const plex = IBM_Plex_Sans_Arabic({
   subsets: ['arabic', 'latin'],
@@ -13,7 +14,7 @@ const plex = IBM_Plex_Sans_Arabic({
 export const metadata: Metadata = {
   title: { default: 'طاقم | منصة الموارد البشرية والرواتب للمنشآت متعددة الفروع', template: '%s | طاقم' },
   description: 'طاقم منصة سعودية للموارد البشرية والرواتب والحضور مصممة للمنشآت متعددة الفروع: رواتب وحماية أجور، حضور بالموقع، إجازات، سعودة، وتطبيق خدمة ذاتية للموظف.',
-  manifest: '/manifest.webmanifest',
+  manifest: withBase('/manifest.webmanifest'),
 };
 
 export const viewport: Viewport = { themeColor: '#0F3D3E', width: 'device-width', initialScale: 1 };

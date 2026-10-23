@@ -9,6 +9,8 @@ import { label, ATTENDANCE_STATUS } from '@/lib/labels';
 import { useToast } from '@/components/ui/Toast';
 import type { MeHome } from './types';
 import { formatDistance, haversineMeters } from './utils';
+import { IS_DEMO } from '@/lib/paths';
+import { getSimulateLocation, onSimulateLocationChange, setSimulateLocation } from '@/demo/location';
 
 type Pos = { lat: number; lng: number; accuracy: number };
 type Feedback = { kind: 'success' | 'error' | 'warning'; title: string; detail?: string } | null;
@@ -24,6 +26,17 @@ function locate(): Promise<Pos> {
       GEO_OPTS,
     );
   });
+}
+
+/** Demo build only: optionally pretend the device is at the branch so visitors anywhere can try the geofenced punch. */
+function useSimulatedLocation() {
+  const [sim, setSim] = useState(false);
+  useEffect(() => {
+    if (!IS_DEMO) return;
+    setSim(getSimulateLocation());
+    return onSimulateLocationChange(() => setSim(getSimulateLocation()));
+  }, []);
+  return sim;
 }
 
 export function useNow(intervalMs = 1000) {
@@ -46,6 +59,8 @@ export function CheckInCard({ home, onChanged }: { home: MeHome; onChanged: () =
   const [feedback, setFeedback] = useState<Feedback>(null);
 
   const { today, branch } = home;
+  const sim = useSimulatedLocation();
+  const locateHere = useCallback(async (): Promise<Pos> => (sim && branch ? { lat: branch.lat, lng: branch.lng, accuracy: 5 } : locate()), [sim, branch]);
   const mode: 'in' | 'out' | 'done' = !today.checkIn ? 'in' : !today.checkOut ? 'out' : 'done';
   const distance = pos && branch ? haversineMeters(pos, branch) : null;
   const inside = distance !== null && branch ? distance <= branch.radiusMeters : null;
@@ -60,25 +75,27 @@ export function CheckInCard({ home, onChanged }: { home: MeHome; onChanged: () =
 
   const refreshLocation = useCallback(async (silent = false) => {
     setLocating(true);
-    try { const p = await locate(); setPos(p); if (!silent) setFeedback(null); return p; }
+    try { const p = await locateHere(); setPos(p); if (!silent) setFeedback(null); return p; }
     catch (e) { if (!silent) setFeedback(geoError(e)); return null; }
     finally { setLocating(false); }
-  }, [geoError]);
+  }, [geoError, locateHere]);
 
   // Pre-fetch location only when permission was already granted (no surprise prompt).
   useEffect(() => {
+    if (mode !== 'done' && sim) { void refreshLocation(true); return; }
+    if (!sim && IS_DEMO) setPos(null);
     if (mode === 'done' || typeof navigator === 'undefined' || !navigator.permissions?.query) return;
     navigator.permissions.query({ name: 'geolocation' as PermissionName })
       .then((s) => { if (s.state === 'granted') void refreshLocation(true); })
       .catch(() => {});
-  }, [mode, refreshLocation]);
+  }, [mode, refreshLocation, sim]);
 
   const punch = async () => {
     if (mode === 'done' || busy) return;
     setBusy(true); setFeedback(null);
     try {
       let p: Pos;
-      try { p = await locate(); setPos(p); }
+      try { p = await locateHere(); setPos(p); }
       catch (e) { const f = geoError(e); setFeedback(f); if (f) toast(f.title, 'error'); return; }
       try {
         await api.post(`/me/attendance/${mode === 'in' ? 'check-in' : 'check-out'}`, { lat: p.lat, lng: p.lng });
@@ -179,6 +196,14 @@ export function CheckInCard({ home, onChanged }: { home: MeHome; onChanged: () =
             </button>
           )}
         </div>
+
+        {IS_DEMO && mode !== 'done' && branch && (
+          <label className="mx-auto mt-3 flex w-fit cursor-pointer items-center gap-2 rounded-full bg-white/[.08] px-3 py-1.5 text-xs text-white/85 ring-1 ring-white/15">
+            <input type="checkbox" className="h-4 w-4 accent-[#F2A541]" checked={sim} onChange={(e) => setSimulateLocation(e.target.checked)} />
+            {t('محاكاة الموقع داخل الفرع', 'Simulate being at the branch')}
+            <span className="rounded-full bg-accent/20 px-1.5 text-[10px] text-accent">{t('تجريبي', 'demo')}</span>
+          </label>
+        )}
 
         {feedback && (
           <div role="status" className={clsx('mt-4 flex gap-2.5 rounded-2xl p-3 text-sm',

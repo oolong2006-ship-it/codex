@@ -1,4 +1,7 @@
 // Thin fetch client for the Taqam API (see docs/API_CONTRACT.md).
+// In the static demo build (NEXT_PUBLIC_DEMO=1) every call is answered by an in-browser mock (src/demo), loaded lazily.
+import { IS_DEMO } from './paths';
+
 export const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4100/api';
 const TOKEN_KEY = 'taqam.token';
 
@@ -31,6 +34,7 @@ function qs(query?: Query) {
 }
 
 async function request<T>(method: string, path: string, body?: unknown, query?: Query): Promise<T> {
+  if (IS_DEMO) return demoRequest<T>(method, path, body, query);
   const headers: Record<string, string> = { Accept: 'application/json' };
   const token = getToken();
   if (token) headers.Authorization = `Bearer ${token}`;
@@ -55,6 +59,32 @@ async function request<T>(method: string, path: string, body?: unknown, query?: 
 }
 function safeJson(t: string) { try { return JSON.parse(t); } catch { return t; } }
 
+// ---------- demo mode (no backend) ----------
+let demoModule: Promise<typeof import('@/demo/client')> | null = null;
+const loadDemo = () => (demoModule ??= import('@/demo/client'));
+
+async function demoCall(method: string, path: string, body?: unknown, query?: Query) {
+  const { demoFetch } = await loadDemo();
+  const res = await demoFetch(method, path, { body, query, token: getToken() });
+  if (res.status === 401 && typeof window !== 'undefined' && !path.startsWith('/auth/login')) setToken(null);
+  if (res.status >= 400) {
+    const d = (res.data || {}) as { message?: string | string[]; messageAr?: string };
+    const msg = Array.isArray(d.message) ? d.message.join('، ') : d.message || `HTTP ${res.status}`;
+    throw new ApiError(res.status, msg, d.messageAr, res.data);
+  }
+  return res.data;
+}
+async function demoRequest<T>(method: string, path: string, body?: unknown, query?: Query): Promise<T> {
+  return (await demoCall(method, path, body, query)) as T;
+}
+function saveBlob(blob: Blob, filename: string) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
 export const api = {
   get: <T>(path: string, query?: Query) => request<T>('GET', path, undefined, query),
   post: <T>(path: string, body?: unknown) => request<T>('POST', path, body ?? {}),
@@ -63,6 +93,11 @@ export const api = {
   del: <T>(path: string) => request<T>('DELETE', path),
   /** Download a file (CSV etc.) with auth and trigger a browser save. */
   async download(path: string, filename: string, query?: Query) {
+    if (IS_DEMO) {
+      const data = await demoCall('GET', path, undefined, query);
+      saveBlob(new Blob([typeof data === 'string' ? data : JSON.stringify(data)], { type: 'text/csv;charset=utf-8' }), filename);
+      return;
+    }
     const token = getToken();
     const res = await fetch(`${API_URL}${path}${qs(query)}`, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
     if (!res.ok) {

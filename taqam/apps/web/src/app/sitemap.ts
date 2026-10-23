@@ -2,6 +2,9 @@ import type { MetadataRoute } from 'next';
 import { SECTORS } from '@/components/marketing/data';
 import { SITE_URL } from '@/components/marketing/seo';
 
+// Static (also required by the static demo export).
+export const dynamic = 'force-static';
+
 export default function sitemap(): MetadataRoute.Sitemap {
   const lastModified = new Date('2026-10-01');
   const pages: { path: string; priority: number; freq: MetadataRoute.Sitemap[number]['changeFrequency'] }[] = [

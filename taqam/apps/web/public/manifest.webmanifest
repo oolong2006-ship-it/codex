@@ -1,11 +1,11 @@
 {
   "name": "طاقم — الخدمة الذاتية",
   "short_name": "طاقم",
-  "start_url": "/me",
+  "start_url": "./me",
   "display": "standalone",
   "dir": "rtl",
   "lang": "ar",
   "background_color": "#FAF6EF",
   "theme_color": "#0F3D3E",
-  "icons": [{ "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml" }]
+  "icons": [{ "src": "./icon.svg", "sizes": "any", "type": "image/svg+xml" }]
 }

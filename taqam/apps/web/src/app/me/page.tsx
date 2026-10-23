@@ -9,6 +9,7 @@ import { ErrorState } from '@/components/ui/States';
 import { CheckInCard } from '@/components/ess/CheckInCard';
 import { IconTile, Ring, Section, Skeleton } from '@/components/ess/primitives';
 import type { MeHome } from '@/components/ess/types';
+import { payslipHref } from '@/lib/paths';
 
 export default function MeHomePage() {
   const { t, lang, dir } = useLang();
@@ -51,7 +52,7 @@ export default function MeHomePage() {
           </div>
         </Link>
 
-        <Link href={data.lastPayslip ? `/me/payslips/${data.lastPayslip.id}` : '/me/payslips'} className="rounded-3xl border border-line bg-white p-4 shadow-soft active:scale-[.99]">
+        <Link href={data.lastPayslip ? payslipHref(data.lastPayslip.id) : '/me/payslips'} className="rounded-3xl border border-line bg-white p-4 shadow-soft active:scale-[.99]">
           <IconTile icon={<Wallet className="h-5 w-5" />} tone="accent" />
           <p className="mt-3 text-xs text-ink-muted">{data.lastPayslip ? `${t('صافي راتب', 'Net pay')} ${fmtPeriod(data.lastPayslip.period, lang)}` : t('آخر راتب', 'Last payslip')}</p>
           <p className="num mt-0.5 text-lg font-bold text-ink">{data.lastPayslip ? money(data.lastPayslip.net, { decimals: 0 }) : '—'}</p>

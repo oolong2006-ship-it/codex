@@ -10,6 +10,7 @@ import { Badge, statusTone } from '@/components/ui/Badge';
 import { EmptyState, ErrorState } from '@/components/ui/States';
 import { IconTile, ListSkeleton, PageTitle, Skeleton } from '@/components/ess/primitives';
 import { asArray, type PayslipListItem } from '@/components/ess/types';
+import { payslipHref } from '@/lib/paths';
 
 export default function MyPayslipsPage() {
   const { t, lang, dir } = useLang();
@@ -29,7 +30,7 @@ export default function MyPayslipsPage() {
         <div className="rounded-3xl border border-line bg-white"><EmptyState title={t('لا توجد قسائم بعد', 'No payslips yet')} description={t('ستظهر قسيمتك هنا بعد اعتماد مسير الرواتب.', 'Your payslip appears once payroll is approved.')} /></div>
       ) : (
         <>
-          <Link href={`/me/payslips/${latest.id}`} className="relative block overflow-hidden rounded-[28px] bg-primary p-5 text-white shadow-lift active:scale-[.99]">
+          <Link href={payslipHref(latest.id)} className="relative block overflow-hidden rounded-[28px] bg-primary p-5 text-white shadow-lift active:scale-[.99]">
             <div className="taqam-pattern pointer-events-none absolute inset-0 opacity-30" aria-hidden />
             <div className="relative">
               <p className="text-sm text-white/70">{t('آخر راتب', 'Latest pay')} · {fmtPeriod(latest.period, lang)}</p>
@@ -45,7 +46,7 @@ export default function MyPayslipsPage() {
           <ul className="space-y-2.5">
             {list.map((p) => (
               <li key={p.id}>
-                <Link href={`/me/payslips/${p.id}`} className="flex items-center gap-3 rounded-2xl border border-line bg-white p-3.5 shadow-soft active:scale-[.99]">
+                <Link href={payslipHref(p.id)} className="flex items-center gap-3 rounded-2xl border border-line bg-white p-3.5 shadow-soft active:scale-[.99]">
                   <IconTile icon={<ReceiptText className="h-5 w-5" />} tone="accent" />
                   <div className="min-w-0 flex-1">
                     <p className="font-semibold text-ink">{fmtPeriod(p.period, lang)}</p>

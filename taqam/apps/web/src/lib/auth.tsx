@@ -1,6 +1,7 @@
 'use client';
 import { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { api, getToken, setToken } from './api';
+import { withBase } from './paths';
 
 export type Role = 'OWNER' | 'HR_ADMIN' | 'PAYROLL' | 'BRANCH_MANAGER' | 'EMPLOYEE';
 export interface SessionUser {
@@ -46,7 +47,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
   const login = async (email: string, password: string) => accept(await api.post<AuthResponse>('/auth/login', { email, password }));
   const register = async (body: Record<string, unknown>) => accept(await api.post<AuthResponse>('/auth/register', body));
-  const logout = () => { setToken(null); setUser(null); if (typeof window !== 'undefined') window.location.href = '/login'; };
+  const logout = () => { setToken(null); setUser(null); if (typeof window !== 'undefined') window.location.href = withBase('/login'); };
 
   return <Ctx.Provider value={{ user, loading, login, register, logout, refresh }}>{children}</Ctx.Provider>;
 }

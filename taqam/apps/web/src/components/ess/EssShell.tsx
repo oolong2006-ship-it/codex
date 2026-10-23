@@ -7,6 +7,7 @@ import { Bell, CalendarDays, Clock4, Home, LayoutGrid, Wallet } from 'lucide-rea
 import { useAuth } from '@/lib/auth';
 import { useLang } from '@/lib/i18n';
 import { api } from '@/lib/api';
+import { IS_DEMO, withBase } from '@/lib/paths';
 import { Logo } from '@/components/ui/Logo';
 import { Spinner } from '@/components/ui/States';
 import { asArray, type Notification } from './types';
@@ -57,8 +58,9 @@ export function EssShell({ children }: { children: React.ReactNode }) {
 
   // Offline shell caching (production only, to keep dev HMR clean).
   useEffect(() => {
-    if (process.env.NODE_ENV !== 'production' || !('serviceWorker' in navigator)) return;
-    navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(() => {});
+    // Not in the static demo: the worker's cache rules assume the app is served from the domain root.
+    if (IS_DEMO || process.env.NODE_ENV !== 'production' || !('serviceWorker' in navigator)) return;
+    navigator.serviceWorker.register(withBase('/sw.js'), { scope: withBase('/') }).catch(() => {});
   }, []);
 
   if (loading || !user) {
