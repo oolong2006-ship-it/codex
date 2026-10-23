@@ -53,7 +53,7 @@ export function ProductMock({ className }: { className?: string }) {
                       <p className="flex items-center gap-1 text-[10px] text-ink-soft"><MapPin className="h-2.5 w-2.5" />{t(b.cityAr, b.cityEn)}</p>
                     </div>
                     <div className="flex items-center gap-2">
-                      <div className="hidden flex-wrap gap-1 min-[400px]:flex">{b.dots.map((d, i) => <LiveDot key={i} kind={d} i={i} />)}</div>
+                      <div className="flex flex-wrap justify-end gap-1">{b.dots.map((d, i) => <LiveDot key={i} kind={d} i={i} />)}</div>
                       <span className="num text-[11px] font-semibold text-primary">{present}/{b.dots.length}</span>
                     </div>
                   </li>

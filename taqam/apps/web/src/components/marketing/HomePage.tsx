@@ -283,7 +283,7 @@ function Proof() {
           {stats.map((s) => (
             <div key={s.l} className="rounded-2xl border border-line bg-white p-5 text-center shadow-soft">
               <dt className="sr-only">{s.l}</dt>
-              <dd className="num text-3xl font-bold text-primary sm:text-4xl">{s.v}</dd>
+              <dd className="num text-3xl font-bold text-primary sm:text-4xl" dir="ltr">{s.v}</dd>
               <dd className="mt-2 text-sm leading-6 text-ink-muted">{s.l}</dd>
             </div>
           ))}

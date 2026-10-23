@@ -43,8 +43,8 @@ export function SiteFooter() {
     <footer className="relative overflow-hidden bg-[#0B2E2F] text-white/80">
       <StarMotif className="pointer-events-none absolute -bottom-24 h-96 w-96 text-white/[0.04] ltr:-left-24 rtl:-right-24" />
       <Container className="relative py-14">
-        <div className="grid gap-10 lg:grid-cols-[1.3fr_repeat(4,1fr)]">
-          <div className="max-w-sm">
+        <div className="grid grid-cols-2 gap-x-6 gap-y-10 sm:grid-cols-4 lg:grid-cols-[1.3fr_repeat(4,1fr)]">
+          <div className="col-span-2 max-w-sm sm:col-span-4 lg:col-span-1">
             <Logo light />
             <p className="mt-4 text-sm leading-7 text-white/65">
               {t('منصة سعودية للموارد البشرية والرواتب، مصممة للمنشآت متعددة الفروع ذات العمالة الميدانية.',

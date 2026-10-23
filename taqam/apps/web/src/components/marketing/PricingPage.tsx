@@ -37,7 +37,7 @@ export function PricingPage() {
                   className={clsx('relative rounded-full px-5 py-2 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent',
                     annual === o.v ? 'bg-primary text-white' : 'text-ink-muted hover:text-primary')}>
                   {o.l}
-                  {o.v && <span className={clsx('ms-2 rounded-full px-2 py-0.5 text-[11px]', annual ? 'bg-accent text-primary' : 'bg-accent-100 text-accent-600')}>−15%</span>}
+                  {o.v && <span dir="ltr" className={clsx('ms-2 rounded-full px-2 py-0.5 text-[11px]', annual ? 'bg-accent text-primary' : 'bg-accent-100 text-accent-600')}>−15%</span>}
                 </button>
               ))}
             </div>
@@ -121,7 +121,7 @@ export function PricingPage() {
       <section className="bg-white py-16 sm:py-20">
         <Container>
           <SectionHeading center eyebrow={t('مقارنة الباقات', 'Compare plans')} title={t('كل التفاصيل في مكان واحد', 'Every detail in one place')} />
-          <div className="mt-10 overflow-x-auto rounded-2xl border border-line">
+          <div className="relative mt-10 overflow-x-auto rounded-2xl border border-line">
             <table className="w-full min-w-[640px] text-sm">
               <caption className="sr-only">{t('مقارنة مزايا الباقات', 'Plan feature comparison')}</caption>
               <thead>
