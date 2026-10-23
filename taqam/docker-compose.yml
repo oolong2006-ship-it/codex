@@ -1,0 +1,45 @@
+# طاقم — تشغيل كامل المنصة بأمر واحد: docker compose up --build
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: taqam
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-taqam_dev}
+      POSTGRES_DB: taqam
+    volumes:
+      - taqam_pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U taqam"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    environment:
+      DATABASE_URL: postgresql://taqam:${POSTGRES_PASSWORD:-taqam_dev}@db:5432/taqam?schema=public
+      JWT_SECRET: ${JWT_SECRET:-change-me-in-production}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3100}
+      PORT: 4100
+      SEED_DEMO: ${SEED_DEMO:-true}
+    ports:
+      - "4100:4100"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:4100/api}
+    ports:
+      - "3100:3100"
+    depends_on:
+      - api
+
+volumes:
+  taqam_pg:
