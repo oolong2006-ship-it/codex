@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import clsx from 'clsx';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ChevronDown, Minus, Plus } from 'lucide-react';
 import { Button, Card, EmptyState, PageHeader } from '@/components/ui';
 import { Async, Avatar, SearchInput } from '@/components/app/primitives';
@@ -36,6 +36,12 @@ export default function OrgChartPage() {
   const roots = useMemo(() => buildTree(data ?? []), [data]);
   const toggle = (id: string) => setCollapsed((s) => { const n = new Set(s); if (n.has(id)) n.delete(id); else n.add(id); return n; });
   const match = q.trim().toLowerCase();
+  const scroller = useRef<HTMLDivElement>(null);
+  // Center the (usually very wide) tree horizontally once it renders.
+  useEffect(() => {
+    const el = scroller.current;
+    if (el) el.scrollLeft = (el.scrollWidth - el.clientWidth) / 2;
+  }, [roots.length, zoom]);
 
   return (
     <>
@@ -52,8 +58,8 @@ export default function OrgChartPage() {
       <Card className="overflow-hidden">
         <Async loading={loading} error={error} onRetry={reload} hasData={!!data}>
           {!roots.length ? <EmptyState /> : (
-            <div className="overflow-auto bg-[radial-gradient(#E7E1D6_1px,transparent_1px)] p-6 [background-size:18px_18px]" style={{ minHeight: 420 }}>
-              <div dir="ltr" className="org-tree inline-flex min-w-full justify-center" style={{ transform: `scale(${zoom})`, transformOrigin: 'top center' }}>
+            <div ref={scroller} dir="ltr" className="overflow-auto bg-[radial-gradient(#E7E1D6_1px,transparent_1px)] p-6 [background-size:18px_18px]" style={{ minHeight: 420 }}>
+              <div className="org-tree mx-auto flex w-max min-w-full justify-center" style={{ zoom }}>
                 <ul className="flex gap-6">
                   {roots.map((r) => <Node key={r.id} node={r} collapsed={collapsed} toggle={toggle} match={match} />)}
                 </ul>

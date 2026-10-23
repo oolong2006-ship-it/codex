@@ -54,9 +54,9 @@ export default function EmployeeDetailPage() {
             <Card className="mb-6 overflow-hidden">
               <div className="taqam-pattern h-20 bg-primary" />
               <div className="flex flex-col gap-4 px-5 pb-5 sm:flex-row sm:items-end sm:justify-between">
-                <div className="-mt-8 flex flex-col gap-3 sm:flex-row sm:items-end">
-                  <Avatar name={employeeName(e, lang)} color={e.avatarColor} size="xl" className="ring-4 ring-white" />
-                  <div>
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
+                  <Avatar name={employeeName(e, lang)} color={e.avatarColor} size="xl" className="-mt-8 ring-4 ring-white" />
+                  <div className="sm:pt-3">
                     <div className="flex flex-wrap items-center gap-2">
                       <h1 className="text-xl font-bold text-ink">{employeeName(e, lang)}</h1>
                       <StatusBadge map={EMPLOYEE_STATUS} value={e.status} />
