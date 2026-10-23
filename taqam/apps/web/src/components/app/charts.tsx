@@ -68,12 +68,16 @@ export function useChartDir() {
   return { reversed: rtl, yOrientation: (rtl ? 'right' : 'left') as 'right' | 'left' };
 }
 
-const ACTION_AR: Record<string, string> = { CREATE: 'إضافة', UPDATE: 'تعديل', DELETE: 'حذف', APPROVE: 'اعتماد', REJECT: 'رفض', LOGIN: 'تسجيل دخول', TERMINATE: 'إنهاء خدمة', CALCULATE: 'احتساب', MARK_PAID: 'تسجيل دفع', CANCEL: 'إلغاء', REGISTER: 'تسجيل' };
-const ENTITY_AR: Record<string, string> = { Employee: 'موظف', Branch: 'فرع', Department: 'قسم', LeaveRequest: 'طلب إجازة', EmployeeRequest: 'طلب', PayrollRun: 'مسير رواتب', Loan: 'سلفة', Shift: 'وردية', Attendance: 'حضور', Document: 'مستند', User: 'مستخدم', Company: 'المنشأة', Announcement: 'إعلان', Job: 'وظيفة', Candidate: 'مرشح', Holiday: 'عطلة', LeaveType: 'نوع إجازة', PerformanceCycle: 'دورة تقييم', PerformanceReview: 'تقييم', Adjustment: 'تسوية', Roster: 'جدول الورديات' };
+const ACTION_AR: Record<string, string> = { CREATE: 'إضافة', UPDATE: 'تعديل', DELETE: 'حذف', APPROVE: 'اعتماد', REJECT: 'رفض', LOGIN: 'تسجيل دخول', TERMINATE: 'إنهاء خدمة', CALCULATE: 'احتساب', MARK_PAID: 'تسجيل دفع', CANCEL: 'إلغاء', REGISTER: 'تسجيل', EXPORT: 'تصدير', EXPORT_WPS: 'تصدير ملف حماية الأجور', CHANGE_PASSWORD: 'تغيير كلمة المرور', CHECK_IN: 'تسجيل حضور', CHECK_OUT: 'تسجيل انصراف', CORRECTION: 'تصحيح', MANUAL_ENTRY: 'إدخال يدوي', MOVE_STAGE: 'نقل مرحلة' };
+const ENTITY_AR: Record<string, string> = { Employee: 'موظف', Branch: 'فرع', Department: 'قسم', LeaveRequest: 'طلب إجازة', EmployeeRequest: 'طلب', PayrollRun: 'مسير رواتب', Loan: 'سلفة', Shift: 'وردية', Attendance: 'حضور', Document: 'مستند', User: 'مستخدم', Company: 'المنشأة', Announcement: 'إعلان', Job: 'وظيفة', Candidate: 'مرشح', Holiday: 'عطلة', LeaveType: 'نوع إجازة', PerformanceCycle: 'دورة تقييم', PerformanceReview: 'تقييم', Adjustment: 'تسوية', Roster: 'جدول الورديات', Report: 'تقرير', JobOpening: 'وظيفة', AttendanceRecord: 'سجل حضور', EmployeeDocument: 'مستند', PayrollAdjustment: 'تسوية رواتب', Request: 'طلب' };
 /** Human text for an audit action like "CREATE"/"employee.create" + entity "Employee". */
 export function activityText(action: string, entity: string, lang: 'ar' | 'en') {
-  const a = (action.split(/[.:_]/).length > 1 && !ACTION_AR[action] ? action.split(/[.:]/).pop()! : action).toUpperCase();
+  const a = (ACTION_AR[action] ? action : action.split(/[.:]/).pop() ?? action).toUpperCase();
   const ent = entity ? entity.charAt(0).toUpperCase() + entity.slice(1) : '';
-  if (lang === 'en') return `${a.charAt(0)}${a.slice(1).toLowerCase().replace(/_/g, ' ')} ${ent.replace(/([a-z])([A-Z])/g, '$1 $2').toLowerCase()}`;
-  return `${ACTION_AR[a] ?? action} ${ENTITY_AR[ent] ?? entity}`;
+  if (lang === 'en') {
+    const verb = a.toLowerCase().replace(/_/g, ' ');
+    return `${verb.charAt(0).toUpperCase()}${verb.slice(1)} · ${ent.replace(/([a-z])([A-Z])/g, '$1 $2').toLowerCase()}`;
+  }
+  if (a === 'EXPORT_WPS' || a === 'CHANGE_PASSWORD') return ACTION_AR[a];
+  return `${ACTION_AR[a] ?? action} ${ENTITY_AR[ent] ?? entity}`.trim();
 }

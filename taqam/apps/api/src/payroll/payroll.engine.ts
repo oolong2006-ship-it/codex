@@ -48,7 +48,8 @@ export async function calculatePayrollRun(db: PrismaClient, companyId: string, r
     where: {
       companyId,
       hireDate: { lte: end },
-      OR: [{ status: { not: 'TERMINATED' } }, { status: 'TERMINATED', terminationDate: { gte: start, lte: end } }],
+      // active employees + anyone whose termination falls on/after the period start (covers historical runs)
+      OR: [{ status: { not: 'TERMINATED' } }, { terminationDate: { gte: start } }],
     },
     orderBy: { employeeNumber: 'asc' },
   });

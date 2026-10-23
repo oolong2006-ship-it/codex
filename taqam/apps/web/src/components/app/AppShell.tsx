@@ -211,7 +211,12 @@ function NotificationsBell() {
       setItems((s) => s.map((x) => (x.id === n.id ? { ...x, readAt: new Date().toISOString() } : x)));
       api.post(`/notifications/${n.id}/read`).catch(() => {});
     }
-    if (n.link) { setOpen(false); router.push(n.link); }
+    if (n.link) {
+      setOpen(false);
+      // API links are relative to the module ("/leaves"); dashboard routes live under /app, ESS under /me.
+      const href = /^https?:\/\//.test(n.link) || n.link.startsWith('/app') || n.link.startsWith('/me') ? n.link : `/app${n.link.startsWith('/') ? '' : '/'}${n.link}`;
+      if (/^https?:\/\//.test(href)) window.open(href, '_blank'); else router.push(href);
+    }
   };
   const readAll = async () => {
     setItems((s) => s.map((x) => ({ ...x, readAt: x.readAt ?? new Date().toISOString() })));

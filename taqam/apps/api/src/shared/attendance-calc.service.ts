@@ -36,10 +36,26 @@ export class AttendanceCalcService {
     });
     if (assignment) return assignment.shift;
     if (!employee.branchId) return null;
+    // If the branch publishes a roster for that day, an unassigned employee is off.
+    if (await this.branchHasRoster(employee.branchId, d)) return null;
     return this.prisma.shift.findFirst({
       where: { branchId: employee.branchId, days: { has: weekday(d) } },
       orderBy: { startTime: 'asc' },
     });
+  }
+
+  async branchHasRoster(branchId: string, date: Date): Promise<boolean> {
+    const n = await this.prisma.shiftAssignment.count({ where: { date, employee: { branchId } } });
+    return n > 0;
+  }
+
+  async rosterBranches(branchIds: string[], date: Date): Promise<Set<string | null>> {
+    if (!branchIds.length) return new Set();
+    const rows = await this.prisma.shiftAssignment.findMany({
+      where: { date, employee: { branchId: { in: branchIds } } },
+      select: { employee: { select: { branchId: true } } },
+    });
+    return new Set(rows.map((r) => r.employee.branchId));
   }
 
   compute(shift: Shift | null, checkIn: Date | null, checkOut: Date | null): AttendanceCalc {
@@ -88,8 +104,7 @@ export class AttendanceCalcService {
     const recMap = new Map(records.map((r) => [r.employeeId, r]));
     const asgMap = new Map(assignments.map((a) => [a.employeeId, a.shift]));
     const onLeave = new Set(leaves.map((l) => l.employeeId));
-    const empBranch = new Map(employees.map((e) => [e.id, e.branchId]));
-    const rosterBranches = new Set(assignments.map((a) => empBranch.get(a.employeeId)));
+    const rosterBranches = await this.rosterBranches(branchIds, d);
 
     return employees.map((e) => {
       const rec = recMap.get(e.id);
