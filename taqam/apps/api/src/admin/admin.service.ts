@@ -369,7 +369,10 @@ export class AdminService {
       throw badRequest('Company is not suspended', 'المنشأة ليست موقوفة');
     }
     const now = new Date();
-    const toStatus: CompanyStatus = c.trialEndsAt && c.trialEndsAt > now ? 'TRIAL' : 'ACTIVE';
+    // Back to TRIAL only while the trial is still running and the company was never ACTIVE (paid).
+    const everActive =
+      !!c.subscriptionEndsAt || (await this.prisma.companyEvent.count({ where: { companyId: id, toStatus: 'ACTIVE' } })) > 0;
+    const toStatus: CompanyStatus = c.trialEndsAt && c.trialEndsAt > now && !everActive ? 'TRIAL' : 'ACTIVE';
     const data: Prisma.CompanyUpdateInput = { status: toStatus, suspendedAt: null, suspensionReason: null, activatedAt: c.activatedAt ?? now };
     // An ended subscription would immediately re-expire: reactivation makes it open-ended (use /extend to set a date).
     if (toStatus === 'ACTIVE' && c.subscriptionEndsAt && c.subscriptionEndsAt <= now) data.subscriptionEndsAt = null;

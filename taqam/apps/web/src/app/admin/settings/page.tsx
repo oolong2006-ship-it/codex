@@ -78,7 +78,7 @@ function SettingsForm() {
                 <Input type="number" min={1} max={365} dir="ltr" value={f.trialDays} onChange={(e) => setF((s) => ({ ...s, trialDays: e.target.value }))} />
               </Field>
               {PLANS.map((pl) => (
-                <Field key={pl} label={t(`سعر ${lbl(PLAN, pl, 'ar')} (ر.س/موظف)`, `${lbl(PLAN, pl, 'en')} (SAR/employee)`)} hint={pl === 'ENTERPRISE' ? t('فارغ = حسب الاتفاق', 'Empty = negotiated') : undefined}>
+                <Field key={pl} label={t(`${lbl(PLAN, pl, 'ar')} (ر.س للموظف)`, `${lbl(PLAN, pl, 'en')} (SAR/emp.)`)} hint={pl === 'ENTERPRISE' ? t('فارغ = حسب الاتفاق', 'Empty = negotiated') : undefined}>
                   <Input type="number" min={0} step="0.5" dir="ltr" value={f.prices[pl]} placeholder="—"
                     onChange={(e) => setF((s) => ({ ...s, prices: { ...s.prices, [pl]: e.target.value } }))} />
                 </Field>
