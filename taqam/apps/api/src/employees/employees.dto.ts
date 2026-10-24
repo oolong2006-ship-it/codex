@@ -3,6 +3,7 @@ import { ContractType, DocumentType, EmployeeStatus, Gender } from '@prisma/clie
 import { Transform, Type } from 'class-transformer';
 import {
   IsBoolean,
+  IsDateString,
   IsEmail,
   IsEnum,
   IsIn,
@@ -70,9 +71,14 @@ export class CreateEmployeeDto {
   createUser?: CreateUserForEmployeeDto;
 }
 
+/** Status TERMINATED and terminationDate are set only by POST /employees/:id/terminate (EOSB + login deactivation). */
 export class UpdateEmployeeDto extends PartialType(CreateEmployeeDto) {
-  @ApiPropertyOptional() @IsOptional() @Transform(emptyToUndef) @Matches(DATE) terminationDate?: string | null;
   @ApiPropertyOptional() @IsOptional() @IsString() terminationReason?: string | null;
+}
+
+export class EosbQueryDto {
+  @ApiPropertyOptional({ example: '2026-10-01' }) @IsOptional() @IsDateString({ strict: true }) endDate?: string;
+  @ApiPropertyOptional({ enum: TERMINATION_REASONS }) @IsOptional() @IsIn(TERMINATION_REASONS) reason?: TerminationReason;
 }
 
 export class TerminateDto {

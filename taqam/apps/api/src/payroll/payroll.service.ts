@@ -85,6 +85,7 @@ export class PayrollService {
     if (e instanceof PayrollStateError) {
       if (e.message === 'NOT_FOUND') throw notFound('Payroll run', 'مسير الرواتب غير موجود');
       if (e.message === 'LOCKED') throw badRequest('Run is already approved', 'لا يمكن إعادة احتساب مسير معتمد');
+      if (e.message === 'ALREADY_PROCESSED') throw conflict('Payroll run was already processed', 'تمت معالجة هذا الطلب مسبقاً');
       if (e.message === 'NOT_CALCULATED') throw badRequest('Run must be CALCULATED first', 'يجب احتساب المسير قبل اعتماده');
     }
     throw e;

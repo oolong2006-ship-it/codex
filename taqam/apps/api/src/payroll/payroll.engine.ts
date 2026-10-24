@@ -186,10 +186,10 @@ export async function calculatePayrollRun(db: PrismaClient, companyId: string, r
   }
 
   return db.$transaction(async (tx) => {
-    await tx.payslip.deleteMany({ where: { payrollRunId: run.id } });
-    if (slips.length) await tx.payslip.createMany({ data: slips });
-    return tx.payrollRun.update({
-      where: { id: run.id },
+    // Conditional write first: it takes the run's row lock, so a concurrent approve either waits for us
+    // or has already moved the run out of DRAFT/CALCULATED (→ count 0 → nothing is written).
+    const claimed = await tx.payrollRun.updateMany({
+      where: { id: run.id, status: { in: ['DRAFT', 'CALCULATED'] } },
       data: {
         status: 'CALCULATED',
         calculatedAt: new Date(),
@@ -201,16 +201,30 @@ export async function calculatePayrollRun(db: PrismaClient, companyId: string, r
         totalEmployerCost: r2(totals.employerCost),
       },
     });
+    if (claimed.count === 0) throw new PayrollStateError('ALREADY_PROCESSED');
+    await tx.payslip.deleteMany({ where: { payrollRunId: run.id } });
+    if (slips.length) await tx.payslip.createMany({ data: slips });
+    return tx.payrollRun.findUniqueOrThrow({ where: { id: run.id } });
   });
 }
 
-/** CALCULATED → APPROVED, deducting the applied loan installments. */
+/**
+ * CALCULATED → APPROVED, deducting the applied loan installments.
+ * The status flip is a conditional update inside the transaction, so of two concurrent approvals
+ * exactly one deducts loans; the other gets ALREADY_PROCESSED (409).
+ */
 export async function approvePayrollRun(db: PrismaClient, companyId: string, runId: string, approver: { id: string; name: string }) {
   const run = await db.payrollRun.findFirst({ where: { id: runId, companyId } });
   if (!run) throw new PayrollStateError('NOT_FOUND');
+  if (run.status === 'APPROVED' || run.status === 'PAID') throw new PayrollStateError('ALREADY_PROCESSED');
   if (run.status !== 'CALCULATED') throw new PayrollStateError('NOT_CALCULATED');
-  const slips = await db.payslip.findMany({ where: { payrollRunId: run.id }, select: { loanDeductions: true } });
   return db.$transaction(async (tx: Db) => {
+    const claimed = await tx.payrollRun.updateMany({
+      where: { id: run.id, status: 'CALCULATED' },
+      data: { status: 'APPROVED', approvedAt: new Date(), approvedById: approver.id, approvedByName: approver.name },
+    });
+    if (claimed.count === 0) throw new PayrollStateError('ALREADY_PROCESSED');
+    const slips = await tx.payslip.findMany({ where: { payrollRunId: run.id }, select: { loanDeductions: true } });
     for (const s of slips) {
       for (const ld of ((s.loanDeductions ?? []) as { loanId: string; amount: number }[])) {
         const loan = await tx.loan.findUnique({ where: { id: ld.loanId } });
@@ -219,9 +233,6 @@ export async function approvePayrollRun(db: PrismaClient, companyId: string, run
         await tx.loan.update({ where: { id: loan.id }, data: { remaining, status: remaining <= 0 ? 'PAID' : loan.status } });
       }
     }
-    return tx.payrollRun.update({
-      where: { id: run.id },
-      data: { status: 'APPROVED', approvedAt: new Date(), approvedById: approver.id, approvedByName: approver.name },
-    });
+    return tx.payrollRun.findUniqueOrThrow({ where: { id: run.id } });
   });
 }

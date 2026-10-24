@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import * as bcrypt from 'bcryptjs';
 import { randomInt } from 'crypto';
+import { round2 } from '@taqam/core';
 import { Company, CompanyEvent, CompanyStatus, Plan, Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotifyService } from '../shared/notifications.service';
@@ -64,7 +65,6 @@ const adminSelect = { id: true, name: true, email: true, isActive: true, lastLog
 const leadSelect = {
   id: true, name: true, company: true, email: true, phone: true, employeesCount: true, sector: true, message: true, status: true, notes: true, createdAt: true,
 } as const;
-const round2 = (n: number) => Math.round(n * 100) / 100;
 const actor = (a: PlatformUser) => ({ id: a.id, name: a.name });
 
 /** Temporary password: readable, meets the 8+ chars rule. */
@@ -224,8 +224,12 @@ export class AdminService {
     };
   }
 
+  /**
+   * Company list. Read-only: expiry is persisted by the daily job and lazily on access, not here.
+   * Filters and (for column sorts) ordering + pagination run in the database; only `name`
+   * (Arabic collation) and `employees` (aggregate) are sorted in memory.
+   */
   async list(q: CompaniesQuery): Promise<Paginated<AdminCompany>> {
-    await this.platform.expireDue();
     const { page, pageSize, skip, take } = pageParams(q);
     const where: Prisma.CompanyWhereInput = {};
     if (q.status) where.status = { in: q.status.split(',') as CompanyStatus[] };
@@ -241,17 +245,29 @@ export class AdminService {
         { users: { some: { role: 'OWNER', OR: [{ email: has }, { name: has }, { phone: has }] } } },
       ];
     }
-    const rows = await this.views(await this.prisma.company.findMany({ where, orderBy: { createdAt: 'desc' } }));
     const raw = q.sort ?? 'createdAt';
     const key = raw.replace(/^-/, '');
-    const sorts: Record<string, { cmp: (a: AdminCompany, b: AdminCompany) => number; dir: 1 | -1 }> = {
-      createdAt: { cmp: (a, b) => a.createdAt.getTime() - b.createdAt.getTime(), dir: -1 },
+    const sorts: Record<string, { cmp: (a: AdminCompany, b: AdminCompany) => number; dir: 1 | -1; db?: (d: Prisma.SortOrder) => Prisma.CompanyOrderByWithRelationInput }> = {
+      createdAt: { cmp: (a, b) => a.createdAt.getTime() - b.createdAt.getTime(), dir: -1, db: (d) => ({ createdAt: d }) },
       name: { cmp: (a, b) => a.nameAr.localeCompare(b.nameAr, 'ar'), dir: 1 },
       employees: { cmp: (a, b) => a.activeEmployees - b.activeEmployees || a.employeesCount - b.employeesCount, dir: -1 },
-      lastActivityAt: { cmp: (a, b) => (a.lastActivityAt?.getTime() ?? 0) - (b.lastActivityAt?.getTime() ?? 0), dir: -1 },
+      lastActivityAt: {
+        cmp: (a, b) => (a.lastActivityAt?.getTime() ?? 0) - (b.lastActivityAt?.getTime() ?? 0),
+        dir: -1,
+        db: (d) => ({ lastActivityAt: { sort: d, nulls: d === 'asc' ? 'first' : 'last' } }),
+      },
     };
     const sort = sorts[key] ?? sorts.createdAt;
     const dir = q.order === 'asc' ? 1 : q.order === 'desc' ? -1 : raw.startsWith('-') ? -1 : sort.dir;
+
+    if (sort.db) {
+      const [companies, total] = await Promise.all([
+        this.prisma.company.findMany({ where, orderBy: [sort.db(dir === 1 ? 'asc' : 'desc'), { createdAt: 'desc' }], skip, take }),
+        this.prisma.company.count({ where }),
+      ]);
+      return { data: await this.views(companies), total, page, pageSize };
+    }
+    const rows = await this.views(await this.prisma.company.findMany({ where, orderBy: { createdAt: 'desc' } }));
     rows.sort((a, b) => dir * sort.cmp(a, b) || b.createdAt.getTime() - a.createdAt.getTime());
     return { data: rows.slice(skip, skip + take), total: rows.length, page, pageSize };
   }

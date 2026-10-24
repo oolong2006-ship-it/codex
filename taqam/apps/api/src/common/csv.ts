@@ -1,5 +1,5 @@
 /** Leading characters that make Excel/Sheets evaluate a cell as a formula (CSV/formula injection). */
-const FORMULA_START = /^[=+\-@\t\r]/;
+const FORMULA_START = /^[=+\-@]/;
 
 const field = (v: unknown) => {
   let s = v === null || v === undefined ? '' : v instanceof Date ? v.toISOString().slice(0, 10) : String(v);

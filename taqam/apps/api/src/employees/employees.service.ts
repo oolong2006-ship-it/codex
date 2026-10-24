@@ -112,7 +112,7 @@ export class EmployeesService {
     }
   }
 
-  private toData(dto: Partial<CreateEmployeeDto & { terminationDate?: string | null }>) {
+  private toData(dto: Partial<CreateEmployeeDto>) {
     const { createUser: _cu, ...rest } = dto;
     const data: Record<string, unknown> = { ...rest };
     for (const f of DATE_FIELDS) {
@@ -188,7 +188,8 @@ export class EmployeesService {
 
   async update(u: AuthUser, id: string, dto: UpdateEmployeeDto) {
     const current = await this.scope.employee(u, id);
-    if (dto.status && dto.status !== 'TERMINATED' && current.status === 'TERMINATED') await this.assertSeat(u.companyId);
+    if (dto.status === 'TERMINATED') throw badRequest('Use the terminate action to end employment', 'استخدم إجراء إنهاء الخدمة');
+    if (dto.status && current.status === 'TERMINATED') await this.assertSeat(u.companyId);
     await this.validateRefs(u, dto, id);
     if (dto.employeeNumber) {
       const dup = await this.prisma.employee.findFirst({ where: { companyId: u.companyId, employeeNumber: dto.employeeNumber, id: { not: id } } });
@@ -200,9 +201,9 @@ export class EmployeesService {
     return employeeView(e);
   }
 
-  async eosb(u: AuthUser, id: string, endDate?: string, reason?: string) {
+  async eosb(u: AuthUser, id: string, endDate?: string, reason?: TerminationReason) {
     const e = await this.scope.employee(u, id);
-    const r = (reason || 'EMPLOYER_TERMINATION') as TerminationReason;
+    const r: TerminationReason = reason || 'EMPLOYER_TERMINATION';
     const end = endDate || (e.terminationDate ? e.terminationDate.toISOString().slice(0, 10) : todayStr());
     const bal = await this.leaves.annualBalance(e, end);
     return calculateEndOfService({

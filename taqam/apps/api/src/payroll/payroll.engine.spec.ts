@@ -7,12 +7,14 @@ const dec = (n: number) => new Prisma.Decimal(n);
 
 function fakeDb(overrides: Record<string, unknown> = {}, opts: { conditionalCount?: number } = {}) {
   const created: Prisma.PayslipCreateManyInput[] = [];
-  const runUpdate = jest.fn(async ({ data }) => ({ id: 'run1', period: '2026-09', ...data }));
   const tx = {
-    payslip: { deleteMany: jest.fn(), createMany: jest.fn(async ({ data }) => created.push(...data)) },
+    payslip: {
+      deleteMany: jest.fn(),
+      createMany: jest.fn(async ({ data }) => created.push(...data)),
+      findMany: jest.fn(async () => [{ loanDeductions: [{ loanId: 'loan1', amount: 600 }] }]),
+    },
     payrollRun: {
-      update: runUpdate,
-      updateMany: jest.fn(async () => ({ count: opts.conditionalCount ?? 1 })),
+      updateMany: jest.fn(async (_args: { where: unknown; data: Record<string, unknown> }) => ({ count: opts.conditionalCount ?? 1 })),
       findUniqueOrThrow: jest.fn(async () => ({ id: 'run1', period: '2026-09' })),
     },
     loan: { findUnique: jest.fn(async () => ({ id: 'loan1', remaining: dec(600), status: 'ACTIVE' })), update: jest.fn() },
@@ -60,12 +62,12 @@ function fakeDb(overrides: Record<string, unknown> = {}, opts: { conditionalCoun
     $transaction: jest.fn(async (fn: (t: typeof tx) => unknown) => fn(tx)),
     ...overrides,
   };
-  return { db, tx, created, runUpdate };
+  return { db, tx, created };
 }
 
 describe('payroll engine', () => {
   it('gathers attendance, leave, adjustments and loans and delegates to core.calculatePayslip', async () => {
-    const { db, created, runUpdate } = fakeDb();
+    const { db, created, tx } = fakeDb();
     await calculatePayrollRun(db as never, 'c1', 'run1');
     expect(created).toHaveLength(1);
     const slip = created[0];
@@ -90,7 +92,7 @@ describe('payroll engine', () => {
     expect(slip.deductions).toEqual(expected.deductions);
     expect(slip.loanDeductions).toEqual([{ loanId: 'loan1', amount: 600 }]);
     expect((slip.inputs as Record<string, unknown>).unpaidLeaveDays).toBe(2);
-    const data = runUpdate.mock.calls[0][0].data;
+    const data = tx.payrollRun.updateMany.mock.calls[0][0].data;
     expect(data.status).toBe('CALCULATED');
     expect(data.employeesCount).toBe(1);
     expect(data.totalNet).toBe(expected.net);
@@ -110,7 +112,7 @@ describe('payroll engine', () => {
     });
     await approvePayrollRun(db as never, 'c1', 'run1', { id: 'u1', name: 'ماجد' });
     expect(tx.loan.update).toHaveBeenCalledWith({ where: { id: 'loan1' }, data: { remaining: 0, status: 'PAID' } });
-    expect(tx.payrollRun.update.mock.calls[0][0].data.status).toBe('APPROVED');
+    expect(tx.payrollRun.updateMany.mock.calls[0][0]).toMatchObject({ where: { id: 'run1', status: 'CALCULATED' }, data: { status: 'APPROVED' } });
   });
 
   it('UNPAID leave is deducted on calendar days: a whole-November unpaid leave deducts 30/30 of the wage (review #3)', async () => {

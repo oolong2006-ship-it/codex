@@ -2,7 +2,7 @@ import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestj
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { ADMIN, CurrentUser, Roles, STAFF } from '../common/decorators';
 import { AuthUser } from '../common/types';
-import { CreateEmployeeDto, DocumentDto, TerminateDto, UpdateEmployeeDto } from './employees.dto';
+import { CreateEmployeeDto, DocumentDto, EosbQueryDto, TerminateDto, UpdateEmployeeDto } from './employees.dto';
 import { EmployeeQuery, EmployeesService } from './employees.service';
 
 @ApiTags('employees')
@@ -43,8 +43,8 @@ export class EmployeesController {
 
   @Roles('OWNER', 'HR_ADMIN', 'PAYROLL')
   @Get('employees/:id/eosb')
-  eosb(@CurrentUser() u: AuthUser, @Param('id') id: string, @Query('endDate') endDate?: string, @Query('reason') reason?: string) {
-    return this.svc.eosb(u, id, endDate, reason);
+  eosb(@CurrentUser() u: AuthUser, @Param('id') id: string, @Query() q: EosbQueryDto) {
+    return this.svc.eosb(u, id, q.endDate, q.reason);
   }
 
   @Roles(...STAFF)

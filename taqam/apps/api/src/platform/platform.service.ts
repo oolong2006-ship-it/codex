@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
+import { round2 } from '@taqam/core';
 import { BillingCycle, Company, CompanyEventType, CompanyStatus, Plan, Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { forbidden } from '../common/errors';
@@ -38,8 +39,6 @@ export interface EventInput {
   data?: unknown;
   admin?: { id: string; name: string } | null;
 }
-
-const round2 = (n: number) => Math.round(n * 100) / 100;
 
 /** End of a Riyadh calendar day (trials/subscriptions run through their last day). */
 export const endOfDay = (d: string | Date) => new Date(riyadhDateTime(dayStr(d)!, '23:59').getTime() + 59999);
@@ -109,9 +108,14 @@ export class PlatformService {
     return false;
   }
 
-  /** Persist TRIAL/ACTIVE → EXPIRED (idempotent: only the first caller writes the event). */
-  async expire(c: LifecycleFields): Promise<boolean> {
-    const res = await this.prisma.company.updateMany({ where: { id: c.id, status: c.status }, data: { status: 'EXPIRED' } });
+  /**
+   * Persist TRIAL/ACTIVE → EXPIRED (idempotent: only the first caller writes the event). The end date is
+   * re-checked in the write so a trial/subscription extended after `c` was read is never expired.
+   */
+  async expire(c: LifecycleFields, now = new Date()): Promise<boolean> {
+    if (c.status !== 'TRIAL' && c.status !== 'ACTIVE') return false;
+    const stillDue: Prisma.CompanyWhereInput = c.status === 'TRIAL' ? { trialEndsAt: { lte: now } } : { subscriptionEndsAt: { lte: now } };
+    const res = await this.prisma.company.updateMany({ where: { id: c.id, status: c.status, ...stillDue }, data: { status: 'EXPIRED' } });
     if (res.count) {
       await this.logEvent({
         companyId: c.id,
@@ -137,7 +141,7 @@ export class PlatformService {
       select: { id: true, nameAr: true, status: true, trialEndsAt: true, subscriptionEndsAt: true },
     });
     let n = 0;
-    for (const c of due) if (await this.expire(c)) n++;
+    for (const c of due) if (await this.expire(c, now)) n++;
     return n;
   }
 
@@ -164,8 +168,10 @@ export class PlatformService {
   async assertCompanyAccess(c: LifecycleFields): Promise<CompanyStatus> {
     let status = c.status;
     if (this.isDue(c)) {
-      await this.expire(c);
-      status = 'EXPIRED';
+      // a concurrent extend may have won the race: trust the stored status then
+      status = (await this.expire(c))
+        ? 'EXPIRED'
+        : ((await this.prisma.company.findUnique({ where: { id: c.id }, select: { status: true } }))?.status ?? 'EXPIRED');
     }
     const err = this.blockedError(status);
     if (err) throw err;
