@@ -136,6 +136,23 @@ export interface EngineSnapshot {
   random: number;
 }
 
+export interface PersistedEngineState {
+  version: 1;
+  started: boolean;
+  events: EngineEvent[];
+  transcript: TranscriptEntry[];
+  snapshot: Omit<
+    EngineSnapshot,
+    "answers" | "asked" | "skipped" | "sectionFollowUps" | "sectionLastFollowUp"
+  > & {
+    answers: [string, AnswerRecord][];
+    asked: string[];
+    skipped: string[];
+    sectionFollowUps: [string, number][];
+    sectionLastFollowUp: [string, FollowUpKind][];
+  };
+}
+
 function replaceMap<K, V>(target: Map<K, V>, source: Map<K, V>): void {
   target.clear();
   for (const [k, v] of source) target.set(k, v);
@@ -259,6 +276,45 @@ export class InterviewEngine {
     this.lastBackchannel = s.lastBackchannel;
     this.rotation = s.rotation;
     this.random.state = s.random;
+  }
+
+  /**
+   * Full, JSON-safe state for interviews that outlive a process (WhatsApp
+   * conversations spread over hours). Pair with importState on a new engine
+   * built from the same options.
+   */
+  exportState(): PersistedEngineState {
+    const snap = this.snapshot();
+    return {
+      version: 1,
+      started: this.started,
+      events: structuredClone(this.events),
+      transcript: structuredClone(this.transcript),
+      snapshot: {
+        ...snap,
+        answers: [...snap.answers],
+        asked: [...snap.asked],
+        skipped: [...snap.skipped],
+        sectionFollowUps: [...snap.sectionFollowUps],
+        sectionLastFollowUp: [...snap.sectionLastFollowUp],
+      },
+    };
+  }
+
+  importState(state: PersistedEngineState): void {
+    if (state.version !== 1) throw new Error(`unsupported engine state version ${state.version}`);
+    this.started = state.started;
+    this.events.splice(0, this.events.length, ...structuredClone(state.events));
+    this.transcript.splice(0, this.transcript.length, ...structuredClone(state.transcript));
+    const s = state.snapshot;
+    this.restore({
+      ...s,
+      answers: new Map(s.answers),
+      asked: new Set(s.asked),
+      skipped: new Set(s.skipped),
+      sectionFollowUps: new Map(s.sectionFollowUps),
+      sectionLastFollowUp: new Map(s.sectionLastFollowUp),
+    });
   }
 
   start(): InterviewerTurn {

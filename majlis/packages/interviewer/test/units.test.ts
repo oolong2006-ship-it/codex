@@ -270,3 +270,29 @@ describe("snapshot / restore", () => {
     expect(engine.answers.get("q1")!.followUps).toBe(0);
   });
 });
+
+describe("persisted state", () => {
+  it("survives JSON round-trips mid-interview and continues identically", () => {
+    const opts = {
+      guide: restaurantGuide,
+      voiceGender: "female" as const,
+      participantGender: "female" as const,
+      seed: 4,
+    };
+    const live = new InterviewEngine(opts);
+    live.start();
+    live.respond({ text: "إيه" });
+    live.respond({ text: "عادي" });
+
+    const saved = JSON.parse(JSON.stringify(live.exportState()));
+    const resumed = new InterviewEngine(opts);
+    resumed.importState(saved);
+
+    for (const text of ["لأنه قريب من البيت والأكل نظيف", "الطلب كان سريع والاستلام سهل"]) {
+      expect(resumed.respond({ text })).toEqual(live.respond({ text }));
+    }
+    expect(resumed.consent).toEqual(live.consent);
+    expect(resumed.transcript).toEqual(live.transcript);
+    expect(resumed.events).toEqual(live.events);
+  });
+});

@@ -15,6 +15,13 @@
       "when": 1792864122452,
       "tag": "0001_analysis",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792884286304,
+      "tag": "0002_governance",
+      "breakpoints": true
     }
   ]
 }

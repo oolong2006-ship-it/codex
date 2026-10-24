@@ -36,7 +36,7 @@ export const sessionStatus = pgEnum("session_status", [
   "abandoned",
 ]);
 export const turnRole = pgEnum("turn_role", ["interviewer", "participant"]);
-export const consentMethod = pgEnum("consent_method", ["click", "verbal"]);
+export const consentMethod = pgEnum("consent_method", ["click", "verbal", "message"]);
 export const qaFlagKind = pgEnum("qa_flag_kind", [
   "low_asr_confidence",
   "too_short",
@@ -139,6 +139,8 @@ export const participants = pgTable(
     gender: gender("gender"),
     city: text("city"),
     ageBand: ageBand("age_band"),
+    /** SHA-256 of the code given to the participant to request deletion later. */
+    deletionTokenHash: text("deletion_token_hash").unique(),
     createdAt: createdAt(),
   },
   (t) => [index("participants_study_idx").on(t.studyId)],
@@ -165,6 +167,9 @@ export const interviewSessions = pgTable(
     latencyStats: jsonb("latency_stats"),
     /** Set once the worker has embedded and analyzed this interview. */
     analyzedAt: timestamp("analyzed_at", { withTimezone: true }),
+    /** Interviewer state for asynchronous channels (WhatsApp), between messages. */
+    engineState: jsonb("engine_state"),
+    recordingsPurgedAt: timestamp("recordings_purged_at", { withTimezone: true }),
     startedAt: timestamp("started_at", { withTimezone: true }),
     endedAt: timestamp("ended_at", { withTimezone: true }),
     createdAt: createdAt(),
@@ -205,6 +210,10 @@ export const turns = pgTable(
     dialectTag: text("dialect_tag"),
     action: text("action"),
     questionId: text("question_id"),
+    /** ASR output before a reviewer corrected it (source of the measured WER). */
+    originalText: text("original_text"),
+    reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
+    reviewedBy: uuid("reviewed_by").references(() => users.id, { onDelete: "set null" }),
     /** Embedding of the redacted text, for semantic search over the consumer memory. */
     embedding: vector("embedding", { dimensions: EMBEDDING_DIMENSIONS }),
     createdAt: createdAt(),
@@ -317,4 +326,41 @@ export const retentionPolicies = pgTable("retention_policies", {
   recordingsDays: integer("recordings_days").notNull().default(90),
   transcriptsDays: integer("transcripts_days").notNull().default(365),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+/** Human ratings of interviewer speech: naturalness (MOS 1–5) and dialect correctness. */
+export const turnRatings = pgTable(
+  "turn_ratings",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    turnId: uuid("turn_id")
+      .notNull()
+      .references(() => turns.id, { onDelete: "cascade" }),
+    reviewerId: uuid("reviewer_id").references(() => users.id, { onDelete: "set null" }),
+    naturalness: integer("naturalness"),
+    dialectCorrect: boolean("dialect_correct"),
+    createdAt: createdAt(),
+  },
+  (t) => [uniqueIndex("turn_ratings_turn_reviewer_idx").on(t.turnId, t.reviewerId)],
+);
+
+/**
+ * WhatsApp participants. The number is needed to reply, so it is kept
+ * encrypted; lookups use a peppered hash. Never exposed to clients.
+ */
+export const whatsappContacts = pgTable("whatsapp_contacts", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  phoneHash: text("phone_hash").notNull().unique(),
+  phoneEncrypted: text("phone_encrypted").notNull(),
+  sessionId: text("session_id").references(() => interviewSessions.id, { onDelete: "set null" }),
+  lastMessageAt: timestamp("last_message_at", { withTimezone: true }),
+  createdAt: createdAt(),
+});
+
+/** What the platform did with personal data (erasures, retention runs); holds counts only. */
+export const auditLog = pgTable("audit_log", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  kind: text("kind").notNull(),
+  detail: jsonb("detail").notNull().default({}),
+  createdAt: createdAt(),
 });

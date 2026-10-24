@@ -11,3 +11,4 @@ export {
   type MemoryNote,
   type ParsedQuestion,
 } from "./ask.js";
+export { wordErrors, detectQaIssues, type QaIssue, type QaInput, type QaKind } from "./quality.js";
