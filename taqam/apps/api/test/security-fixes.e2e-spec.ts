@@ -122,6 +122,14 @@ describe('Review fixes: requests, employees, auth (e2e)', () => {
     await login(`sec-hr${stamp}@test.sa`, 'N3wPassw0rd!').expect(200);
   });
 
+  it('owner setting a user password via PATCH /users/:id revokes that user\'s old token', async () => {
+    const mgr = await prisma.user.findFirstOrThrow({ where: { companyId, role: 'BRANCH_MANAGER' } });
+    await http.get('/api/auth/me').set(auth(managerToken)).expect(200);
+    await http.patch(`/api/users/${mgr.id}`).set(auth(ownerToken)).send({ password: 'Reset0wner!' }).expect(200);
+    await http.get('/api/auth/me').set(auth(managerToken)).expect(401);
+    await login(mgr.email, 'Reset0wner!').expect(200);
+  });
+
   it('admin reset-password revokes the old token', async () => {
     const admin = (await login('platform@test.sa', 'Admin@2026!').expect(200)).body.accessToken;
     const owner = await prisma.user.findUniqueOrThrow({ where: { email: ownerEmail } });

@@ -265,7 +265,9 @@ describe('Taqam API (e2e)', () => {
     await http.post('/api/employees').set(auth(mgr)).send({ ...base, firstNameAr: 'x' }).expect(403);
 
     const loanReq = await http.post('/api/me/requests').set(auth(employeeToken)).send({ type: 'LOAN', title: 'سلفة', amount: 1200, payload: { months: 4 } }).expect(201);
-    const approved = await http.post(`/api/requests/${loanReq.body.id}/approve`).set(auth(mgr)).send({ comment: 'ok' }).expect(200);
+    // loan approval is reserved for HR / payroll (review #11): the branch manager is refused, the owner approves
+    await http.post(`/api/requests/${loanReq.body.id}/approve`).set(auth(mgr)).send({ comment: 'ok' }).expect(403);
+    const approved = await http.post(`/api/requests/${loanReq.body.id}/approve`).set(auth(tokenA)).send({ comment: 'ok' }).expect(200);
     expect(approved.body.status).toBe('APPROVED');
     const loans = await http.get('/api/loans').set(auth(tokenA)).expect(200);
     expect(loans.body.find((l: { id: string }) => l.id === approved.body.loanId)).toMatchObject({ amount: 1200, monthlyDeduction: 300, remaining: 1200 });

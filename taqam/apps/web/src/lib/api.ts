@@ -114,3 +114,10 @@ export const api = {
 };
 
 export interface Paginated<T> { data: T[]; total: number; page: number; pageSize: number; }
+
+/** Changing the password revokes existing sessions; keep this one alive with the fresh token the server returns. */
+export async function changePassword(currentPassword: string, newPassword: string) {
+  const res = await api.post<{ ok: boolean; accessToken?: string }>('/auth/change-password', { currentPassword, newPassword });
+  if (res?.accessToken) setToken(res.accessToken);
+  return res;
+}

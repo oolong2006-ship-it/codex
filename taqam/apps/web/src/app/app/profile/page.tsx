@@ -5,7 +5,7 @@ import { KeyRound, Smartphone } from 'lucide-react';
 import { Button, Card, CardBody, CardHeader, Field, Input, PageHeader } from '@/components/ui';
 import { Avatar, KV } from '@/components/app/primitives';
 import { useAction } from '@/components/app/utils';
-import { api } from '@/lib/api';
+import { changePassword } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { useLang } from '@/lib/i18n';
 import { ROLE, label } from '@/lib/labels';
@@ -19,7 +19,7 @@ export default function ProfilePage() {
   const valid = f.currentPassword && f.newPassword.length >= 8 && f.newPassword === f.confirm;
   const change = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (valid && await run('pw', () => api.post('/auth/change-password', { currentPassword: f.currentPassword, newPassword: f.newPassword }), t('تم تغيير كلمة المرور', 'Password changed'))) setF({ currentPassword: '', newPassword: '', confirm: '' });
+    if (valid && await run('pw', () => changePassword(f.currentPassword, f.newPassword), t('تم تغيير كلمة المرور', 'Password changed'))) setF({ currentPassword: '', newPassword: '', confirm: '' });
   };
   if (!user) return null;
   return (

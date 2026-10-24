@@ -109,7 +109,8 @@ export class SettingsController {
     const { password, ...rest } = dto;
     const user = await this.prisma.user.update({
       where: { id },
-      data: { ...rest, ...(password ? { passwordHash: await bcrypt.hash(password, 10) } : {}) },
+      // a new password (or deactivation) revokes the user's existing sessions
+      data: { ...rest, ...(password ? { passwordHash: await bcrypt.hash(password, 10) } : {}), ...(password || dto.isActive === false ? { tokenVersion: { increment: 1 } } : {}) },
       select: userSelect,
     });
     await this.audit.log(u, 'UPDATE', 'User', id, rest);

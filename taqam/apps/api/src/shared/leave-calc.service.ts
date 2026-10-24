@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Employee, LeaveType } from '@prisma/client';
-import { annualLeaveBalance, calendarDays, countLeaveDays, serviceDuration } from '@taqam/core';
+import { addYears, annualLeaveBalance, annualLeaveEntitlement, calendarDays, countLeaveDays, serviceDuration } from '@taqam/core';
 import { PrismaService } from '../prisma/prisma.service';
 import { day, todayStr } from '../common/dates';
 import { badRequest } from '../common/errors';
@@ -34,35 +34,65 @@ export class LeaveCalcService {
     return countLeaveDays(start, end, opts);
   }
 
-  /** Start of the employee's current service year (latest hire anniversary <= asOf). */
+  /** Start of the employee's current service year (latest hire anniversary <= asOf; Feb-29 hires → Feb 28). */
   serviceYearStart(hireDate: Date, asOf: string = todayStr()): Date {
     const years = serviceDuration(hireDate, asOf).years;
-    const d = new Date(hireDate);
-    d.setUTCFullYear(d.getUTCFullYear() + Math.max(0, years));
-    return d;
+    return addYears(hireDate, Math.max(0, years));
   }
 
-  async annualBalance(emp: Pick<Employee, 'id' | 'hireDate' | 'annualLeaveCarryOver'>, asOf: string = todayStr()) {
-    const yearStart = this.serviceYearStart(emp.hireDate, asOf);
-    const agg = await this.prisma.leaveRequest.aggregate({
-      where: { employeeId: emp.id, status: 'APPROVED', leaveType: { code: 'ANNUAL' }, startDate: { gte: yearStart } },
-      _sum: { days: true },
-    });
+  /**
+   * Annual balance = carried over + accrued in the current service year − taken in it.
+   * Carried over = the HR opening balance (`annualLeaveCarryOver`, unused leave from before the
+   * employee was added to Taqam) + Σ entitlement of each completed service year tracked in Taqam
+   * − Σ annual leave taken before the current service year, floored at 0. Unused leave is not
+   * forfeited (Arts. 109/111), so there is no upper cap.
+   */
+  async annualBalance(
+    emp: Pick<Employee, 'id' | 'hireDate' | 'annualLeaveCarryOver'> & { createdAt?: Date | null },
+    asOf: string = todayStr(),
+  ) {
+    const hire = day(emp.hireDate);
+    const completedYears = Math.max(0, serviceDuration(hire, asOf).years);
+    const yearStart = addYears(hire, completedYears);
+    const trackedFrom = emp.createdAt ? day(emp.createdAt) : hire;
+
+    let firstTrackedYearStart: Date | null = null;
+    let entitled = 0;
+    for (let i = 0; i < completedYears; i++) {
+      if (addYears(hire, i + 1) <= trackedFrom) continue; // finished before the record existed
+      const start = addYears(hire, i);
+      firstTrackedYearStart ??= start;
+      entitled += annualLeaveEntitlement(hire, start);
+    }
+
+    const [current, prior] = await Promise.all([
+      this.prisma.leaveRequest.aggregate({
+        where: { employeeId: emp.id, status: 'APPROVED', leaveType: { code: 'ANNUAL' }, startDate: { gte: yearStart } },
+        _sum: { days: true },
+      }),
+      firstTrackedYearStart
+        ? this.prisma.leaveRequest.aggregate({
+            where: { employeeId: emp.id, status: 'APPROVED', leaveType: { code: 'ANNUAL' }, startDate: { gte: firstTrackedYearStart, lt: yearStart } },
+            _sum: { days: true },
+          })
+        : null,
+    ]);
+    const computedCarry = firstTrackedYearStart ? Math.max(0, entitled - (prior?._sum.days ?? 0)) : 0;
     return annualLeaveBalance({
       hireDate: emp.hireDate,
       asOf,
-      takenDays: agg._sum.days ?? 0,
-      carriedOver: num(emp.annualLeaveCarryOver),
+      takenDays: current._sum.days ?? 0,
+      carriedOver: num(emp.annualLeaveCarryOver) + computedCarry,
     });
   }
 
   /** `{ leaveTypeId, code, nameAr, entitlement|null, taken, balance|null }[]` */
   async balances(emp: Employee) {
     const types = await this.prisma.leaveType.findMany({ where: { companyId: emp.companyId }, orderBy: { createdAt: 'asc' } });
-    const yearStart = day(`${todayStr().slice(0, 4)}-01-01`);
+    const year = todayStr().slice(0, 4);
     const taken = await this.prisma.leaveRequest.groupBy({
       by: ['leaveTypeId'],
-      where: { employeeId: emp.id, status: 'APPROVED', startDate: { gte: yearStart } },
+      where: { employeeId: emp.id, status: 'APPROVED', startDate: { gte: day(`${year}-01-01`), lte: day(`${year}-12-31`) } },
       _sum: { days: true },
     });
     const takenMap = new Map(taken.map((t) => [t.leaveTypeId, t._sum.days ?? 0]));
@@ -136,7 +166,7 @@ export class LeaveCalcService {
         );
       }
     } else if (type.maxDaysPerYear !== null && type.code !== 'SICK') {
-      const yearStart = day(`${startDate.slice(0, 4)}-01-01`);
+      const year = startDate.slice(0, 4);
       const used =
         (
           await this.prisma.leaveRequest.aggregate({
@@ -144,7 +174,7 @@ export class LeaveCalcService {
               employeeId: emp.id,
               leaveTypeId: type.id,
               status: { in: ['PENDING', 'APPROVED'] },
-              startDate: { gte: yearStart },
+              startDate: { gte: day(`${year}-01-01`), lte: day(`${year}-12-31`) },
               ...(excludeId ? { id: { not: excludeId } } : {}),
             },
             _sum: { days: true },

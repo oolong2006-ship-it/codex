@@ -3,7 +3,7 @@ import clsx from 'clsx';
 import Link from 'next/link';
 import { useState } from 'react';
 import { Bell, BriefcaseBusiness, ChevronLeft, ChevronRight, ClipboardList, IdCard, KeyRound, Languages, LayoutDashboard, LogOut, UserRound } from 'lucide-react';
-import { api, ApiError } from '@/lib/api';
+import { api, ApiError, changePassword } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { useFetch } from '@/lib/useFetch';
 import { useLang } from '@/lib/i18n';
@@ -181,7 +181,7 @@ function ChangePasswordSheet({ open, onClose }: { open: boolean; onClose: () => 
     if (next !== confirm) return setError(t('تأكيد كلمة المرور غير مطابق', 'Passwords do not match'));
     setSaving(true);
     try {
-      await api.post('/auth/change-password', { currentPassword: current, newPassword: next });
+      await changePassword(current, next);
       toast(t('تم تغيير كلمة المرور', 'Password changed'));
       setCurrent(''); setNext(''); setConfirm('');
       onClose();

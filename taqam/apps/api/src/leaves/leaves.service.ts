@@ -7,10 +7,13 @@ import { ScopeService } from '../shared/scope.service';
 import { LeaveCalcService } from '../shared/leave-calc.service';
 import { AuthUser } from '../common/types';
 import { day, todayStr } from '../common/dates';
-import { badRequest, notFound } from '../common/errors';
+import { badRequest, conflict, notFound } from '../common/errors';
 import { pageParams } from '../common/pagination';
 import { fullName } from '../employees/employee.view';
 import { MyLeaveDto } from './leaves.dto';
+import { LeaveStatusJob } from './leave-status.job';
+
+const ALREADY_PROCESSED = () => conflict('Leave request was already processed', 'تمت معالجة هذا الطلب مسبقاً');
 
 export const leaveInclude = {
   employee: { select: { id: true, firstNameAr: true, lastNameAr: true, branchId: true, branch: { select: { nameAr: true } } } },
@@ -35,6 +38,7 @@ export class LeavesService {
     private readonly notify: NotifyService,
     private readonly scope: ScopeService,
     private readonly calc: LeaveCalcService,
+    private readonly statusJob: LeaveStatusJob,
   ) {}
 
   async list(u: AuthUser, q: { page?: string; pageSize?: string; status?: string; employeeId?: string; branchId?: string; from?: string; to?: string; leaveTypeId?: string }) {
@@ -98,15 +102,14 @@ export class LeavesService {
       // re-check balance at approval time (other leaves may have been approved meanwhile)
       await this.calc.validate(emp, l.leaveType, l.startDate.toISOString().slice(0, 10), l.endDate.toISOString().slice(0, 10), l.id);
     }
-    const updated = await this.prisma.leaveRequest.update({
-      where: { id },
+    // Conditional write: of two concurrent decisions only one finds the request still PENDING.
+    const claimed = await this.prisma.leaveRequest.updateMany({
+      where: { id, status: 'PENDING' },
       data: { status: approve ? 'APPROVED' : 'REJECTED', approverId: u.id, approverName: u.name, decidedAt: new Date(), comment },
-      include: leaveInclude,
     });
-    const today = todayStr();
-    if (approve && day(today) >= l.startDate && day(today) <= l.endDate) {
-      await this.prisma.employee.update({ where: { id: emp.id }, data: { status: 'ON_LEAVE' } });
-    }
+    if (claimed.count === 0) throw ALREADY_PROCESSED();
+    const updated = await this.prisma.leaveRequest.findUniqueOrThrow({ where: { id }, include: leaveInclude });
+    if (approve) await this.statusJob.syncLeaveStatuses(todayStr(), { employeeId: emp.id });
     await this.audit.log(u, approve ? 'APPROVE' : 'REJECT', 'LeaveRequest', id, { comment });
     await this.notify.toEmployees(
       u.companyId,
@@ -122,7 +125,10 @@ export class LeavesService {
     const l = await this.prisma.leaveRequest.findFirst({ where: { id, companyId: u.companyId, employeeId: u.employeeId ?? '__none__' } });
     if (!l) throw notFound('Leave request', 'طلب الإجازة غير موجود');
     if (l.status !== 'PENDING') throw badRequest('Only pending requests can be cancelled', 'يمكن إلغاء الطلبات المعلقة فقط');
-    const updated = await this.prisma.leaveRequest.update({ where: { id }, data: { status: 'CANCELLED', decidedAt: new Date() }, include: leaveInclude });
+    const claimed = await this.prisma.leaveRequest.updateMany({ where: { id, status: 'PENDING' }, data: { status: 'CANCELLED', decidedAt: new Date() } });
+    if (claimed.count === 0) throw ALREADY_PROCESSED();
+    const updated = await this.prisma.leaveRequest.findUniqueOrThrow({ where: { id }, include: leaveInclude });
+    await this.statusJob.syncLeaveStatuses(todayStr(), { employeeId: l.employeeId });
     await this.audit.log(u, 'CANCEL', 'LeaveRequest', id);
     return leaveView(updated);
   }
