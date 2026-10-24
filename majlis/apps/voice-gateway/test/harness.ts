@@ -5,6 +5,7 @@ import {
   createProviders,
 } from "@majlis/providers";
 import type { AsrResult, ProviderSet } from "@majlis/providers";
+import type { ConsentRecord, TranscriptEntry } from "@majlis/interviewer";
 import type { ServerMessage } from "@majlis/voice-client/protocol";
 import { loadConfig } from "../src/config.js";
 import { Conversation, type EndStatus } from "../src/conversation.js";
@@ -38,6 +39,8 @@ export async function harness(options: HarnessOptions = {}) {
   const messages: ServerMessage[] = [];
   const audio: { turnId: string; bytes: number }[] = [];
   const ended: { status?: EndStatus } = {};
+  const stored: TranscriptEntry[] = [];
+  const consents: ConsentRecord[] = [];
   let audioOffset = 0;
   let currentAudioTurn = "";
 
@@ -52,7 +55,17 @@ export async function harness(options: HarnessOptions = {}) {
       if (msg.type === "audio_start") currentAudioTurn = msg.turnId;
     },
     sendAudio: (chunk) => audio.push({ turnId: currentAudioTurn, bytes: chunk.byteLength }),
-    onEnd: (status) => (ended.status = status),
+    onEnd: (status) => {
+      ended.status = status;
+    },
+    persist: {
+      turns: async (entries) => {
+        stored.push(...entries);
+      },
+      consent: async (record) => {
+        consents.push(record);
+      },
+    },
   });
 
   const feed = (frames: Int16Array[]) => {
@@ -84,5 +97,19 @@ export async function harness(options: HarnessOptions = {}) {
   /** Speech of `ms` followed by end-of-turn silence. */
   const say = (ms = 400) => feed([...tone(ms), ...silence(600)]);
 
-  return { conversation, asr, messages, audio, ended, feed, send, of, waitFor, heard, say };
+  return {
+    conversation,
+    asr,
+    messages,
+    audio,
+    ended,
+    stored,
+    consents,
+    feed,
+    send,
+    of,
+    waitFor,
+    heard,
+    say,
+  };
 }

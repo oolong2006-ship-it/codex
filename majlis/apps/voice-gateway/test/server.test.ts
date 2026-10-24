@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import WebSocket from "ws";
 import { demoGuide } from "../src/demo-guide.js";
 import { CLOSE, buildServer } from "../src/server.js";
+import { InMemorySessionStore } from "../src/sessions.js";
 
 const TOKEN = "test-internal-token";
 let app: FastifyInstance | undefined;
@@ -14,8 +15,12 @@ afterEach(async () => {
   app = undefined;
 });
 
-async function start(config: Record<string, unknown> = {}) {
-  app = await buildServer({ config: { internalToken: TOKEN, ...config }, seed: 1 });
+async function start(config: Record<string, unknown> = {}, store?: InMemorySessionStore) {
+  app = await buildServer({
+    config: { internalToken: TOKEN, ...config },
+    seed: 1,
+    ...(store ? { store } : {}),
+  });
   await app.listen({ port: 0, host: "127.0.0.1" });
   const { port } = app.server.address() as AddressInfo;
   return { http: `http://127.0.0.1:${port}`, ws: `ws://127.0.0.1:${port}` };
@@ -134,6 +139,24 @@ describe("voice gateway server", () => {
     expect(audioStart).toMatchObject({ sampleRate: 24000, encoding: "pcm_s16le" });
     await client.next("audio_end");
     expect(audioBytes).toBeGreaterThan(24000); // over half a second of speech
+    client.ws.close();
+  });
+
+  it("does not lose messages sent while the session is still being looked up", async () => {
+    class SlowStore extends InMemorySessionStore {
+      override async get(id: string) {
+        await new Promise((r) => setTimeout(r, 80)); // a database round trip
+        return super.get(id);
+      }
+    }
+    const { http, ws } = await start({}, new SlowStore());
+    const { id } = (await (await createSession(http)).json()) as { id: string };
+    const client = connect(`${ws}/v1/sessions/${id}/stream`);
+    await client.opened;
+    client.ws.send(
+      JSON.stringify({ type: "hello", protocol: 1, mode: "text", voiceGender: "male" }),
+    );
+    expect(await client.next("turn")).toMatchObject({ action: "disclose" });
     client.ws.close();
   });
 });

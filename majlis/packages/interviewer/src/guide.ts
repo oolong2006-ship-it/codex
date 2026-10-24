@@ -9,7 +9,10 @@ export interface FollowUpPolicy {
 
 export interface Question {
   id: string;
+  /** Wording addressed to a man, or neutral. */
   text: string;
+  /** Wording addressed to a woman; falls back to `text` when absent. */
+  textFemale?: string;
   sensitive?: boolean;
   followUpPolicy?: FollowUpPolicy;
   /**

@@ -1,2 +1,8 @@
-// Schema and client arrive with the first feature that persists data (phase 2).
-export {};
+export * from "./schema.js";
+export { createDb, runMigrations, type Db, type DbHandle } from "./client.js";
+export { redactPII, REDACTED, FORBIDDEN_CLIENT_FIELDS } from "./privacy.js";
+export * from "./repos/auth.js";
+export * from "./repos/studies.js";
+export * from "./repos/participation.js";
+export * from "./repos/gateway.js";
+export * from "./repos/client-views.js";

@@ -28,3 +28,13 @@ export {
   type SpokenTurn,
   type InterviewerOptions,
 } from "./interviewer.js";
+export {
+  TEMPLATE_IDS,
+  fromTemplate,
+  generateStudy,
+  pickTemplate,
+  type TemplateId,
+  type GeneratedStudy,
+  type ScreenerQuestion,
+  type ScreenerOption,
+} from "./templates.js";

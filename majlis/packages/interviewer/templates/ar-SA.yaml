@@ -1,0 +1,155 @@
+# Ready-made study templates. Spoken wording, so kept as data.
+# {topic} is replaced by the study topic. `textFemale` is used for female participants.
+# status: draft — must be reviewed by native speakers and researchers.
+
+restaurant_satisfaction:
+  topic: "المطعم"
+  keywords: ["مطعم", "رضا", "تجربة", "زيارة", "الأكل", "كافيه", "مقهى"]
+  screener:
+    - id: frequency
+      text: "عدد مرات طلبك أو زيارتك لـ{topic} بالشهر تقريباً"
+      options:
+        - { id: none, label: "ولا مرة", qualifies: false }
+        - { id: once, label: "مرة", qualifies: true }
+        - { id: few, label: "مرتين إلى ثلاث", qualifies: true }
+        - { id: many, label: "أكثر من ثلاث", qualifies: true }
+  sections:
+    - id: visit
+      title: "آخر زيارة"
+      questions:
+        - id: visit_reason
+          text: "وش اللي خلاك تختار {topic} آخر مرة؟"
+          textFemale: "وش اللي خلاك تختارين {topic} آخر مرة؟"
+        - id: visit_experience
+          text: "كيف كانت التجربة من لحظة الطلب لين وصلك الأكل؟"
+          coverKeywords: ["الطلب", "التوصيل", "الاستلام", "وصل"]
+    - id: quality
+      title: "الأكل والخدمة"
+      questions:
+        - id: food
+          text: "وش رأيك في الأكل نفسه، الطعم والكمية والجودة؟"
+        - id: service
+          text: "وش اللي لفت انتباهك في تعامل الموظفين؟"
+    - id: price
+      title: "السعر"
+      questions:
+        - id: value
+          text: "وش رأيك في الأسعار مقارنة باللي تحصله؟"
+          textFemale: "وش رأيك في الأسعار مقارنة باللي تحصلينه؟"
+          coverKeywords: ["السعر", "الأسعار", "غالي", "غالية", "رخيص", "ريال"]
+    - id: improve
+      title: "التحسين"
+      questions:
+        - id: change
+          text: "لو بيدك تغيّر شي واحد، وش بيكون؟"
+          textFemale: "لو بيدك تغيّرين شي واحد، وش بيكون؟"
+        - id: recommend
+          text: "لو أحد من أهلك سألك عن {topic}، وش بتقول له؟"
+          textFemale: "لو أحد من أهلك سألك عن {topic}، وش بتقولين له؟"
+
+churn_reasons:
+  topic: "الخدمة"
+  keywords:
+    ["ترك", "يتركون", "تركوا", "توقف", "خسارة", "خسرنا", "رحيل", "انسحاب", "إلغاء", "الاشتراك"]
+  screener:
+    - id: last_use
+      text: "آخر تعامل لك مع {topic}"
+      options:
+        - { id: recent, label: "خلال آخر شهر", qualifies: false }
+        - { id: months, label: "من شهر إلى ست شهور", qualifies: true }
+        - { id: older, label: "أكثر من ست شهور", qualifies: true }
+  sections:
+    - id: relationship
+      title: "العلاقة"
+      questions:
+        - id: since
+          text: "من متى وانت تتعامل مع {topic}؟"
+          textFemale: "من متى وانتي تتعاملين مع {topic}؟"
+    - id: leaving
+      title: "قرار التوقف"
+      questions:
+        - id: moment
+          text: "متى حسيت إنك ما عاد تبي تكمل معهم؟"
+          textFemale: "متى حسيتي إنك ما عاد تبين تكملين معهم؟"
+        - id: reasons
+          text: "وش الأسباب اللي خلتك توقف؟"
+          textFemale: "وش الأسباب اللي خلتك توقفين؟"
+    - id: after
+      title: "بعد التوقف"
+      questions:
+        - id: alternative
+          text: "وين رحت بعدها، ووش اللي عجبك هناك؟"
+          textFemale: "وين رحتي بعدها، ووش اللي عجبك هناك؟"
+        - id: comeback
+          text: "وش اللي ممكن يخليك ترجع؟"
+          textFemale: "وش اللي ممكن يخليك ترجعين؟"
+
+new_item_test:
+  topic: "الصنف الجديد"
+  keywords: ["صنف", "منتج جديد", "جديد", "إطلاق", "منيو", "طبق", "نكهة"]
+  screener:
+    - id: awareness
+      text: "تجربتك مع {topic}"
+      options:
+        - { id: tried, label: "جربته", qualifies: true }
+        - { id: heard, label: "سمعت عنه وما جربته", qualifies: true }
+        - { id: unaware, label: "ما سمعت عنه", qualifies: false }
+  sections:
+    - id: impression
+      title: "الانطباع الأول"
+      questions:
+        - id: first_thought
+          text: "لما سمعت عن {topic} أول مرة، وش أول شي جا في بالك؟"
+          textFemale: "لما سمعتي عن {topic} أول مرة، وش أول شي جا في بالك؟"
+    - id: experience
+      title: "التجربة"
+      questions:
+        - id: experience
+          text: "كيف كانت تجربتك مع {topic}؟"
+        - id: compare
+          text: "كيف تقارنه باللي تطلبه عادةً؟"
+          textFemale: "كيف تقارنينه باللي تطلبينه عادةً؟"
+    - id: future
+      title: "المستقبل"
+      questions:
+        - id: repeat
+          text: "وش اللي ممكن يخليك تطلبه مرة ثانية؟"
+          textFemale: "وش اللي ممكن يخليك تطلبينه مرة ثانية؟"
+
+price_test:
+  topic: "المنتج"
+  keywords: ["سعر", "أسعار", "تسعير", "السعر", "الأسعار", "غالي", "رخيص", "خصم"]
+  screener:
+    - id: purchase
+      text: "عدد مرات شرائك لـ{topic} بالشهر تقريباً"
+      options:
+        - { id: none, label: "ولا مرة", qualifies: false }
+        - { id: some, label: "مرة إلى ثلاث", qualifies: true }
+        - { id: many, label: "أكثر من ثلاث", qualifies: true }
+  sections:
+    - id: spend
+      title: "الصرف الحالي"
+      questions:
+        - id: current_spend
+          text: "عادةً كم تصرف على {topic} بالشهر تقريباً؟"
+          textFemale: "عادةً كم تصرفين على {topic} بالشهر تقريباً؟"
+    - id: thresholds
+      title: "حدود السعر"
+      questions:
+        - id: fair
+          text: "كم تشوف السعر المناسب لـ{topic}؟"
+          textFemale: "كم تشوفين السعر المناسب لـ{topic}؟"
+        - id: too_expensive
+          text: "عند أي سعر تحس إنه صار غالي وما تشتريه؟"
+          textFemale: "عند أي سعر تحسين إنه صار غالي وما تشترينه؟"
+        - id: too_cheap
+          text: "وعند أي سعر تبدأ تشك في الجودة؟"
+          textFemale: "وعند أي سعر تبدين تشكين في الجودة؟"
+    - id: context
+      title: "السياق"
+      questions:
+        - id: worth
+          text: "وش اللي يخلي السعر يستاهل بالنسبة لك؟"
+        - id: income
+          text: "تقريباً وين يقع دخل الأسرة بالشهر؟"
+          sensitive: true

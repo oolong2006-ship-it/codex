@@ -17,8 +17,16 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
       </header>
       <h1 className="text-4xl font-semibold leading-tight">{t(locale, "home.title")}</h1>
       <p className="text-lg leading-relaxed">{t(locale, "home.description")}</p>
+      <div>
+        <Link
+          href={`/${locale}/login`}
+          className="inline-flex min-h-11 items-center rounded-xl bg-palm px-5 font-semibold text-white"
+        >
+          {t(locale, "home.login")}
+        </Link>
+      </div>
       <p className="border-s-4 border-palm ps-3 text-sm opacity-80">
-        {t(locale, "home.status", { phase: 0 })}
+        {t(locale, "home.status", { phase: 4 })}
       </p>
     </main>
   );

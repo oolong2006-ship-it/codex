@@ -6,9 +6,212 @@
   "home": {
     "title": "اسمع عملاءك بلهجتهم",
     "description": "مقابلات صوتية يديرها مساعد ذكي يُفصح عن هويته، وتحليل يبني ذاكرة مستهلك تتراكم مع كل دراسة.",
-    "status": "المنصة قيد البناء — المرحلة {phase}"
+    "status": "المنصة قيد البناء — المرحلة {phase}",
+    "login": "دخول العملاء"
   },
   "common": {
-    "switchLanguage": "English"
+    "switchLanguage": "English",
+    "save": "حفظ",
+    "back": "رجوع",
+    "next": "التالي",
+    "add": "إضافة",
+    "remove": "حذف",
+    "optional": "اختياري",
+    "any": "الكل",
+    "preferNot": "أفضّل ما أقول"
+  },
+  "auth": {
+    "title": "دخول العملاء",
+    "email": "البريد الإلكتروني",
+    "password": "كلمة المرور",
+    "submit": "دخول",
+    "invalid": "البريد أو كلمة المرور غير صحيحة",
+    "logout": "خروج"
+  },
+  "nav": {
+    "studies": "الدراسات",
+    "newStudy": "دراسة جديدة"
+  },
+  "studies": {
+    "title": "الدراسات",
+    "empty": "ما فيه دراسات بعد. ابدأ بهدف من جملة واحدة.",
+    "sessions": "{count} مقابلة",
+    "completed": "{count} مكتملة",
+    "status": {
+      "draft": "مسودة",
+      "recruiting": "تستقبل مشاركين",
+      "closed": "مغلقة"
+    }
+  },
+  "newStudy": {
+    "title": "دراسة جديدة",
+    "objective": "هدف الدراسة بجملة واحدة",
+    "objectiveHint": "مثال: نبي نعرف ليش العملاء يتركون التطبيق",
+    "template": "قالب جاهز",
+    "templateAuto": "اختيار تلقائي حسب الهدف",
+    "topic": "موضوع الحديث كما يُنطق",
+    "topicHint": "مثال: مطعم البيت",
+    "submit": "أنشئ دليل المقابلة",
+    "required": "اكتب هدف الدراسة"
+  },
+  "templates": {
+    "restaurant_satisfaction": "رضا عملاء مطعم",
+    "churn_reasons": "أسباب ترك العملاء",
+    "new_item_test": "اختبار صنف جديد",
+    "price_test": "اختبار سعر"
+  },
+  "study": {
+    "objective": "الهدف",
+    "tabs": {
+      "guide": "دليل المقابلة",
+      "segment": "الشريحة والصوت",
+      "invite": "الدعوة",
+      "sessions": "المقابلات"
+    }
+  },
+  "guide": {
+    "version": "النسخة {version}",
+    "topic": "الموضوع كما يُنطق",
+    "sectionTitle": "عنوان المحور",
+    "questionText": "صيغة المذكر أو المحايدة",
+    "questionFemale": "صيغة المؤنث",
+    "sensitive": "سؤال حساس: يُطرح بلطف مع خيار عدم الإجابة، وبدون متابعة",
+    "addQuestion": "إضافة سؤال",
+    "addSection": "إضافة محور",
+    "removeQuestion": "حذف السؤال",
+    "removeSection": "حذف المحور",
+    "save": "حفظ نسخة جديدة",
+    "saved": "حُفظت النسخة {version}",
+    "invalid": "الدليل غير صالح: {reason}",
+    "issue": "ملاحظة على الصياغة: {detail}",
+    "screener": "أسئلة الفرز",
+    "qualifies": "مؤهل",
+    "notQualifies": "غير مؤهل",
+    "newQuestion": "سؤال جديد؟",
+    "newSection": "محور جديد"
+  },
+  "segment": {
+    "hint": "اترك الخيارات فارغة لقبول الجميع.",
+    "cities": "المدن",
+    "ageBands": "الفئات العمرية",
+    "genders": "الجنس",
+    "dialects": "اللهجة المفضلة",
+    "voice": "صوت المحاور",
+    "voiceChoice": "يختار المشارك",
+    "voiceMale": "رجالي",
+    "voiceFemale": "نسائي",
+    "incentive": "الحافز (يُقال في ختام المقابلة)",
+    "duration": "المدة كما تُنطق",
+    "saved": "حُفظت الإعدادات"
+  },
+  "invite": {
+    "link": "رابط الدعوة",
+    "qr": "رمز QR",
+    "whatsapp": "مشاركة عبر واتساب",
+    "whatsappText": "نبي نسمع رأيك عن {topic} في مقابلة صوتية قصيرة: {url}",
+    "status": "حالة الدراسة",
+    "open": "فتح الاستقبال",
+    "close": "إيقاف الاستقبال",
+    "notOpen": "الرابط لا يستقبل مشاركين حتى تفتح الاستقبال."
+  },
+  "sessions": {
+    "empty": "ما فيه مقابلات بعد.",
+    "privacy": "النصوص مخفية الهوية: أرقام الجوال والبريد والهويات تُحذف تلقائياً.",
+    "date": "التاريخ",
+    "participant": "المشارك",
+    "dialect": "اللهجة المكتشفة",
+    "statusLabel": "الحالة",
+    "view": "عرض النص",
+    "audioAllowed": "يسمح بسماع صوته",
+    "status": {
+      "created": "لم تبدأ",
+      "active": "جارية",
+      "completed": "مكتملة",
+      "no_consent": "بدون موافقة",
+      "abandoned": "انقطعت"
+    }
+  },
+  "transcript": {
+    "title": "نص المقابلة",
+    "interviewer": "المحاور",
+    "participant": "المشارك",
+    "back": "رجوع للمقابلات"
+  },
+  "gender": {
+    "male": "ذكر",
+    "female": "أنثى"
+  },
+  "cities": {
+    "riyadh": "الرياض",
+    "jeddah": "جدة",
+    "makkah": "مكة المكرمة",
+    "madinah": "المدينة المنورة",
+    "dammam": "الدمام",
+    "khobar": "الخبر",
+    "ahsa": "الأحساء",
+    "taif": "الطائف",
+    "tabuk": "تبوك",
+    "abha": "أبها",
+    "khamis": "خميس مشيط",
+    "jazan": "جازان",
+    "najran": "نجران",
+    "hail": "حائل",
+    "buraidah": "بريدة",
+    "jouf": "الجوف",
+    "arar": "عرعر",
+    "baha": "الباحة",
+    "yanbu": "ينبع",
+    "other": "مدينة أخرى"
+  },
+  "dialects": {
+    "najdi": "نجدية",
+    "hijazi": "حجازية",
+    "southern": "جنوبية",
+    "eastern": "شرقية / خليجية",
+    "northern": "شمالية",
+    "msa_simple": "فصحى مبسطة"
+  },
+  "participant": {
+    "notFound": "الرابط غير صحيح.",
+    "closed": "هالدراسة ما تستقبل مشاركات حالياً. شكراً لاهتمامك.",
+    "step": "الخطوة {step} من {total}",
+    "welcomeTitle": "أهلاً بك في مجلس",
+    "welcomeBody": "نبي نسمع رأيك عن {topic}. المقابلة قصيرة ({duration})، بالصوت أو بالكتابة، وبدون كاميرا.",
+    "pointAi": "اللي بيحاورك مساعد ذكي، مو إنسان.",
+    "pointPrivate": "ما نطلب اسمك ولا رقمك، والعميل يشوف كلامك بدون أي بيانات تعرّف عليك.",
+    "pointRegion": "بياناتك محفوظة داخل المملكة.",
+    "pointIncentive": "الحافز: {incentive}",
+    "aboutTitle": "عنك",
+    "aboutHint": "هالمعلومات تساعدنا نفهم الآراء حسب الفئة، وتقدر تتركها.",
+    "gender": "الجنس",
+    "age": "العمر",
+    "city": "المدينة",
+    "dialect": "لهجتك",
+    "screenerTitle": "سؤال سريع",
+    "screenerRequired": "جاوب على أسئلة الفرز عشان نكمل.",
+    "consentTitle": "قبل ما نبدأ",
+    "disclosureLabel": "هذا اللي بيقوله المحاور في البداية:",
+    "voiceLabel": "اختر صوت المحاور",
+    "consentInterview": "أوافق على المشاركة، وأعرف إن المحاور مساعد ذكي وإن كلامي يُحفظ لأغراض البحث.",
+    "consentAudio": "أسمح للعميل يسمع مقاطع من صوتي (اختياري).",
+    "consentRequired": "الموافقة مطلوبة عشان نبدأ.",
+    "begin": "ابدأ",
+    "screenedOut": "شكراً لك! هالدراسة تبحث عن فئة ثانية هالمرة.",
+    "failed": "ما قدرنا نبدأ المقابلة. حاول مرة ثانية.",
+    "interviewTitle": "المقابلة",
+    "connecting": "جاري الاتصال…",
+    "listening": "أسمعك…",
+    "speaking": "المحاور يتكلم…",
+    "ended": "انتهت المقابلة",
+    "error": "صار خلل في الاتصال",
+    "micDenied": "ما قدرنا نوصل للميكروفون، تقدر تكمل كتابة.",
+    "switchToText": "أكمل كتابة",
+    "switchToVoice": "أكمل بالصوت",
+    "typePlaceholder": "اكتب ردك هنا",
+    "send": "إرسال",
+    "end": "إنهاء المقابلة",
+    "thanksTitle": "يعطيك العافية!",
+    "thanksBody": "شكراً على وقتك ورأيك.",
+    "thanksIncentive": "الحافز: {incentive}"
   }
 }

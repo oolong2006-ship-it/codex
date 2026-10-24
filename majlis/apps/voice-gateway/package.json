@@ -20,13 +20,15 @@
     "@majlis/dialect": "workspace:*",
     "@majlis/interviewer": "workspace:*",
     "@majlis/voice-client": "workspace:*",
-    "@fastify/static": "^8.2.0"
+    "@fastify/static": "^8.2.0",
+    "@majlis/db": "workspace:*"
   },
   "devDependencies": {
     "tsx": "^4.23.0",
     "ws": "^8.18.0",
     "@types/ws": "^8.18.0",
-    "playwright": "1.63.0"
+    "playwright": "1.63.0",
+    "drizzle-orm": "^0.45.0"
   },
   "files": [
     "dist",

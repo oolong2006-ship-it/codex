@@ -83,6 +83,7 @@ export interface TranscriptEntry {
   at: string;
   action?: TurnAction;
   questionId?: string;
+  asrConfidence?: number;
 }
 
 export interface AnswerRecord {
@@ -276,6 +277,9 @@ export class InterviewEngine {
       text: raw,
       at: this.now(),
       ...(this.position ? { questionId: this.current()!.id } : {}),
+      ...(input.asrConfidence !== undefined && input.channel !== "text"
+        ? { asrConfidence: input.asrConfidence }
+        : {}),
     });
 
     const lowConfidence =
@@ -484,8 +488,9 @@ export class InterviewEngine {
   // ─── helpers ───────────────────────────────────────────────────────────────
 
   private questionText(q: Question): string {
-    if (!q.sensitive) return q.text;
-    return `${this.p(this.phrases.sensitive_prefix)}${q.text}${this.p(this.phrases.sensitive_suffix)}`;
+    const text = this.opts.participantGender === "female" && q.textFemale ? q.textFemale : q.text;
+    if (!q.sensitive) return text;
+    return `${this.p(this.phrases.sensitive_prefix)}${text}${this.p(this.phrases.sensitive_suffix)}`;
   }
 
   /**

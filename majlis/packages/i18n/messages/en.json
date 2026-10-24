@@ -6,9 +6,212 @@
   "home": {
     "title": "Hear your customers in their own dialect",
     "description": "Voice interviews run by a self-disclosing AI assistant, with analysis that builds a consumer memory across studies.",
-    "status": "Platform under construction — phase {phase}"
+    "status": "Platform under construction — phase {phase}",
+    "login": "Client sign in"
   },
   "common": {
-    "switchLanguage": "العربية"
+    "switchLanguage": "العربية",
+    "save": "Save",
+    "back": "Back",
+    "next": "Next",
+    "add": "Add",
+    "remove": "Remove",
+    "optional": "Optional",
+    "any": "Any",
+    "preferNot": "Prefer not to say"
+  },
+  "auth": {
+    "title": "Client sign in",
+    "email": "Email",
+    "password": "Password",
+    "submit": "Sign in",
+    "invalid": "Incorrect email or password",
+    "logout": "Sign out"
+  },
+  "nav": {
+    "studies": "Studies",
+    "newStudy": "New study"
+  },
+  "studies": {
+    "title": "Studies",
+    "empty": "No studies yet. Start with a one-sentence goal.",
+    "sessions": "{count} interviews",
+    "completed": "{count} completed",
+    "status": {
+      "draft": "Draft",
+      "recruiting": "Recruiting",
+      "closed": "Closed"
+    }
+  },
+  "newStudy": {
+    "title": "New study",
+    "objective": "Study goal in one sentence",
+    "objectiveHint": "e.g. Why do customers stop using our app?",
+    "template": "Template",
+    "templateAuto": "Pick automatically from the goal",
+    "topic": "Topic as it is spoken",
+    "topicHint": "e.g. Al Bait Restaurant",
+    "submit": "Create interview guide",
+    "required": "Write the study goal"
+  },
+  "templates": {
+    "restaurant_satisfaction": "Restaurant satisfaction",
+    "churn_reasons": "Why customers leave",
+    "new_item_test": "New item test",
+    "price_test": "Price test"
+  },
+  "study": {
+    "objective": "Goal",
+    "tabs": {
+      "guide": "Interview guide",
+      "segment": "Segment & voice",
+      "invite": "Invite",
+      "sessions": "Interviews"
+    }
+  },
+  "guide": {
+    "version": "Version {version}",
+    "topic": "Topic as it is spoken",
+    "sectionTitle": "Section title",
+    "questionText": "Masculine or neutral wording",
+    "questionFemale": "Feminine wording",
+    "sensitive": "Sensitive: asked gently with an opt-out, never followed up",
+    "addQuestion": "Add question",
+    "addSection": "Add section",
+    "removeQuestion": "Remove question",
+    "removeSection": "Remove section",
+    "save": "Save new version",
+    "saved": "Saved version {version}",
+    "invalid": "Invalid guide: {reason}",
+    "issue": "Wording note: {detail}",
+    "screener": "Screener questions",
+    "qualifies": "Qualifies",
+    "notQualifies": "Screened out",
+    "newQuestion": "New question?",
+    "newSection": "New section"
+  },
+  "segment": {
+    "hint": "Leave a group empty to accept everyone.",
+    "cities": "Cities",
+    "ageBands": "Age bands",
+    "genders": "Gender",
+    "dialects": "Preferred dialect",
+    "voice": "Interviewer voice",
+    "voiceChoice": "Participant chooses",
+    "voiceMale": "Male",
+    "voiceFemale": "Female",
+    "incentive": "Incentive (said at the end)",
+    "duration": "Duration as spoken",
+    "saved": "Settings saved"
+  },
+  "invite": {
+    "link": "Invite link",
+    "qr": "QR code",
+    "whatsapp": "Share on WhatsApp",
+    "whatsappText": "Tell us what you think about {topic} in a short voice interview: {url}",
+    "status": "Study status",
+    "open": "Open recruiting",
+    "close": "Stop recruiting",
+    "notOpen": "The link does not accept participants until recruiting is open."
+  },
+  "sessions": {
+    "empty": "No interviews yet.",
+    "privacy": "Transcripts are de-identified: phone numbers, emails and IDs are removed automatically.",
+    "date": "Date",
+    "participant": "Participant",
+    "dialect": "Detected dialect",
+    "statusLabel": "Status",
+    "view": "View transcript",
+    "audioAllowed": "Allows audio playback",
+    "status": {
+      "created": "Not started",
+      "active": "In progress",
+      "completed": "Completed",
+      "no_consent": "No consent",
+      "abandoned": "Dropped"
+    }
+  },
+  "transcript": {
+    "title": "Interview transcript",
+    "interviewer": "Interviewer",
+    "participant": "Participant",
+    "back": "Back to interviews"
+  },
+  "gender": {
+    "male": "Male",
+    "female": "Female"
+  },
+  "cities": {
+    "riyadh": "Riyadh",
+    "jeddah": "Jeddah",
+    "makkah": "Makkah",
+    "madinah": "Madinah",
+    "dammam": "Dammam",
+    "khobar": "Khobar",
+    "ahsa": "Al-Ahsa",
+    "taif": "Taif",
+    "tabuk": "Tabuk",
+    "abha": "Abha",
+    "khamis": "Khamis Mushait",
+    "jazan": "Jazan",
+    "najran": "Najran",
+    "hail": "Hail",
+    "buraidah": "Buraidah",
+    "jouf": "Al-Jouf",
+    "arar": "Arar",
+    "baha": "Al-Baha",
+    "yanbu": "Yanbu",
+    "other": "Other city"
+  },
+  "dialects": {
+    "najdi": "Najdi",
+    "hijazi": "Hijazi",
+    "southern": "Southern",
+    "eastern": "Eastern / Gulf",
+    "northern": "Northern",
+    "msa_simple": "Simplified MSA"
+  },
+  "participant": {
+    "notFound": "This link is not valid.",
+    "closed": "This study is not accepting participants right now. Thank you for your interest.",
+    "step": "Step {step} of {total}",
+    "welcomeTitle": "Welcome to Majlis",
+    "welcomeBody": "We'd like to hear what you think about {topic}. It is short ({duration}), by voice or text, and never uses the camera.",
+    "pointAi": "You will be talking with an AI assistant, not a person.",
+    "pointPrivate": "We never ask for your name or number, and the client sees your words without anything that identifies you.",
+    "pointRegion": "Your data is stored inside Saudi Arabia.",
+    "pointIncentive": "Incentive: {incentive}",
+    "aboutTitle": "About you",
+    "aboutHint": "This helps us understand views by group. You can skip it.",
+    "gender": "Gender",
+    "age": "Age",
+    "city": "City",
+    "dialect": "Your dialect",
+    "screenerTitle": "A quick question",
+    "screenerRequired": "Please answer the screener questions to continue.",
+    "consentTitle": "Before we start",
+    "disclosureLabel": "This is what the interviewer says first:",
+    "voiceLabel": "Choose the interviewer's voice",
+    "consentInterview": "I agree to take part. I understand the interviewer is an AI assistant and my answers are kept for research.",
+    "consentAudio": "The client may listen to clips of my voice (optional).",
+    "consentRequired": "Consent is required to start.",
+    "begin": "Start",
+    "screenedOut": "Thank you! This study is looking for a different group this time.",
+    "failed": "We couldn't start the interview. Please try again.",
+    "interviewTitle": "Interview",
+    "connecting": "Connecting…",
+    "listening": "Listening…",
+    "speaking": "The interviewer is speaking…",
+    "ended": "The interview has ended",
+    "error": "Connection problem",
+    "micDenied": "We couldn't access the microphone. You can continue by typing.",
+    "switchToText": "Continue by typing",
+    "switchToVoice": "Continue by voice",
+    "typePlaceholder": "Type your answer",
+    "send": "Send",
+    "end": "End interview",
+    "thanksTitle": "Thank you!",
+    "thanksBody": "Thanks for your time and your views.",
+    "thanksIncentive": "Incentive: {incentive}"
   }
 }

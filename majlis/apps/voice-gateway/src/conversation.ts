@@ -1,5 +1,12 @@
+import type { Dialect } from "@majlis/dialect";
 import type { AsrResult, AsrStream, ProviderSet } from "@majlis/providers";
-import { Interviewer, type EngineSnapshot, type SpokenTurn } from "@majlis/interviewer";
+import {
+  Interviewer,
+  type ConsentRecord,
+  type EngineSnapshot,
+  type SpokenTurn,
+  type TranscriptEntry,
+} from "@majlis/interviewer";
 import {
   FRAME_MS,
   INPUT_SAMPLE_RATE,
@@ -25,7 +32,13 @@ export interface ConversationDeps {
   config: GatewayConfig;
   sendJson: (msg: ServerMessage) => void;
   sendAudio: (chunk: Uint8Array) => void;
-  onEnd: (status: EndStatus, latency: LatencySummary) => void;
+  onEnd: (status: EndStatus, latency: LatencySummary, dialect: Dialect | null) => void;
+  /** Stores committed turns only: a reply taken back before it was heard is never saved. */
+  persist?: {
+    turns: (entries: TranscriptEntry[], dialect: Dialect | null) => Promise<void>;
+    consent: (record: ConsentRecord) => Promise<void>;
+  };
+  onPersistError?: (err: unknown) => void;
   now?: () => number;
   vad?: Vad;
   seed?: number;
@@ -78,6 +91,9 @@ export class Conversation {
   private finished = false;
   private readonly now: () => number;
   private voiceGender: "male" | "female" = "female";
+  private persisted = 0;
+  private consentPersisted = false;
+  private persistQueue: Promise<void> = Promise.resolve();
 
   constructor(private readonly deps: ConversationDeps) {
     this.now = deps.now ?? (() => performance.now());
@@ -91,9 +107,10 @@ export class Conversation {
       });
   }
 
-  /** Resolves when all queued work (utterances, replies) has finished; used by tests. */
-  idle(): Promise<void> {
-    return this.queue;
+  /** Resolves when all queued work (utterances, replies, storage) has finished. */
+  async idle(): Promise<void> {
+    await this.queue;
+    await this.persistQueue;
   }
 
   // ─── inbound ────────────────────────────────────────────────────────────────
@@ -275,6 +292,7 @@ export class Conversation {
 
     if (this.mode === "text" || !turn.speech) {
       if (this.pending === pending) this.pending = null;
+      this.commit();
       this.deps.sendJson(turnMsg);
       return this.afterTurn(turn);
     }
@@ -302,6 +320,7 @@ export class Conversation {
               streaming: true,
               ...(timing ? { endOfSpeech: timing.endOfSpeech } : {}),
             };
+            this.commit();
             this.deps.sendJson(turnMsg);
             this.deps.sendJson({
               type: "audio_start",
@@ -324,6 +343,7 @@ export class Conversation {
     if (!started) {
       // TTS produced nothing; the participant still gets the words.
       if (this.pending === pending) this.pending = null;
+      this.commit();
       this.deps.sendJson(turnMsg);
     } else {
       this.deps.sendJson({ type: "audio_end", turnId });
@@ -337,6 +357,24 @@ export class Conversation {
       }
     }
     this.afterTurn(turn);
+  }
+
+  /** Persists transcript entries (and a verbal consent) that are now final. */
+  private commit(): void {
+    const engine = this.interviewer!.engine;
+    const fresh = engine.transcript.slice(this.persisted);
+    this.persisted = engine.transcript.length;
+    const dialect = engine.dialect;
+    const consent = !this.consentPersisted && engine.consent ? engine.consent : null;
+    if (consent) this.consentPersisted = true;
+    const persist = this.deps.persist;
+    if (!persist || (!fresh.length && !consent)) return;
+    this.persistQueue = this.persistQueue
+      .then(async () => {
+        if (fresh.length) await persist.turns(fresh, dialect);
+        if (consent) await persist.consent(consent);
+      })
+      .catch((err: unknown) => this.deps.onPersistError?.(err));
   }
 
   private recordLatency(turnId: string, t: Timing, thinkDone: number, firstChunk: number): void {
@@ -411,7 +449,9 @@ export class Conversation {
     if (this.speaking?.fallbackTimer) clearTimeout(this.speaking.fallbackTimer);
     const summary = this.latency.summary();
     if (reason) this.deps.sendJson({ type: "ended", reason, latency: summary });
-    this.deps.onEnd(status, summary);
+    const dialect = this.interviewer?.engine.dialect ?? null;
+    // Storage of the last turns finishes before the session is marked as ended.
+    this.persistQueue = this.persistQueue.then(() => this.deps.onEnd(status, summary, dialect));
   }
 
   private error(code: string, message: string): void {

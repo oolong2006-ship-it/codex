@@ -30,7 +30,12 @@ describe("Conversation — text mode", () => {
     expect(h.of("turn").map((t) => t.action)).toEqual(["disclose", "ask", "ask", "ask", "close"]);
     expect(h.audio).toHaveLength(0);
     expect(h.of("ended")[0]).toMatchObject({ reason: "completed" });
+    await h.conversation.idle();
     expect(h.ended.status).toBe("completed");
+    expect(h.stored).toHaveLength(9);
+    expect(
+      h.stored.filter((e) => e.role === "participant").every((e) => e.asrConfidence === undefined),
+    ).toBe(true);
   });
 
   it("rejects a second hello and a wrong protocol", async () => {
@@ -128,6 +133,19 @@ describe("Conversation — voice", () => {
     expect(h.of("turn").at(-1)).toMatchObject({ questionId: "q2" });
     expect(h.of("transcript").at(-1)!.text).toBe("عادي بس لأنه قريب من البيت والأكل نظيف");
     expect(h.of("audio_cancel")).toHaveLength(0);
+    // Only what was actually said is stored: no trace of the withdrawn follow-up.
+    expect(h.stored.map((e) => e.action ?? e.role)).toEqual([
+      "disclose",
+      "participant",
+      "ask",
+      "participant",
+      "ask",
+    ]);
+    expect(h.stored[3]).toMatchObject({
+      text: "عادي بس لأنه قريب من البيت والأكل نظيف",
+      asrConfidence: 0.9,
+    });
+    expect(h.consents).toHaveLength(1);
   });
 
   it("asks to repeat when recognition confidence is low", async () => {
