@@ -1,8 +1,16 @@
 import type { Metadata, Viewport } from 'next';
-import { IBM_Plex_Sans_Arabic } from 'next/font/google';
+import { Alexandria, IBM_Plex_Sans_Arabic } from 'next/font/google';
+import { BRAND } from '@/lib/brand';
 import './globals.css';
 import { Providers } from './providers';
 import { withBase } from '@/lib/paths';
+
+const display = Alexandria({
+  subsets: ['arabic', 'latin'],
+  weight: ['300', '500', '600', '700', '800'],
+  variable: '--font-display',
+  display: 'swap',
+});
 
 const plex = IBM_Plex_Sans_Arabic({
   subsets: ['arabic', 'latin'],
@@ -17,11 +25,11 @@ export const metadata: Metadata = {
   manifest: withBase('/manifest.webmanifest'),
 };
 
-export const viewport: Viewport = { themeColor: '#0F3D3E', width: 'device-width', initialScale: 1 };
+export const viewport: Viewport = { themeColor: BRAND.night, width: 'device-width', initialScale: 1 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="ar" dir="rtl" className={plex.variable}>
+    <html lang="ar" dir="rtl" className={`${plex.variable} ${display.variable}`}>
       <body className="min-h-screen font-sans">
         <Providers>{children}</Providers>
       </body>
