@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>تقييم الأصوات — مجلس</title>
+<style>
+  :root { --bg: #f6f1e7; --ink: #1f2a2e; --accent: #1f6f5c; --card: #fffdf8; --line: #ded6c6; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 17px/1.7 system-ui, "Segoe UI", Tahoma, sans-serif; }
+  main { max-width: 640px; margin: 0 auto; padding: 24px 16px 64px; }
+  h1 { font-size: 1.4rem; margin: 0 0 4px; }
+  .muted { opacity: .75; font-size: .92rem; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 20px; margin-top: 16px; }
+  .text { font-size: 1.15rem; margin: 8px 0 14px; }
+  audio { width: 100%; margin: 6px 0; }
+  .scale { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0 14px; }
+  .scale button, .choice button { flex: 1 1 0; min-width: 52px; padding: 10px 6px; border: 1px solid var(--line); background: #fff; border-radius: 10px; font: inherit; cursor: pointer; }
+  .scale button[aria-pressed="true"], .choice button[aria-pressed="true"] { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .choice { display: flex; gap: 8px; margin: 8px 0 14px; }
+  label { display: block; margin: 10px 0 4px; }
+  input, select { width: 100%; padding: 10px; border: 1px solid var(--line); border-radius: 10px; font: inherit; background: #fff; }
+  .nav { display: flex; justify-content: space-between; gap: 8px; margin-top: 12px; }
+  .primary { background: var(--accent); color: #fff; border: 0; border-radius: 10px; padding: 12px 18px; font: inherit; cursor: pointer; }
+  .secondary { background: transparent; border: 1px solid var(--line); border-radius: 10px; padding: 12px 18px; font: inherit; cursor: pointer; }
+  .primary:disabled { opacity: .4; cursor: default; }
+  .progress { height: 6px; background: var(--line); border-radius: 3px; overflow: hidden; margin-top: 12px; }
+  .progress > div { height: 100%; background: var(--accent); width: 0; }
+  .hint { font-size: .85rem; opacity: .7; }
+</style>
+</head>
+<body>
+<main id="app"></main>
+<script>
+const DATA = /*__DATA__*/null;
+const T = {
+  title: "تقييم أصوات المحاور",
+  intro: "بتسمع جُمل قصيرة بأصوات مختلفة. قيّم كل صوت حسب إحساسك: كم يبدو طبيعياً، وهل اللهجة صحيحة. ما فيه إجابة صح أو غلط.",
+  rater: "رمز المقيّم (بدون اسم)",
+  region: "منطقتك / لهجتك",
+  regions: { najdi: "نجدية", hijazi: "حجازية", southern: "جنوبية", eastern: "شرقية / خليجية", northern: "شمالية", other: "أخرى" },
+  start: "ابدأ",
+  naturalness: "كم يبدو الصوت طبيعياً؟",
+  scale: { 1: "سيئ جداً", 2: "ضعيف", 3: "مقبول", 4: "جيد", 5: "ممتاز" },
+  dialect: "هل اللهجة والنطق صحيحة وطبيعية؟",
+  yes: "نعم", no: "لا",
+  abTitle: "أي الصوتين أطبع؟",
+  a: "الصوت أ", b: "الصوت ب", tie: "متساويين",
+  next: "التالي", prev: "السابق",
+  doneTitle: "يعطيك العافية!",
+  doneBody: "حمّل ملف التقييم وأرسله لفريق مجلس.",
+  download: "تحميل ملف التقييم",
+  step: (i, n) => `${i} من ${n}`,
+};
+const STORE_KEY = "majlis-listening-v1";
+const state = load() || { rater: "", region: "", step: -1, ratings: {}, ab: {}, order: null };
+
+function load() { try { return JSON.parse(localStorage.getItem(STORE_KEY)); } catch { return null; } }
+function save() { try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch {} }
+function shuffle(list) { const a = [...list]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+function el(tag, attrs = {}, ...kids) {
+  const n = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) k.startsWith("on") ? n.addEventListener(k.slice(2), v) : n.setAttribute(k, v);
+  for (const kid of kids) n.append(kid);
+  return n;
+}
+function steps() {
+  if (!state.order) {
+    state.order = [...shuffle(DATA.items).map(i => ({ kind: "item", id: i.id })), ...shuffle(DATA.pairs).map(p => ({ kind: "pair", id: p.id }))];
+    save();
+  }
+  return state.order;
+}
+function buttons(options, current, onPick, cls) {
+  return el("div", { class: cls }, ...options.map(([value, label]) =>
+    el("button", { type: "button", "aria-pressed": String(current === value), onclick: () => onPick(value) }, label)));
+}
+function render() {
+  const app = document.getElementById("app");
+  app.replaceChildren();
+  const all = steps();
+  if (state.step < 0) return app.append(intro());
+  if (state.step >= all.length) return app.append(done());
+  const s = all[state.step];
+  app.append(el("div", { class: "muted" }, T.step(state.step + 1, all.length)),
+    el("div", { class: "progress" }, el("div", { style: `width:${(100 * state.step) / all.length}%` })),
+    s.kind === "item" ? itemCard(s.id) : pairCard(s.id));
+}
+function intro() {
+  const rater = el("input", { value: state.rater, autocomplete: "off" });
+  const region = el("select", {}, el("option", { value: "" }, "—"), ...Object.entries(T.regions).map(([v, l]) => {
+    const o = el("option", { value: v }, l); if (state.region === v) o.selected = true; return o; }));
+  const start = el("button", { class: "primary", onclick: () => { state.rater = rater.value.trim(); state.region = region.value; state.step = 0; save(); render(); } }, T.start);
+  const sync = () => { start.disabled = !rater.value.trim() || !region.value; };
+  rater.addEventListener("input", sync); region.addEventListener("change", sync); sync();
+  return el("div", {}, el("h1", {}, T.title), el("p", { class: "muted" }, T.intro),
+    el("div", { class: "card" }, el("label", {}, T.rater), rater, el("label", {}, T.region), region, el("div", { class: "nav" }, start)));
+}
+function nav(ready) {
+  const next = el("button", { class: "primary", onclick: () => { state.step++; save(); render(); } }, T.next);
+  next.disabled = !ready;
+  return el("div", { class: "nav" }, el("button", { class: "secondary", onclick: () => { state.step--; save(); render(); } }, T.prev), next);
+}
+function itemCard(id) {
+  const item = DATA.items.find(i => i.id === id);
+  const r = state.ratings[id] || (state.ratings[id] = {});
+  const pick = (field) => (v) => { r[field] = v; save(); render(); };
+  return el("div", { class: "card" },
+    el("div", { class: "text" }, item.text),
+    el("audio", { controls: "", preload: "auto", src: item.audio }),
+    el("label", {}, T.naturalness),
+    buttons([1, 2, 3, 4, 5].map(v => [v, `${v} · ${T.scale[v]}`]), r.mos, pick("mos"), "scale"),
+    el("label", {}, T.dialect),
+    buttons([[true, T.yes], [false, T.no]], r.dialect_ok, pick("dialect_ok"), "choice"),
+    nav(r.mos != null && r.dialect_ok != null));
+}
+function pairCard(id) {
+  const pair = DATA.pairs.find(p => p.id === id);
+  const choice = state.ab[id];
+  return el("div", { class: "card" },
+    el("label", {}, T.abTitle), el("div", { class: "text" }, pair.text),
+    el("div", { class: "hint" }, T.a), el("audio", { controls: "", preload: "auto", src: pair.a }),
+    el("div", { class: "hint" }, T.b), el("audio", { controls: "", preload: "auto", src: pair.b }),
+    buttons([["a", T.a], ["tie", T.tie], ["b", T.b]], choice, (v) => { state.ab[id] = v; save(); render(); }, "choice"),
+    nav(choice != null));
+}
+function done() {
+  const sheet = {
+    rater: state.rater, region: state.region, submitted_at: new Date().toISOString(),
+    ratings: Object.entries(state.ratings).map(([item, r]) => ({ item, mos: r.mos ?? null, dialect_ok: r.dialect_ok ?? null })),
+    ab: Object.entries(state.ab).map(([pair, choice]) => ({ pair, choice })),
+  };
+  const url = URL.createObjectURL(new Blob([JSON.stringify(sheet, null, 2)], { type: "application/json" }));
+  return el("div", { class: "card" }, el("h1", {}, T.doneTitle), el("p", {}, T.doneBody),
+    el("a", { class: "primary", href: url, download: `ratings-${state.rater || "rater"}.json`, style: "display:inline-block;text-decoration:none" }, T.download),
+    el("div", { class: "nav" }, el("button", { class: "secondary", onclick: () => { state.step--; save(); render(); } }, T.prev)));
+}
+render();
+</script>
+</body>
+</html>

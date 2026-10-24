@@ -5,3 +5,5 @@ pnpm-lock.yaml
 coverage
 .turbo
 voice-lab/datasets
+voice-lab/REPORT.md
+voice-lab/majlis_voice_lab/listening.html

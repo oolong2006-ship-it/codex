@@ -15,3 +15,5 @@ voice-lab/datasets/**/*.mp3
 voice-lab/datasets/**/*.flac
 voice-lab/output/
 *.egg-info/
+voice-lab/lab.yaml
+voice-lab/ratings/

@@ -1,0 +1,58 @@
+# Copy to lab.yaml and point each entry at a model hosted by us.
+# Policy: `location` must be `local` or `in-kingdom`; anything else is rejected.
+# Licenses must be verified against each model card before production use.
+datasets_dir: datasets
+output_dir: output
+
+asr:
+  - id: mock-asr
+    adapter: mock
+    location: local
+    license: n/a
+  # - id: whisper-large-v3
+  #   adapter: faster-whisper
+  #   location: in-kingdom
+  #   license: MIT
+  #   options: { model: large-v3, device: cuda, compute_type: float16, beam_size: 5 }
+  # - id: whisper-server
+  #   adapter: openai-compatible
+  #   location: in-kingdom
+  #   license: MIT
+  #   options: { base_url: "https://asr.internal.example", model: large-v3, api_key_env: ASR_TOKEN }
+  # - id: hf-local-checkpoint
+  #   adapter: transformers
+  #   location: in-kingdom
+  #   license: verify-model-card
+  #   options: { model: /models/arabic-asr, device: 0 }
+
+tts:
+  - id: mock-tts
+    adapter: mock
+    location: local
+    license: n/a
+  # - id: chatterbox-ml
+  #   adapter: chatterbox
+  #   location: in-kingdom
+  #   license: MIT
+  #   options: { device: cuda, voices: { male: voices/male_ref.wav, female: voices/female_ref.wav } }
+  # - id: piper-ar
+  #   adapter: command
+  #   location: in-kingdom
+  #   license: verify-model-card
+  #   options: { command: "piper --model voices/ar_{gender}.onnx --output_file {out}" }
+  # - id: tts-server
+  #   adapter: openai-compatible
+  #   location: in-kingdom
+  #   license: verify-model-card
+  #   options: { base_url: "https://tts.internal.example", model: my-tts, voices: { male: m1, female: f1 } }
+
+llm:
+  - id: mock-llm
+    adapter: mock
+    location: local
+    license: n/a
+  # - id: allam-7b
+  #   adapter: openai-compatible        # served with vLLM inside the Kingdom
+  #   location: in-kingdom
+  #   license: verify-model-card
+  #   options: { base_url: "https://llm.internal.example", model: ALLaM-7B-Instruct, api_key_env: LLM_TOKEN }

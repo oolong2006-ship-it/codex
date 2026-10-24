@@ -1,0 +1,82 @@
+# 20 interviewer sentences used to compare TTS engines. Written in spoken Saudi form
+# (numbers and currency already spelled the way people say them).
+- {
+    id: s01,
+    category: disclosure,
+    dialect: najdi,
+    text: "هلا والله، معك مساعد ذكي من منصة مجلس، بنسولف عشر دقايق عن تجربتك مع المطعم، وكلامك سري ويهمنا. نبدأ؟",
+  }
+- {
+    id: s02,
+    category: greeting,
+    dialect: najdi,
+    text: "حيّاك الله، تقدر تجاوب بالصوت أو بالكتابة، اللي يريحك.",
+  }
+- { id: s03, category: backchannel, dialect: najdi, text: "إيه، فاهم عليك." }
+- { id: s04, category: backchannel, dialect: najdi, text: "والله؟ طيب كمّل." }
+- { id: s05, category: question, dialect: najdi, text: "زين، وش اللي خلاك تختار هالمكان بالذات؟" }
+- { id: s06, category: follow_up, dialect: najdi, text: "كيف يعني؟ عطني مثال لو تكرمت." }
+- { id: s07, category: follow_up, dialect: najdi, text: "ليش حسيت كذا؟" }
+- { id: s08, category: numbers, dialect: najdi, text: "يعني الطلب كان بخمسة وعشرين ريال، صح كذا؟" }
+- {
+    id: s09,
+    category: numbers,
+    dialect: najdi,
+    text: "قلت إنك دفعت تقريباً مية وخمسين ريال للعائلة كلها.",
+  }
+- {
+    id: s10,
+    category: numbers,
+    dialect: najdi,
+    text: "طلبت الساعة تسعة ونص بالليل، ووصل بعد ساعة إلا ربع.",
+  }
+- {
+    id: s11,
+    category: code_switch,
+    dialect: najdi,
+    text: "قلت إن الـ delivery تأخر، كم تقريباً تأخر؟",
+  }
+- {
+    id: s12,
+    category: code_switch,
+    dialect: najdi,
+    text: "تشوف الـ app سهل في الطلب، ولا فيه أشياء تلخبطك؟",
+  }
+- {
+    id: s13,
+    category: brands,
+    dialect: najdi,
+    text: "عادةً تطلب من هنقرستيشن ولا جاهز ولا تطبيق ثاني؟",
+  }
+- {
+    id: s14,
+    category: sensitive,
+    dialect: najdi,
+    text: "إذا ما عندك مانع، وبدون تفاصيل، تقريباً وين يقع دخل الأسرة بالشهر؟ وعادي لو تفضّل ما تجاوب.",
+  }
+- { id: s15, category: repair, dialect: najdi, text: "عفواً ما سمعتك زين، ممكن تعيد؟" }
+- {
+    id: s16,
+    category: repair,
+    dialect: najdi,
+    text: "يبدو إن الصوت متقطع شوي، تحب تكتب بدال ما تتكلم؟",
+  }
+- {
+    id: s17,
+    category: honesty,
+    dialect: najdi,
+    text: "لا، أنا مساعد ذكي مو إنسان، بس كل كلمة تقولها توصل للفريق ويهمهم رأيك. نكمّل؟",
+  }
+- {
+    id: s18,
+    category: question,
+    dialect: hijazi,
+    text: "طيب إيش رأيك في الأسعار؟ مناسبة لك ولا لأ؟",
+  }
+- { id: s19, category: question, dialect: eastern, text: "شنو أكثر شي عجبك في التجربة؟" }
+- {
+    id: s20,
+    category: closing,
+    dialect: najdi,
+    text: "يعطيك العافية، والله يجزاك خير على وقتك. الحافز بيوصلك على جوالك خلال يومين.",
+  }

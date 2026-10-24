@@ -10,6 +10,9 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest>=8.0", "ruff>=0.6"]
+faster-whisper = ["faster-whisper>=1.0"]
+transformers = ["transformers>=4.40", "torch>=2.2"]
+chatterbox = ["chatterbox-tts>=0.1"]
 
 [tool.ruff]
 line-length = 100
@@ -22,4 +25,7 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
-packages = ["majlis_voice_lab"]
+packages = ["majlis_voice_lab", "majlis_voice_lab.providers"]
+
+[tool.setuptools.package-data]
+majlis_voice_lab = ["listening.html"]
