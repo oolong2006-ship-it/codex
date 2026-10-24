@@ -1,0 +1,48 @@
+name: Majlis CI
+
+on:
+  push:
+    paths: ["majlis/**", ".github/workflows/majlis-ci.yml"]
+  pull_request:
+    paths: ["majlis/**", ".github/workflows/majlis-ci.yml"]
+
+defaults:
+  run:
+    working-directory: majlis
+
+jobs:
+  node:
+    name: Node (format, lint, typecheck, test, build)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: majlis/package.json
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: majlis/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm format:check
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test
+      - run: pnpm build
+
+  voice-lab:
+    name: Voice lab (ruff, pytest)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: majlis/voice-lab
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e ".[dev]"
+      - run: ruff check .
+      - run: ruff format --check .
+      - run: pytest

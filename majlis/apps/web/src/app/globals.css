@@ -1,0 +1,13 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "IBM Plex Sans Arabic", system-ui, sans-serif;
+  --color-ink: #1f2a2e;
+  --color-sand: #f6f1e7;
+  --color-palm: #1f6f5c;
+}
+
+html {
+  background: var(--color-sand);
+  color: var(--color-ink);
+}

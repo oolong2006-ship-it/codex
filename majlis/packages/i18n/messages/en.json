@@ -1,0 +1,14 @@
+{
+  "app": {
+    "name": "Majlis",
+    "tagline": "Voice-first consumer research in Saudi dialects"
+  },
+  "home": {
+    "title": "Hear your customers in their own dialect",
+    "description": "Voice interviews run by a self-disclosing AI assistant, with analysis that builds a consumer memory across studies.",
+    "status": "Platform under construction — phase {phase}"
+  },
+  "common": {
+    "switchLanguage": "العربية"
+  }
+}

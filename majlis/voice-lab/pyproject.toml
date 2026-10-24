@@ -1,0 +1,25 @@
+[project]
+name = "majlis-voice-lab"
+version = "0.0.0"
+description = "Provider benchmarking for Majlis: per-dialect WER/CER, TTS blind A/B (MOS), end-to-end latency"
+requires-python = ">=3.11"
+dependencies = [
+  "jiwer>=3.0",
+  "pyyaml>=6.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0", "ruff>=0.6"]
+
+[tool.ruff]
+line-length = 100
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["majlis_voice_lab"]
