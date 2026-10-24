@@ -46,9 +46,13 @@ export function SeatBar({ used, max, className }: { used: number; max: number | 
         <span className="num font-medium text-ink" dir="ltr">{num(used)}{max ? ` / ${num(max)}` : ''}</span>
         {!max && <span className="text-[10px] text-ink-soft">{t('غير محدود', 'Unlimited')}</span>}
       </div>
-      <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-sand-200" role="progressbar" aria-valuenow={used} aria-valuemax={max ?? undefined}>
-        <div className={clsx('h-full rounded-full', color)} style={{ width: max ? `${Math.max(4, ratio * 100)}%` : '100%' }} />
-      </div>
+      {max ? (
+        <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-sand-200" role="progressbar" aria-valuenow={used} aria-valuemax={max}>
+          <div className={clsx('h-full rounded-full', color)} style={{ width: `${Math.max(4, ratio * 100)}%` }} />
+        </div>
+      ) : (
+        <div className="mt-1 h-1.5 rounded-full border border-dashed border-line" aria-hidden="true" />
+      )}
     </div>
   );
 }

@@ -188,7 +188,7 @@ function SectionHead({ icon, title, count, href }: { icon: React.ReactNode; titl
         <span className="text-ink-soft">{icon}</span>{title}
         <span className="num rounded-full bg-sand-200 px-2 text-xs text-ink-muted">{count}</span>
       </h3>
-      {href && <Link href={href} className="text-xs font-medium text-primary-500 hover:underline">{t('عرض الكل', 'View all')}</Link>}
+      {href && <Link href={href} className="whitespace-nowrap text-xs font-medium text-primary-500 hover:underline">{t('عرض الكل', 'View all')}</Link>}
     </div>
   );
 }
