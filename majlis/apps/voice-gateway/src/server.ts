@@ -144,7 +144,8 @@ export async function buildServer(options: GatewayOptions = {}): Promise<Fastify
           if (socket.readyState === socket.OPEN) socket.send(chunk, { binary: true });
         },
         persist: {
-          turns: (entries, dialect) => store.appendTurns(session.id, entries, dialect),
+          turns: (entries, dialect, audioFor) =>
+            store.appendTurns(session.id, entries, dialect, audioFor),
           consent: (record) => store.recordVerbalConsent(session.id, record),
         },
         onPersistError: (err) => req.log.error({ err }, "failed to store turns"),

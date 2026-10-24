@@ -7,7 +7,9 @@ import {
   setSessionStatus,
   type Db,
 } from "@majlis/db";
+import { randomUUID } from "node:crypto";
 import type { Dialect } from "@majlis/dialect";
+import { pcmToWav, type ObjectStore } from "@majlis/storage";
 import type { ConsentRecord, TranscriptEntry } from "@majlis/interviewer";
 import type { LatencySummary } from "@majlis/voice-client/protocol";
 import type { FinalStatus, SessionRecord, SessionStore } from "./sessions.js";
@@ -16,7 +18,11 @@ import type { FinalStatus, SessionRecord, SessionStore } from "./sessions.js";
 export class DbSessionStore implements SessionStore {
   private readonly participants = new Map<string, string>();
 
-  constructor(private readonly db: Db) {}
+  /** Without an object store, utterances are transcribed but not recorded. */
+  constructor(
+    private readonly db: Db,
+    private readonly recordings?: ObjectStore,
+  ) {}
 
   async get(id: string): Promise<SessionRecord | undefined> {
     const row = await loadSessionForGateway(this.db, id);
@@ -35,9 +41,22 @@ export class DbSessionStore implements SessionStore {
     return claimSession(this.db, id);
   }
 
-  async appendTurns(id: string, entries: TranscriptEntry[], dialect: Dialect | null) {
+  async appendTurns(
+    id: string,
+    entries: TranscriptEntry[],
+    dialect: Dialect | null,
+    audioFor?: (entry: TranscriptEntry) => Uint8Array | undefined,
+  ) {
     for (const e of entries) {
+      const pcm = e.role === "participant" ? audioFor?.(e) : undefined;
+      let audioRef: string | undefined;
+      if (pcm && this.recordings) {
+        // Keys carry no personal data: session token + random id.
+        audioRef = `recordings/${id}/${randomUUID()}.wav`;
+        await this.recordings.put(audioRef, pcmToWav(pcm), "audio/wav");
+      }
       await appendTurn(this.db, id, {
+        ...(audioRef ? { audioRef } : {}),
         role: e.role,
         text: e.text,
         ...(e.asrConfidence !== undefined ? { asrConfidence: e.asrConfidence } : {}),

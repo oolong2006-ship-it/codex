@@ -146,6 +146,14 @@ describe("Conversation — voice", () => {
       asrConfidence: 0.9,
     });
     expect(h.consents).toHaveLength(1);
+
+    // Each spoken answer carries its recording; the merged one holds both parts:
+    // two utterances of (300 ms preroll-limited speech + 600 ms trailing silence).
+    const consentAudio = h.recorded.get(h.stored[1]!)!;
+    const mergedAudio = h.recorded.get(h.stored[3]!)!;
+    expect(consentAudio).toBeGreaterThan(0);
+    expect(mergedAudio).toBeGreaterThan(consentAudio * 1.5);
+    expect([...h.recorded.keys()].every((e) => e.role === "participant")).toBe(true);
   });
 
   it("asks to repeat when recognition confidence is low", async () => {

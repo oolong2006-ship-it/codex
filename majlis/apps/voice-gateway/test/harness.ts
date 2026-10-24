@@ -40,6 +40,7 @@ export async function harness(options: HarnessOptions = {}) {
   const audio: { turnId: string; bytes: number }[] = [];
   const ended: { status?: EndStatus } = {};
   const stored: TranscriptEntry[] = [];
+  const recorded = new Map<TranscriptEntry, number>();
   const consents: ConsentRecord[] = [];
   let audioOffset = 0;
   let currentAudioTurn = "";
@@ -59,8 +60,12 @@ export async function harness(options: HarnessOptions = {}) {
       ended.status = status;
     },
     persist: {
-      turns: async (entries) => {
+      turns: async (entries, _dialect, audioFor) => {
         stored.push(...entries);
+        for (const e of entries) {
+          const audio = audioFor(e);
+          if (audio) recorded.set(e, audio.byteLength);
+        }
       },
       consent: async (record) => {
         consents.push(record);
@@ -104,6 +109,7 @@ export async function harness(options: HarnessOptions = {}) {
     audio,
     ended,
     stored,
+    recorded,
     consents,
     feed,
     send,

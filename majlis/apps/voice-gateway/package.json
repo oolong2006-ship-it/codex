@@ -21,7 +21,8 @@
     "@majlis/interviewer": "workspace:*",
     "@majlis/voice-client": "workspace:*",
     "@fastify/static": "^8.2.0",
-    "@majlis/db": "workspace:*"
+    "@majlis/db": "workspace:*",
+    "@majlis/storage": "workspace:*"
   },
   "devDependencies": {
     "tsx": "^4.23.0",

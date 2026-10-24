@@ -35,7 +35,12 @@ export interface ConversationDeps {
   onEnd: (status: EndStatus, latency: LatencySummary, dialect: Dialect | null) => void;
   /** Stores committed turns only: a reply taken back before it was heard is never saved. */
   persist?: {
-    turns: (entries: TranscriptEntry[], dialect: Dialect | null) => Promise<void>;
+    turns: (
+      entries: TranscriptEntry[],
+      dialect: Dialect | null,
+      /** Recorded PCM (16 kHz mono) of a participant entry, when spoken. */
+      audioFor: (entry: TranscriptEntry) => Uint8Array | undefined,
+    ) => Promise<void>;
     consent: (record: ConsentRecord) => Promise<void>;
   };
   onPersistError?: (err: unknown) => void;
@@ -81,11 +86,14 @@ export class Conversation {
   private mode: Mode = "voice";
   private readonly vad: Vad;
   private preroll: Int16Array[] = [];
-  private asr: { stream: AsrStream; final: Promise<AsrResult> } | null = null;
+  private asr: { stream: AsrStream; final: Promise<AsrResult>; audio: Uint8Array[] } | null = null;
   private lastVoicedAt = 0;
   private pending: Pending | null = null;
   private speaking: Speaking | null = null;
   private carry = "";
+  private carryAudio: Uint8Array[] = [];
+  /** Recording of each participant utterance, attached once the engine has logged it. */
+  private readonly audioByEntry = new WeakMap<TranscriptEntry, Uint8Array>();
   private turnCounter = 0;
   private queue: Promise<void> = Promise.resolve();
   private finished = false;
@@ -158,11 +166,11 @@ export class Conversation {
         this.onSpeechStart(now);
         opened = true;
       } else {
-        this.asr?.stream.write(asBytes(frame));
+        this.feedAsr(frame);
         this.onSpeechEnd(now);
       }
     }
-    if (!opened && events.length === 0 && this.asr) this.asr.stream.write(asBytes(frame));
+    if (!opened && events.length === 0 && this.asr) this.feedAsr(frame);
   }
 
   close(): void {
@@ -179,7 +187,11 @@ export class Conversation {
       language: "ar-SA",
       format: { encoding: "pcm_s16le", sampleRateHz: INPUT_SAMPLE_RATE, channels: 1 },
     });
-    for (const f of this.preroll) stream.write(asBytes(f));
+    const audio: Uint8Array[] = [];
+    for (const f of this.preroll) {
+      stream.write(asBytes(f));
+      audio.push(asBytes(f).slice());
+    }
     const final = (async (): Promise<AsrResult> => {
       for await (const event of stream) {
         if (event.type === "final") {
@@ -191,7 +203,7 @@ export class Conversation {
       }
       return { text: "" };
     })();
-    this.asr = { stream, final };
+    this.asr = { stream, final, audio };
   }
 
   private onSpeechEnd(now: number): void {
@@ -200,7 +212,7 @@ export class Conversation {
     this.asr = null;
     if (!asr) return;
     asr.stream.end();
-    this.enqueue(asr.final, { endOfSpeech: this.lastVoicedAt, endpoint: now }, "voice");
+    this.enqueue(asr.final, { endOfSpeech: this.lastVoicedAt, endpoint: now }, "voice", asr.audio);
   }
 
   /** Barge-in for audible replies, retraction for planned ones. */
@@ -221,6 +233,12 @@ export class Conversation {
     }
   }
 
+  private feedAsr(frame: Int16Array): void {
+    if (!this.asr) return;
+    this.asr.stream.write(asBytes(frame));
+    this.asr.audio.push(asBytes(frame).slice());
+  }
+
   private closeAsr(): void {
     this.asr?.stream.end();
     this.asr = null;
@@ -228,11 +246,16 @@ export class Conversation {
 
   // ─── turns ──────────────────────────────────────────────────────────────────
 
-  private enqueue(final: Promise<AsrResult>, timing: Timing | undefined, channel: Mode): void {
+  private enqueue(
+    final: Promise<AsrResult>,
+    timing: Timing | undefined,
+    channel: Mode,
+    audio: Uint8Array[] = [],
+  ): void {
     const pending: Pending = { controller: new AbortController(), retracted: false };
     if (channel === "voice") this.pending = pending;
     this.queue = this.queue
-      .then(() => this.process(final, timing, channel, pending))
+      .then(() => this.process(final, timing, channel, pending, audio))
       .catch((err: unknown) =>
         this.error("internal", err instanceof Error ? err.message : String(err)),
       );
@@ -243,21 +266,26 @@ export class Conversation {
     timing: Timing | undefined,
     channel: Mode,
     pending: Pending,
+    audio: Uint8Array[],
   ): Promise<void> {
     const final = await finalPromise;
     if (timing) timing.asrFinal = this.now();
     const text = [this.carry, final.text.trim()].filter(Boolean).join(" ");
+    const recording = [...this.carryAudio, ...audio];
     if (pending.retracted || this.finished) {
       this.carry = text;
+      this.carryAudio = recording;
       return;
     }
     this.carry = "";
+    this.carryAudio = [];
     if (channel === "voice" && final.text.trim()) {
       this.deps.sendJson({ type: "transcript", text, final: true });
     }
 
     const engine = this.interviewer!.engine;
     pending.snapshot = engine.snapshot();
+    const loggedAt = engine.transcript.length;
     const turn = await this.interviewer!.respond(
       {
         text,
@@ -267,10 +295,17 @@ export class Conversation {
       pending.controller.signal,
     );
     const thinkDone = this.now();
+    const entry = engine.transcript[loggedAt];
+    if (entry?.role === "participant" && recording.length) {
+      this.audioByEntry.set(entry, concat(recording));
+    }
     if (!pending.retracted) await this.speak(turn, pending, timing, thinkDone);
     // Retraction can land while thinking or while TTS warms up; either way the
     // words were never heard, so they are carried into the next utterance.
-    if (pending.retracted) this.carry = text;
+    if (pending.retracted) {
+      this.carry = text;
+      this.carryAudio = recording;
+    }
   }
 
   private async speak(
@@ -371,7 +406,7 @@ export class Conversation {
     if (!persist || (!fresh.length && !consent)) return;
     this.persistQueue = this.persistQueue
       .then(async () => {
-        if (fresh.length) await persist.turns(fresh, dialect);
+        if (fresh.length) await persist.turns(fresh, dialect, (e) => this.audioByEntry.get(e));
         if (consent) await persist.consent(consent);
       })
       .catch((err: unknown) => this.deps.onPersistError?.(err));
@@ -457,6 +492,16 @@ export class Conversation {
   private error(code: string, message: string): void {
     this.deps.sendJson({ type: "error", code, message });
   }
+}
+
+function concat(parts: Uint8Array[]): Uint8Array {
+  const out = new Uint8Array(parts.reduce((n, p) => n + p.byteLength, 0));
+  let offset = 0;
+  for (const p of parts) {
+    out.set(p, offset);
+    offset += p.byteLength;
+  }
+  return out;
 }
 
 function asBytes(frame: Int16Array): Uint8Array {

@@ -26,7 +26,12 @@ export interface SessionStore {
   get(id: string): Promise<SessionRecord | undefined>;
   /** Marks a created session active; false if it was already used. */
   claim(id: string): Promise<boolean>;
-  appendTurns(id: string, entries: TranscriptEntry[], dialect: Dialect | null): Promise<void>;
+  appendTurns(
+    id: string,
+    entries: TranscriptEntry[],
+    dialect: Dialect | null,
+    audioFor?: (entry: TranscriptEntry) => Uint8Array | undefined,
+  ): Promise<void>;
   recordVerbalConsent(id: string, record: ConsentRecord): Promise<void>;
   finish(
     id: string,

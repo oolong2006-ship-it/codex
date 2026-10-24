@@ -4,6 +4,7 @@ import {
   OpenAiCompatibleLlm,
   OpenAiCompatibleTts,
 } from "./adapters/openai-compatible.js";
+import { WhatsAppCloudProvider } from "./adapters/whatsapp-cloud.js";
 import {
   MockEmbeddingProvider,
   MockAsrProvider,
@@ -79,7 +80,24 @@ const factories: { [K in keyof ProviderSet]: Record<string, Factory<K>> } = {
       }),
   },
   telephony: { mock: () => new MockTelephonyProvider() },
-  whatsapp: { mock: () => new MockWhatsAppProvider() },
+  whatsapp: {
+    mock: () => new MockWhatsAppProvider(),
+    "cloud-api": (env) => {
+      // Not in-Kingdom by nature: requires a deliberate, documented decision.
+      if (env.WHATSAPP_CROSS_BORDER_APPROVED !== "true") {
+        throw new ProviderConfigError(
+          "The WhatsApp Cloud API routes participant messages through Meta's servers outside the Kingdom. " +
+            "Set WHATSAPP_CROSS_BORDER_APPROVED=true only after a documented legal approval of that transfer.",
+        );
+      }
+      return new WhatsAppCloudProvider({
+        phoneNumberId: required(env, "WHATSAPP_PHONE_NUMBER_ID"),
+        accessToken: required(env, "WHATSAPP_API_TOKEN"),
+        appSecret: required(env, "WHATSAPP_APP_SECRET"),
+        ...(env.WHATSAPP_API_BASE ? { apiBase: env.WHATSAPP_API_BASE } : {}),
+      });
+    },
+  },
 };
 
 export function availableProviders(kind: ProviderKind): string[] {
@@ -96,7 +114,7 @@ function resolve<K extends keyof ProviderSet>(kind: K, env: Env): ProviderSet[K]
         `Set ${prefix}_PROVIDER accordingly.`,
     );
   }
-  if (name !== "mock") {
+  if (name !== "mock" && kind !== "whatsapp") {
     const location = env[`${prefix}_LOCATION`]?.trim();
     if (!(ALLOWED_LOCATIONS as readonly (string | undefined)[]).includes(location)) {
       throw new ProviderConfigError(

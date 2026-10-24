@@ -11,6 +11,10 @@ import {
   updateStudySettings,
   type DbHandle,
 } from "@majlis/db";
+import { mkdtempSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { EncryptedObjectStore, FileObjectStore } from "@majlis/storage";
 import { asc, eq } from "drizzle-orm";
 import type { FastifyInstance } from "fastify";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
@@ -65,6 +69,41 @@ describe.skipIf(!URL_TEST)("gateway with PostgreSQL", () => {
     new Promise<number>((resolve) =>
       new WebSocket(`${base}/v1/sessions/${id}/stream`).on("close", (code) => resolve(code)),
     );
+
+  it("stores recordings encrypted and links them to the participant's turn", async () => {
+    const dir = mkdtempSync(join(tmpdir(), "majlis-rec-"));
+    const recordings = new EncryptedObjectStore(
+      new FileObjectStore(dir),
+      Buffer.alloc(32, 1).toString("base64"),
+    );
+    const id = await newSession();
+    const store = new DbSessionStore(h.db, recordings);
+    const pcm = new Uint8Array(3200).fill(7);
+    const entries = [
+      {
+        role: "interviewer" as const,
+        text: "هلا",
+        at: new Date().toISOString(),
+        action: "disclose" as const,
+      },
+      {
+        role: "participant" as const,
+        text: "إيه",
+        at: new Date().toISOString(),
+        asrConfidence: 0.9,
+      },
+    ];
+    await store.appendTurns(id, entries, null, (e) => (e === entries[1] ? pcm : undefined));
+    const rows = await h.db
+      .select()
+      .from(turns)
+      .where(eq(turns.sessionId, id))
+      .orderBy(asc(turns.idx));
+    expect(rows[0]!.audioRef).toBeNull();
+    expect(rows[1]!.audioRef).toMatch(new RegExp(`^recordings/${id}/[0-9a-f-]{36}\\.wav$`));
+    const wav = await recordings.get(rows[1]!.audioRef!);
+    expect(wav!.byteLength).toBe(44 + pcm.byteLength);
+  });
 
   it("refuses a session without a consent record", async () => {
     const id = await newSession();

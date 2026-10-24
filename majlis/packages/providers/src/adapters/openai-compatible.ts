@@ -82,7 +82,13 @@ export class OpenAiCompatibleAsr implements AsrProvider {
     form.set("language", options.language.split("-")[0] ?? "ar");
     form.set("response_format", "verbose_json");
     if (options.phraseHints?.length) form.set("prompt", options.phraseHints.join("، "));
-    form.set("file", new Blob([wav], { type: "audio/wav" }), "audio.wav");
+    // WhatsApp voice notes arrive as OGG/Opus; the server needs the right extension.
+    const ogg = options.format.encoding === "opus";
+    form.set(
+      "file",
+      new Blob([wav], { type: ogg ? "audio/ogg" : "audio/wav" }),
+      ogg ? "audio.ogg" : "audio.wav",
+    );
     const res = await fetch(url(this.cfg, "/v1/audio/transcriptions"), {
       method: "POST",
       headers: headers(this.cfg),
