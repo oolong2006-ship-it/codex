@@ -2,11 +2,12 @@
 import { API_URL, ApiError, getToken } from '@/lib/api';
 import { IS_DEMO } from '@/lib/paths';
 
-/** DELETE with a JSON body (the shared `api.del` sends none; DELETE /admin/companies/:id needs `{ confirmName }`). */
-export async function delWithBody<T>(path: string, body: unknown): Promise<T> {
+/** DELETE carrying its payload both as a JSON body (per contract) and as a query string (the shared `api.del` sends no body). */
+export async function delWithBody<T>(path: string, body: Record<string, string>): Promise<T> {
+  const qs = new URLSearchParams(body).toString();
   if (IS_DEMO) {
     const { demoFetch } = await import('@/demo/client');
-    const res = await demoFetch('DELETE', path, { body, query: undefined, token: getToken() });
+    const res = await demoFetch('DELETE', path, { body, query: body, token: getToken() });
     if (res.status >= 400) {
       const d = (res.data || {}) as { message?: string | string[]; messageAr?: string };
       throw new ApiError(res.status, Array.isArray(d.message) ? d.message.join('، ') : d.message || `HTTP ${res.status}`, d.messageAr, res.data);
@@ -16,7 +17,7 @@ export async function delWithBody<T>(path: string, body: unknown): Promise<T> {
   const token = getToken();
   let res: Response;
   try {
-    res = await fetch(`${API_URL}${path}`, {
+    res = await fetch(`${API_URL}${path}${qs ? `?${qs}` : ''}`, {
       method: 'DELETE',
       headers: { Accept: 'application/json', 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
       body: JSON.stringify(body),
