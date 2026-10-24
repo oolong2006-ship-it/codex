@@ -50,7 +50,19 @@ describe("EncryptedObjectStore", () => {
 
   it("will not start without an encryption key", () => {
     expect(() => createObjectStore({})).toThrow(/STORAGE_ENCRYPTION_KEY/);
-    expect(() => createObjectStore({ STORAGE_ENCRYPTION_KEY: "c2hvcnQ=" })).toThrow(/32 bytes/);
+    expect(() =>
+      createObjectStore({ STORAGE_ENCRYPTION_KEY: "c2hvcnQ=", STORAGE_DIR: "/tmp/x" }),
+    ).toThrow(/32 bytes/);
+    const key = Buffer.alloc(32, 1).toString("base64");
+    expect(() => createObjectStore({ STORAGE_ENCRYPTION_KEY: key, STORAGE_DIR: "./rel" })).toThrow(
+      /absolute/,
+    );
+    expect(() =>
+      createObjectStore({ STORAGE_ENCRYPTION_KEY: key, STORAGE_DIR: "/tmp/x" }),
+    ).not.toThrow();
+    expect(() =>
+      createObjectStore({ STORAGE_ENCRYPTION_KEY: key, STORAGE_ENDPOINT: "http://minio:9000" }),
+    ).toThrow(/REGION/);
   });
 });
 

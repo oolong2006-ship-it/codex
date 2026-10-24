@@ -43,11 +43,15 @@ export interface HandlerDeps {
   personaMinSessions?: number;
   /** Where recordings live; needed for retention and erasure. */
   recordings?: ObjectStore & Deleter;
+  /** Days a WhatsApp number is kept after its last message (default 30). */
+  contactDays?: number;
   whatsapp?: {
     provider: WhatsAppProvider;
     asr: AsrProvider;
     tts?: TtsProvider;
     keys: PiiKeys;
+    /** Public deletion page, sent with the participant's deletion code. */
+    deletionUrl: string;
   };
 }
 
@@ -122,7 +126,9 @@ export function registerHandlers(registry: JobRegistry, deps: HandlerDeps): void
 
   registry.register(JOBS.retentionSweep, async () => {
     if (!deps.recordings) throw new Error("retention needs the recordings store");
-    await purgeExpired(deps.db, deps.recordings);
+    await purgeExpired(deps.db, deps.recordings, new Date(), {
+      contactDays: deps.contactDays ?? 30,
+    });
     // Reschedules itself: one sweep a day.
     await enqueueJob(
       deps.db,
@@ -136,7 +142,10 @@ export function registerHandlers(registry: JobRegistry, deps: HandlerDeps): void
   if (whatsapp && deps.recordings) {
     const recordings = deps.recordings;
     registry.register(JOBS.whatsappInbound, (payload) =>
-      handleWhatsappMessage({ db: deps.db, recordings, ...whatsapp }, payload as never),
+      handleWhatsappMessage(
+        { db: deps.db, recordings, contactDays: deps.contactDays ?? 30, ...whatsapp },
+        payload as never,
+      ),
     );
   }
 }

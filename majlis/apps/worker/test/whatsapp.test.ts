@@ -79,7 +79,7 @@ describe.skipIf(!URL_TEST)("asynchronous WhatsApp interview", () => {
       db: h.db,
       embedding: new MockEmbeddingProvider(),
       recordings: tracking,
-      whatsapp: { provider: whatsapp, asr, keys },
+      whatsapp: { provider: whatsapp, asr, keys, deletionUrl: "https://majlis.test/ar/delete" },
     });
     contactId = await upsertContact(h.db, PHONE, keys);
   });
@@ -109,6 +109,8 @@ describe.skipIf(!URL_TEST)("asynchronous WhatsApp interview", () => {
     expect(replies).toHaveLength(3);
     expect(replies[0]).toContain("Meta");
     expect(replies[1]).toContain("احذف");
+    expect(replies[1]).toMatch(/[0-9A-Z]{4}-[0-9A-Z]{4}-[0-9A-Z]{4}/);
+    expect(replies[1]).toContain("https://majlis.test/ar/delete");
     expect(replies[2]).toContain("مساعدة ذكية");
     expect(replies[2]).toContain("مطعم الديرة");
     expect(whatsapp.sent.every((s) => s.participantRef === PHONE)).toBe(true);

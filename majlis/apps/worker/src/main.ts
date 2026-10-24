@@ -18,6 +18,7 @@ registerHandlers(registry, {
     : {}),
   personaMinSessions: Number(process.env.PERSONA_MIN_SESSIONS ?? 3),
   ...(recordings ? { recordings } : {}),
+  contactDays: Number(process.env.WHATSAPP_CONTACT_RETENTION_DAYS ?? 30),
   ...(whatsappEnabled
     ? {
         whatsapp: {
@@ -25,6 +26,7 @@ registerHandlers(registry, {
           asr: providers.asr,
           ...(process.env.WHATSAPP_VOICE_REPLIES === "true" ? { tts: providers.tts } : {}),
           keys: piiKeysFromEnv(),
+          deletionUrl: `${(process.env.WEB_PUBLIC_URL ?? "http://localhost:3000").replace(/\/+$/, "")}/ar/delete`,
         },
       }
     : {}),

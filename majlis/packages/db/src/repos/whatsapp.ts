@@ -4,6 +4,7 @@ import { eq } from "drizzle-orm";
 import type { Db } from "../client.js";
 import { decryptPii, encryptPii, hashPhone, normalizePhone, type PiiKeys } from "../pii-crypto.js";
 import { interviewSessions, participants, studies, whatsappContacts } from "../schema.js";
+import { hashDeletionCode, newDeletionCode } from "./participation.js";
 import { latestGuide } from "./studies.js";
 
 export async function upsertContact(db: Db, phone: string, keys: PiiKeys): Promise<string> {
@@ -84,10 +85,12 @@ export async function startWhatsappSession(db: Db, contactId: string, inviteToke
     ...(study.incentive ? { incentive: study.incentive } : {}),
   };
   const sessionId = randomBytes(18).toString("base64url");
+  // Lets the participant erase the interview after the number itself is deleted.
+  const deletionCode = newDeletionCode();
   await db.transaction(async (tx) => {
     const [p] = await tx
       .insert(participants)
-      .values({ studyId: study.id })
+      .values({ studyId: study.id, deletionTokenHash: hashDeletionCode(deletionCode) })
       .returning({ id: participants.id });
     await tx.insert(interviewSessions).values({
       id: sessionId,
@@ -103,7 +106,7 @@ export async function startWhatsappSession(db: Db, contactId: string, inviteToke
     });
     await tx.update(whatsappContacts).set({ sessionId }).where(eq(whatsappContacts.id, contactId));
   });
-  return { sessionId, guide: guideSnapshot, voiceGender, studyId: study.id };
+  return { sessionId, guide: guideSnapshot, voiceGender, studyId: study.id, deletionCode };
 }
 
 export async function saveEngineState(db: Db, sessionId: string, state: PersistedEngineState) {

@@ -2,8 +2,10 @@ import { and, eq, inArray, isNotNull, isNull, lt, sql } from "drizzle-orm";
 import type { Db } from "../client.js";
 import {
   auditLog,
+  insights,
   interviewSessions,
   participants,
+  personas,
   retentionPolicies,
   studies,
   turns,
@@ -18,6 +20,7 @@ export interface Deleter {
 }
 
 const DEFAULT_TRANSCRIPT_DAYS = 365;
+const DEFAULT_CONTACT_DAYS = 30;
 
 async function deleteObjects(store: Deleter, keys: (string | null)[]): Promise<number> {
   let n = 0;
@@ -43,6 +46,32 @@ async function reanalyze(db: Db, studyIds: string[]): Promise<void> {
 }
 
 /**
+ * Removes quotes of erased turns from results and personas at once, so they
+ * never show between the erasure and the rebuild that follows.
+ */
+async function scrubQuotes(db: Db, studyIds: string[], turnIds: string[]): Promise<void> {
+  if (studyIds.length === 0 || turnIds.length === 0) return;
+  const erased = sql`array[${sql.join(
+    turnIds.map((id) => sql`${id}`),
+    sql`, `,
+  )}]::text[]`;
+  const keep = (column: typeof insights.quotes | typeof personas.evidence) =>
+    sql`coalesce((select jsonb_agg(q) from jsonb_array_elements(${column}) q where not ((q->>'turnId') = any(${erased}))), '[]'::jsonb)`;
+  await db
+    .update(insights)
+    .set({ quotes: keep(insights.quotes) })
+    .where(inArray(insights.studyId, studyIds));
+  const orgs = db
+    .select({ orgId: studies.orgId })
+    .from(studies)
+    .where(inArray(studies.id, studyIds));
+  await db
+    .update(personas)
+    .set({ evidence: keep(personas.evidence) })
+    .where(inArray(personas.orgId, orgs));
+}
+
+/**
  * Erases every interview of the participants given: recordings, transcripts,
  * embeddings, consent records and segment attributes. Audit keeps counts only.
  */
@@ -62,6 +91,14 @@ async function eraseParticipants(db: Db, store: Deleter, participantIds: string[
   const recordings = await deleteObjects(
     store,
     audio.map((a) => a.ref),
+  );
+  const erasedTurns = sessionIds.length
+    ? await db.select({ id: turns.id }).from(turns).where(inArray(turns.sessionId, sessionIds))
+    : [];
+  await scrubQuotes(
+    db,
+    [...new Set(sessions.map((s) => s.studyId))],
+    erasedTurns.map((t) => t.id),
   );
   // Sessions, turns, consent records and flags cascade from the participant row.
   await db.delete(participants).where(inArray(participants.id, participantIds));
@@ -115,9 +152,15 @@ export async function eraseWhatsappContact(
 
 /**
  * Retention: recordings older than the study's retention are deleted; whole
- * interviews older than the organization's transcript retention are erased.
+ * interviews older than the organization's transcript retention are erased;
+ * WhatsApp numbers are kept only while a conversation is going on.
  */
-export async function purgeExpired(db: Db, store: Deleter, now = new Date()) {
+export async function purgeExpired(
+  db: Db,
+  store: Deleter,
+  now = new Date(),
+  options: { contactDays?: number } = {},
+) {
   // 1. Recordings, per study retention.
   const expiredAudio = await db
     .select({ turnId: turns.id, ref: turns.audioRef, sessionId: turns.sessionId })
@@ -194,7 +237,47 @@ export async function purgeExpired(db: Db, store: Deleter, now = new Date()) {
     "abandoned",
   );
 
-  const summary = { recordings, sessions: erased.sessions, abandonedSessions: abandoned.sessions };
+  // 3. WhatsApp numbers idle for longer than contactDays. An interview left
+  // unfinished there cannot be resumed, so it goes the same way as abandoned ones.
+  const contactDays = options.contactDays ?? DEFAULT_CONTACT_DAYS;
+  const idle = await db
+    .select({ id: whatsappContacts.id })
+    .from(whatsappContacts)
+    .where(
+      lt(
+        sql`coalesce(${whatsappContacts.lastMessageAt}, ${whatsappContacts.createdAt})`,
+        sql`${now.toISOString()}::timestamptz - make_interval(days => ${contactDays})`,
+      ),
+    );
+  const idleIds = idle.map((c) => c.id);
+  let unfinished = 0;
+  if (idleIds.length) {
+    const open = await db
+      .select({ participantId: interviewSessions.participantId })
+      .from(interviewSessions)
+      .where(and(inArray(interviewSessions.contactId, idleIds), isNull(interviewSessions.endedAt)));
+    unfinished = (
+      await eraseParticipants(
+        db,
+        store,
+        [...new Set(open.map((o) => o.participantId))],
+        "abandoned",
+      )
+    ).sessions;
+    // Completed interviews stay (erasable with their deletion code), unlinked from the number.
+    await db
+      .update(interviewSessions)
+      .set({ contactId: null })
+      .where(inArray(interviewSessions.contactId, idleIds));
+    await db.delete(whatsappContacts).where(inArray(whatsappContacts.id, idleIds));
+  }
+
+  const summary = {
+    recordings,
+    sessions: erased.sessions,
+    abandonedSessions: abandoned.sessions + unfinished,
+    whatsappNumbers: idleIds.length,
+  };
   await db.insert(auditLog).values({ kind: "retention_run", detail: summary });
   return summary;
 }

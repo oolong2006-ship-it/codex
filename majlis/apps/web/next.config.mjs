@@ -5,6 +5,7 @@ const SERVER_EXTERNAL = [
   "@majlis/dialect",
   "@majlis/providers",
   "@majlis/analysis",
+  "@majlis/storage",
 ];
 
 /** @type {import('next').NextConfig} */

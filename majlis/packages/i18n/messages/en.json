@@ -31,7 +31,8 @@
   "nav": {
     "studies": "Studies",
     "newStudy": "New study",
-    "memory": "Ask your memory"
+    "memory": "Ask your memory",
+    "review": "Review"
   },
   "studies": {
     "title": "Studies",
@@ -137,7 +138,8 @@
     "title": "Interview transcript",
     "interviewer": "Interviewer",
     "participant": "Participant",
-    "back": "Back to interviews"
+    "back": "Back to interviews",
+    "listen": "Listen to this answer"
   },
   "gender": {
     "male": "Male",
@@ -265,7 +267,7 @@
     "help": "Hi! Send the study code from your invitation to begin.",
     "closed": "This study is not accepting participants right now. Thank you for your interest.",
     "privacy": "Before we start: WhatsApp messages pass through Meta's servers outside Saudi Arabia. If you prefer, you can take part from the invitation link in your browser instead.",
-    "deleteHint": "You can send \"delete\" at any time and we will erase your participation and all your data.",
+    "deleteHint": "You can send \"delete\" at any time and we will erase your participation and all your data. Keep this deletion code: {code}\nWe delete your number {days} days after your last message; after that you can still delete your participation with the code at: {url}",
     "deleted": "Your participation and all your data have been deleted. Thank you."
   },
   "deletion": {
@@ -275,5 +277,41 @@
     "submit": "Delete my participation",
     "done": "Your participation and all your data have been deleted.",
     "notFound": "No participation matches this code. Check it and try again."
+  },
+  "review": {
+    "title": "Review and quality",
+    "forbidden": "This page is for reviewers and administrators only.",
+    "metricsTitle": "Quality criteria on real interviews",
+    "metricsHint": "Actual numbers computed from human reviews; shown as they are, even when below target.",
+    "metricWer": "Word error rate (WER) — {dialect}",
+    "metricMos": "Interviewer voice naturalness (MOS)",
+    "metricDialect": "Dialect correctness",
+    "metricLatency": "Response latency (p90)",
+    "target": "Target: {target}",
+    "sample": "Sample: {n}",
+    "noData": "Not enough data yet",
+    "pass": "Meets target",
+    "fail": "Below target",
+    "unknownDialect": "Unknown",
+    "flagsTitle": "Segments to review",
+    "flagsEmpty": "Nothing is waiting for review.",
+    "confidence": "Transcription confidence: {value}",
+    "correction": "Correct text as spoken",
+    "saveCorrection": "Save correction",
+    "dismiss": "Dismiss",
+    "saved": "Saved",
+    "failed": "Could not save, please try again.",
+    "rateTitle": "Rate the interviewer",
+    "rateHint": "Listen to the line and rate its naturalness from 1 (very robotic) to 5 (fully natural).",
+    "rateEmpty": "No new lines to rate.",
+    "naturalness": "Naturalness",
+    "dialectOk": "Dialect is correct and fitting",
+    "saveRating": "Save rating",
+    "flagKinds": {
+      "low_asr_confidence": "Low transcription confidence",
+      "too_short": "Very short answers",
+      "repeated": "Repeated answer",
+      "automated": "Possible automated pattern"
+    }
   }
 }

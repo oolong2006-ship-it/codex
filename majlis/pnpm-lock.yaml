@@ -102,6 +102,9 @@ importers:
       '@majlis/providers':
         specifier: workspace:*
         version: link:../../packages/providers
+      '@majlis/storage':
+        specifier: workspace:*
+        version: link:../../packages/storage
       '@majlis/voice-client':
         specifier: workspace:*
         version: link:../../packages/voice-client

@@ -3,7 +3,9 @@
  * models) and the built web app, driven by Chromium.
  *
  *   create study → open recruiting → participant consents → interview (switch to
- *   typing) → session completed → de-identified transcript in the dashboard.
+ *   typing) → session completed → de-identified transcript in the dashboard →
+ *   analysis and memory → review panel (correction, MOS rating, metrics) →
+ *   participant deletes everything with their code.
  *
  * Also checks RTL layout on the main screens (direction, no horizontal scroll)
  * at phone and desktop widths, and saves screenshots to e2e/artifacts/.
@@ -15,7 +17,7 @@ import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { createOrgWithOwner } from "@majlis/db";
+import { appendTurn, createDb, createOrgWithOwner, interviewSessions } from "@majlis/db";
 import { isolatedTestDb } from "@majlis/db/testing";
 import { chromium, type Page } from "playwright";
 
@@ -40,6 +42,12 @@ await createOrgWithOwner(handle.db, {
   password: PASSWORD,
 });
 await handle.close();
+
+// Recordings: encrypted, in one absolute folder shared by every service.
+const STORAGE = {
+  STORAGE_ENCRYPTION_KEY: Buffer.alloc(32, 7).toString("base64"),
+  STORAGE_DIR: mkdtempSync(join(tmpdir(), "majlis-recordings-")),
+};
 
 // ─── services ────────────────────────────────────────────────────────────────
 const procs: ChildProcess[] = [];
@@ -72,6 +80,7 @@ run("node", ["dist/main.js"], join(ROOT, "apps/voice-gateway"), {
   DATABASE_URL: DB_URL,
   VOICE_GATEWAY_PORT: String(GW_PORT),
   GATEWAY_ALLOWED_ORIGINS: WEB,
+  ...STORAGE,
 });
 run(
   "node",
@@ -89,6 +98,7 @@ run(
     WEB_PUBLIC_URL: WEB,
     WEB_PUBLIC_VOICE_GATEWAY_URL: `ws://127.0.0.1:${GW_PORT}`,
     NODE_ENV: "production",
+    ...STORAGE,
   },
 );
 await waitFor(`http://127.0.0.1:${GW_PORT}/healthz`);
@@ -258,6 +268,11 @@ try {
   }
   await participant.getByText("يعطيك العافية!").waitFor({ timeout: 10000 });
   check("participant reaches the thank-you screen", true);
+  const deletionCode = (await participant.textContent('[data-testid="deletion-code"]')) ?? "";
+  check(
+    "thank-you screen shows a deletion code",
+    /^[0-9A-Z]{4}-[0-9A-Z]{4}-[0-9A-Z]{4}$/.test(deletionCode),
+  );
   await layout(participant, "participant-thanks");
 
   // Results in the dashboard.
@@ -289,7 +304,7 @@ try {
   await new Promise<void>((resolve, reject) => {
     const w = spawn("node", ["dist/main.js", "--once"], {
       cwd: join(ROOT, "apps/worker"),
-      env: { ...process.env, DATABASE_URL: DB_URL, PERSONA_MIN_SESSIONS: "1" },
+      env: { ...process.env, DATABASE_URL: DB_URL, PERSONA_MIN_SESSIONS: "1", ...STORAGE },
       stdio: "ignore",
     });
     w.on("exit", (code) => (code === 0 ? resolve() : reject(new Error(`worker exited ${code}`))));
@@ -342,6 +357,75 @@ try {
     (await client.textContent("main"))!.includes("النسخة 1"),
   );
   await layout(client, "memory");
+
+  // Review panel: a low-confidence voice answer waits for a human correction.
+  const direct = createDb(DB_URL);
+  const [session] = await direct.db.select().from(interviewSessions);
+  await appendTurn(direct.db, session!.id, {
+    role: "participant",
+    text: "الاكل باهض شوي",
+    asrConfidence: 0.42,
+  });
+  await direct.close();
+
+  await client.goto(`${WEB}/ar/dashboard/review`);
+  check(
+    "review panel lists the low-confidence segment",
+    await client.getByTestId("flag").isVisible(),
+  );
+  await client.getByTestId("flag").locator("textarea").fill("الأكل باهظ شوي");
+  await client.getByRole("button", { name: "احفظ التصحيح" }).click();
+  await client.getByTestId("flag").getByText("تم الحفظ").waitFor();
+  const rate = client.getByTestId("rate").first();
+  const ttsSrc = (await rate.locator("audio").getAttribute("src")) ?? "";
+  // Fetched from the page, as the <audio> element does (the session cookie is Secure).
+  const tts = await client.evaluate(async (src) => {
+    const r = await fetch(src);
+    return {
+      ok: r.ok,
+      type: r.headers.get("content-type"),
+      bytes: (await r.arrayBuffer()).byteLength,
+    };
+  }, ttsSrc);
+  check(
+    "interviewer line is playable for MOS rating",
+    tts.ok && tts.type === "audio/wav" && tts.bytes > 44,
+  );
+  await rate.getByText("4", { exact: true }).click();
+  await rate.getByRole("button", { name: "احفظ التقييم" }).click();
+  await rate.getByText("تم الحفظ").waitFor();
+  await client.reload();
+  const metrics = (await client.getByTestId("metric").allTextContents()).join(" | ");
+  check(
+    "metrics show measured WER and MOS with their sample sizes",
+    metrics.includes("WER") && metrics.includes("4.00") && metrics.includes("العينة: 1"),
+  );
+  check("metrics compare against the section-3 targets", metrics.includes("≥ 4.4"));
+  await layout(client, "review");
+  const anonymous = await browser.newContext();
+  const leaked = await anonymous.request.get(`${WEB}${ttsSrc}`);
+  check("review audio requires a reviewer session", leaked.status() === 404);
+  await anonymous.close();
+
+  // The participant deletes their participation with the code.
+  await participant.goto(`${WEB}/ar/delete`);
+  await layout(participant, "deletion");
+  await participant.getByLabel("رمز الحذف").fill("AAAA-BBBB-CCCC");
+  await participant.getByRole("button", { name: "احذف مشاركتي" }).click();
+  await participant.getByText("ما لقينا مشاركة").waitFor();
+  check("wrong deletion code is rejected", true);
+  await participant.getByLabel("رمز الحذف").fill(deletionCode.toLowerCase());
+  await participant.getByRole("button", { name: "احذف مشاركتي" }).click();
+  await participant.getByText("تم حذف مشاركتك").waitFor();
+  check("participant erased with their code", true);
+  await client.goto(`${WEB}/ar/dashboard/memory`);
+  await client.getByRole("textbox").fill("وش رأيهم بالأسعار؟");
+  await client.getByRole("button", { name: "اسأل", exact: true }).click();
+  await client.locator('[data-testid="memory-answer"]').waitFor({ timeout: 8000 });
+  check(
+    "erased answers no longer appear in memory",
+    !((await client.textContent("main")) ?? "").includes("الأسعار مقبولة"),
+  );
 
   // English stays LTR.
   await client.goto(`${WEB}/en/login`);

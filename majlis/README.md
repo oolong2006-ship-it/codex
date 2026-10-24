@@ -2,7 +2,7 @@
 
 منصة سعودية لأبحاث المستهلك: مقابلات **صوتية** يديرها مساعد ذكي يُفصح عن هويته، باللهجات السعودية، مع تحليل يبني «ذاكرة مستهلك» تتراكم مع كل دراسة.
 
-> الحالة: **المرحلة 5** (التحليل وذاكرة المستهلك). انظر [`CHANGELOG.md`](CHANGELOG.md) و [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
+> الحالة: **المرحلة 6** (واتساب، الحذف التلقائي، لوحة المراجعة). انظر [`CHANGELOG.md`](CHANGELOG.md) و [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 
 ## المتطلبات
 
@@ -31,6 +31,8 @@ pnpm dev          # web على :3000 ، voice-gateway على :4100 ، والعا
 | دراسة جديدة  | `/ar/dashboard/studies/new`                  |
 | صفحة المشارك | `/ar/p/<رمز الدعوة>`، يظهر في تبويب «الدعوة» |
 | اسأل ذاكرتك  | `/ar/dashboard/memory`                       |
+| المراجعة     | `/ar/dashboard/review`                       |
+| حذف مشاركة   | `/ar/delete`                                 |
 
 ## الفحوصات
 

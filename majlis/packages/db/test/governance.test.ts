@@ -14,15 +14,19 @@ import {
   enqueueJob,
   eraseByDeletionCode,
   hashPhone,
+  insights,
   interviewSessions,
   openFlags,
   participants,
+  personas,
   purgeExpired,
   qualityMetrics,
   rateInterviewerTurn,
   setRetentionPolicy,
   setSessionStatus,
   startInterview,
+  startWhatsappSession,
+  transcriptForClient,
   turns,
   updateStudySettings,
   upsertContact,
@@ -85,6 +89,21 @@ describe.skipIf(!TEST_URL)("governance, review and WhatsApp data", () => {
 
   it("erases everything about a participant with their deletion code", async () => {
     const s = await interview({ audio: true });
+    const other = await interview();
+    const [study] = await h.db
+      .select({ id: interviewSessions.studyId })
+      .from(interviewSessions)
+      .limit(1);
+    const quotes = [
+      { turnId: s.answer, text: "الاكل كان زين مره" },
+      { turnId: other.answer, text: "باقي" },
+    ];
+    await h.db
+      .insert(insights)
+      .values({ studyId: study!.id, theme: "الأكل", sentiment: "positive", quotes });
+    await h.db
+      .insert(personas)
+      .values({ orgId: org.orgId, segment: {}, attributes: {}, evidence: quotes });
     expect(s.deletionCode).toMatch(/^[0-9A-Z]{4}-[0-9A-Z]{4}-[0-9A-Z]{4}$/);
     expect(await eraseByDeletionCode(h.db, store, "WRONG-CODE-0000")).toBe(false);
     // Typed in lower case with spaces still works.
@@ -96,6 +115,11 @@ describe.skipIf(!TEST_URL)("governance, review and WhatsApp data", () => {
       await h.db.select().from(interviewSessions).where(eq(interviewSessions.id, s.sessionId)),
     ).toEqual([]);
     expect(await h.db.select().from(turns).where(eq(turns.sessionId, s.sessionId))).toEqual([]);
+    // Derived quotes disappear immediately, before any rebuild runs.
+    const [insight] = await h.db.select().from(insights);
+    const [persona] = await h.db.select().from(personas);
+    expect(insight!.quotes.map((q) => q.turnId)).toEqual([other.answer]);
+    expect(persona!.evidence.map((q) => q.turnId)).toEqual([other.answer]);
     const [log] = await h.db.select().from(auditLog).where(eq(auditLog.kind, "erasure"));
     expect(log!.detail).toMatchObject({
       reason: "participant_request",
@@ -189,6 +213,10 @@ describe.skipIf(!TEST_URL)("governance, review and WhatsApp data", () => {
     const denied = await interview({ audio: true, allowAudio: false });
     const allowed = await interview({ audio: true, allowAudio: true });
     expect(await audioRefForClient(h.db, org.orgId, denied.answer)).toBeNull();
+    const players = async (sessionId: string) =>
+      (await transcriptForClient(h.db, org.orgId, sessionId))!.map((t) => t.audioTurnId);
+    expect(await players(denied.sessionId)).toEqual([null, null]);
+    expect(await players(allowed.sessionId)).toEqual([null, allowed.answer]);
     expect(await audioRefForClient(h.db, org.orgId, allowed.answer)).toBe(
       `recordings/${allowed.sessionId}/a.wav`,
     );
@@ -226,5 +254,40 @@ describe.skipIf(!TEST_URL)("governance, review and WhatsApp data", () => {
     expect(Object.keys((await h.db.select().from(participants).limit(1))[0] ?? {})).not.toContain(
       "phone",
     );
+  });
+
+  it("deletes idle WhatsApp numbers and their unfinished interviews, keeping finished ones", async () => {
+    const keys = {
+      encryptionKey: Buffer.alloc(32, 4).toString("base64"),
+      hashPepper: "pepper-for-tests-only",
+    };
+    const done = await upsertContact(h.db, "0501111111", keys);
+    const idle = await upsertContact(h.db, "0502222222", keys);
+    const finished = await startWhatsappSession(h.db, done, inviteToken);
+    expect(finished!.deletionCode).toMatch(/^[0-9A-Z]{4}-[0-9A-Z]{4}-[0-9A-Z]{4}$/);
+    await setSessionStatus(h.db, finished!.sessionId, "completed");
+    const unfinished = await startWhatsappSession(h.db, idle, inviteToken);
+
+    const soon = new Date(Date.now() + 10 * 86_400_000);
+    expect((await purgeExpired(h.db, store, soon, { contactDays: 30 })).whatsappNumbers).toBe(0);
+    const later = new Date(Date.now() + 31 * 86_400_000);
+    const summary = await purgeExpired(h.db, store, later, { contactDays: 30 });
+    expect(summary.whatsappNumbers).toBeGreaterThanOrEqual(2);
+    expect(await h.db.select().from(whatsappContacts).where(eq(whatsappContacts.id, done))).toEqual(
+      [],
+    );
+    const [kept] = await h.db
+      .select()
+      .from(interviewSessions)
+      .where(eq(interviewSessions.id, finished!.sessionId));
+    expect(kept).toMatchObject({ status: "completed", contactId: null });
+    expect(
+      await h.db
+        .select()
+        .from(interviewSessions)
+        .where(eq(interviewSessions.id, unfinished!.sessionId)),
+    ).toEqual([]);
+    // The finished interview can still be erased with the code sent over WhatsApp.
+    expect(await eraseByDeletionCode(h.db, store, finished!.deletionCode)).toBe(true);
   });
 });

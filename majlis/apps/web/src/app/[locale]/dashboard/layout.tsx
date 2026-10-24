@@ -2,7 +2,7 @@ import { isLocale, t } from "@majlis/i18n";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
-import { requireUser } from "@/lib/server";
+import { canReview, requireUser } from "@/lib/server";
 import { logoutAction } from "../login/actions";
 
 export const dynamic = "force-dynamic";
@@ -31,6 +31,9 @@ export default async function DashboardLayout({
             <Link href={`/${locale}/dashboard`}>{t(locale, "nav.studies")}</Link>
             <Link href={`/${locale}/dashboard/studies/new`}>{t(locale, "nav.newStudy")}</Link>
             <Link href={`/${locale}/dashboard/memory`}>{t(locale, "nav.memory")}</Link>
+            {canReview(user) && (
+              <Link href={`/${locale}/dashboard/review`}>{t(locale, "nav.review")}</Link>
+            )}
             <form action={logoutAction.bind(null, locale)}>
               <button type="submit" className="underline underline-offset-4">
                 {t(locale, "auth.logout")}

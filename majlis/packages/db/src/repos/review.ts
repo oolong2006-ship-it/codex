@@ -236,6 +236,20 @@ export async function audioRefForReviewer(db: Db, orgId: string, turnId: string)
   return row?.ref ?? null;
 }
 
+/**
+ * An interviewer line to rate, with the voice it was spoken in. Interviewer audio
+ * is not stored, so reviewers listen to it re-synthesized by the same TTS.
+ */
+export async function interviewerTurnForReview(db: Db, orgId: string, turnId: string) {
+  const [row] = await db
+    .select({ text: turns.text, voiceGender: interviewSessions.voiceGender })
+    .from(turns)
+    .innerJoin(interviewSessions, eq(interviewSessions.id, turns.sessionId))
+    .innerJoin(studies, eq(studies.id, interviewSessions.studyId))
+    .where(and(eq(turns.id, turnId), eq(studies.orgId, orgId), eq(turns.role, "interviewer")));
+  return row ?? null;
+}
+
 /** Audio for the client: only when the participant separately allowed it. */
 export async function audioRefForClient(db: Db, orgId: string, turnId: string) {
   const [row] = await db

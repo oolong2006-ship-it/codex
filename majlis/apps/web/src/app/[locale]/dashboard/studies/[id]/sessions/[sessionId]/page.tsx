@@ -45,6 +45,15 @@ export default async function TranscriptPage({
                 )}
               </span>
               {turn.text}
+              {turn.audioTurnId && (
+                <audio
+                  controls
+                  preload="none"
+                  src={`/api/audio/${turn.audioTurnId}`}
+                  className="mt-2 w-full"
+                  aria-label={t(locale, "transcript.listen")}
+                />
+              )}
             </li>
           ))}
         </ol>

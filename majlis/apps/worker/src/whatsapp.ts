@@ -27,6 +27,8 @@ export interface WhatsappDeps {
   /** When set, replies are also sent as voice notes (TTS must produce OGG/Opus). */
   tts?: TtsProvider;
   keys: PiiKeys;
+  deletionUrl: string;
+  contactDays: number;
 }
 
 export interface InboundPayload {
@@ -99,7 +101,13 @@ export async function handleWhatsappMessage(
     // Honest about the channel before anything is asked; the disclosure goes last
     // because it ends with the consent question.
     await send(t("ar", "whatsapp.privacy"));
-    await send(t("ar", "whatsapp.deleteHint"));
+    await send(
+      t("ar", "whatsapp.deleteHint", {
+        code: started.deletionCode,
+        url: deps.deletionUrl,
+        days: deps.contactDays,
+      }),
+    );
     await send(first.text);
     return;
   }

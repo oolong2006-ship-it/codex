@@ -1,4 +1,4 @@
-import { and, asc, desc, eq } from "drizzle-orm";
+import { and, asc, desc, eq, sql } from "drizzle-orm";
 import type { Db } from "../client.js";
 import { redactPII } from "../privacy.js";
 import { consentRecords, interviewSessions, participants, studies, turns } from "../schema.js";
@@ -70,6 +70,8 @@ export interface ClientTurn {
   role: "interviewer" | "participant";
   text: string;
   questionId: string | null;
+  /** Set only when this answer was recorded and the participant allowed playback. */
+  audioTurnId: string | null;
 }
 
 export async function transcriptForClient(
@@ -83,10 +85,27 @@ export async function transcriptForClient(
     .innerJoin(studies, eq(studies.id, interviewSessions.studyId))
     .where(and(eq(interviewSessions.id, sessionId), eq(studies.orgId, orgId)));
   if (!owned) return null;
+  const [playback] = await db
+    .select({ id: consentRecords.id })
+    .from(consentRecords)
+    .where(
+      and(eq(consentRecords.sessionId, sessionId), eq(consentRecords.allowAudioPlayback, true)),
+    );
   const rows = await db
-    .select({ idx: turns.idx, role: turns.role, text: turns.text, questionId: turns.questionId })
+    .select({
+      id: turns.id,
+      idx: turns.idx,
+      role: turns.role,
+      text: turns.text,
+      questionId: turns.questionId,
+      hasAudio: sql<boolean>`${turns.audioRef} is not null`,
+    })
     .from(turns)
     .where(eq(turns.sessionId, sessionId))
     .orderBy(asc(turns.idx));
-  return rows.map((r) => ({ ...r, text: redactPII(r.text) }));
+  return rows.map(({ id, hasAudio, ...r }) => ({
+    ...r,
+    text: redactPII(r.text),
+    audioTurnId: playback && hasAudio && r.role === "participant" ? id : null,
+  }));
 }

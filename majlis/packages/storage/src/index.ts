@@ -1,6 +1,6 @@
 import { createCipheriv, createDecipheriv, randomBytes } from "node:crypto";
 import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
-import { dirname, join, resolve, sep } from "node:path";
+import { dirname, isAbsolute, join, resolve, sep } from "node:path";
 import { AwsClient } from "aws4fetch";
 
 /** Minimal object store used for recordings. Keys are opaque, never contain personal data. */
@@ -154,13 +154,31 @@ export function createObjectStore(env: Env = process.env): ObjectStore {
         bucket: env.STORAGE_BUCKET ?? "majlis-recordings",
         accessKeyId: env.STORAGE_ACCESS_KEY ?? "",
         secretAccessKey: env.STORAGE_SECRET_KEY ?? "",
-        region: env.DATA_REGION || "us-east-1",
+        region: storageRegion(env),
       })
-    : new FileObjectStore(env.STORAGE_DIR ?? "./.recordings");
+    : new FileObjectStore(localDir(env.STORAGE_DIR));
   return new EncryptedObjectStore(inner, encryptionKey);
 }
 
 /** Wraps 16 kHz mono PCM s16le in a WAV container for playback. */
+/** No region is written in code: it comes from STORAGE_REGION or DATA_REGION. */
+function storageRegion(env: Env): string {
+  const region = env.STORAGE_REGION || env.DATA_REGION;
+  if (!region) throw new Error("STORAGE_REGION or DATA_REGION is required with STORAGE_ENDPOINT");
+  return region;
+}
+
+/**
+ * Every service (gateway, worker, web) must resolve the same folder, or a
+ * deletion in one would miss files written by another, so it must be absolute.
+ */
+function localDir(dir: string | undefined): string {
+  if (!dir || !isAbsolute(dir)) {
+    throw new Error("STORAGE_DIR must be an absolute path when STORAGE_ENDPOINT is not set");
+  }
+  return dir;
+}
+
 export function pcmToWav(pcm: Uint8Array, sampleRate = 16_000): Uint8Array {
   const header = Buffer.alloc(44);
   header.write("RIFF", 0);

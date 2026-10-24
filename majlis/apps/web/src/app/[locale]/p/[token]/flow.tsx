@@ -45,6 +45,7 @@ export function ParticipantFlow({
   const [consent, setConsent] = useState({ interview: false, audio: false });
   const [error, setError] = useState<MessageKey | null>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
+  const [deletionCode, setDeletionCode] = useState<string | null>(null);
   const [pending, start] = useTransition();
 
   const index = NUMBERED.indexOf(step);
@@ -67,6 +68,7 @@ export function ParticipantFlow({
       });
       if (result.ok) {
         setSessionId(result.sessionId);
+        setDeletionCode(result.deletionCode);
         setStep("interview");
       } else if (result.reason === "screened_out") setStep("screened");
       else
@@ -253,6 +255,22 @@ export function ParticipantFlow({
           <p>{t(locale, "participant.thanksBody")}</p>
           {invite.incentive && (
             <p>{t(locale, "participant.thanksIncentive", { incentive: invite.incentive })}</p>
+          )}
+          {deletionCode && (
+            <div className="mt-2 flex flex-col gap-2 rounded-xl bg-sand p-4">
+              <h2 className="font-semibold">{t(locale, "participant.deletionTitle")}</h2>
+              <p
+                dir="ltr"
+                className="font-mono text-xl tracking-widest"
+                data-testid="deletion-code"
+              >
+                {deletionCode}
+              </p>
+              <p className="text-sm">{t(locale, "participant.deletionBody")}</p>
+              <a href={`/${locale}/delete`} className="text-palm underline underline-offset-4">
+                {t(locale, "participant.deletionLink")}
+              </a>
+            </div>
           )}
         </Card>
       )}
