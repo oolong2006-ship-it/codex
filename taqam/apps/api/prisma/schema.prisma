@@ -17,6 +17,46 @@ enum Role {
   PAYROLL
   BRANCH_MANAGER
   EMPLOYEE
+  SUPER_ADMIN
+}
+
+enum CompanyStatus {
+  PENDING
+  TRIAL
+  ACTIVE
+  SUSPENDED
+  EXPIRED
+}
+
+enum Plan {
+  ESSENTIALS
+  GROWTH
+  ENTERPRISE
+}
+
+enum BillingCycle {
+  MONTHLY
+  ANNUAL
+}
+
+enum CompanyEventType {
+  REGISTERED
+  ACTIVATED
+  SUSPENDED
+  REACTIVATED
+  PLAN_CHANGED
+  EXTENDED
+  NOTE
+  IMPERSONATED
+  EXPIRED
+  DELETED
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  CONVERTED
+  LOST
 }
 
 enum Gender {
@@ -125,6 +165,20 @@ model Company {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
+  // ---- platform lifecycle (admin portal) ----
+  status             CompanyStatus @default(ACTIVE)
+  plan               Plan          @default(GROWTH)
+  billingCycle       BillingCycle  @default(MONTHLY)
+  maxEmployees       Int?
+  pricePerEmployee   Decimal?      @db.Decimal(10, 2)
+  trialEndsAt        DateTime?
+  subscriptionEndsAt DateTime?
+  activatedAt        DateTime?
+  suspendedAt        DateTime?
+  suspensionReason   String?
+  adminNotes         String?
+  lastActivityAt     DateTime?
+
   branches           Branch[]
   departments        Department[]
   users              User[]
@@ -192,10 +246,12 @@ model Department {
 
 model User {
   id           String    @id @default(uuid())
-  companyId    String
+  /// null only for platform SUPER_ADMIN users
+  companyId    String?
   email        String    @unique
   passwordHash String
   name         String
+  phone        String?
   role         Role
   employeeId   String?   @unique
   isActive     Boolean   @default(true)
@@ -203,7 +259,7 @@ model User {
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 
-  company       Company        @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  company       Company?       @relation(fields: [companyId], references: [id], onDelete: Cascade)
   employee      Employee?      @relation(fields: [employeeId], references: [id], onDelete: SetNull)
   notifications Notification[]
 
@@ -661,7 +717,7 @@ model Candidate {
 
 // Public demo requests from the marketing site (not tenant-owned).
 model Lead {
-  id             String   @id @default(uuid())
+  id             String     @id @default(uuid())
   name           String
   company        String
   email          String
@@ -669,5 +725,37 @@ model Lead {
   employeesCount Int?
   sector         String?
   message        String?
-  createdAt      DateTime @default(now())
+  status         LeadStatus @default(NEW)
+  notes          String?
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @default(now()) @updatedAt
+
+  @@index([status])
+}
+
+// Platform lifecycle log. Not FK-bound to Company so DELETED events survive the hard delete.
+model CompanyEvent {
+  id          String           @id @default(uuid())
+  companyId   String
+  companyName String?
+  type        CompanyEventType
+  fromStatus  CompanyStatus?
+  toStatus    CompanyStatus?
+  data        Json?
+  adminId     String?
+  adminName   String?
+  createdAt   DateTime         @default(now())
+
+  @@index([companyId, createdAt])
+  @@index([createdAt])
+}
+
+// Single-row platform configuration (id = 1).
+model PlatformSettings {
+  id              Int      @id @default(1)
+  requireApproval Boolean  @default(true)
+  trialDays       Int      @default(14)
+  prices          Json     @default("{\"ESSENTIALS\":19,\"GROWTH\":29,\"ENTERPRISE\":null}")
+  annualDiscount  Float    @default(0.15)
+  updatedAt       DateTime @default(now()) @updatedAt
 }

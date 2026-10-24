@@ -5,7 +5,8 @@ import {
 } from '@taqam/core';
 import { newEmployeeId, NEW_EMPLOYEE_POOL } from './ids';
 import { addDays, dayStr, eachDay, parseTime, r2, todayStr, weekday } from './dates';
-import { nextId, type DB, type Employee, type Role, type User } from './db';
+import { nextId, type Company, type DB, type Employee, type PlatformAdmin, type Role, type User } from './db';
+import { assertCompanyAccess, assertSeat, endOfDay, lifecycleDefaults, logEvent, nextCompanyId, tenantCompanyView } from './lifecycle';
 import { badRequest, conflict, forbidden, notFound, unauthorized } from './errors';
 import { route, v, pick, paginate, byCreatedAsc, byCreatedDesc, employeeView, ok, DATE_RE, EMAIL_RE, type Ctx, type Route } from './router';
 import { ADMIN, ALL_ROLES, STAFF, Services, byNumber, fullName, nowIso, type AuthUser } from './services';
@@ -16,24 +17,60 @@ const AVATAR_COLORS = ['#0F3D3E', '#145A5C', '#1F7A7C', '#F2A541', '#3B7EA1', '#
 const MANAGERS: Role[] = ['OWNER', 'HR_ADMIN', 'BRANCH_MANAGER'];
 
 // ---------- auth helpers ----------
+/** Legacy demo token ("demo.<userId>") — still accepted so sessions saved before the admin portal keep working. */
 export const TOKEN_PREFIX = 'demo.';
+const AUTH_ROLES: Role[] = [...ALL_ROLES, 'SUPER_ADMIN'];
+interface TokenPayload { sub: string; role: Role; companyId: string | null; employeeId: string | null; branchId: string | null; impersonatedBy?: string; iat: number; exp?: number }
+const b64url = (s: string) => btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+const unb64url = (s: string) => atob(s.replace(/-/g, '+').replace(/_/g, '/') + '==='.slice((s.length + 3) % 4));
+const TOKEN_HEADER = b64url(JSON.stringify({ alg: 'none', typ: 'JWT' }));
+/** JWT-shaped (unsigned) demo token so the web app can decode the payload exactly like a real one. */
+function signToken(p: Omit<TokenPayload, 'iat'>): string {
+  return `${TOKEN_HEADER}.${b64url(JSON.stringify({ ...p, iat: Math.floor(Date.now() / 1000) }))}.demo`;
+}
+function readToken(token: string): TokenPayload | null {
+  if (token.startsWith(TOKEN_PREFIX)) return { sub: token.slice(TOKEN_PREFIX.length), role: 'EMPLOYEE', companyId: null, employeeId: null, branchId: null, iat: 0 };
+  const parts = token.split('.');
+  if (parts.length !== 3 || parts[2] !== 'demo') return null;
+  try { return JSON.parse(unb64url(parts[1])) as TokenPayload; } catch { return null; }
+}
 export function userView(svc: Services, u: User) {
   return { id: u.id, email: u.email, name: u.name, role: u.role, companyId: u.companyId, employeeId: u.employeeId, branchId: svc.emp(u.employeeId)?.branchId ?? null };
 }
 function companyLite(svc: Services, id: string) {
   const c = svc.company(id);
-  return { id: c.id, nameAr: c.nameAr, nameEn: c.nameEn };
+  return { id: c.id, nameAr: c.nameAr, nameEn: c.nameEn, status: c.status };
 }
-function authResponse(svc: Services, u: User) {
-  return { accessToken: `${TOKEN_PREFIX}${u.id}`, user: userView(svc, u), company: companyLite(svc, u.companyId) };
+/** AuthResponse for a company user (`impersonatedBy` → 1h support token issued by a platform admin). */
+export function authResponse(svc: Services, u: User, impersonatedBy?: string) {
+  const user = userView(svc, u);
+  const accessToken = signToken({
+    sub: u.id, role: u.role, companyId: u.companyId, employeeId: u.employeeId, branchId: user.branchId,
+    ...(impersonatedBy ? { impersonatedBy, exp: Math.floor(Date.now() / 1000) + 3600 } : {}),
+  });
+  return { accessToken, user, company: companyLite(svc, u.companyId) };
 }
-/** JwtAuthGuard equivalent: resolves the bearer token to the request user. */
+function adminUserView(a: PlatformAdmin) {
+  return { id: a.id, email: a.email, name: a.name, role: 'SUPER_ADMIN' as const, companyId: null, employeeId: null, branchId: null };
+}
+function adminAuthResponse(a: PlatformAdmin) {
+  return { accessToken: signToken({ sub: a.id, role: 'SUPER_ADMIN', companyId: null, employeeId: null, branchId: null }), user: adminUserView(a), company: null };
+}
+/** JwtAuthGuard equivalent: resolves the bearer token to the request user (company user or platform admin). */
 export function resolveUser(db: DB, svc: Services, token: string | null): AuthUser {
   if (!token) throw unauthorized('Missing bearer token', 'يجب تسجيل الدخول');
-  const u = token.startsWith(TOKEN_PREFIX) ? db.users.find((x) => x.id === token.slice(TOKEN_PREFIX.length)) : undefined;
+  const p = readToken(token);
+  const expired = !p || (p.exp !== undefined && p.exp * 1000 < Date.now());
+  const admin = !expired ? db.admins.find((x) => x.id === p!.sub) : undefined;
+  if (admin) {
+    if (!admin.isActive) throw unauthorized('User inactive', 'الحساب غير مفعّل');
+    return { id: admin.id, email: admin.email, name: admin.name, role: 'SUPER_ADMIN', companyId: '', employeeId: null, branchId: null };
+  }
+  const u = !expired ? db.users.find((x) => x.id === p!.sub) : undefined;
   if (!u) throw unauthorized('Invalid or expired token', 'انتهت الجلسة، سجّل الدخول مجدداً');
   if (!u.isActive) throw unauthorized('User inactive', 'الحساب غير مفعّل');
-  return userView(svc, u);
+  if (p!.impersonatedBy && !db.admins.some((a) => a.id === p!.impersonatedBy && a.isActive)) throw unauthorized('Invalid or expired token', 'انتهت الجلسة، سجّل الدخول مجدداً');
+  return { ...userView(svc, u), impersonatedBy: p!.impersonatedBy ?? null };
 }
 
 // ---------- employees helpers ----------
@@ -196,7 +233,7 @@ export const coreRoutes: Route[] = [
   route('GET', '/health', 'PUBLIC', () => ({ status: 'ok' })),
   route('POST', '/public/leads', 'PUBLIC', ({ db, body }) => {
     v.str(body, 'name', { min: 2 }); v.str(body, 'company'); const email = v.email(body, 'email')!; v.str(body, 'phone');
-    const lead = { id: nextId(db, 'lead'), name: String(body.name), company: String(body.company), email, phone: String(body.phone), employeesCount: body.employeesCount ? Number(body.employeesCount) : null, sector: (body.sector as string) ?? null, message: (body.message as string) ?? null, createdAt: nowIso() };
+    const lead = { id: nextId(db, 'lead'), name: String(body.name), company: String(body.company), email, phone: String(body.phone), employeesCount: body.employeesCount ? Number(body.employeesCount) : null, sector: (body.sector as string) ?? null, message: (body.message as string) ?? null, status: 'NEW' as const, notes: null, createdAt: nowIso(), updatedAt: nowIso() };
     db.leads.push(lead);
     return { id: lead.id };
   }),
@@ -214,34 +251,51 @@ export const coreRoutes: Route[] = [
   route('POST', '/auth/login', 'PUBLIC', ({ db, svc, body }) => {
     const email = String(body.email ?? '').trim().toLowerCase();
     if (!EMAIL_RE.test(email)) throw badRequest('email must be an email');
+    const password = String(body.password ?? '');
+    const admin = db.admins.find((x) => x.email === email);
+    if (admin) {
+      if (!admin.isActive || admin.password !== password) throw unauthorized('Invalid email or password', 'البريد الإلكتروني أو كلمة المرور غير صحيحة');
+      admin.lastLoginAt = nowIso();
+      return adminAuthResponse(admin);
+    }
     const u = db.users.find((x) => x.email === email);
-    if (!u || !u.isActive || u.password !== String(body.password ?? '')) throw unauthorized('Invalid email or password', 'البريد الإلكتروني أو كلمة المرور غير صحيحة');
+    if (!u || !u.isActive || u.password !== password) throw unauthorized('Invalid email or password', 'البريد الإلكتروني أو كلمة المرور غير صحيحة');
+    assertCompanyAccess(svc, u.companyId);
     u.lastLoginAt = nowIso();
     return authResponse(svc, u);
   }),
   route('POST', '/auth/register', 'PUBLIC', ({ db, svc, body }) => {
     v.str(body, 'companyNameAr', { min: 2 }); v.str(body, 'sector'); v.str(body, 'ownerName', { min: 2 }); const email = v.email(body, 'email')!; v.str(body, 'password', { min: 8 });
-    if (db.users.some((x) => x.email === email)) throw conflict('Email already registered', 'البريد الإلكتروني مسجل مسبقاً');
+    if (db.users.some((x) => x.email === email) || db.admins.some((x) => x.email === email)) throw conflict('Email already registered', 'البريد الإلكتروني مسجل مسبقاً');
     const now = nowIso();
-    const companyId = nextId(db, 'co');
-    db.companies.push({
+    const companyId = nextCompanyId(db);
+    const settings = db.settings;
+    const company: Company = {
       id: companyId, nameAr: String(body.companyNameAr), nameEn: (body.companyNameEn as string) || null, crNumber: null, establishmentId: null, gosiNumber: null, vatNumber: null,
       sector: String(body.sector), city: null, iban: null, bankCode: null, weekendDays: [5, 6], payrollDay: 27, employeesCount: body.employeesCount ? Number(body.employeesCount) : null, createdAt: now, updatedAt: now,
-    });
+      ...lifecycleDefaults(),
+      ...(settings.requireApproval ? {} : { status: 'TRIAL' as const, trialEndsAt: endOfDay(addDays(todayStr(), settings.trialDays)) }),
+    };
+    db.companies.push(company);
     for (const p of SAUDI_LEAVE_POLICIES) db.leaveTypes.push({ id: nextId(db, 'lt'), companyId, code: p.code, nameAr: p.nameAr, nameEn: p.nameEn, paid: p.paid, maxDaysPerYear: p.maxDaysPerYear, createdAt: now });
-    const user: User = { id: nextId(db, 'usr'), companyId, email, password: String(body.password), name: String(body.ownerName), role: 'OWNER', employeeId: null, isActive: true, lastLoginAt: now, createdAt: now, updatedAt: now };
+    const phone = typeof body.phone === 'string' && body.phone.trim() ? body.phone.trim() : null;
+    const user: User = { id: nextId(db, 'usr'), companyId, email, password: String(body.password), name: String(body.ownerName), role: 'OWNER', employeeId: null, isActive: true, lastLoginAt: now, createdAt: now, updatedAt: now, phone };
     db.users.push(user);
+    logEvent(svc, company, 'REGISTERED', { to: company.status, data: { ownerName: user.name, ownerEmail: email, sector: company.sector, employeesCount: company.employeesCount }, createdAt: now });
     svc.audit({ id: user.id, name: user.name, companyId }, 'REGISTER', 'Company', companyId);
     return authResponse(svc, user);
   }),
-  route('GET', '/auth/me', ALL_ROLES, ({ db, svc, user }) => ({ ...userView(svc, db.users.find((x) => x.id === user.id)!), company: companyLite(svc, user.companyId) })),
-  route('POST', '/auth/change-password', ALL_ROLES, ({ db, svc, user, body }) => {
+  route('GET', '/auth/me', AUTH_ROLES, ({ db, svc, user }) => {
+    if (user.role === 'SUPER_ADMIN') return { ...adminUserView(db.admins.find((x) => x.id === user.id)!), company: null };
+    return { ...userView(svc, db.users.find((x) => x.id === user.id)!), company: companyLite(svc, user.companyId) };
+  }),
+  route('POST', '/auth/change-password', AUTH_ROLES, ({ db, svc, user, body }) => {
     v.str(body, 'currentPassword'); v.str(body, 'newPassword', { min: 8 });
-    const u = db.users.find((x) => x.id === user.id)!;
+    const u = user.role === 'SUPER_ADMIN' ? db.admins.find((x) => x.id === user.id)! : db.users.find((x) => x.id === user.id)!;
     if (u.password !== body.currentPassword) throw badRequest('Current password is incorrect', 'كلمة المرور الحالية غير صحيحة');
     u.password = String(body.newPassword);
     u.updatedAt = nowIso();
-    svc.audit(user, 'CHANGE_PASSWORD', 'User', u.id);
+    if (user.role !== 'SUPER_ADMIN') svc.audit(user, 'CHANGE_PASSWORD', 'User', u.id);
     return ok;
   }),
 
@@ -305,7 +359,7 @@ export const coreRoutes: Route[] = [
   }),
 
   // ---------- company & settings ----------
-  route('GET', '/company', STAFF, ({ svc, user }) => svc.company(user.companyId)),
+  route('GET', '/company', STAFF, ({ svc, user }) => tenantCompanyView(svc.company(user.companyId))),
   route('PATCH', '/company', ADMIN, ({ svc, user, body }) => {
     const dto = companyDto(body);
     if (dto.iban) {
@@ -315,7 +369,7 @@ export const coreRoutes: Route[] = [
     }
     const c = Object.assign(svc.company(user.companyId), dto, { updatedAt: nowIso() });
     svc.audit(user, 'UPDATE', 'Company', c.id, dto);
-    return c;
+    return tenantCompanyView(c);
   }),
   route('GET', '/users', ADMIN, ({ db, svc, user }) => db.users.filter((x) => x.companyId === user.companyId).sort(byCreatedAsc).map((x) => userSelect(svc, x))),
   route('POST', '/users', ADMIN, ({ db, svc, user: u, body }) => {
@@ -510,6 +564,7 @@ export const coreRoutes: Route[] = [
   }),
   route('GET', '/employees/:id', STAFF, ({ svc, user, params }) => employeeDetail(svc, user, params.id)),
   route('POST', '/employees', ADMIN, ({ db, svc, user: u, body }) => {
+    assertSeat(svc, u.companyId);
     const dto = employeeDto(body, false);
     validateEmployeeRefs(svc, u, dto);
     const cu = body.createUser as { email?: string; password?: string } | undefined;

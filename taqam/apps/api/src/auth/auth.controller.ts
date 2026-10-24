@@ -1,8 +1,8 @@
 import { Body, Controller, Get, HttpCode, Post } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
-import { ALL_ROLES, CurrentUser, Public, Roles } from '../common/decorators';
-import { AuthUser } from '../common/types';
+import { ALL_ROLES, CurrentRequestUser, Public, Roles } from '../common/decorators';
+import { RequestUser } from '../common/types';
 import { ChangePasswordDto, LoginDto, RegisterDto } from './auth.dto';
 import { AuthService } from './auth.service';
 
@@ -27,17 +27,17 @@ export class AuthController {
   }
 
   @ApiBearerAuth()
-  @Roles(...ALL_ROLES)
+  @Roles(...ALL_ROLES, 'SUPER_ADMIN')
   @Get('me')
-  me(@CurrentUser() user: AuthUser) {
+  me(@CurrentRequestUser() user: RequestUser) {
     return this.auth.me(user);
   }
 
   @ApiBearerAuth()
-  @Roles(...ALL_ROLES)
+  @Roles(...ALL_ROLES, 'SUPER_ADMIN')
   @HttpCode(200)
   @Post('change-password')
-  changePassword(@CurrentUser() user: AuthUser, @Body() dto: ChangePasswordDto) {
+  changePassword(@CurrentRequestUser() user: RequestUser, @Body() dto: ChangePasswordDto) {
     return this.auth.changePassword(user, dto);
   }
 }

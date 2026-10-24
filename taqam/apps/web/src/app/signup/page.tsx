@@ -2,21 +2,23 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { Building2 } from 'lucide-react';
+import { Building2, MailCheck } from 'lucide-react';
+import { api, setToken } from '@/lib/api';
 import { Button, Field, Input, Select } from '@/components/ui';
 import { AuthLayout } from '@/components/app/AuthLayout';
 import { errMsg } from '@/components/app/utils';
-import { homeFor, useAuth } from '@/lib/auth';
+import { homeFor, useAuth, type AuthResponse } from '@/lib/auth';
 import { useLang } from '@/lib/i18n';
 import { SECTOR } from '@/lib/labels';
 
 export default function SignupPage() {
   const { t, lang } = useLang();
-  const { register } = useAuth();
+  const { refresh } = useAuth();
   const router = useRouter();
   const [f, setF] = useState({ companyNameAr: '', companyNameEn: '', sector: 'RESTAURANTS', employeesCount: '', ownerName: '', email: '', phone: '', password: '' });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [pending, setPending] = useState<string | null>(null);
   const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => setF((s) => ({ ...s, [k]: e.target.value }));
 
   const submit = async (e: React.FormEvent) => {
@@ -24,7 +26,7 @@ export default function SignupPage() {
     if (f.password.length < 8) { setError(t('كلمة المرور يجب ألا تقل عن 8 أحرف', 'Password must be at least 8 characters')); return; }
     setBusy(true); setError(null);
     try {
-      const u = await register({
+      const r = await api.post<AuthResponse & { company: { status?: string } }>('/auth/register', {
         companyNameAr: f.companyNameAr.trim(),
         companyNameEn: f.companyNameEn.trim() || undefined,
         sector: f.sector,
@@ -34,9 +36,36 @@ export default function SignupPage() {
         phone: f.phone.trim() || undefined,
         password: f.password,
       });
-      router.replace(homeFor(u));
+      // Approval required: the company is PENDING and cannot sign in yet, so don't start a session.
+      if (r.company?.status === 'PENDING' || r.user?.company?.status === 'PENDING') { setPending(r.company?.nameAr || f.companyNameAr.trim()); return; }
+      setToken(r.accessToken);
+      await refresh();
+      router.replace(homeFor(r.user));
     } catch (err) { setError(errMsg(err)); } finally { setBusy(false); }
   };
+
+  if (pending !== null) {
+    return (
+      <AuthLayout>
+        <div className="text-center">
+          <div className="mx-auto mb-4 inline-flex rounded-2xl bg-success-50 p-4 text-success"><MailCheck className="h-8 w-8" /></div>
+          <h1 className="text-2xl font-bold text-ink">{t('تم استلام طلبك، وسنفعّل حسابك خلال يوم عمل', 'Request received — we will activate your account within one business day')}</h1>
+          <p className="mt-3 text-sm text-ink-muted">
+            {t(`سجّلنا «${pending}». سنراجع الطلب ونرسل لك بريداً عند التفعيل على ${f.email.trim()}.`, `We registered “${pending}”. We will review it and email ${f.email.trim()} once it is active.`)}
+          </p>
+          <div className="mt-6 rounded-2xl border border-line bg-sand p-4 text-start text-sm text-ink-muted">
+            <p className="font-medium text-ink">{t('ماذا بعد؟', 'What next?')}</p>
+            <ul className="mt-2 list-disc space-y-1 ps-5">
+              <li>{t('يراجع فريق طاقم بيانات منشأتك', 'The Taqam team reviews your company details')}</li>
+              <li>{t('نفعّل لك فترة تجريبية مجانية', 'We activate a free trial for you')}</li>
+              <li>{t('تسجّل الدخول بنفس البريد وكلمة المرور', 'Sign in with the same email and password')}</li>
+            </ul>
+          </div>
+          <Link href="/login" className="mt-6 inline-block text-sm font-semibold text-primary-500 hover:underline">{t('العودة إلى تسجيل الدخول', 'Back to sign in')}</Link>
+        </div>
+      </AuthLayout>
+    );
+  }
 
   const sectors = Object.entries(SECTOR).map(([value, l]) => ({ value, label: lang === 'ar' ? l[0] : l[1] }));
   return (

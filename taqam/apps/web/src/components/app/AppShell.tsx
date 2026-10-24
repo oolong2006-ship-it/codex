@@ -15,6 +15,7 @@ import type { AppNotification, Employee } from '@/lib/types';
 import { NAV, isActive } from './nav';
 import { Avatar } from './primitives';
 import { employeeName } from './utils';
+import { ImpersonationBanner } from '@/components/admin/ImpersonationBanner';
 
 function useClickOutside(ref: React.RefObject<HTMLElement | null>, onOut: () => void) {
   useEffect(() => {
@@ -118,7 +119,9 @@ function Topbar({ onMenu }: { onMenu: () => void }) {
   const { lang, setLang, t } = useLang();
   const company = user?.company ? (lang === 'en' ? user.company.nameEn || user.company.nameAr : user.company.nameAr) : '';
   return (
-    <header className="sticky top-0 z-20 flex h-16 items-center gap-3 border-b border-line bg-white/90 px-4 backdrop-blur sm:px-6 lg:px-8">
+    <div className="sticky top-0 z-20">
+    <ImpersonationBanner />
+    <header className="flex h-16 items-center gap-3 border-b border-line bg-white/90 px-4 backdrop-blur sm:px-6 lg:px-8">
       <button onClick={onMenu} className="rounded-lg p-2 text-ink-muted hover:bg-sand lg:hidden" aria-label="menu"><Menu className="h-5 w-5" /></button>
       <div className="hidden min-w-0 md:block">
         <p className="truncate text-sm font-semibold text-ink">{company}</p>
@@ -133,6 +136,7 @@ function Topbar({ onMenu }: { onMenu: () => void }) {
         <UserMenu />
       </div>
     </header>
+    </div>
   );
 }
 

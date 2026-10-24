@@ -24,3 +24,5 @@ export const unauthorized = (message: string, messageAr: string) => new HttpErro
 export const notFound = (entity = 'Resource', messageAr = 'العنصر غير موجود') => new HttpError(404, { message: `${entity} not found`, messageAr });
 export const conflict = (message: string, messageAr?: string) => new HttpError(409, { message, messageAr });
 export const forbidden = (message = 'Forbidden', messageAr = 'ليس لديك صلاحية لهذا الإجراء') => new HttpError(403, { message, messageAr });
+/** 403 carrying a machine-readable `code` (COMPANY_PENDING, COMPANY_SUSPENDED, COMPANY_EXPIRED, SEAT_LIMIT…). */
+export const forbiddenCode = (code: string, message: string, messageAr: string) => new HttpError(403, { message, messageAr, code });

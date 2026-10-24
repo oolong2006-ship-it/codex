@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import { EssShell } from '@/components/ess/EssShell';
+import { SuperAdminRedirect } from '@/components/admin/SuperAdminRedirect';
 
 export const metadata: Metadata = {
   title: 'الخدمة الذاتية',
@@ -9,5 +10,5 @@ export const metadata: Metadata = {
 export const viewport: Viewport = { themeColor: '#0F3D3E', width: 'device-width', initialScale: 1, viewportFit: 'cover' };
 
 export default function MeLayout({ children }: { children: React.ReactNode }) {
-  return <EssShell>{children}</EssShell>;
+  return <SuperAdminRedirect><EssShell>{children}</EssShell></SuperAdminRedirect>;
 }

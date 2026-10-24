@@ -23,6 +23,12 @@ const userSelect = {
   employee: { select: { id: true, firstNameAr: true, lastNameAr: true, branchId: true } },
 } as const;
 
+/** Company as the tenant sees it: internal platform admin notes are never exposed. */
+function tenantCompany<T extends { adminNotes?: string | null }>(c: T): Omit<T, 'adminNotes'> {
+  const { adminNotes: _n, ...rest } = c;
+  return rest;
+}
+
 @ApiTags('settings')
 @ApiBearerAuth()
 @Controller()
@@ -35,8 +41,8 @@ export class SettingsController {
   // ---------- Company ----------
   @Roles(...STAFF)
   @Get('company')
-  company(@CurrentUser() u: AuthUser) {
-    return this.prisma.company.findUniqueOrThrow({ where: { id: u.companyId } });
+  async company(@CurrentUser() u: AuthUser) {
+    return tenantCompany(await this.prisma.company.findUniqueOrThrow({ where: { id: u.companyId } }));
   }
 
   @Roles(...ADMIN)
@@ -49,7 +55,7 @@ export class SettingsController {
     }
     const c = await this.prisma.company.update({ where: { id: u.companyId }, data: dto });
     await this.audit.log(u, 'UPDATE', 'Company', c.id, dto);
-    return c;
+    return tenantCompany(c);
   }
 
   // ---------- Users ----------

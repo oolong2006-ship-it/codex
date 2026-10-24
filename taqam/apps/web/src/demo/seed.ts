@@ -3,13 +3,16 @@
  * Deterministic (same PRNG + seed) and relative to today. Payroll runs go through the same engine as the handlers.
  */
 import { calculateAttendance, countLeaveDays, SAUDI_LEAVE_POLICIES } from '@taqam/core';
-import { jobId, runId, seedEmployeeId } from './ids';
+import { companyPoolId, jobId, runId, seedEmployeeId } from './ids';
+import { endOfDay, lifecycleDefaults } from './lifecycle';
+import { seedPlatform } from './seed-platform';
 import { addDays, addMonths, day, eachDay, periodOf, periodRange, riyadhDateTime, todayStr, weekday } from './dates';
 import { emptyDb, nextId, type Approval, type DB, type Employee, type Goal, type Role } from './db';
 import { Services, fullName } from './services';
 
 export const DEMO_PASSWORD = 'Taqam@2026';
-export const DEMO_COMPANY_ID = 'co-wardalsham';
+/** First id of the admin-portal company pool (src/demo/ids.ts COMPANY_IDS). */
+export const DEMO_COMPANY_ID = companyPoolId(1);
 
 let seedState = 20260223;
 function rand() {
@@ -87,6 +90,11 @@ const PEOPLE: Seed[] = [
 ];
 const HABITUALLY_LATE = new Set(['o10', 'm8', 'd6']);
 
+function plusMonths(d: string, n: number): string {
+  const x = day(d);
+  x.setUTCMonth(x.getUTCMonth() + n);
+  return x.toISOString().slice(0, 10);
+}
 const ts = (d: string, hours = 0) => new Date(day(d).getTime() + hours * 3600000).toISOString();
 
 export function buildSeed(now: Date = new Date()): DB {
@@ -108,6 +116,10 @@ export function buildSeed(now: Date = new Date()): DB {
     id: companyId, nameAr: 'مطاعم ورد الشام', nameEn: 'Ward Al-Sham Restaurants', crNumber: '1010654321', establishmentId: '7001845236',
     gosiNumber: '512345678', vatNumber: '310456789100003', sector: 'RESTAURANTS', city: 'الرياض', iban: saudiIban('80'), bankCode: '80',
     weekendDays: [5, 6], payrollDay: 27, employeesCount: 40, createdAt: ts(rel(-120)), updatedAt: createdAt,
+    ...lifecycleDefaults(),
+    status: 'ACTIVE', plan: 'GROWTH', billingCycle: 'MONTHLY', maxEmployees: 60, activatedAt: ts(rel(-119), 10),
+    subscriptionEndsAt: endOfDay(plusMonths(today, 10)), adminNotes: 'عميل مرجعي — حساب العرض التجريبي العام',
+    lastActivityAt: new Date(now.getTime() - 2 * 3600000).toISOString(),
   });
   const leaveTypes: Record<string, string> = {};
   for (const p of SAUDI_LEAVE_POLICIES) {
@@ -468,5 +480,8 @@ export function buildSeed(now: Date = new Date()): DB {
   audit(owner, 'UPDATE', 'Company', companyId, 3, { payrollDay: 27 });
   audit(hrU, 'CREATE', 'JobOpening', job2, 2, { title: 'مشرف صالة (سعودي)' });
 
+  // ---------- platform: admins, other subscriber companies, leads ----------
+  seedPlatform(db, svc, now);
+  svc.dirty = false;
   return db;
 }

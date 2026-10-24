@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { ScheduleModule } from '@nestjs/schedule';
 import { PrismaModule } from './prisma/prisma.module';
 import { SharedModule } from './shared/shared.module';
 import { AuthModule } from './auth/auth.module';
@@ -21,6 +22,8 @@ import { CommsModule } from './comms/comms.controller';
 import { ReportsModule } from './reports/reports.controller';
 import { DashboardModule } from './dashboard/dashboard.controller';
 import { MeModule } from './me/me.controller';
+import { PlatformModule } from './platform/platform.module';
+import { AdminModule } from './admin/admin.module';
 
 @Module({
   imports: [
@@ -30,7 +33,9 @@ import { MeModule } from './me/me.controller';
         limit: Number(process.env.RATE_LIMIT_MAX ?? 600),
       },
     ]),
+    ScheduleModule.forRoot(),
     PrismaModule,
+    PlatformModule,
     SharedModule,
     AuthModule,
     PublicModule,
@@ -48,6 +53,7 @@ import { MeModule } from './me/me.controller';
     ReportsModule,
     DashboardModule,
     MeModule,
+    AdminModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: ThrottlerGuard },

@@ -6,12 +6,14 @@ import { todayStr, day } from './dates';
 import { clearDb, loadDb, saveDb, MAX_AGE_DAYS, type DB } from './db';
 import { HttpError, forbidden, notFound } from './errors';
 import { match, type Query } from './router';
+import { assertCompanyAccess, sweepExpiry, touchActivity } from './lifecycle';
+import { adminRoutes } from './routes-admin';
 import { coreRoutes, resolveUser } from './routes-core';
 import { moreRoutes } from './routes-more';
 import { buildSeed } from './seed';
 import { STAFF, Services, type AuthUser } from './services';
 
-const routes = [...coreRoutes, ...moreRoutes];
+const routes = [...coreRoutes, ...moreRoutes, ...adminRoutes];
 let db: DB | null = null;
 
 function fresh(): DB {
@@ -52,14 +54,24 @@ export async function demoFetch(method: string, path: string, opts: { body?: unk
     let user = null as unknown as AuthUser;
     if (m.route.roles !== 'PUBLIC') {
       user = resolveUser(state, svc, opts.token ?? null);
+      const isAdminPath = /^\/admin(\/|$)/.test(path);
+      // Platform admins only reach /auth/* and /admin/*; company roles never reach /admin/*.
+      if (user.role === 'SUPER_ADMIN' && !isAdminPath && !path.startsWith('/auth/')) throw forbidden();
       const roles = m.route.roles ?? STAFF;
       if (!roles.includes(user.role)) throw forbidden();
+      if (user.role === 'SUPER_ADMIN') sweepExpiry(svc);
+      else if (!user.impersonatedBy) {
+        // Company status gate (PENDING / SUSPENDED / EXPIRED → 403 with code); support sessions bypass it.
+        assertCompanyAccess(svc, user.companyId);
+        touchActivity(svc, user.companyId);
+      }
     }
     const result = m.route.handler({ db: state, svc, user, params: m.params, query, body });
-    if (method !== 'GET' || /\/(wps|export)$/.test(path)) saveDb(state);
+    if (method !== 'GET' || svc.dirty || /\/(wps|export)$/.test(path)) saveDb(state);
     const status = method === 'POST' && !/\/(login|calculate|approve|reject|mark-paid|read|read-all|cancel|check-in|check-out|terminate|eosb)$/.test(path) ? 201 : 200;
     return { status, data: result === undefined ? undefined : typeof result === 'string' ? result : JSON.parse(JSON.stringify(result)) };
   } catch (e) {
+    if (svc.dirty) saveDb(state); // e.g. a lazy expiry recorded right before the 403
     if (e instanceof HttpError) return { status: e.status, data: e.toJSON() };
     console.error('[demo api]', method, path, e);
     return { status: 500, data: { statusCode: 500, message: 'Internal server error', messageAr: 'حدث خطأ غير متوقع' } };

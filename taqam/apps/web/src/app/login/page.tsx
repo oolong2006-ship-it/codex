@@ -2,7 +2,8 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { Eye, EyeOff, LogIn } from 'lucide-react';
+import { Ban, CalendarX2, Eye, EyeOff, Hourglass, LogIn } from 'lucide-react';
+import { ApiError } from '@/lib/api';
 import { Button, Field, Input } from '@/components/ui';
 import { AuthLayout } from '@/components/app/AuthLayout';
 import { errMsg } from '@/components/app/utils';
@@ -16,8 +17,18 @@ const DEMO = [
   { email: 'payroll@taqam.demo', role: 'PAYROLL' },
   { email: 'manager@taqam.demo', role: 'BRANCH_MANAGER' },
   { email: 'employee@taqam.demo', role: 'EMPLOYEE' },
+  { email: 'admin@taqam.demo', role: 'SUPER_ADMIN' },
 ];
 const DEMO_PASSWORD = 'Taqam@2026';
+
+type CompanyBlock = 'COMPANY_PENDING' | 'COMPANY_SUSPENDED' | 'COMPANY_EXPIRED';
+/** Company-status refusal from the API (403 + code), so it can be shown as a clear state instead of a generic error. */
+function companyBlock(err: unknown): { code: CompanyBlock; message: string } | null {
+  if (!(err instanceof ApiError) || err.status !== 403) return null;
+  const code = (err.body as { code?: string } | undefined)?.code;
+  if (code === 'COMPANY_PENDING' || code === 'COMPANY_SUSPENDED' || code === 'COMPANY_EXPIRED') return { code, message: err.display };
+  return null;
+}
 
 function destination(u: SessionUser) {
   if (typeof window === 'undefined') return homeFor(u);
@@ -36,17 +47,19 @@ export default function LoginPage() {
   const [show, setShow] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [block, setBlock] = useState<{ code: CompanyBlock; message: string } | null>(null);
 
   useEffect(() => { if (!loading && user) router.replace(destination(user)); }, [user, loading, router]);
 
   const submit = async (e?: React.FormEvent, creds?: { email: string; password: string }) => {
     e?.preventDefault();
-    setBusy(true); setError(null);
+    setBusy(true); setError(null); setBlock(null);
     try {
       const u = await login((creds?.email ?? email).trim(), creds?.password ?? password);
       router.replace(destination(u));
     } catch (err) {
-      setError(errMsg(err));
+      const b = companyBlock(err);
+      if (b) setBlock(b); else setError(errMsg(err));
     } finally { setBusy(false); }
   };
 
@@ -67,6 +80,7 @@ export default function LoginPage() {
           </div>
         </Field>
         {error && <p className="rounded-xl bg-danger-50 px-3 py-2 text-sm text-danger">{error}</p>}
+        {block && <CompanyBlockNotice code={block.code} message={block.message} />}
         <Button type="submit" size="lg" className="w-full" loading={busy}><LogIn className="h-4 w-4 rtl:rotate-180" />{t('تسجيل الدخول', 'Sign in')}</Button>
       </form>
       <p className="mt-6 text-center text-sm text-ink-muted">
@@ -82,12 +96,32 @@ export default function LoginPage() {
             <button key={d.email} type="button" disabled={busy}
               onClick={() => { setEmail(d.email); setPassword(DEMO_PASSWORD); void submit(undefined, { email: d.email, password: DEMO_PASSWORD }); }}
               className="rounded-xl border border-line bg-white px-3 py-2 text-start transition-colors hover:border-primary-500 hover:bg-primary-50 disabled:opacity-50">
-              <span className="block text-sm font-medium text-primary">{label(ROLE, d.role, lang)}</span>
+              <span className="block text-sm font-medium text-primary">{d.role === 'SUPER_ADMIN' ? t('مدير المنصة', 'Platform admin') : label(ROLE, d.role, lang)}</span>
               <span className="block truncate text-[11px] text-ink-soft" dir="ltr">{d.email}</span>
             </button>
           ))}
         </div>
       </div>
     </AuthLayout>
+  );
+}
+
+function CompanyBlockNotice({ code, message }: { code: CompanyBlock; message: string }) {
+  const { t } = useLang();
+  const cfg = {
+    COMPANY_PENDING: { icon: Hourglass, box: 'border-warning/40 bg-warning-50 text-[#9a7400]', title: t('حسابك قيد المراجعة', 'Account under review'), fallback: 'حساب منشأتك قيد المراجعة، وسيتم تفعيله قريباً' },
+    COMPANY_SUSPENDED: { icon: Ban, box: 'border-danger/30 bg-danger-50 text-danger', title: t('الحساب موقوف', 'Account suspended'), fallback: 'تم إيقاف حساب منشأتك. تواصل مع الدعم' },
+    COMPANY_EXPIRED: { icon: CalendarX2, box: 'border-line bg-sand-200 text-ink', title: t('انتهى الاشتراك', 'Subscription ended'), fallback: 'انتهى اشتراك منشأتك. تواصل معنا للتجديد' },
+  }[code];
+  const Icon = cfg.icon;
+  return (
+    <div role="alert" className={`flex items-start gap-3 rounded-2xl border px-4 py-3 ${cfg.box}`}>
+      <Icon className="mt-0.5 h-5 w-5 shrink-0" />
+      <div className="text-sm">
+        <p className="font-semibold">{cfg.title}</p>
+        <p className="mt-0.5 opacity-90">{message || cfg.fallback}</p>
+        {code !== 'COMPANY_PENDING' && <a href="mailto:hello@taqam.sa" className="mt-1 inline-block text-xs font-medium underline" dir="ltr">hello@taqam.sa</a>}
+      </div>
+    </div>
   );
 }

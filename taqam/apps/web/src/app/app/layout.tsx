@@ -15,10 +15,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (loading) return;
     if (!user) router.replace(`/login?next=${encodeURIComponent(pathname)}`);
+    else if (user.role === 'SUPER_ADMIN') router.replace('/admin');
     else if (user.role === 'EMPLOYEE') router.replace('/me');
   }, [user, loading, router, pathname]);
 
-  if (loading || !user || user.role === 'EMPLOYEE') {
+  if (loading || !user || user.role === 'EMPLOYEE' || user.role === 'SUPER_ADMIN') {
     return <div className="min-h-screen bg-sand"><PageLoader /></div>;
   }
   const item = navItemFor(pathname);

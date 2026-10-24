@@ -14,7 +14,7 @@ import { ScopeService } from '../shared/scope.service';
 import { LeaveCalcService } from '../shared/leave-calc.service';
 import { AuthUser } from '../common/types';
 import { addDays, day, todayStr } from '../common/dates';
-import { badRequest, conflict, notFound } from '../common/errors';
+import { badRequest, conflict, forbidden, notFound } from '../common/errors';
 import { num } from '../common/money';
 import { pageParams } from '../common/pagination';
 import { CreateEmployeeDto, DocumentDto, TerminateDto, UpdateEmployeeDto } from './employees.dto';
@@ -136,7 +136,18 @@ export class EmployeesService {
     return `EMP-${String(max + 1).padStart(4, '0')}`;
   }
 
+  /** Seat limit of the company's plan: active (non-terminated) employees must stay below maxEmployees. */
+  private async assertSeat(companyId: string) {
+    const c = await this.prisma.company.findUniqueOrThrow({ where: { id: companyId }, select: { maxEmployees: true } });
+    if (c.maxEmployees === null) return;
+    const active = await this.prisma.employee.count({ where: { companyId, status: { not: 'TERMINATED' } } });
+    if (active >= c.maxEmployees) {
+      throw forbidden('Employee seat limit reached for your plan', 'وصلت إلى الحد الأقصى لعدد الموظفين في باقتك', { code: 'SEAT_LIMIT' });
+    }
+  }
+
   async create(u: AuthUser, dto: CreateEmployeeDto) {
+    await this.assertSeat(u.companyId);
     await this.validateRefs(u, dto);
     if (dto.createUser && (await this.prisma.user.findUnique({ where: { email: dto.createUser.email.toLowerCase() } }))) {
       throw conflict('Login email already in use', 'البريد الإلكتروني للدخول مستخدم مسبقاً');
@@ -176,7 +187,8 @@ export class EmployeesService {
   }
 
   async update(u: AuthUser, id: string, dto: UpdateEmployeeDto) {
-    await this.scope.employee(u, id);
+    const current = await this.scope.employee(u, id);
+    if (dto.status && dto.status !== 'TERMINATED' && current.status === 'TERMINATED') await this.assertSeat(u.companyId);
     await this.validateRefs(u, dto, id);
     if (dto.employeeNumber) {
       const dup = await this.prisma.employee.findFirst({ where: { companyId: u.companyId, employeeNumber: dto.employeeNumber, id: { not: id } } });

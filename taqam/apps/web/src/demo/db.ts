@@ -1,11 +1,20 @@
 /** In-memory demo database (mirrors apps/api/prisma/schema.prisma), persisted to localStorage. */
-export type Role = 'OWNER' | 'HR_ADMIN' | 'PAYROLL' | 'BRANCH_MANAGER' | 'EMPLOYEE';
+export type Role = 'OWNER' | 'HR_ADMIN' | 'PAYROLL' | 'BRANCH_MANAGER' | 'EMPLOYEE' | 'SUPER_ADMIN';
+export type CompanyStatus = 'PENDING' | 'TRIAL' | 'ACTIVE' | 'SUSPENDED' | 'EXPIRED';
+export type Plan = 'ESSENTIALS' | 'GROWTH' | 'ENTERPRISE';
+export type BillingCycle = 'MONTHLY' | 'ANNUAL';
+export type CompanyEventType = 'REGISTERED' | 'ACTIVATED' | 'SUSPENDED' | 'REACTIVATED' | 'PLAN_CHANGED' | 'EXTENDED' | 'NOTE' | 'IMPERSONATED' | 'EXPIRED' | 'DELETED';
+export type LeadStatus = 'NEW' | 'CONTACTED' | 'CONVERTED' | 'LOST';
 export type Approval = 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED';
 
 export interface Company {
   id: string; nameAr: string; nameEn: string | null; crNumber: string | null; establishmentId: string | null; gosiNumber: string | null;
   vatNumber: string | null; sector: string | null; city: string | null; iban: string | null; bankCode: string | null;
   weekendDays: number[]; payrollDay: number; employeesCount: number | null; createdAt: string; updatedAt: string;
+  // platform lifecycle (docs/ADMIN_PORTAL.md)
+  status: CompanyStatus; plan: Plan; billingCycle: BillingCycle; maxEmployees: number | null; pricePerEmployee: number | null;
+  trialEndsAt: string | null; subscriptionEndsAt: string | null; activatedAt: string | null; suspendedAt: string | null;
+  suspensionReason: string | null; adminNotes: string | null; lastActivityAt: string | null;
 }
 export interface Branch {
   id: string; companyId: string; nameAr: string; nameEn: string | null; city: string; address: string | null; lat: number; lng: number;
@@ -14,8 +23,18 @@ export interface Branch {
 export interface Department { id: string; companyId: string; name: string; parentId: string | null; createdAt: string }
 export interface User {
   id: string; companyId: string; email: string; password: string; name: string; role: Role; employeeId: string | null;
-  isActive: boolean; lastLoginAt: string | null; createdAt: string; updatedAt: string;
+  isActive: boolean; lastLoginAt: string | null; createdAt: string; updatedAt: string; phone?: string | null;
 }
+/** Platform SUPER_ADMIN account (companyId/employeeId are always null for these). */
+export interface PlatformAdmin { id: string; email: string; password: string; name: string; isActive: boolean; lastLoginAt: string | null; createdAt: string; updatedAt: string }
+export interface CompanyEvent {
+  id: string; companyId: string; companyName: string | null; type: CompanyEventType; fromStatus: CompanyStatus | null; toStatus: CompanyStatus | null;
+  data: Record<string, unknown> | null; adminId: string | null; adminName: string | null; createdAt: string;
+}
+export interface PlatformSettings {
+  requireApproval: boolean; trialDays: number; prices: Record<Plan, number | null>; annualDiscount: number;
+}
+export const DEFAULT_SETTINGS: PlatformSettings = { requireApproval: true, trialDays: 14, prices: { ESSENTIALS: 19, GROWTH: 29, ENTERPRISE: null }, annualDiscount: 0.15 };
 export interface Employee {
   id: string; companyId: string; employeeNumber: string; firstNameAr: string; lastNameAr: string; fullNameEn: string | null;
   nationality: string; isSaudi: boolean; gender: 'MALE' | 'FEMALE'; birthDate: string | null; maritalStatus: string | null;
@@ -99,7 +118,10 @@ export interface Candidate {
   id: string; companyId: string; jobId: string; name: string; email: string | null; phone: string | null; nationality: string | null;
   expectedSalary: number | null; notes: string | null; stage: string; createdAt: string; updatedAt: string;
 }
-export interface Lead { id: string; name: string; company: string; email: string; phone: string; employeesCount: number | null; sector: string | null; message: string | null; createdAt: string }
+export interface Lead {
+  id: string; name: string; company: string; email: string; phone: string; employeesCount: number | null; sector: string | null; message: string | null;
+  status: LeadStatus; notes: string | null; createdAt: string; updatedAt: string;
+}
 
 export interface DB {
   version: number;
@@ -132,10 +154,13 @@ export interface DB {
   jobs: JobOpening[];
   candidates: Candidate[];
   leads: Lead[];
+  admins: PlatformAdmin[];
+  companyEvents: CompanyEvent[];
+  settings: PlatformSettings;
 }
 
-export const STORAGE_KEY = 'taqam.demo.v1';
-export const DB_VERSION = 1;
+export const STORAGE_KEY = 'taqam.demo.v2';
+export const DB_VERSION = 2;
 /** Seeded data is relative to "today"; a snapshot older than this is re-seeded so attendance and payroll stay current. */
 export const MAX_AGE_DAYS = 7;
 
@@ -145,6 +170,7 @@ export function emptyDb(seededOn: string): DB {
     companies: [], branches: [], departments: [], users: [], employees: [], documents: [], shifts: [], assignments: [], attendance: [],
     leaveTypes: [], leaves: [], requests: [], loans: [], runs: [], payslips: [], adjustments: [], holidays: [], announcements: [],
     notifications: [], audit: [], cycles: [], reviews: [], jobs: [], candidates: [], leads: [],
+    admins: [], companyEvents: [], settings: JSON.parse(JSON.stringify(DEFAULT_SETTINGS)),
   };
 }
 
@@ -156,6 +182,7 @@ export function nextId(db: DB, prefix: string): string {
 
 export function loadDb(): DB | null {
   try {
+    window.localStorage.removeItem('taqam.demo.v1'); // pre-admin-portal snapshot: free the space, it is never read again
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) return null;
     const db = JSON.parse(raw) as DB;
@@ -176,6 +203,7 @@ export function saveDb(db: DB) {
 export function clearDb() {
   try {
     window.localStorage.removeItem(STORAGE_KEY);
+    window.localStorage.removeItem('taqam.demo.v1');
   } catch {
     /* storage unavailable */
   }

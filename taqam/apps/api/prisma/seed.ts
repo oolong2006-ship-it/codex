@@ -1,7 +1,8 @@
 /* eslint-disable no-console */
 /**
  * Demo seed — "مطاعم ورد الشام" / Ward Al-Sham Restaurants.
- * Idempotent: wipes the demo company (cascade) and recreates it.
+ * Idempotent: wipes the demo companies (cascade) + their platform events/leads and recreates them.
+ * Platform admin portal data (admin@taqam.demo, 7 extra companies, leads) comes from ./seed-platform.ts.
  * Payroll runs are produced by the real payroll engine (src/payroll/payroll.engine.ts → @taqam/core).
  */
 import 'dotenv/config';
@@ -9,6 +10,7 @@ import { Prisma, PrismaClient, Role } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
 import { calculateAttendance, countLeaveDays, SAUDI_LEAVE_POLICIES } from '@taqam/core';
 import { approvePayrollRun, calculatePayrollRun } from '../src/payroll/payroll.engine';
+import { EXTRA_COMPANY_NAMES_EN, EXTRA_OWNER_EMAILS, seedPlatform, wipePlatformDemo } from './seed-platform';
 import { addDays, addMonths, day, dayStr, eachDay, periodOf, periodRange, riyadhDateTime, todayStr, weekday } from '../src/common/dates';
 
 const prisma = new PrismaClient();
@@ -114,14 +116,24 @@ const PEOPLE: Seed[] = [
 const HABITUALLY_LATE = new Set(['o10', 'm8', 'd6']);
 
 async function wipe() {
-  const users = await prisma.user.findMany({ where: { email: { in: DEMO_EMAILS } }, select: { companyId: true } });
+  const users = await prisma.user.findMany({
+    where: { email: { in: [...DEMO_EMAILS, ...EXTRA_OWNER_EMAILS] }, companyId: { not: null } },
+    select: { companyId: true },
+  });
   const companies = await prisma.company.findMany({
-    where: { OR: [{ nameEn: 'Ward Al-Sham Restaurants' }, { id: { in: users.map((u) => u.companyId) } }] },
+    where: {
+      OR: [
+        { nameEn: { in: ['Ward Al-Sham Restaurants', ...EXTRA_COMPANY_NAMES_EN] } },
+        { id: { in: users.map((u) => u.companyId as string) } },
+      ],
+    },
     select: { id: true },
   });
-  if (companies.length) {
-    await prisma.company.deleteMany({ where: { id: { in: companies.map((c) => c.id) } } });
-    console.log(`  wiped ${companies.length} existing demo compan${companies.length > 1 ? 'ies' : 'y'}`);
+  const ids = companies.map((c) => c.id);
+  await wipePlatformDemo(prisma, ids);
+  if (ids.length) {
+    await prisma.company.deleteMany({ where: { id: { in: ids } } });
+    console.log(`  wiped ${ids.length} existing demo compan${ids.length > 1 ? 'ies' : 'y'}`);
   }
 }
 
@@ -614,12 +626,14 @@ async function main() {
     ],
   });
 
+  await seedPlatform(prisma, { passwordHash, demoCompanyId: companyId, demoCreatedDaysAgo: 120 });
+
   const totals = await prisma.payrollRun.findMany({ where: { companyId }, orderBy: { period: 'asc' }, select: { period: true, status: true, employeesCount: true, totalNet: true } });
   console.log(`✅ Company: ${company.nameAr} (${companyId})`);
   console.log(`   ${Object.keys(emp).length} employees, ${docs.length} documents, ${assignments.length} roster slots, ${records.length} attendance records`);
   console.log(`   ${leaves.length} leave requests, ${reqs.length} employee requests, ${loanDefs.length} loans`);
   for (const t of totals) console.log(`   payroll ${t.period}: ${t.status} — ${t.employeesCount} payslips, net ${t.totalNet.toString()} SAR`);
-  console.log(`   Logins (password ${PASSWORD}): ${DEMO_EMAILS.join(', ')}`);
+  console.log(`   Logins (password ${PASSWORD}): ${DEMO_EMAILS.join(', ')}, admin@taqam.demo (SUPER_ADMIN)`);
 }
 
 main()

@@ -7,6 +7,7 @@ import {
   IsBoolean,
   IsEmail,
   IsEnum,
+  IsIn,
   IsInt,
   IsOptional,
   IsString,
@@ -31,18 +32,21 @@ export class UpdateCompanyDto {
   @ApiPropertyOptional() @IsOptional() @IsInt() @Min(1) @Max(28) payrollDay?: number;
 }
 
+/** Roles a company may assign — SUPER_ADMIN is platform-only. */
+const COMPANY_ROLES: Role[] = ['OWNER', 'HR_ADMIN', 'PAYROLL', 'BRANCH_MANAGER', 'EMPLOYEE'];
+
 const lower = ({ value }: { value: unknown }) => (typeof value === 'string' ? value.trim().toLowerCase() : value);
 
 export class CreateUserDto {
   @ApiProperty() @Transform(lower) @IsEmail() email: string;
   @ApiProperty() @IsString() @MinLength(2) name: string;
-  @ApiProperty({ enum: Role }) @IsEnum(Role) role: Role;
+  @ApiProperty({ enum: COMPANY_ROLES }) @IsIn(COMPANY_ROLES) role: Role;
   @ApiProperty() @IsString() @MinLength(8) password: string;
   @ApiPropertyOptional() @IsOptional() @IsString() employeeId?: string;
 }
 
 export class UpdateUserDto {
-  @ApiPropertyOptional({ enum: Role }) @IsOptional() @IsEnum(Role) role?: Role;
+  @ApiPropertyOptional({ enum: COMPANY_ROLES }) @IsOptional() @IsIn(COMPANY_ROLES) role?: Role;
   @ApiPropertyOptional() @IsOptional() @IsBoolean() isActive?: boolean;
   @ApiPropertyOptional() @IsOptional() @IsString() name?: string;
   @ApiPropertyOptional() @IsOptional() @IsString() employeeId?: string | null;

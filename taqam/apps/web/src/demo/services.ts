@@ -12,7 +12,12 @@ import { addDays, day, maxDay, minDay, periodRange, r2, riyadhDateTime, todayStr
 import { nextId, type DB, type Employee, type LeaveType, type PayrollAdjustment, type Role, type Shift } from './db';
 import { badRequest, forbidden, notFound } from './errors';
 
-export interface AuthUser { id: string; email: string; name: string; role: Role; companyId: string; employeeId: string | null; branchId: string | null }
+/** Request user. Platform SUPER_ADMINs carry companyId '' (they only reach /auth/* and /admin/*). */
+export interface AuthUser {
+  id: string; email: string; name: string; role: Role; companyId: string; employeeId: string | null; branchId: string | null;
+  /** Set when a platform admin is browsing as this company's owner. */
+  impersonatedBy?: string | null;
+}
 
 export const ADMIN: Role[] = ['OWNER', 'HR_ADMIN'];
 export const STAFF: Role[] = ['OWNER', 'HR_ADMIN', 'PAYROLL', 'BRANCH_MANAGER'];
@@ -23,6 +28,8 @@ export const nowIso = () => new Date().toISOString();
 export const byNumber = (a: Employee, b: Employee) => a.employeeNumber.localeCompare(b.employeeNumber);
 
 export class Services {
+  /** Set by handlers/lifecycle code that changed state during a GET (lazy expiry, lastActivityAt) so it gets persisted. */
+  dirty = false;
   constructor(public db: DB) {}
 
   // ---------- lookups ----------

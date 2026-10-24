@@ -39,6 +39,8 @@ describe('Taqam API (e2e)', () => {
     app = setupApp(moduleRef.createNestApplication(), { swagger: false });
     await app.init();
     http = request(app.getHttpServer());
+    // Self-serve signups start as TRIAL here (approval flow is covered in admin.e2e-spec.ts).
+    await app.get(PrismaService).platformSettings.upsert({ where: { id: 1 }, update: { requireApproval: false }, create: { id: 1, requireApproval: false } });
   });
 
   afterAll(async () => {
@@ -57,7 +59,7 @@ describe('Taqam API (e2e)', () => {
       .expect(201);
     expect(reg.body.accessToken).toBeTruthy();
     expect(reg.body.user).toMatchObject({ role: 'OWNER', employeeId: null, branchId: null });
-    expect(reg.body.company).toMatchObject({ nameAr: 'شركة ألف', nameEn: 'Alef Co' });
+    expect(reg.body.company).toMatchObject({ nameAr: 'شركة ألف', nameEn: 'Alef Co', status: 'TRIAL' });
 
     const login = await http.post('/api/auth/login').send({ email: `A${stamp}@test.sa`, password: 'Passw0rd!' }).expect(200);
     tokenA = login.body.accessToken;

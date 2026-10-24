@@ -1,0 +1,126 @@
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { BillingCycle, CompanyEventType, CompanyStatus, LeadStatus, Plan } from '@prisma/client';
+import { Transform, Type } from 'class-transformer';
+import {
+  IsBoolean,
+  IsDateString,
+  IsEmail,
+  IsIn,
+  IsInt,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsString,
+  Matches,
+  Max,
+  Min,
+  MinLength,
+  ValidateNested,
+} from 'class-validator';
+
+export const COMPANY_STATUSES: CompanyStatus[] = ['PENDING', 'TRIAL', 'ACTIVE', 'SUSPENDED', 'EXPIRED'];
+export const PLAN_VALUES: Plan[] = ['ESSENTIALS', 'GROWTH', 'ENTERPRISE'];
+export const CYCLES: BillingCycle[] = ['MONTHLY', 'ANNUAL'];
+export const LEAD_STATUSES: LeadStatus[] = ['NEW', 'CONTACTED', 'CONVERTED', 'LOST'];
+export const EVENT_TYPES: CompanyEventType[] = [
+  'REGISTERED', 'ACTIVATED', 'SUSPENDED', 'REACTIVATED', 'PLAN_CHANGED', 'EXTENDED', 'NOTE', 'IMPERSONATED', 'EXPIRED', 'DELETED',
+];
+export const COMPANY_SORTS = ['createdAt', 'name', 'employees', 'lastActivityAt'] as const;
+
+const lower = ({ value }: { value: unknown }) => (typeof value === 'string' ? value.trim().toLowerCase() : value);
+
+export class PageQuery {
+  @ApiPropertyOptional() @IsOptional() @Type(() => Number) @IsInt() @Min(1) page?: number;
+  @ApiPropertyOptional() @IsOptional() @Type(() => Number) @IsInt() @Min(1) @Max(500) pageSize?: number;
+}
+
+const STATUS_LIST = new RegExp(`^(${COMPANY_STATUSES.join('|')})(,(${COMPANY_STATUSES.join('|')}))*$`);
+
+export class CompaniesQuery extends PageQuery {
+  @ApiPropertyOptional() @IsOptional() @IsString() search?: string;
+  @ApiPropertyOptional({ description: 'One status or a comma-separated list', example: 'PENDING' })
+  @IsOptional() @Matches(STATUS_LIST, { message: `status must be one of ${COMPANY_STATUSES.join(', ')}` }) status?: string;
+  @ApiPropertyOptional({ enum: PLAN_VALUES }) @IsOptional() @IsIn(PLAN_VALUES) plan?: Plan;
+  @ApiPropertyOptional({ enum: COMPANY_SORTS, description: 'prefix with - to force descending' })
+  @IsOptional() @IsIn([...COMPANY_SORTS, ...COMPANY_SORTS.map((s) => `-${s}`)]) sort?: string;
+  @ApiPropertyOptional({ enum: ['asc', 'desc'] }) @IsOptional() @IsIn(['asc', 'desc']) order?: 'asc' | 'desc';
+}
+
+export class ActivateDto {
+  @ApiProperty({ enum: PLAN_VALUES }) @IsOptional() @IsIn(PLAN_VALUES) plan?: Plan;
+  @ApiProperty({ enum: CYCLES }) @IsOptional() @IsIn(CYCLES) billingCycle?: BillingCycle;
+  @ApiPropertyOptional({ nullable: true }) @IsOptional() @IsInt() @Min(1) maxEmployees?: number | null;
+  @ApiPropertyOptional({ nullable: true }) @IsOptional() @IsNumber() @Min(0) pricePerEmployee?: number | null;
+  @ApiProperty({ enum: ['TRIAL', 'PAID'] }) @IsIn(['TRIAL', 'PAID']) mode: 'TRIAL' | 'PAID';
+  @ApiPropertyOptional({ default: 14 }) @IsOptional() @IsInt() @Min(1) @Max(365) trialDays?: number;
+  @ApiPropertyOptional({ nullable: true }) @IsOptional() @IsDateString() subscriptionEndsAt?: string | null;
+}
+
+export class SuspendDto {
+  @ApiProperty() @IsString() @IsNotEmpty() reason: string;
+}
+
+export class UpdateCompanyAdminDto {
+  @ApiPropertyOptional({ enum: PLAN_VALUES }) @IsOptional() @IsIn(PLAN_VALUES) plan?: Plan;
+  @ApiPropertyOptional({ enum: CYCLES }) @IsOptional() @IsIn(CYCLES) billingCycle?: BillingCycle;
+  @ApiPropertyOptional({ nullable: true }) @IsOptional() @IsInt() @Min(1) maxEmployees?: number | null;
+  @ApiPropertyOptional({ nullable: true }) @IsOptional() @IsNumber() @Min(0) pricePerEmployee?: number | null;
+  @ApiPropertyOptional({ nullable: true }) @IsOptional() @IsDateString() trialEndsAt?: string | null;
+  @ApiPropertyOptional({ nullable: true }) @IsOptional() @IsDateString() subscriptionEndsAt?: string | null;
+  @ApiPropertyOptional({ nullable: true }) @IsOptional() @IsString() adminNotes?: string | null;
+  @ApiPropertyOptional() @IsOptional() @IsString() @MinLength(2) nameAr?: string;
+  @ApiPropertyOptional({ nullable: true }) @IsOptional() @IsString() nameEn?: string | null;
+}
+
+export class ExtendDto {
+  @ApiProperty() @IsInt() @Min(1) @Max(3650) days: number;
+}
+
+export class DeleteCompanyDto {
+  @ApiProperty() @IsOptional() @IsString() confirmName?: string;
+}
+
+export class LeadsQuery extends PageQuery {
+  @ApiPropertyOptional({ enum: LEAD_STATUSES }) @IsOptional() @IsIn(LEAD_STATUSES) status?: LeadStatus;
+  @ApiPropertyOptional() @IsOptional() @IsString() search?: string;
+}
+
+export class UpdateLeadDto {
+  @ApiPropertyOptional({ enum: LEAD_STATUSES }) @IsOptional() @IsIn(LEAD_STATUSES) status?: LeadStatus;
+  @ApiPropertyOptional({ nullable: true }) @IsOptional() @IsString() notes?: string | null;
+}
+
+export class EventsQuery extends PageQuery {
+  @ApiPropertyOptional() @IsOptional() @IsString() companyId?: string;
+  @ApiPropertyOptional({ enum: EVENT_TYPES }) @IsOptional() @IsIn(EVENT_TYPES) type?: CompanyEventType;
+}
+
+export class CreateAdminDto {
+  @ApiProperty() @IsString() @MinLength(2) name: string;
+  @ApiProperty() @Transform(lower) @IsEmail() email: string;
+  @ApiProperty() @IsString() @MinLength(8) password: string;
+}
+
+export class UpdateAdminDto {
+  @ApiPropertyOptional() @IsOptional() @IsBoolean() isActive?: boolean;
+  @ApiPropertyOptional() @IsOptional() @IsString() @MinLength(2) name?: string;
+}
+
+export class PricesDto {
+  @ApiPropertyOptional({ nullable: true }) @IsOptional() @IsNumber() @Min(0) ESSENTIALS?: number | null;
+  @ApiPropertyOptional({ nullable: true }) @IsOptional() @IsNumber() @Min(0) GROWTH?: number | null;
+  @ApiPropertyOptional({ nullable: true }) @IsOptional() @IsNumber() @Min(0) ENTERPRISE?: number | null;
+}
+
+export class UpdateSettingsDto {
+  @ApiPropertyOptional() @IsOptional() @IsBoolean() requireApproval?: boolean;
+  @ApiPropertyOptional() @IsOptional() @IsInt() @Min(1) @Max(365) trialDays?: number;
+  @ApiPropertyOptional({ type: PricesDto }) @IsOptional() @ValidateNested() @Type(() => PricesDto) prices?: PricesDto;
+  @ApiPropertyOptional() @IsOptional() @IsNumber() @Min(0) @Max(0.9) annualDiscount?: number;
+}
+
+export class BroadcastDto {
+  @ApiProperty() @IsString() @IsNotEmpty() title: string;
+  @ApiProperty() @IsString() @IsNotEmpty() body: string;
+  @ApiProperty({ enum: ['ALL', 'ACTIVE', 'TRIAL'] }) @IsIn(['ALL', 'ACTIVE', 'TRIAL']) target: 'ALL' | 'ACTIVE' | 'TRIAL';
+}
