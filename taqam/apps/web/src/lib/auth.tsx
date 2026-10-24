@@ -3,11 +3,11 @@ import { createContext, useCallback, useContext, useEffect, useState } from 'rea
 import { api, getToken, setToken } from './api';
 import { withBase } from './paths';
 
-export type Role = 'OWNER' | 'HR_ADMIN' | 'PAYROLL' | 'BRANCH_MANAGER' | 'EMPLOYEE';
+export type Role = 'OWNER' | 'HR_ADMIN' | 'PAYROLL' | 'BRANCH_MANAGER' | 'EMPLOYEE' | 'SUPER_ADMIN';
 export interface SessionUser {
   id: string; email: string; name: string; role: Role;
-  companyId: string; employeeId: string | null; branchId: string | null;
-  company?: { id: string; nameAr: string; nameEn?: string };
+  companyId: string | null; employeeId: string | null; branchId: string | null;
+  company?: { id: string; nameAr: string; nameEn?: string; status?: string } | null;
 }
 export interface AuthResponse { accessToken: string; user: SessionUser; company: { id: string; nameAr: string; nameEn?: string } }
 
@@ -24,7 +24,7 @@ const Ctx = createContext<AuthCtx | null>(null);
 export const ADMIN_ROLES: Role[] = ['OWNER', 'HR_ADMIN'];
 export function hasRole(user: SessionUser | null, roles: Role[]) { return !!user && roles.includes(user.role); }
 /** Where a user lands after login. */
-export function homeFor(user: SessionUser) { return user.role === 'EMPLOYEE' ? '/me' : '/app'; }
+export function homeFor(user: SessionUser) { return user.role === 'SUPER_ADMIN' ? '/admin' : user.role === 'EMPLOYEE' ? '/me' : '/app'; }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<SessionUser | null>(null);
