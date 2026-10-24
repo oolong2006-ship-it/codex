@@ -1,17 +1,16 @@
 import type { AddressInfo } from "node:net";
+import { isolatedTestDb } from "@majlis/db/testing";
 import {
   consentRecords,
-  createDb,
   createOrgWithOwner,
   createStudyFromObjective,
   interviewSessions,
-  runMigrations,
   startInterview,
   turns,
   updateStudySettings,
   type DbHandle,
 } from "@majlis/db";
-import { asc, eq, sql } from "drizzle-orm";
+import { asc, eq } from "drizzle-orm";
 import type { FastifyInstance } from "fastify";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import WebSocket from "ws";
@@ -27,11 +26,7 @@ describe.skipIf(!URL_TEST)("gateway with PostgreSQL", () => {
   let inviteToken = "";
 
   beforeAll(async () => {
-    h = createDb(URL_TEST);
-    await h.db.execute(sql`drop schema if exists public cascade`);
-    await h.db.execute(sql`drop schema if exists drizzle cascade`);
-    await h.db.execute(sql`create schema public`);
-    await runMigrations(h);
+    h = await isolatedTestDb(URL_TEST!, "gateway");
     const org = await createOrgWithOwner(h.db, {
       orgName: "o",
       email: "gw@example.com",

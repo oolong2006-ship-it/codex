@@ -5,6 +5,8 @@ import type { ReactNode } from "react";
 import { requireUser } from "@/lib/server";
 import { logoutAction } from "../login/actions";
 
+export const dynamic = "force-dynamic";
+
 export default async function DashboardLayout({
   children,
   params,

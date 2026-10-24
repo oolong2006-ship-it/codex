@@ -17,3 +17,4 @@ voice-lab/output/
 *.egg-info/
 voice-lab/lab.yaml
 voice-lab/ratings/
+e2e/artifacts/
