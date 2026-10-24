@@ -30,7 +30,7 @@ export default function MyPayslipsPage() {
         <div className="rounded-3xl border border-line bg-white"><EmptyState title={t('لا توجد قسائم بعد', 'No payslips yet')} description={t('ستظهر قسيمتك هنا بعد اعتماد مسير الرواتب.', 'Your payslip appears once payroll is approved.')} /></div>
       ) : (
         <>
-          <Link href={payslipHref(latest.id)} className="relative block overflow-hidden rounded-[28px] bg-primary p-5 text-white shadow-lift active:scale-[.99]">
+          <Link href={payslipHref(latest.id)} className="relative block overflow-hidden rounded-[28px] bg-night p-5 text-white shadow-lift active:scale-[.99]">
             <div className="taqam-pattern pointer-events-none absolute inset-0 opacity-30" aria-hidden />
             <div className="relative">
               <p className="text-sm text-white/70">{t('آخر راتب', 'Latest pay')} · {fmtPeriod(latest.period, lang)}</p>

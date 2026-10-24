@@ -1,18 +1,19 @@
 'use client';
 import { useLang } from '@/lib/i18n';
 import { num } from '@/lib/format';
+import { BRAND } from '@/lib/brand';
 
 export const CHART = {
-  primary: '#0C1F24',
-  teal: '#0B7A6B',
+  primary: BRAND.night,
+  teal: BRAND.oasis600,
   tealLight: '#8FD3C4',
-  accent: '#FFB547',
-  success: '#1B7F53',
-  warning: '#D99A1E',
-  danger: '#C2412D',
-  info: '#2F6F9F',
-  grid: '#EFE8DC',
-  axis: '#5E6E69',
+  accent: BRAND.saffron,
+  success: BRAND.success,
+  warning: BRAND.saffron600,
+  danger: BRAND.danger,
+  info: BRAND.info,
+  grid: BRAND.mist200,
+  axis: BRAND.soft,
 };
 export const SERIES = [CHART.primary, CHART.accent, CHART.teal, CHART.info, CHART.success, CHART.danger, '#6B5B95', CHART.tealLight];
 

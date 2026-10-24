@@ -74,7 +74,7 @@ export default function BroadcastPage() {
           <CardBody>
             <div className="rounded-2xl border border-line bg-white shadow-soft">
               <div className="flex gap-3 bg-accent-50/60 px-4 py-3">
-                <span className="mt-0.5 rounded-lg bg-primary p-1.5 text-accent"><Bell className="h-4 w-4" /></span>
+                <span className="mt-0.5 rounded-lg bg-night p-1.5 text-accent"><Bell className="h-4 w-4" /></span>
                 <span className="min-w-0 flex-1">
                   <span className="block text-sm font-medium text-ink">{f.title || t('عنوان الإشعار', 'Notification title')}</span>
                   <span className="mt-0.5 block whitespace-pre-line break-words text-xs text-ink-muted">{f.body || t('نص الرسالة يظهر هنا…', 'Message body appears here…')}</span>

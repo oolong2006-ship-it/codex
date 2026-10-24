@@ -51,7 +51,7 @@ export function PayslipDetail({ id }: { id: string }) {
           </header>
 
           {/* Net hero */}
-          <div className="relative overflow-hidden rounded-[28px] bg-primary p-5 text-white shadow-lift print:rounded-xl print:border print:border-line print:bg-white print:text-ink print:shadow-none">
+          <div className="relative overflow-hidden rounded-[28px] bg-night p-5 text-white shadow-lift print:rounded-xl print:border print:border-line print:bg-white print:text-ink print:shadow-none">
             <div className="taqam-pattern pointer-events-none absolute inset-0 opacity-30 print:hidden" aria-hidden />
             <div className="relative">
               <p className="text-sm text-white/70 print:text-ink-muted">{t('صافي الراتب', 'Net salary')} · {fmtPeriod(p.period, lang)}</p>

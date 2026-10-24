@@ -131,7 +131,7 @@ export function EosbCalculator() {
           {/* result */}
           <div className="lg:sticky lg:top-24" aria-live="polite">
             <div className="overflow-hidden rounded-2xl border border-line bg-white shadow-lift">
-              <div className="relative overflow-hidden bg-primary p-6 text-white sm:p-7">
+              <div className="relative overflow-hidden bg-night p-6 text-white sm:p-7">
                 <div aria-hidden className="taqam-pattern absolute inset-0 opacity-60" />
                 <div className="relative">
                   <p className="text-sm text-white/70">{t('إجمالي المستحق التقديري', 'Estimated total due')}</p>

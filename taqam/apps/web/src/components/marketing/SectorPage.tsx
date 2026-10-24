@@ -40,7 +40,7 @@ export function SectorPage({ slug }: { slug: SectorSlug }) {
           <ul className="mt-10 grid gap-5 sm:grid-cols-2">
             {s.features.map((f, i) => (
               <li key={f.title[1]} className="group flex gap-4 rounded-2xl border border-line bg-sand/40 p-6 transition-colors hover:bg-white hover:shadow-soft">
-                <span className="num flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary text-sm font-bold text-accent">{String(i + 1).padStart(2, '0')}</span>
+                <span className="num flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-night text-sm font-bold text-accent">{String(i + 1).padStart(2, '0')}</span>
                 <div>
                   <h3 className="font-semibold text-ink">{tt(f.title)}</h3>
                   <p className="mt-1.5 text-sm leading-7 text-ink-muted">{tt(f.body)}</p>
@@ -53,7 +53,7 @@ export function SectorPage({ slug }: { slug: SectorSlug }) {
 
       <section className="py-16 sm:py-20">
         <Container>
-          <div className="relative overflow-hidden rounded-[28px] bg-primary p-6 text-white shadow-lift sm:p-10 lg:p-12">
+          <div className="relative overflow-hidden rounded-[28px] bg-night p-6 text-white shadow-lift sm:p-10 lg:p-12">
             <div aria-hidden className="taqam-pattern absolute inset-0 opacity-60" />
             <StarMotif className="pointer-events-none absolute -bottom-16 h-64 w-64 text-white/[0.06] ltr:-right-16 rtl:-left-16" />
             <div className="relative grid gap-10 lg:grid-cols-[1.4fr_1fr] lg:items-center">

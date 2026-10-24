@@ -112,7 +112,7 @@ export default function MeHomePage() {
 function HomeSkeleton() {
   return (
     <div className="space-y-6">
-      <div className="space-y-4 rounded-[28px] bg-primary p-5">
+      <div className="space-y-4 rounded-[28px] bg-night p-5">
         <Skeleton className="h-9 w-40 bg-white/15" />
         <Skeleton className="h-4 w-32 bg-white/10" />
         <Skeleton className="h-11 w-full bg-white/10" />

@@ -7,7 +7,7 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        primary: { DEFAULT: BRAND.oasis600, 600: BRAND.oasis700, 500: BRAND.oasis, 100: BRAND.oasis100, 50: BRAND.oasis50 },
+        primary: { DEFAULT: BRAND.oasis600, 600: BRAND.oasis700, 500: BRAND.oasis600, 100: BRAND.oasis100, 50: BRAND.oasis50 },
         night: { DEFAULT: BRAND.night, 800: BRAND.night800 },
         accent: { DEFAULT: BRAND.saffron, 600: BRAND.saffron600, 100: BRAND.saffron100, 50: BRAND.saffron50 },
         sand: { DEFAULT: BRAND.mist, 200: BRAND.mist200, 300: BRAND.dune },

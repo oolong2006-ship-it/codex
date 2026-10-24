@@ -126,7 +126,7 @@ function ProblemSolution() {
               ))}
             </ul>
           </div>
-          <div className="relative overflow-hidden rounded-2xl bg-primary p-6 text-white shadow-lift sm:p-8">
+          <div className="relative overflow-hidden rounded-2xl bg-night p-6 text-white shadow-lift sm:p-8">
             <StarMotif className="pointer-events-none absolute -bottom-10 h-48 w-48 text-white/[0.07] ltr:-right-10 rtl:-left-10" />
             <p className="text-sm font-semibold text-accent">{t('مع طاقم', 'With Taqam')}</p>
             <ul className="relative mt-5 space-y-4">
@@ -158,7 +158,7 @@ function FeatureGrid() {
             <li key={m.id}>
               <Link href={`/features#${m.id}`}
                 className="group flex h-full flex-col rounded-2xl border border-line bg-sand/40 p-5 transition-all hover:-translate-y-0.5 hover:border-primary-500/40 hover:bg-white hover:shadow-lift focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent">
-                <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary text-accent transition-transform group-hover:scale-105">
+                <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-night text-accent transition-transform group-hover:scale-105">
                   <m.icon className="h-5 w-5" aria-hidden />
                 </span>
                 <h3 className="mt-4 font-semibold text-ink">{tt(m.name)}</h3>
@@ -240,7 +240,7 @@ function EssSection() {
     { icon: ShieldCheck, title: t('دون تحميل من المتجر', 'No app-store install'), body: t('يعمل من المتصفح على أي جوال، ويُضاف للشاشة الرئيسية كتطبيق.', 'Runs in any phone browser and can be added to the home screen.') },
   ];
   return (
-    <section className="relative overflow-hidden bg-primary py-20 text-white sm:py-24">
+    <section className="relative overflow-hidden bg-night py-20 text-white sm:py-24">
       <div aria-hidden className="taqam-pattern absolute inset-0 opacity-70" />
       <Container className="relative grid items-center gap-14 lg:grid-cols-2">
         <div>
@@ -323,7 +323,7 @@ function PricingTeaser() {
         <div className="mt-12 grid gap-5 lg:grid-cols-3">
           {TIERS.map((tier) => (
             <div key={tier.id} className={clsx('relative flex flex-col rounded-2xl border p-6',
-              tier.highlight ? 'border-primary bg-primary text-white shadow-lift' : 'border-line bg-sand/40')}>
+              tier.highlight ? 'border-night bg-night text-white shadow-lift' : 'border-line bg-sand/40')}>
               {tier.highlight && <span className="absolute -top-3 rounded-full bg-accent px-3 py-1 text-xs font-bold text-night ltr:right-6 rtl:left-6">{t('الأكثر اختياراً', 'Most popular')}</span>}
               <h3 className={clsx('text-lg font-semibold', tier.highlight ? 'text-white' : 'text-ink')}>{tt(tier.name)}</h3>
               <p className={clsx('mt-1 text-sm', tier.highlight ? 'text-white/70' : 'text-ink-muted')}>{tt(tier.desc)}</p>

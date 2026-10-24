@@ -69,7 +69,7 @@ export function StarMotif({ className }: { className?: string }) {
 export function PageHero({ eyebrow, title, subtitle, children }:
   { eyebrow?: string; title: string; subtitle?: string; children?: React.ReactNode }) {
   return (
-    <section className="relative overflow-hidden bg-primary text-white">
+    <section className="relative overflow-hidden bg-night text-white">
       <div aria-hidden className="taqam-pattern absolute inset-0 opacity-60" />
       <StarMotif className="pointer-events-none absolute -top-16 h-72 w-72 text-white/[0.06] ltr:-right-16 rtl:-left-16" />
       <Container className="relative py-16 sm:py-20">

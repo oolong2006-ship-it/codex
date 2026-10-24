@@ -21,7 +21,7 @@ export const BRAND = {
   white: '#FFFFFF',
   success: '#1B7F53',
   success50: '#E5F4EC',
-  warning: '#A1640F',
+  warning: '#94590C',
   warning50: '#FDF3DC',
   danger: '#C2412D',
   danger50: '#FBEAE6',

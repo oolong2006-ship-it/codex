@@ -41,3 +41,9 @@ describe('chart series', () => {
     }
   });
 });
+
+describe('token pairs used together in the UI', () => {
+  it('warning text on its own tint meets AA (status badges)', () => {
+    expect(contrastRatio(BRAND.warning, BRAND.warning50)).toBeGreaterThanOrEqual(4.5);
+  });
+});

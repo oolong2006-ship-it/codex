@@ -104,7 +104,7 @@ export function FeaturesPage() {
             <section key={m.id} id={m.id} aria-labelledby={`${m.id}-h`} className="scroll-mt-32 py-12 sm:py-16">
               <Container className="grid items-center gap-10 lg:grid-cols-2 lg:gap-16">
                 <div className={clsx(i % 2 === 1 && 'lg:order-2')}>
-                  <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary text-accent shadow-soft"><m.icon className="h-6 w-6" aria-hidden /></span>
+                  <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-night text-accent shadow-soft"><m.icon className="h-6 w-6" aria-hidden /></span>
                   <h2 id={`${m.id}-h`} className="mt-5 text-2xl font-bold text-ink sm:text-3xl">{tt(m.name)}</h2>
                   <p className="mt-4 text-base leading-8 text-ink-muted">{tt(m.long)}</p>
                   <ul className="mt-6 grid gap-3 sm:grid-cols-2">

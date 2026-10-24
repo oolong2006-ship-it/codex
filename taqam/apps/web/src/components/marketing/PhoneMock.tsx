@@ -7,11 +7,11 @@ export function PhoneMock({ className }: { className?: string }) {
   const { t } = useT2();
   return (
     <div className={clsx('relative mx-auto w-[270px] sm:w-[290px]', className)} role="img" aria-label={t('معاينة توضيحية لتطبيق الخدمة الذاتية', 'Illustrative preview of the self-service app')}>
-      <div className="rounded-[44px] bg-[#0B2E2F] p-2.5 shadow-lift ring-1 ring-black/10">
+      <div className="rounded-[44px] bg-night p-2.5 shadow-lift ring-1 ring-black/10">
         <div className="relative overflow-hidden rounded-[36px] bg-sand">
-          <div className="absolute left-1/2 top-2 z-10 h-5 w-24 -translate-x-1/2 rounded-full bg-[#0B2E2F]" />
+          <div className="absolute left-1/2 top-2 z-10 h-5 w-24 -translate-x-1/2 rounded-full bg-night" />
           {/* header */}
-          <div className="bg-primary px-5 pb-6 pt-10 text-white">
+          <div className="bg-night px-5 pb-6 pt-10 text-white">
             <p className="text-[11px] text-white/70">{t('صباح الخير', 'Good morning')}</p>
             <p className="text-base font-bold">{t('نورة الشمري', 'Noura Al-Shammari')}</p>
             <p className="mt-0.5 text-[11px] text-white/70">{t('كاشير — فرع التحلية', 'Cashier — Tahlia branch')}</p>
@@ -22,7 +22,7 @@ export function PhoneMock({ className }: { className?: string }) {
               <div className="relative mx-auto flex h-36 w-36 items-center justify-center">
                 <span className="absolute inset-0 rounded-full border-2 border-dashed border-success/40" />
                 <span className="absolute inset-3 animate-pulse rounded-full bg-success-50" />
-                <button type="button" tabIndex={-1} aria-hidden className="relative flex h-24 w-24 flex-col items-center justify-center rounded-full bg-primary text-white shadow-lift">
+                <button type="button" tabIndex={-1} aria-hidden className="relative flex h-24 w-24 flex-col items-center justify-center rounded-full bg-night text-white shadow-lift">
                   <Fingerprint className="h-8 w-8 text-accent" />
                   <span className="mt-1 text-xs font-semibold">{t('تسجيل حضور', 'Check in')}</span>
                 </button>

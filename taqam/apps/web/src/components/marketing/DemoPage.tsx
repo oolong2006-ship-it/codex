@@ -84,7 +84,7 @@ export function DemoPage() {
 
   return (
     <section className="relative overflow-hidden">
-      <div aria-hidden className="absolute inset-x-0 top-0 h-[460px] bg-primary">
+      <div aria-hidden className="absolute inset-x-0 top-0 h-[460px] bg-night">
         <div className="taqam-pattern h-full w-full opacity-60" />
       </div>
       <StarMotif className="pointer-events-none absolute top-10 h-72 w-72 text-white/[0.06] ltr:-right-20 rtl:-left-20" />

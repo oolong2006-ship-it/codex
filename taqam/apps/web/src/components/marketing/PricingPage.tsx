@@ -46,7 +46,7 @@ export function PricingPage() {
           <div className="mt-10 grid gap-5 lg:grid-cols-3">
             {TIERS.map((tier) => (
               <div key={tier.id} className={clsx('relative flex flex-col rounded-2xl border p-6 sm:p-8',
-                tier.highlight ? 'border-primary bg-primary text-white shadow-lift lg:-my-3 lg:py-11' : 'border-line bg-white shadow-soft')}>
+                tier.highlight ? 'border-night bg-night text-white shadow-lift lg:-my-3 lg:py-11' : 'border-line bg-white shadow-soft')}>
                 {tier.highlight && (
                   <span className="absolute -top-3 rounded-full bg-accent px-3 py-1 text-xs font-bold text-night ltr:right-6 rtl:left-6">{t('الأكثر اختياراً', 'Most popular')}</span>
                 )}
@@ -106,7 +106,7 @@ export function PricingPage() {
             </div>
             <div className="grid gap-3 sm:grid-cols-2">
               {TIERS.filter((x) => x.price != null).map((tier) => (
-                <div key={tier.id} className={clsx('rounded-xl p-5', tier.highlight ? 'bg-primary text-white' : 'bg-sand')}>
+                <div key={tier.id} className={clsx('rounded-xl p-5', tier.highlight ? 'bg-night text-white' : 'bg-sand')}>
                   <p className={clsx('text-sm', tier.highlight ? 'text-white/75' : 'text-ink-muted')}>{tt(tier.name)}</p>
                   <p className="num mt-1 text-2xl font-bold">{fmt(Math.round(unit(tier.price!) * billable * 100) / 100)} <span className="text-sm font-medium opacity-70">{t('ر.س / شهر', 'SAR / mo')}</span></p>
                   {annual && <p className={clsx('num mt-1 text-xs', tier.highlight ? 'text-white/65' : 'text-ink-soft')}>{t('سنوياً', 'Yearly')}: {fmt(Math.round(unit(tier.price!) * billable * 12 * 100) / 100)} {t('ر.س', 'SAR')}</p>}

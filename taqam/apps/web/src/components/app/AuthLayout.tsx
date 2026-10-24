@@ -27,8 +27,8 @@ export function AuthLayout({ children }: { children: React.ReactNode }) {
         </div>
         <p className="text-center text-xs text-ink-soft">© {new Date().getFullYear()} {t('طاقم — صُنع في السعودية', 'Taqam — made in Saudi Arabia')}</p>
       </div>
-      <div className="taqam-pattern relative hidden overflow-hidden bg-primary lg:block">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary via-primary/95 to-primary-600/90" />
+      <div className="taqam-pattern relative hidden overflow-hidden bg-night lg:block">
+        <div className="absolute inset-0 bg-gradient-to-br from-night via-night/95 to-night-800/90" />
         <div className="relative flex h-full flex-col justify-center px-14 py-16 text-white">
           <span className="mb-6 inline-flex w-fit items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs text-accent">
             <span className="h-1.5 w-1.5 rounded-full bg-accent" />{t('للمنشآت متعددة الفروع', 'Built for multi-branch businesses')}

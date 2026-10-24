@@ -31,7 +31,7 @@ export function AboutPage() {
                 'Today Taqam brings attendance, leave, requests, payroll and end of service into one platform, with a self-service app that runs on any phone.')}</p>
             </div>
           </div>
-          <div className="relative overflow-hidden rounded-[28px] bg-primary p-8 text-white shadow-lift sm:p-10">
+          <div className="relative overflow-hidden rounded-[28px] bg-night p-8 text-white shadow-lift sm:p-10">
             <div aria-hidden className="taqam-pattern absolute inset-0 opacity-60" />
             <StarMotif className="pointer-events-none absolute -top-10 h-48 w-48 text-accent/30 ltr:-right-10 rtl:-left-10" />
             <p className="relative text-sm font-semibold text-accent">{t('رسالتنا', 'Our mission')}</p>
@@ -49,7 +49,7 @@ export function AboutPage() {
           <ul className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
             {values.map((v) => (
               <li key={v.h} className="rounded-2xl border border-line bg-sand/40 p-6">
-                <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary text-accent"><v.icon className="h-5 w-5" aria-hidden /></span>
+                <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-night text-accent"><v.icon className="h-5 w-5" aria-hidden /></span>
                 <h3 className="mt-4 font-semibold text-ink">{v.h}</h3>
                 <p className="mt-2 text-sm leading-7 text-ink-muted">{v.b}</p>
               </li>

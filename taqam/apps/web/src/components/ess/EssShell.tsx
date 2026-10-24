@@ -109,7 +109,7 @@ export function EssShell({ children }: { children: React.ReactNode }) {
           <Link href="/me/notifications" className="relative grid h-11 w-11 place-items-center rounded-2xl bg-white/10 transition active:scale-95" aria-label={t('الإشعارات', 'Notifications')}>
             <Bell className="h-5 w-5" />
             {unread > 0 && (
-              <span className="num absolute -top-0.5 end-0 grid h-5 min-w-5 place-items-center rounded-full bg-accent px-1 text-[11px] font-bold text-night ring-2 ring-primary">
+              <span className="num absolute -top-0.5 end-0 grid h-5 min-w-5 place-items-center rounded-full bg-accent px-1 text-[11px] font-bold text-night ring-2 ring-night">
                 {unread > 9 ? '9+' : unread}
               </span>
             )}
