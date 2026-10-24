@@ -278,6 +278,7 @@ describe("persisted state", () => {
       voiceGender: "female" as const,
       participantGender: "female" as const,
       seed: 4,
+      now: () => new Date("2026-10-24T09:00:00Z"),
     };
     const live = new InterviewEngine(opts);
     live.start();
