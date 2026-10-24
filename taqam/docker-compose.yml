@@ -20,7 +20,8 @@ services:
       dockerfile: apps/api/Dockerfile
     environment:
       DATABASE_URL: postgresql://taqam:${POSTGRES_PASSWORD:-taqam_dev}@db:5432/taqam?schema=public
-      JWT_SECRET: ${JWT_SECRET:-change-me-in-production}
+      # required: the API refuses to boot in production without a JWT_SECRET of 32+ chars (see apps/api/.env.example)
+      JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET (min 32 chars) in taqam/.env, e.g. JWT_SECRET=$(openssl rand -hex 32)}
       CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3100}
       PORT: 4100
     ports:
