@@ -1,6 +1,7 @@
 name: Taqam CI
 
 on:
+  workflow_dispatch:
   push:
     paths: ['taqam/**', '.github/workflows/taqam-ci.yml']
   pull_request:
