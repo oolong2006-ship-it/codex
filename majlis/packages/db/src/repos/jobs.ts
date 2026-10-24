@@ -12,7 +12,7 @@ export async function enqueueJob(
   db: Db,
   kind: string,
   payload: Record<string, unknown>,
-  options: { dedupeKey?: string; delaySeconds?: number } = {},
+  options: { dedupeKey?: string; serialKey?: string; delaySeconds?: number } = {},
 ): Promise<void> {
   await db
     .insert(jobs)
@@ -20,6 +20,7 @@ export async function enqueueJob(
       kind,
       payload,
       dedupeKey: options.dedupeKey ?? null,
+      serialKey: options.serialKey ?? null,
       runAfter: new Date(Date.now() + (options.delaySeconds ?? 0) * 1000),
     })
     // A pending job with the same dedupe key already covers this request.
@@ -32,8 +33,14 @@ export async function claimJob(db: Db): Promise<JobRow | null> {
     update jobs set status = 'running', locked_at = now(), attempts = attempts + 1
     where id = (
       select id from jobs
-      where (status = 'pending' and run_after <= now())
-         or (status = 'running' and locked_at < now() - ${STALE_AFTER}::interval)
+      where ((status = 'pending' and run_after <= now())
+          or (status = 'running' and locked_at < now() - ${STALE_AFTER}::interval))
+        -- One job per serial key at a time, and never ahead of an older one.
+        and (serial_key is null or not exists (
+          select 1 from jobs other
+          where other.serial_key = jobs.serial_key and other.id <> jobs.id
+            and (other.status = 'running' or (other.status = 'pending' and other.created_at < jobs.created_at))
+        ))
       order by created_at
       for update skip locked
       limit 1

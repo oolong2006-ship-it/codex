@@ -56,6 +56,8 @@ export async function claimSession(db: Db, sessionId: string): Promise<boolean> 
 }
 
 export interface TurnInput {
+  /** Object-store key of the participant's recorded utterance. */
+  audioRef?: string;
   role: "interviewer" | "participant";
   text: string;
   asrConfidence?: number;
@@ -81,6 +83,7 @@ export async function appendTurn(db: Db, sessionId: string, turn: TurnInput) {
         role: turn.role,
         text: turn.text,
         asrConfidence: turn.asrConfidence ?? null,
+        audioRef: turn.audioRef ?? null,
         dialectTag: turn.dialectTag ?? null,
         action: turn.action ?? null,
         questionId: turn.questionId ?? null,
@@ -112,11 +115,12 @@ export async function recordVerbalConsent(
     disclosureVersion: number;
     disclosureSha256: string;
   },
+  method: "verbal" | "message" = "verbal",
 ) {
   await db.insert(consentRecords).values({
     participantId,
     sessionId,
-    method: "verbal",
+    method,
     grantedAt: new Date(record.grantedAt),
     disclosureText: record.disclosureText,
     disclosureVersion: record.disclosureVersion,

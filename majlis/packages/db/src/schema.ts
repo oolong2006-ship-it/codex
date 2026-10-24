@@ -169,6 +169,8 @@ export const interviewSessions = pgTable(
     analyzedAt: timestamp("analyzed_at", { withTimezone: true }),
     /** Interviewer state for asynchronous channels (WhatsApp), between messages. */
     engineState: jsonb("engine_state"),
+    /** WhatsApp sessions: the contact that took part (deleted with the contact). */
+    contactId: uuid("contact_id"),
     recordingsPurgedAt: timestamp("recordings_purged_at", { withTimezone: true }),
     startedAt: timestamp("started_at", { withTimezone: true }),
     endedAt: timestamp("ended_at", { withTimezone: true }),
@@ -282,6 +284,8 @@ export const jobs = pgTable(
     payload: jsonb("payload").notNull().default({}),
     /** Pending jobs with the same key are coalesced into one. */
     dedupeKey: text("dedupe_key"),
+    /** Jobs sharing a serial key run one at a time, oldest first (e.g. one WhatsApp contact). */
+    serialKey: text("serial_key"),
     status: jobStatus("status").notNull().default("pending"),
     attempts: integer("attempts").notNull().default(0),
     runAfter: timestamp("run_after", { withTimezone: true }).notNull().defaultNow(),

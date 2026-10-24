@@ -26,7 +26,9 @@ CREATE TABLE "whatsapp_contacts" (
 );
 --> statement-breakpoint
 ALTER TABLE "interview_sessions" ADD COLUMN "engine_state" jsonb;--> statement-breakpoint
+ALTER TABLE "interview_sessions" ADD COLUMN "contact_id" uuid;--> statement-breakpoint
 ALTER TABLE "interview_sessions" ADD COLUMN "recordings_purged_at" timestamp with time zone;--> statement-breakpoint
+ALTER TABLE "jobs" ADD COLUMN "serial_key" text;--> statement-breakpoint
 ALTER TABLE "participants" ADD COLUMN "deletion_token_hash" text;--> statement-breakpoint
 ALTER TABLE "turns" ADD COLUMN "original_text" text;--> statement-breakpoint
 ALTER TABLE "turns" ADD COLUMN "reviewed_at" timestamp with time zone;--> statement-breakpoint

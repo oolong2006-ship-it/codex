@@ -52,7 +52,7 @@ export interface StartInput {
 }
 
 export type StartResult =
-  | { ok: true; sessionId: string }
+  | { ok: true; sessionId: string; deletionCode: string }
   | { ok: false; reason: "not_found" | "closed" | "no_consent" | "screened_out" };
 
 export function qualifies(screener: ScreenerQuestion[], answers: Record<string, string>): boolean {
@@ -84,6 +84,7 @@ export async function startInterview(db: Db, input: StartInput): Promise<StartRe
   };
   const disclosureText = new InterviewEngine({ guide: guideSnapshot, voiceGender }).disclosureText;
   const sessionId = randomBytes(18).toString("base64url");
+  const deletionCode = newDeletionCode();
 
   await db.transaction(async (tx) => {
     const [participant] = await tx
@@ -94,6 +95,7 @@ export async function startInterview(db: Db, input: StartInput): Promise<StartRe
         city: input.participant.city?.slice(0, 60) ?? null,
         ageBand: input.participant.ageBand ?? null,
         dialect: input.participant.dialect ?? null,
+        deletionTokenHash: hashDeletionCode(deletionCode),
       })
       .returning({ id: participants.id });
     await tx.insert(interviewSessions).values({
@@ -115,5 +117,24 @@ export async function startInterview(db: Db, input: StartInput): Promise<StartRe
       allowAudioPlayback: input.consent.allowAudioPlayback,
     });
   });
-  return { ok: true, sessionId };
+  return { ok: true, sessionId, deletionCode };
+}
+
+// Crockford base32 without look-alikes; read out or typed by the participant.
+const CODE_ALPHABET = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
+
+/** A 12-character code (60 bits) shown once to the participant, e.g. "7KQ2-M9TX-4BRD". */
+export function newDeletionCode(): string {
+  const bytes = randomBytes(12);
+  const chars = [...bytes].map((b) => CODE_ALPHABET[b % 32]!);
+  return [0, 4, 8].map((i) => chars.slice(i, i + 4).join("")).join("-");
+}
+
+export function hashDeletionCode(code: string): string {
+  const normalized = code
+    .toUpperCase()
+    .replace(/[^0-9A-Z]/g, "")
+    .replace(/O/g, "0")
+    .replace(/[IL]/g, "1");
+  return createHash("sha256").update(`majlis-deletion:${normalized}`).digest("hex");
 }

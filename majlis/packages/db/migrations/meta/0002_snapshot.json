@@ -1,5 +1,5 @@
 {
-  "id": "0d648407-3568-41a0-82b7-e2e58cd968fc",
+  "id": "0a82652e-c354-419c-aaad-7cb55964ee3e",
   "prevId": "38a2a8b2-54f5-49da-8aa9-8858720f9e26",
   "version": "7",
   "dialect": "postgresql",
@@ -479,6 +479,12 @@
           "primaryKey": false,
           "notNull": false
         },
+        "contact_id": {
+          "name": "contact_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
         "recordings_purged_at": {
           "name": "recordings_purged_at",
           "type": "timestamp with time zone",
@@ -574,6 +580,12 @@
         },
         "dedupe_key": {
           "name": "dedupe_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "serial_key": {
+          "name": "serial_key",
           "type": "text",
           "primaryKey": false,
           "notNull": false
