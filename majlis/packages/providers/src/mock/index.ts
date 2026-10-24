@@ -181,7 +181,8 @@ export class MockWhatsAppProvider implements WhatsAppProvider {
   }
 
   async downloadMedia(): Promise<Uint8Array> {
-    return new Uint8Array();
+    // "OggS": just enough for code that stores the voice note.
+    return new Uint8Array([0x4f, 0x67, 0x67, 0x53]);
   }
 
   parseWebhook(rawBody: string): WhatsAppInboundMessage[] {

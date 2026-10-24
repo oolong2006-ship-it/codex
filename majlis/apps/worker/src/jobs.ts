@@ -1,12 +1,10 @@
-/**
- * Job catalog. Handlers are registered as each phase lands; the queue
- * (BullMQ on Redis) is wired once the first real job exists.
- */
+/** Job catalog. */
 export const JOBS = {
-  finalTranscription: "final-transcription",
   analyzeSession: "analyze-session",
+  analyzeStudy: "analyze-study",
   updatePersonas: "update-personas",
   retentionSweep: "retention-sweep",
+  whatsappInbound: "whatsapp-inbound",
 } as const;
 
 export type JobName = (typeof JOBS)[keyof typeof JOBS];

@@ -76,7 +76,7 @@ export async function startWhatsappSession(db: Db, contactId: string, inviteToke
   if (!study || study.status !== "recruiting") return null;
   const guide = await latestGuide(db, study.id);
   if (!guide) return null;
-  const voiceGender = study.voiceSetting === "male" ? "male" : "female";
+  const voiceGender: "male" | "female" = study.voiceSetting === "male" ? "male" : "female";
   const guideSnapshot: InterviewGuide = {
     ...guide.content,
     studyId: study.id,

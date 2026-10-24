@@ -12,8 +12,20 @@ export async function enqueueJob(
   db: Db,
   kind: string,
   payload: Record<string, unknown>,
-  options: { dedupeKey?: string; serialKey?: string; delaySeconds?: number } = {},
+  options: {
+    dedupeKey?: string;
+    serialKey?: string;
+    delaySeconds?: number;
+    /** Never enqueue twice for the same dedupe key, even after it ran (webhook redeliveries). */
+    once?: boolean;
+  } = {},
 ): Promise<void> {
+  if (options.once && options.dedupeKey) {
+    const seen = await db.execute(
+      sql`select 1 from jobs where dedupe_key = ${options.dedupeKey} limit 1`,
+    );
+    if (seen.rows.length) return;
+  }
   await db
     .insert(jobs)
     .values({

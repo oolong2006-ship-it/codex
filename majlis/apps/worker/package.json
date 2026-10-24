@@ -14,11 +14,16 @@
     "start:once": "node dist/main.js --once"
   },
   "devDependencies": {
-    "tsx": "^4.23.0"
+    "tsx": "^4.23.0",
+    "drizzle-orm": "^0.45.0"
   },
   "dependencies": {
     "@majlis/analysis": "workspace:*",
     "@majlis/db": "workspace:*",
-    "@majlis/providers": "workspace:*"
+    "@majlis/providers": "workspace:*",
+    "@majlis/storage": "workspace:*",
+    "@majlis/dialect": "workspace:*",
+    "@majlis/i18n": "workspace:*",
+    "@majlis/interviewer": "workspace:*"
   }
 }

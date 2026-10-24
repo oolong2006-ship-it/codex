@@ -154,10 +154,25 @@ importers:
       '@majlis/db':
         specifier: workspace:*
         version: link:../../packages/db
+      '@majlis/dialect':
+        specifier: workspace:*
+        version: link:../../packages/dialect
+      '@majlis/i18n':
+        specifier: workspace:*
+        version: link:../../packages/i18n
+      '@majlis/interviewer':
+        specifier: workspace:*
+        version: link:../../packages/interviewer
       '@majlis/providers':
         specifier: workspace:*
         version: link:../../packages/providers
+      '@majlis/storage':
+        specifier: workspace:*
+        version: link:../../packages/storage
     devDependencies:
+      drizzle-orm:
+        specifier: ^0.45.0
+        version: 0.45.4(@types/pg@8.23.1)(pg@8.23.1)
       tsx:
         specifier: ^4.23.0
         version: 4.23.15

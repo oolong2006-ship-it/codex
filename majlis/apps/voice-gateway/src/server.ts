@@ -12,8 +12,11 @@ import { Conversation } from "./conversation.js";
 import { LatencyTracker } from "./latency.js";
 import { demoGuide } from "./demo-guide.js";
 import { InMemorySessionStore, type SessionSettings, type SessionStore } from "./sessions.js";
+import { registerWhatsappWebhook, type WhatsappWebhookOptions } from "./whatsapp-webhook.js";
 
 export interface GatewayOptions {
+  /** Enables the WhatsApp webhook (needs the database). */
+  whatsapp?: WhatsappWebhookOptions;
   providers?: ProviderSet;
   config?: Partial<GatewayConfig>;
   store?: SessionStore;
@@ -154,6 +157,8 @@ export async function buildServer(options: GatewayOptions = {}): Promise<Fastify
       for (const m of early.splice(0)) deliver(m.data, m.isBinary);
     },
   );
+
+  if (options.whatsapp) await registerWhatsappWebhook(app, options.whatsapp);
 
   // ─── local development page ───────────────────────────────────────────────
   if (config.devPage && createSession) {

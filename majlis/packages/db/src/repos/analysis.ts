@@ -79,6 +79,22 @@ export async function turnsToEmbed(db: Db, sessionId: string) {
     );
 }
 
+/** Answers of completed interviews in a study that still need a vector (new or corrected). */
+export async function studyTurnsToEmbed(db: Db, studyId: string) {
+  return db
+    .select({ id: turns.id, text: turns.text })
+    .from(turns)
+    .innerJoin(interviewSessions, eq(interviewSessions.id, turns.sessionId))
+    .where(
+      and(
+        eq(interviewSessions.studyId, studyId),
+        eq(interviewSessions.status, "completed"),
+        eq(turns.role, "participant"),
+        isNull(turns.embedding),
+      ),
+    );
+}
+
 export async function saveEmbeddings(db: Db, rows: { turnId: string; vector: number[] }[]) {
   for (const r of rows) {
     await db.update(turns).set({ embedding: r.vector }).where(eq(turns.id, r.turnId));

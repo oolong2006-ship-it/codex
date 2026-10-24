@@ -214,7 +214,10 @@
     "end": "End interview",
     "thanksTitle": "Thank you!",
     "thanksBody": "Thanks for your time and your views.",
-    "thanksIncentive": "Incentive: {incentive}"
+    "thanksIncentive": "Incentive: {incentive}",
+    "deletionTitle": "Your deletion code",
+    "deletionBody": "Keep this code. If you later want your participation and all your data deleted, enter it on the deletion page.",
+    "deletionLink": "Deletion page"
   },
   "results": {
     "empty": "No results yet. They appear once interviews are completed and analyzed.",
@@ -257,5 +260,20 @@
     "praises": "Praise",
     "complaints": "Complain about",
     "version": "Version {version}"
+  },
+  "whatsapp": {
+    "help": "Hi! Send the study code from your invitation to begin.",
+    "closed": "This study is not accepting participants right now. Thank you for your interest.",
+    "privacy": "Before we start: WhatsApp messages pass through Meta's servers outside Saudi Arabia. If you prefer, you can take part from the invitation link in your browser instead.",
+    "deleteHint": "You can send \"delete\" at any time and we will erase your participation and all your data.",
+    "deleted": "Your participation and all your data have been deleted. Thank you."
+  },
+  "deletion": {
+    "title": "Delete my participation",
+    "body": "Enter the code shown at the end of your interview. We delete the recordings, transcripts and all data linked to your participation. This cannot be undone.",
+    "code": "Deletion code",
+    "submit": "Delete my participation",
+    "done": "Your participation and all your data have been deleted.",
+    "notFound": "No participation matches this code. Check it and try again."
   }
 }
