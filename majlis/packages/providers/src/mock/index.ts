@@ -21,9 +21,16 @@ import type {
 export class MockAsrProvider implements AsrProvider {
   readonly name = "mock";
   private readonly queue: AsrResult[];
+  private readonly finalDelayMs: number;
 
-  constructor(scripted: readonly AsrResult[] = []) {
+  constructor(scripted: readonly AsrResult[] = [], options: { finalDelayMs?: number } = {}) {
     this.queue = [...scripted];
+    this.finalDelayMs = options.finalDelayMs ?? 0;
+  }
+
+  /** Queues more scripted results (used by tests driving a live session). */
+  script(...results: AsrResult[]): void {
+    this.queue.push(...results);
   }
 
   private next(): AsrResult {
@@ -54,9 +61,14 @@ export class MockAsrProvider implements AsrProvider {
       },
       end: () => {
         if (ended) return;
-        ended = true;
-        push({ type: "speech_ended" });
-        push({ type: "final", ...this.next() });
+        const result = this.next();
+        const finish = () => {
+          ended = true;
+          push({ type: "speech_ended" });
+          push({ type: "final", ...result });
+        };
+        if (this.finalDelayMs) setTimeout(finish, this.finalDelayMs);
+        else finish();
       },
       async *[Symbol.asyncIterator]() {
         while (true) {
@@ -67,21 +79,44 @@ export class MockAsrProvider implements AsrProvider {
           }
           if (ended) return;
           await new Promise<void>((resolve) => (wake = resolve));
+          wake = undefined;
         }
       },
     };
   }
 }
 
+export interface MockTtsOptions {
+  /** Audio length per word. */
+  msPerWord?: number;
+  /** Simulated time to first audio. */
+  firstChunkDelayMs?: number;
+  /** Simulated time between chunks. */
+  chunkDelayMs?: number;
+}
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
 export class MockTtsProvider implements TtsProvider {
   readonly name = "mock";
+  constructor(private readonly options: MockTtsOptions = {}) {}
 
-  /** Emits one small chunk per word so barge-in can be exercised. */
+  /** One chunk of quiet PCM tone per word, so playback and barge-in can be exercised. */
   async *synthesize(request: TtsRequest): AsyncIterable<Uint8Array> {
-    const encoder = new TextEncoder();
-    for (const word of request.text.split(/\s+/).filter(Boolean)) {
+    const { msPerWord = 200, firstChunkDelayMs = 0, chunkDelayMs = 0 } = this.options;
+    const rate = request.format.sampleRateHz;
+    const freq = request.voiceGender === "female" ? 330 : 220;
+    const words = request.text.split(/\s+/).filter(Boolean);
+    for (let i = 0; i < words.length; i++) {
+      const delay = i === 0 ? firstChunkDelayMs : chunkDelayMs;
+      if (delay) await sleep(delay);
       if (request.signal?.aborted) return;
-      yield encoder.encode(word);
+      const samples = Math.round((rate * msPerWord) / 1000);
+      const pcm = new Int16Array(samples);
+      for (let n = 0; n < samples; n++) {
+        pcm[n] = Math.round(2000 * Math.sin((2 * Math.PI * freq * n) / rate));
+      }
+      yield new Uint8Array(pcm.buffer);
       await Promise.resolve();
     }
   }
@@ -91,11 +126,15 @@ export class MockLlmProvider implements LlmProvider {
   readonly name = "mock";
   private readonly replies: string[];
 
-  constructor(scripted: readonly string[] = []) {
+  constructor(
+    scripted: readonly string[] = [],
+    private readonly options: { delayMs?: number } = {},
+  ) {
     this.replies = [...scripted];
   }
 
   async *stream(request: LlmRequest): AsyncIterable<string> {
+    if (this.options.delayMs) await sleep(this.options.delayMs);
     const reply = this.replies.shift() ?? "";
     for (const token of reply.split(/(?<=\s)/)) {
       if (request.signal?.aborted) return;

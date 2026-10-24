@@ -25,8 +25,8 @@ export interface AsrOptions {
 
 export interface AsrResult {
   text: string;
-  /** 0..1, provider-reported or estimated. */
-  confidence: number;
+  /** 0..1 when the provider reports it; absent otherwise (never invented). */
+  confidence?: number;
   /** Detected language tags if the provider reports code-switching. */
   languages?: readonly string[];
 }

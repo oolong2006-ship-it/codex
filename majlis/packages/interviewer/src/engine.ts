@@ -28,7 +28,7 @@ import {
   type Gender,
   type Phrases,
 } from "./phrases.js";
-import { seededRandom } from "./rng.js";
+import { SeededRandom } from "./rng.js";
 
 export type EngineStage = "consent" | "guide" | "follow_up" | "ended";
 
@@ -110,6 +110,41 @@ interface Position {
   question: number;
 }
 
+export interface EngineSnapshot {
+  events: number;
+  transcript: number;
+  answers: Map<string, AnswerRecord>;
+  consent: ConsentRecord | null;
+  textModeOffered: boolean;
+  stage: EngineStage;
+  position: Position | null;
+  asked: Set<string>;
+  skipped: Set<string>;
+  sectionFollowUps: Map<string, number>;
+  sectionLastFollowUp: Map<string, FollowUpKind>;
+  lastFollowUpText: string;
+  consentClarifications: number;
+  repairStreak: number;
+  dialectLocked: boolean;
+  dialect: Dialect | null;
+  dialectLockedAt: number;
+  interviewerTurns: number;
+  guideUtterances: string[];
+  lastBackchannel: string;
+  rotation: number;
+  random: number;
+}
+
+function replaceMap<K, V>(target: Map<K, V>, source: Map<K, V>): void {
+  target.clear();
+  for (const [k, v] of source) target.set(k, v);
+}
+
+function replaceSet<T>(target: Set<T>, source: Set<T>): void {
+  target.clear();
+  for (const v of source) target.add(v);
+}
+
 export class InterviewEngine {
   readonly events: EngineEvent[] = [];
   readonly transcript: TranscriptEntry[] = [];
@@ -134,7 +169,7 @@ export class InterviewEngine {
   private guideUtterances: string[] = [];
   private lastBackchannel = "";
   private rotation = 0;
-  private readonly rng: () => number;
+  private readonly random: SeededRandom;
   private readonly phrases: Phrases;
   private readonly guide: InterviewGuide;
   private readonly opts: Required<
@@ -145,7 +180,7 @@ export class InterviewEngine {
   constructor(options: EngineOptions) {
     this.guide = validateGuide(options.guide);
     this.opts = { asrConfidenceThreshold: 0.5, coverThreshold: 0.5, ...options };
-    this.rng = seededRandom(options.seed ?? 1);
+    this.random = new SeededRandom(options.seed ?? 1);
     this.phrases = loadPhrases();
     this.dialectLocked = options.dialect !== undefined;
     this.dialectValue = options.dialect ?? null;
@@ -166,6 +201,63 @@ export class InterviewEngine {
       duration: this.guide.durationPhrase ?? "عشر دقايق",
       topic: this.guide.topic,
     });
+  }
+
+  /**
+   * Captures all mutable state so a planned turn can be taken back, e.g. when
+   * the participant resumes speaking before the reply is heard.
+   */
+  snapshot(): EngineSnapshot {
+    return structuredClone({
+      events: this.events.length,
+      transcript: this.transcript.length,
+      answers: this.answers,
+      consent: this.consent,
+      textModeOffered: this.textModeOffered,
+      stage: this.stageValue,
+      position: this.position,
+      asked: this.asked,
+      skipped: this.skipped,
+      sectionFollowUps: this.sectionFollowUps,
+      sectionLastFollowUp: this.sectionLastFollowUp,
+      lastFollowUpText: this.lastFollowUpText,
+      consentClarifications: this.consentClarifications,
+      repairStreak: this.repairStreak,
+      dialectLocked: this.dialectLocked,
+      dialect: this.dialectValue,
+      dialectLockedAt: this.dialectLockedAt,
+      interviewerTurns: this.interviewerTurns,
+      guideUtterances: this.guideUtterances,
+      lastBackchannel: this.lastBackchannel,
+      rotation: this.rotation,
+      random: this.random.state,
+    });
+  }
+
+  restore(snap: EngineSnapshot): void {
+    const s = structuredClone(snap);
+    this.events.length = s.events;
+    this.transcript.length = s.transcript;
+    replaceMap(this.answers, s.answers);
+    this.consent = s.consent;
+    this.textModeOffered = s.textModeOffered;
+    this.stageValue = s.stage;
+    this.position = s.position;
+    replaceSet(this.asked, s.asked);
+    replaceSet(this.skipped, s.skipped);
+    replaceMap(this.sectionFollowUps, s.sectionFollowUps);
+    replaceMap(this.sectionLastFollowUp, s.sectionLastFollowUp);
+    this.lastFollowUpText = s.lastFollowUpText;
+    this.consentClarifications = s.consentClarifications;
+    this.repairStreak = s.repairStreak;
+    this.dialectLocked = s.dialectLocked;
+    this.dialectValue = s.dialect;
+    this.dialectLockedAt = s.dialectLockedAt;
+    this.interviewerTurns = s.interviewerTurns;
+    this.guideUtterances = s.guideUtterances;
+    this.lastBackchannel = s.lastBackchannel;
+    this.rotation = s.rotation;
+    this.random.state = s.random;
   }
 
   start(): InterviewerTurn {
@@ -275,7 +367,7 @@ export class InterviewEngine {
     const options = this.phrases.follow_ups[kind]
       .map((v) => this.p(v))
       .filter((t) => t !== this.lastFollowUpText);
-    const text = options[Math.floor(this.rng() * options.length)]!;
+    const text = options[Math.floor(this.random.next() * options.length)]!;
     this.lastFollowUpText = text;
     this.stageValue = "follow_up";
     return this.say({
@@ -428,10 +520,10 @@ export class InterviewEngine {
       const turnsSince = this.interviewerTurns - this.dialectLockedAt;
       const blend = Math.min(0.6, 0.2 * turnsSince);
       const own = loadLexicon().dialects[this.dialectValue].backchannels;
-      if (own.length && this.rng() < blend) pool = own;
+      if (own.length && this.random.next() < blend) pool = own;
     }
     const options = pool.filter((b) => b !== this.lastBackchannel);
-    const choice = options[Math.floor(this.rng() * options.length)]!;
+    const choice = options[Math.floor(this.random.next() * options.length)]!;
     this.lastBackchannel = choice;
     return choice;
   }

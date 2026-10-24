@@ -251,3 +251,22 @@ describe("naturalness regressions", () => {
     expect(engine.dialect).toBe("hijazi");
   });
 });
+
+describe("snapshot / restore", () => {
+  it("takes back a planned turn exactly", () => {
+    const engine = new InterviewEngine({ guide: restaurantGuide, voiceGender: "male", seed: 9 });
+    engine.start();
+    engine.respond({ text: "إيه" });
+    const snap = engine.snapshot();
+    const planned = engine.respond({ text: "عادي" });
+    expect(planned.action).toBe("follow_up");
+
+    engine.restore(snap);
+    expect(engine.transcript).toHaveLength(snap.transcript);
+    // The combined utterance is now treated as one substantive answer.
+    const merged = engine.respond({ text: "عادي، بس لأنه قريب من البيت والأكل نظيف" });
+    expect(merged.action).toBe("ask");
+    expect(merged.questionId).toBe("q2");
+    expect(engine.answers.get("q1")!.followUps).toBe(0);
+  });
+});

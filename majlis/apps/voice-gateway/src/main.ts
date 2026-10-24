@@ -1,5 +1,7 @@
+import { loadConfig } from "./config.js";
 import { buildServer } from "./server.js";
 
-const port = Number(process.env.VOICE_GATEWAY_PORT ?? 4100);
+const config = loadConfig();
 const app = await buildServer({ logger: true });
-await app.listen({ port, host: "0.0.0.0" });
+await app.listen({ port: config.port, host: "0.0.0.0" });
+if (config.devPage) app.log.warn(`dev page enabled at http://localhost:${config.port}/dev`);

@@ -23,6 +23,27 @@ describe("createProviders", () => {
     expect(() => createProviders({ ASR_PROVIDER: "nope" })).toThrow(ProviderConfigError);
     expect(() => createProviders({ ASR_PROVIDER: "nope" })).toThrow(/ASR_PROVIDER/);
   });
+
+  it("refuses real adapters that do not declare an in-Kingdom location", () => {
+    const env = {
+      LLM_PROVIDER: "openai-compatible",
+      LLM_BASE_URL: "http://llm.internal",
+      LLM_MODEL: "m",
+    };
+    expect(() => createProviders(env)).toThrow(/LLM_LOCATION/);
+    expect(() => createProviders({ ...env, LLM_LOCATION: "eu-west" })).toThrow(
+      /inside the Kingdom/,
+    );
+    expect(createProviders({ ...env, LLM_LOCATION: "in-kingdom" }).llm.name).toBe(
+      "openai-compatible",
+    );
+  });
+
+  it("requires endpoint settings for real adapters", () => {
+    expect(() =>
+      createProviders({ ASR_PROVIDER: "openai-compatible", ASR_LOCATION: "local" }),
+    ).toThrow(/ASR_BASE_URL/);
+  });
 });
 
 describe("mock providers", () => {
@@ -41,7 +62,7 @@ describe("mock providers", () => {
   });
 
   it("stops TTS synthesis when aborted (barge-in)", async () => {
-    const tts = new MockTtsProvider();
+    const tts = new MockTtsProvider({ msPerWord: 20 });
     const controller = new AbortController();
     let chunks = 0;
     for await (const _chunk of tts.synthesize({

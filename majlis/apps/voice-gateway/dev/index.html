@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>مجلس — تجربة البوابة الصوتية (تطوير)</title>
+    <style>
+      :root {
+        --bg: #f6f1e7;
+        --ink: #1f2a2e;
+        --accent: #1f6f5c;
+        --line: #ded6c6;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font:
+          16px/1.7 system-ui,
+          sans-serif;
+      }
+      main {
+        max-width: 640px;
+        margin: 0 auto;
+        padding: 24px 16px;
+      }
+      .row {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        align-items: center;
+        margin: 8px 0;
+      }
+      button,
+      select,
+      input {
+        font: inherit;
+        padding: 8px 12px;
+        border-radius: 10px;
+        border: 1px solid var(--line);
+        background: #fff;
+      }
+      button.primary {
+        background: var(--accent);
+        color: #fff;
+        border-color: var(--accent);
+      }
+      #wave {
+        height: 48px;
+        display: flex;
+        gap: 3px;
+        align-items: center;
+        justify-content: center;
+      }
+      #wave span {
+        width: 6px;
+        border-radius: 3px;
+        background: var(--accent);
+        height: 6px;
+        transition: height 0.08s;
+      }
+      #log {
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 12px;
+        min-height: 160px;
+      }
+      #log p {
+        margin: 4px 0;
+      }
+      .me {
+        color: #555;
+      }
+      pre {
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 12px;
+        direction: ltr;
+        font-size: 13px;
+        overflow-x: auto;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>تجربة البوابة الصوتية</h1>
+      <p>صفحة تطوير محلية. الجلسة: <code id="sid">__SESSION_ID__</code></p>
+      <div class="row">
+        <label
+          >صوت المحاور
+          <select id="voice">
+            <option value="female">نسائي</option>
+            <option value="male">رجالي</option>
+          </select></label
+        >
+        <label
+          >الوضع
+          <select id="mode">
+            <option value="voice">صوت</option>
+            <option value="text">كتابة</option>
+          </select></label
+        >
+        <button class="primary" id="start">ابدأ</button>
+        <button id="stop">إنهاء</button>
+      </div>
+      <div id="wave" aria-hidden="true"></div>
+      <p id="state">—</p>
+      <div id="log"></div>
+      <form class="row" id="form">
+        <input id="text" placeholder="اكتب ردك" style="flex: 1" /><button>إرسال</button>
+      </form>
+      <h2>زمن الرد</h2>
+      <pre id="latency">—</pre>
+    </main>
+    <script type="module">
+      import { VoiceClient } from "/dev/client/index.js";
+      const $ = (id) => document.getElementById(id);
+      const bars = Array.from({ length: 16 }, () =>
+        $("wave").appendChild(document.createElement("span")),
+      );
+      const log = (who, text) => {
+        const p = document.createElement("p");
+        p.className = who;
+        p.textContent = (who === "me" ? "أنت: " : "المحاور: ") + text;
+        $("log").append(p);
+      };
+      const states = {
+        connecting: "جاري الاتصال…",
+        listening: "أسمعك…",
+        speaking: "المحاور يتكلم…",
+        ended: "انتهت الجلسة",
+        error: "خطأ",
+      };
+      let client;
+      $("start").onclick = async () => {
+        const proto = location.protocol === "https:" ? "wss" : "ws";
+        client = new VoiceClient({
+          url: `${proto}://${location.host}/v1/sessions/${$("sid").textContent}/stream`,
+          mode: $("mode").value,
+          voiceGender: $("voice").value,
+          onTurn: (t) => log("bot", t.text),
+          onState: (s) => ($("state").textContent = states[s] ?? s),
+          onLevel: (level) =>
+            bars.forEach(
+              (b, i) =>
+                (b.style.height = `${6 + Math.min(42, level * 300 * (0.6 + 0.4 * Math.sin(i + performance.now() / 120)))}px`),
+            ),
+          onEnded: (_reason, latency) =>
+            ($("latency").textContent = JSON.stringify(latency, null, 2)),
+          onError: (m) => ($("state").textContent = m),
+        });
+        await client.connect();
+      };
+      $("stop").onclick = () => client?.close();
+      $("form").onsubmit = (e) => {
+        e.preventDefault();
+        const t = $("text").value.trim();
+        if (t && client) {
+          log("me", t);
+          client.sendText(t);
+          $("text").value = "";
+        }
+      };
+    </script>
+  </body>
+</html>
