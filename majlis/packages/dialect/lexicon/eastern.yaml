@@ -1,0 +1,33 @@
+dialect: eastern
+name: الشرقية/الخليجية
+status: draft — must be reviewed by native speakers before production.
+markers:
+  - { w: "شنو", weight: 3 }
+  - { w: "وايد", weight: 3 }
+  - { w: "جذي", weight: 3 }
+  - { w: "شكثر", weight: 3 }
+  - { w: "شدعوه", weight: 3 }
+  - { w: "عيل", weight: 2 }
+  - { w: "حيل", weight: 2 }
+  - { w: "هني", weight: 2 }
+  - { w: "مب", weight: 2 }
+  - { w: "شفيك", weight: 1 }
+  - { w: "شلون", weight: 1 }
+  - { w: "ابي", weight: 1 }
+  - { w: "الحين", weight: 1 }
+vocabulary:
+  - { word: "شنو", msa: "ماذا" }
+  - { word: "شلون", msa: "كيف" }
+  - { word: "وايد", msa: "كثيراً" }
+  - { word: "جذي", msa: "هكذا" }
+  - { word: "شكثر", msa: "كم" }
+  - { word: "عيل", msa: "إذن" }
+  - { word: "حيل", msa: "جداً" }
+  - { word: "هني", msa: "هنا" }
+  - { word: "مب", msa: "ليس" }
+greetings: ["هلا والله", "حيّاك الله", "هلا بك"]
+closings: ["يعطيك العافية", "مشكور", "تسلم"]
+backchannels: ["إي", "صح", "زين", "فاهم عليك", "إي والله؟"]
+avoid:
+  - { phrase: "دحين", reason: "حجازية" }
+  - { phrase: "مير", reason: "نجدية" }

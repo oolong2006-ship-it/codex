@@ -1,4 +1,4 @@
-/** Interview stages in order. The state machine itself arrives in phase 2. */
+/** Interview stages in order (greeting and disclosure are spoken in the first turn). */
 export const INTERVIEW_STAGES = [
   "greeting",
   "disclosure",
@@ -8,3 +8,23 @@ export const INTERVIEW_STAGES = [
   "closing",
 ] as const;
 export type InterviewStage = (typeof INTERVIEW_STAGES)[number];
+
+export * from "./guide.js";
+export * from "./engine.js";
+export * from "./guardrails.js";
+export * from "./classify.js";
+export { buildSystemPrompt, buildRephraseInstruction, type PromptContext } from "./prompt.js";
+export {
+  loadPhrases,
+  pick,
+  type Gender,
+  type Gendered,
+  type FollowUpKind,
+  type Phrases,
+} from "./phrases.js";
+export {
+  Interviewer,
+  REPHRASABLE,
+  type SpokenTurn,
+  type InterviewerOptions,
+} from "./interviewer.js";

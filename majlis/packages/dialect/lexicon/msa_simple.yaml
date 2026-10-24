@@ -1,0 +1,24 @@
+dialect: msa_simple
+name: الفصحى المبسطة
+status: draft — must be reviewed before production.
+markers:
+  - { w: "ماذا", weight: 2 }
+  - { w: "لماذا", weight: 2 }
+  - { w: "الان", weight: 2 }
+  - { w: "سوف", weight: 2 }
+  - { w: "لقد", weight: 2 }
+  - { w: "اريد", weight: 2 }
+  - { w: "لا اعلم", weight: 2 }
+  - { w: "جدا", weight: 1 }
+  - { w: "هذا", weight: 1 }
+  - { w: "هذه", weight: 1 }
+  - { w: "ليس", weight: 1 }
+  - { w: "الذي", weight: 1 }
+  - { w: "التي", weight: 1 }
+vocabulary: []
+greetings: ["أهلاً وسهلاً", "مرحباً بك"]
+closings: ["شكراً لوقتك", "جزاك الله خيراً"]
+backchannels: ["نعم", "صحيح", "فهمت", "حسناً"]
+avoid: []
+# Formal forms that common.yaml flags are correct here.
+allow: ["سوف", "لقد", "إنني", "خمسة وعشرون", "ريالاً"]

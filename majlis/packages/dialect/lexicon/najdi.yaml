@@ -1,0 +1,36 @@
+dialect: najdi
+name: النجدية
+status: draft — must be reviewed by native speakers before production.
+markers:
+  - { w: "وش", weight: 2 }
+  - { w: "وشلون", weight: 2 }
+  - { w: "ودي", weight: 2 }
+  - { w: "مير", weight: 3 }
+  - { w: "هقوتي", weight: 3 }
+  - { w: "علامك", weight: 3 }
+  - { w: "زود", weight: 2 }
+  - { w: "عيا", weight: 2 }
+  - { w: "ذا", weight: 1 }
+  - { w: "ابي", weight: 1 }
+  - { w: "يبي", weight: 1 }
+  - { w: "الحين", weight: 1 }
+  - { w: "وش فيك", weight: 2 }
+vocabulary:
+  - { word: "وش", msa: "ماذا" }
+  - { word: "وشلون", msa: "كيف" }
+  - { word: "ودي", msa: "أريد / أتمنى" }
+  - { word: "الحين", msa: "الآن" }
+  - { word: "مير", msa: "لكن" }
+  - { word: "زود", msa: "جداً / كثيراً" }
+  - { word: "هقوتي", msa: "ظني" }
+  - { word: "عيا", msa: "رفض" }
+  - { word: "سالفة", msa: "قصة / موضوع" }
+  - { word: "مدري", msa: "لا أدري" }
+  - { word: "كذا", msa: "هكذا" }
+greetings: ["هلا والله", "حيّاك الله", "يا هلا ومرحبا", "هلا وغلا"]
+closings: ["يعطيك العافية", "الله يجزاك خير", "ما قصّرت"]
+backchannels: ["إيه", "صح", "فاهم عليك", "زين", "والله؟", "إيه نعم", "طيب"]
+avoid:
+  - { phrase: "دحين", reason: "حجازية" }
+  - { phrase: "شنو", reason: "خليجية/شرقية" }
+  - { phrase: "وايد", reason: "خليجية/شرقية" }

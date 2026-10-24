@@ -1,0 +1,8 @@
+name: no consent means no interview
+options: { voiceGender: male }
+turns:
+  - participant: "لا، مو الحين، مشغول"
+    expect: { action: end_no_consent }
+  - participant: "وش رأيك نكمل؟"
+    expect: { action: noop }
+final: { stage: ended, consent: false, asked: [] }

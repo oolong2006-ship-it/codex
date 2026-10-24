@@ -1,0 +1,16 @@
+name: declined sensitive question is respected without follow-up
+options: { voiceGender: female, participantGender: female }
+turns:
+  - participant: "إيه"
+    expect: { action: ask, questionId: q1 }
+  - participant: "عشان قريب من شغلي وأمر عليه وأنا راجعة"
+    expect: { action: ask, questionId: q2 }
+  - participant: "الاستلام كان سريع والموظف كان محترم مرة"
+    expect: { action: ask, questionId: q3 }
+  - participant: "شوي غالية بس الجودة تستاهل في الغالب"
+    expect: { action: ask, questionId: q4, contains: "تفضّلين ما تجاوبين" }
+  - participant: "أفضّل ما أجاوب على هذا"
+    expect: { action: ask, questionId: q5 }
+  - participant: "أبي منيو صحي فيه سعرات واضحة"
+    expect: { action: close }
+final: { declined: [q4] }

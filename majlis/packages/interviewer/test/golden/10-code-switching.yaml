@@ -1,0 +1,8 @@
+name: mixed Arabic-English answers are understood as normal answers
+options: { voiceGender: male }
+turns:
+  - participant: "ok يلا"
+    expect: { action: ask, questionId: q1 }
+  - participant: "الـ delivery كان late شوي بس الـ app سهل والـ offers حلوة"
+    expect: { action: ask, questionId: q2 }
+final: { consent: true }

@@ -1,0 +1,57 @@
+# Interviewer phrases (white Saudi speech). Spoken content, kept as data rather than code.
+# A value is either a plain string, or gendered by the *participant*: m / f / n (unknown).
+# {assistant} is gendered by the *interviewer voice*.
+# status: draft — every line must be reviewed by native speakers.
+version: 1
+
+assistant: { male: "مساعد ذكي", female: "مساعدة ذكية" }
+
+disclosure: "هلا والله، معك {assistant} من منصة مجلس، بنسولف {duration} عن تجربتك مع {topic}، وكلامك سري ويهمنا. نبدأ؟"
+
+consent_clarify:
+  m: "حيّاك الله. تبي نبدأ الحين؟"
+  f: "حيّاك الله. تبين نبدأ الحين؟"
+  n: "حيّاك الله. نبدأ الحين ولا يناسبك وقت ثاني؟"
+
+no_consent:
+  m: "ولا يهمك، الله يحييك. الرابط موجود متى ما ناسبك. يعطيك العافية."
+  f: "ولا يهمك، الله يحييك. الرابط موجود متى ما ناسبك. يعطيك العافية."
+  n: "ولا يهمك، الله يحييك. الرابط موجود متى ما ناسبك. يعطيك العافية."
+
+start: "الله يحييك، نبدأ."
+
+honest_identity: "لا، أنا {assistant} مو إنسان، بس كلامك كله يوصل لفريق البحث ويهمهم رأيك."
+
+return_to_question: "نرجع لسؤالنا: {question}"
+
+resume_consent: "نبدأ؟"
+
+repair: "عفواً ما سمعتك زين، ممكن تعيد؟"
+
+offer_text:
+  m: "يبدو إن الصوت متقطع شوي، تحب تكتب بدال ما تتكلم؟"
+  f: "يبدو إن الصوت متقطع شوي، تحبين تكتبين بدال ما تتكلمين؟"
+  n: "يبدو إن الصوت متقطع شوي، والكتابة متاحة لو كانت أسهل. نكمل؟"
+
+decline_ack: ["ولا يهمك، نكمل.", "أبد، براحتك.", "تمام، نتجاوزه."]
+
+sensitive_prefix: "إذا ما عندك مانع، "
+sensitive_suffix:
+  m: " وعادي لو تفضّل ما تجاوب."
+  f: " وعادي لو تفضّلين ما تجاوبين."
+  n: " والجواب اختياري، ونقدر نتجاوزه."
+
+section_transition: ["ننتقل لموضوع ثاني.", "خلنا ننتقل لشي ثاني."]
+
+follow_ups:
+  why: ["ليش؟", "وش السبب برأيك؟"]
+  how: ["كيف يعني؟", "يعني كيف بالضبط؟"]
+  example:
+    - m: "عطني مثال لو تكرمت."
+      f: "عطيني مثال لو تكرمتي."
+      n: "ممكن مثال على هالشي؟"
+    - "مثل إيش مثلاً؟"
+
+backchannels: ["إيه", "صح", "فاهم عليك", "زين", "طيب", "إيه نعم"]
+
+closing: "يعطيك العافية، والله يجزاك خير على وقتك."

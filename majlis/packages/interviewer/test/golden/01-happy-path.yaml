@@ -1,0 +1,16 @@
+name: happy path to closing
+options: { voiceGender: female, participantGender: male }
+turns:
+  - participant: "إيه يلا نبدأ"
+    expect: { action: ask, questionId: q1 }
+  - participant: "لأنه قريب من البيت والأكل عندهم دايم طازج والعيال يحبونه"
+    expect: { action: ask, questionId: q2 }
+  - participant: "طلبت من التطبيق ووصل الطلب بعد نص ساعة وكان حار"
+    expect: { action: ask, questionId: q3 }
+  - participant: "مقبولة بصراحة مع إن الكمية صارت أقل من قبل"
+    expect: { action: ask, questionId: q4, contains: "تفضّل ما تجاوب" }
+  - participant: "تقريباً بين عشرة وخمسطعش ألف"
+    expect: { action: ask, questionId: q5 }
+  - participant: "أخلي الجلسات العائلية أوسع وأهدى شوي"
+    expect: { action: close, contains: "يعطيك العافية" }
+final: { stage: ended, consent: true, declined: [], skipped: [] }

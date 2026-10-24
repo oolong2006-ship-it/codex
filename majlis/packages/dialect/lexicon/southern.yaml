@@ -1,0 +1,17 @@
+dialect: southern
+name: الجنوبية
+status: >-
+  draft — sparse on purpose. Southern dialects (Asir, Jazan, Al-Baha, Najran) vary widely;
+  markers must be filled in by native reviewers rather than guessed.
+markers:
+  - { w: "ذلحين", weight: 2 }
+  - { w: "وش", weight: 1 }
+  - { w: "توه", weight: 1 }
+vocabulary:
+  - { word: "ذلحين", msa: "الآن" }
+greetings: ["هلا والله", "حيّاك الله", "مرحبا بك"]
+closings: ["يعطيك العافية", "الله يجزاك خير"]
+backchannels: ["إيه", "صح", "زين", "فاهم عليك"]
+avoid:
+  - { phrase: "دحين", reason: "حجازية" }
+  - { phrase: "شنو", reason: "خليجية/شرقية" }

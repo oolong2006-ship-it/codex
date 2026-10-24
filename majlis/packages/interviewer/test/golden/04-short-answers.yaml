@@ -1,0 +1,16 @@
+name: short and generic answers get at most two follow-ups per section
+options: { voiceGender: male, participantGender: male }
+turns:
+  - participant: "تمام"
+    expect: { action: ask, questionId: q1 }
+  - participant: "عادي"
+    expect: { action: follow_up, followUpKind: why }
+  - participant: "حلو"
+    expect: { action: follow_up, followUpKind: how }
+  - participant: "مدري"
+    expect: { action: ask, questionId: q2 }
+  - participant: "زين"
+    expect: { action: ask, questionId: q3 }
+  - participant: "غالي"
+    expect: { action: follow_up, followUpKind: example }
+final: {}

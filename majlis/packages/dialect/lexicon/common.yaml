@@ -1,0 +1,55 @@
+# Shared across all dialects.
+# status: draft — must be reviewed by native speakers before production.
+
+# Phrases that sound artificial, formal-written, or non-Saudi when spoken by the interviewer.
+avoid:
+  - { phrase: "ريالاً", reason: "تنوين نصب فصيح لا يُنطق في الحديث" }
+  - { phrase: "خمسة وعشرون", reason: "صيغة فصحى مكتوبة؛ تُقال: خمسة وعشرين" }
+  - { phrase: "سوف", reason: "فصحى رسمية" }
+  - { phrase: "لقد", reason: "فصحى رسمية" }
+  - { phrase: "إنني", reason: "فصحى رسمية" }
+  - { phrase: "حضرتك", reason: "مصرية/رسمية" }
+  - { phrase: "سيادتك", reason: "رسمية مبالغ فيها" }
+  - { phrase: "إزيك", reason: "مصرية" }
+  - { phrase: "أوي", reason: "مصرية" }
+  - { phrase: "دلوقتي", reason: "مصرية" }
+  - { phrase: "عايز", reason: "مصرية" }
+  - { phrase: "هلق", reason: "شامية" }
+  - { phrase: "كتير", reason: "شامية" }
+  - { phrase: "منيح", reason: "شامية" }
+  - { phrase: "عزيزي المشارك", reason: "لغة نماذج واستبيانات، غير طبيعية في الحديث" }
+  - { phrase: "بكل سرور", reason: "ترجمة حرفية متكلفة" }
+  - { phrase: "سؤال رائع", reason: "مجاملة متكلفة وحكم على المشارك" }
+
+# How Saudis say brand names; used by the normalizer before TTS.
+brands:
+  - { match: "HungerStation", say: "هنقرستيشن" }
+  - { match: "Jahez", say: "جاهز" }
+  - { match: "Noon", say: "نون" }
+  - { match: "Careem", say: "كريم" }
+  - { match: "Uber", say: "أوبر" }
+  - { match: "STC", say: "اس تي سي" }
+  - { match: "Mobily", say: "موبايلي" }
+  - { match: "Zain", say: "زين" }
+  - { match: "McDonald's", say: "ماكدونالدز" }
+  - { match: "KFC", say: "كنتاكي" }
+  - { match: "Starbucks", say: "ستاربكس" }
+  - { match: "Al Baik", say: "البيك" }
+  - { match: "Albaik", say: "البيك" }
+  - { match: "Tamara", say: "تمارا" }
+  - { match: "Tabby", say: "تابي" }
+  - { match: "Mada", say: "مدى" }
+  - { match: "Apple Pay", say: "أبل باي" }
+  - { match: "Amazon", say: "أمازون" }
+  - { match: "Snapchat", say: "سناب" }
+  - { match: "TikTok", say: "تيك توك" }
+  - { match: "WhatsApp", say: "واتساب" }
+
+# Spelling variants ASR engines produce; mapped to one canonical form.
+asr_corrections:
+  - { from: "انشالله", to: "إن شاء الله" }
+  - { from: "ان شاء الله", to: "إن شاء الله" }
+  - { from: "ماشالله", to: "ما شاء الله" }
+  - { from: "ما شا الله", to: "ما شاء الله" }
+  - { from: "الحمدلله", to: "الحمد لله" }
+  - { from: "يعطيكالعافيه", to: "يعطيك العافية" }

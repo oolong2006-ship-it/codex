@@ -1,0 +1,10 @@
+name: detects a Hijazi speaker from the first two answers
+options: { voiceGender: female }
+turns:
+  - participant: "ايوه"
+    expect: { action: ask, questionId: q1 }
+  - participant: "والله ايش أقولك، كان قريب مننا ودحين صرنا نروح له كل أسبوع"
+    expect: { action: ask, questionId: q2 }
+  - participant: "الطلب كان مرة سهل بس الاستلام أخد وقت كدا"
+    expect: { action: ask }
+final: { dialect: hijazi }

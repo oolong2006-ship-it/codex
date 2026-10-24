@@ -1,0 +1,10 @@
+name: a question already answered implicitly is not asked
+options: { voiceGender: female }
+turns:
+  - participant: "نعم"
+    expect: { action: ask, questionId: q1 }
+  - participant: "اخترته لأنه قريب بس الأسعار صارت غالية مرة، دفعت ثمانين ريال لشخصين"
+    expect: { action: ask, questionId: q2 }
+  - participant: "الطلب كان سهل والاستلام من السيارة كان سريع"
+    expect: { action: ask, questionId: q4 }
+final: { skipped: [q3] }

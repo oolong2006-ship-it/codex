@@ -1,0 +1,10 @@
+name: unclear consent is clarified, never assumed
+options: { voiceGender: male, participantGender: female }
+turns:
+  - participant: "مين معي؟"
+    expect: { action: clarify_consent, contains: "تبين" }
+  - participant: "اها"
+    expect: { action: clarify_consent }
+  - participant: "ما أدري والله"
+    expect: { action: end_no_consent }
+final: { consent: false, asked: [] }

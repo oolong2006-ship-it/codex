@@ -1,0 +1,12 @@
+name: apologizes once, then offers typing after the second failure
+options: { voiceGender: female }
+turns:
+  - participant: ""
+    expect: { action: repair, contains: "ما سمعتك زين" }
+  - participant: "اممم"
+    asrConfidence: 0.2
+    expect: { action: offer_text, contains: "الكتابة" }
+  - participant: "إيه نبدأ"
+    channel: text
+    expect: { action: ask, questionId: q1 }
+final: { textModeOffered: true, consent: true }

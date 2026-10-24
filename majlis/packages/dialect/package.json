@@ -13,12 +13,16 @@
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "lexicon"
   ],
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "test": "vitest run --passWithNoTests"
+  },
+  "dependencies": {
+    "yaml": "^2.8.0"
   }
 }

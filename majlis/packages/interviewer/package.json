@@ -13,12 +13,18 @@
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "phrases"
   ],
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "test": "vitest run --passWithNoTests"
+  },
+  "dependencies": {
+    "@majlis/dialect": "workspace:*",
+    "@majlis/providers": "workspace:*",
+    "yaml": "^2.8.0"
   }
 }

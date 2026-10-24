@@ -1,0 +1,20 @@
+dialect: northern
+name: الشمالية
+status: >-
+  draft — sparse on purpose. Northern speech (Hail, Al-Jouf, Tabuk, Northern Borders) mixes
+  Najdi-Bedouin and Levantine features; markers must be filled in by native reviewers.
+markers:
+  - { w: "زلمه", weight: 2 }
+  - { w: "هسه", weight: 2 }
+  - { w: "هيك", weight: 1 }
+  - { w: "شو", weight: 1 }
+  - { w: "وش", weight: 1 }
+  - { w: "شلونك", weight: 1 }
+vocabulary:
+  - { word: "زلمة", msa: "رجل" }
+  - { word: "هسّه", msa: "الآن" }
+greetings: ["هلا والله", "حيّاك الله", "يا هلا"]
+closings: ["يعطيك العافية", "الله يجزاك خير"]
+backchannels: ["إيه", "صح", "زين", "فاهم عليك"]
+avoid:
+  - { phrase: "دحين", reason: "حجازية" }

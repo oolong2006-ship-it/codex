@@ -1,0 +1,37 @@
+dialect: hijazi
+name: الحجازية
+status: draft — must be reviewed by native speakers before production.
+markers:
+  - { w: "ايش", weight: 2 }
+  - { w: "ابغى", weight: 2 }
+  - { w: "دحين", weight: 3 }
+  - { w: "كدا", weight: 3 }
+  - { w: "كده", weight: 2 }
+  - { w: "فين", weight: 3 }
+  - { w: "ايوه", weight: 2 }
+  - { w: "هادا", weight: 3 }
+  - { w: "هادي", weight: 2 }
+  - { w: "برضو", weight: 2 }
+  - { w: "لسا", weight: 2 }
+  - { w: "بالمره", weight: 2 }
+  - { w: "مره", weight: 1 }
+  - { w: "زي", weight: 1 }
+  - { w: "ليه", weight: 1 }
+vocabulary:
+  - { word: "ايش", msa: "ماذا" }
+  - { word: "ابغى", msa: "أريد" }
+  - { word: "دحين", msa: "الآن" }
+  - { word: "كدا", msa: "هكذا" }
+  - { word: "فين", msa: "أين" }
+  - { word: "مرّة", msa: "جداً" }
+  - { word: "هادا", msa: "هذا" }
+  - { word: "برضو", msa: "أيضاً" }
+  - { word: "لسّا", msa: "ما زال" }
+  - { word: "ايوه", msa: "نعم" }
+greetings: ["يا هلا", "أهلين", "حيّاك", "يا مرحبا"]
+closings: ["يعطيك العافية", "الله يسعدك", "تسلم"]
+backchannels: ["ايوه", "صح", "طيب", "فاهم عليك", "تمام"]
+avoid:
+  - { phrase: "مير", reason: "نجدية" }
+  - { phrase: "شنو", reason: "خليجية/شرقية" }
+  - { phrase: "وايد", reason: "خليجية/شرقية" }
