@@ -279,7 +279,7 @@ export function EosbTab({ employee, canTerminate, onTerminated }: { employee: Em
             <p>{label(TERMINATION_REASON, reason, lang)} · {date(endDate, lang)}</p>
             {data && <p className="num mt-1 font-semibold text-primary">{t('المستحق', 'Payable')}: {money(data.total)}</p>}
           </div>
-          <label className="flex items-center gap-2 text-ink"><input type="checkbox" checked={ack} onChange={(e) => setAck(e.target.checked)} className="h-4 w-4 accent-[#C8553D]" />{t('أؤكد رغبتي في إنهاء الخدمة', 'I confirm this termination')}</label>
+          <label className="flex items-center gap-2 text-ink"><input type="checkbox" checked={ack} onChange={(e) => setAck(e.target.checked)} className="h-4 w-4 accent-[#C2412D]" />{t('أؤكد رغبتي في إنهاء الخدمة', 'I confirm this termination')}</label>
         </div>} />
     </div>
   );

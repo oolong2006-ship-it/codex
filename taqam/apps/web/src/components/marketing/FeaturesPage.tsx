@@ -70,7 +70,7 @@ const SAMPLES: Record<string, { title: T2; rows: { label: T2; value: T2; tone: T
   ] },
 };
 const toneCls: Record<Tone, string> = {
-  ok: 'bg-success-50 text-success', warn: 'bg-warning-50 text-[#9a7400]', bad: 'bg-danger-50 text-danger', info: 'bg-info-50 text-info',
+  ok: 'bg-success-50 text-success', warn: 'bg-warning-50 text-warning', bad: 'bg-danger-50 text-danger', info: 'bg-info-50 text-info',
 };
 
 export function FeaturesPage() {

@@ -60,7 +60,7 @@ export function SeatBar({ used, max, className }: { used: number; max: number | 
 export function DaysLeft({ days }: { days: number | null | undefined }) {
   const { t } = useLang();
   if (days === null || days === undefined) return <span className="text-ink-soft">—</span>;
-  const cls = days < 0 ? 'text-danger' : days <= 3 ? 'text-danger font-semibold' : days <= 14 ? 'text-[#9a7400] font-medium' : 'text-ink';
+  const cls = days < 0 ? 'text-danger' : days <= 3 ? 'text-danger font-semibold' : days <= 14 ? 'text-warning font-medium' : 'text-ink';
   return <span className={clsx('num text-sm', cls)}>{days < 0 ? t('منتهي', 'Ended') : t(`${days} يوم`, `${days}d`)}</span>;
 }
 

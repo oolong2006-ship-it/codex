@@ -1,14 +1,15 @@
 import clsx from 'clsx';
+import { LogoMark } from './LogoMark';
 
-export function Logo({ className, light }: { className?: string; light?: boolean }) {
+/** Bilingual lockup: mark + «طاقم» (Alexandria 800) with optional latin «taqam». */
+export function Logo({ className, light, showLatin = false }: { className?: string; light?: boolean; showLatin?: boolean }) {
   return (
-    <span className={clsx('inline-flex items-center gap-2 font-bold', light ? 'text-white' : 'text-primary', className)}>
-      <svg viewBox="0 0 64 64" className="h-8 w-8" aria-hidden>
-        <rect width="64" height="64" rx="16" fill={light ? '#FAF6EF' : '#0F3D3E'} />
-        <path d="M18 22h28v6H35v20h-6V28H18z" fill={light ? '#0F3D3E' : '#FAF6EF'} />
-        <circle cx="46" cy="44" r="5" fill="#F2A541" />
-      </svg>
-      <span className="text-xl">طاقم</span>
+    <span className={clsx('inline-flex items-center gap-2.5', className)}>
+      <LogoMark size={34} tone="oasis" />
+      <span className="flex flex-col leading-none">
+        <span className={clsx('font-display text-[22px] font-extrabold', light ? 'text-white' : 'text-night')}>طاقم</span>
+        {showLatin && <span dir="ltr" className={clsx('mt-0.5 text-end font-display text-xs font-medium tracking-tight', light ? 'text-accent' : 'text-primary')}>taqam</span>}
+      </span>
     </span>
   );
 }

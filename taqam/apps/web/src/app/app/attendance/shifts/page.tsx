@@ -11,7 +11,7 @@ import { api } from '@/lib/api';
 import { useLang } from '@/lib/i18n';
 import type { Shift } from '@/lib/types';
 
-const COLORS = ['#1F7A7C', '#F2A541', '#3B7EA1', '#2E8B57', '#C8553D', '#6B5B95', '#0F3D3E', '#D98B23'];
+const COLORS = ['#0B7A6B', '#FFB547', '#2F6F9F', '#1B7F53', '#C2412D', '#6B5B95', '#0C1F24', '#E89A22'];
 
 function shiftHours(s: { startTime: string; endTime: string; breakMinutes: number }) {
   const [sh, sm] = s.startTime.split(':').map(Number); const [eh, em] = s.endTime.split(':').map(Number);

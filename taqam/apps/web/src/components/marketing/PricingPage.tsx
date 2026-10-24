@@ -37,7 +37,7 @@ export function PricingPage() {
                   className={clsx('relative rounded-full px-5 py-2 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent',
                     annual === o.v ? 'bg-primary text-white' : 'text-ink-muted hover:text-primary')}>
                   {o.l}
-                  {o.v && <span dir="ltr" className={clsx('ms-2 rounded-full px-2 py-0.5 text-[11px]', annual ? 'bg-accent text-primary' : 'bg-accent-100 text-accent-600')}>−15%</span>}
+                  {o.v && <span dir="ltr" className={clsx('ms-2 rounded-full px-2 py-0.5 text-[11px]', annual ? 'bg-accent text-night' : 'bg-accent-100 text-accent-600')}>−15%</span>}
                 </button>
               ))}
             </div>
@@ -48,7 +48,7 @@ export function PricingPage() {
               <div key={tier.id} className={clsx('relative flex flex-col rounded-2xl border p-6 sm:p-8',
                 tier.highlight ? 'border-primary bg-primary text-white shadow-lift lg:-my-3 lg:py-11' : 'border-line bg-white shadow-soft')}>
                 {tier.highlight && (
-                  <span className="absolute -top-3 rounded-full bg-accent px-3 py-1 text-xs font-bold text-primary ltr:right-6 rtl:left-6">{t('الأكثر اختياراً', 'Most popular')}</span>
+                  <span className="absolute -top-3 rounded-full bg-accent px-3 py-1 text-xs font-bold text-night ltr:right-6 rtl:left-6">{t('الأكثر اختياراً', 'Most popular')}</span>
                 )}
                 <h2 className={clsx('text-xl font-bold', tier.highlight ? 'text-white' : 'text-ink')}>{tt(tier.name)}</h2>
                 <p className={clsx('mt-1 text-sm', tier.highlight ? 'text-white/70' : 'text-ink-muted')}>{tt(tier.desc)}</p>
@@ -101,7 +101,7 @@ export function PricingPage() {
               </label>
               <input id="headcount" type="range" min={10} max={1000} step={10} value={headcount}
                 onChange={(e) => setHeadcount(Number(e.target.value))}
-                className="mt-3 w-full accent-[#0F3D3E]" />
+                className="mt-3 w-full accent-[#0C1F24]" />
               <div className="num mt-1 flex justify-between text-xs text-ink-soft"><span>10</span><span>1000</span></div>
             </div>
             <div className="grid gap-3 sm:grid-cols-2">

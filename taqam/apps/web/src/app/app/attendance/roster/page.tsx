@@ -86,7 +86,7 @@ export default function RosterPage() {
         actions={<>
           <Button variant="secondary" onClick={copyPrev} disabled={!branchId}><Copy className="h-4 w-4" />{t('نسخ الأسبوع السابق', 'Copy last week')}</Button>
           {dirty > 0 && <Button variant="ghost" onClick={() => setChanges({})}><Undo2 className="h-4 w-4" />{t('تراجع', 'Discard')}</Button>}
-          <Button onClick={save} loading={busy === 'save'} disabled={!dirty}><Save className="h-4 w-4" />{t('حفظ', 'Save')}{dirty > 0 && <span className="num rounded-full bg-accent px-1.5 text-xs text-primary">{dirty}</span>}</Button>
+          <Button onClick={save} loading={busy === 'save'} disabled={!dirty}><Save className="h-4 w-4" />{t('حفظ', 'Save')}{dirty > 0 && <span className="num rounded-full bg-accent px-1.5 text-xs text-night">{dirty}</span>}</Button>
         </>} />
       <SubNav items={ATTENDANCE_NAV} />
       <Card>
@@ -143,7 +143,7 @@ export default function RosterPage() {
                           <td key={d} className="px-1 py-1.5">
                             <select value={v ?? ''} onChange={(ev) => setCell(e.id, d, ev.target.value || null)}
                               className={`h-9 w-full cursor-pointer rounded-lg border px-1.5 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-primary-100 ${changed ? 'ring-2 ring-accent' : ''}`}
-                              style={s ? { background: `${s.color}22`, borderColor: `${s.color}88`, color: '#1B2421' } : { background: '#FAF6EF', borderColor: '#E7E1D6', color: '#8A9893' }}>
+                              style={s ? { background: `${s.color}22`, borderColor: `${s.color}88`, color: '#0C1F24' } : { background: '#F4F7F5', borderColor: '#DCE4E0', color: '#5E6E69' }}>
                               <option value="">{t('راحة', 'Off')}</option>
                               {shifts.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}
                             </select>

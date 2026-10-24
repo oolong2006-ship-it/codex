@@ -43,7 +43,7 @@ export default function AdminOverviewPage() {
             <Card className="overflow-hidden border-warning/40">
               <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line bg-warning-50/60 px-5 py-3.5">
                 <div className="flex items-center gap-2">
-                  <BellRing className="h-5 w-5 text-[#9a7400]" />
+                  <BellRing className="h-5 w-5 text-warning" />
                   <h2 className="text-base font-bold text-ink">{t('تحتاج إجراء', 'Needs action')}</h2>
                   <span className="num rounded-full bg-warning px-2 text-xs font-bold text-[#0C1F24]">{d.companies.pending + d.expiringSoon.length + d.newLeads}</span>
                 </div>
@@ -135,7 +135,7 @@ export default function AdminOverviewPage() {
                         <CartesianGrid stroke={CHART.grid} vertical={false} />
                         <XAxis dataKey="period" reversed={cd.reversed} {...axisProps} minTickGap={4} tickFormatter={(p: string) => period(p, lang).split(' ')[0].slice(0, lang === 'ar' ? 6 : 3)} />
                         <YAxis orientation={cd.yOrientation} {...axisProps} width={28} allowDecimals={false} />
-                        <Tooltip cursor={{ fill: '#F1E9DB80' }} content={<ChartTooltip labelFormatter={(l) => period(l, lang)} />} />
+                        <Tooltip cursor={{ fill: '#E8EEEB80' }} content={<ChartTooltip labelFormatter={(l) => period(l, lang)} />} />
                         <Bar dataKey="count" name={t('منشآت جديدة', 'New companies')} fill={CHART.teal} radius={[6, 6, 0, 0]} maxBarSize={26} />
                       </BarChart>
                     </ResponsiveContainer>

@@ -188,7 +188,7 @@ function HowItWorks() {
             <li key={s.title} className="relative rounded-2xl border border-line bg-white p-6 text-center shadow-soft">
               <span className="relative mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-primary text-white shadow-lift">
                 <s.icon className="h-7 w-7 text-accent" aria-hidden />
-                <span className="num absolute -top-2 flex h-7 w-7 items-center justify-center rounded-full bg-accent text-sm font-bold text-primary ltr:-right-2 rtl:-left-2">{i + 1}</span>
+                <span className="num absolute -top-2 flex h-7 w-7 items-center justify-center rounded-full bg-accent text-sm font-bold text-night ltr:-right-2 rtl:-left-2">{i + 1}</span>
               </span>
               <h3 className="mt-5 text-lg font-semibold text-ink">{s.title}</h3>
               <p className="mt-2 text-sm leading-7 text-ink-muted">{s.body}</p>
@@ -323,7 +323,7 @@ function PricingTeaser() {
           {TIERS.map((tier) => (
             <div key={tier.id} className={clsx('relative flex flex-col rounded-2xl border p-6',
               tier.highlight ? 'border-primary bg-primary text-white shadow-lift' : 'border-line bg-sand/40')}>
-              {tier.highlight && <span className="absolute -top-3 rounded-full bg-accent px-3 py-1 text-xs font-bold text-primary ltr:right-6 rtl:left-6">{t('الأكثر اختياراً', 'Most popular')}</span>}
+              {tier.highlight && <span className="absolute -top-3 rounded-full bg-accent px-3 py-1 text-xs font-bold text-night ltr:right-6 rtl:left-6">{t('الأكثر اختياراً', 'Most popular')}</span>}
               <h3 className={clsx('text-lg font-semibold', tier.highlight ? 'text-white' : 'text-ink')}>{tt(tier.name)}</h3>
               <p className={clsx('mt-1 text-sm', tier.highlight ? 'text-white/70' : 'text-ink-muted')}>{tt(tier.desc)}</p>
               <p className="mt-5">

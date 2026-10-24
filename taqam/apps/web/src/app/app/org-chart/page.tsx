@@ -58,7 +58,7 @@ export default function OrgChartPage() {
       <Card className="overflow-hidden">
         <Async loading={loading} error={error} onRetry={reload} hasData={!!data}>
           {!roots.length ? <EmptyState /> : (
-            <div ref={scroller} dir="ltr" className="overflow-auto bg-[radial-gradient(#E7E1D6_1px,transparent_1px)] p-6 [background-size:18px_18px]" style={{ minHeight: 420 }}>
+            <div ref={scroller} dir="ltr" className="overflow-auto bg-[radial-gradient(#DCE4E0_1px,transparent_1px)] p-6 [background-size:18px_18px]" style={{ minHeight: 420 }}>
               <div className="org-tree mx-auto flex w-max min-w-full justify-center" style={{ zoom }}>
                 <ul className="flex gap-6">
                   {roots.map((r) => <Node key={r.id} node={r} collapsed={collapsed} toggle={toggle} match={match} />)}
@@ -70,15 +70,15 @@ export default function OrgChartPage() {
       </Card>
       <style>{`
         .org-tree ul ul { display:flex; justify-content:center; padding-top:20px; position:relative; }
-        .org-tree ul ul::before { content:''; position:absolute; top:0; left:50%; height:20px; border-left:2px solid #E6DAC5; }
+        .org-tree ul ul::before { content:''; position:absolute; top:0; left:50%; height:20px; border-left:2px solid #E9E1D2; }
         .org-tree li { list-style:none; position:relative; padding:20px 6px 0; display:flex; flex-direction:column; align-items:center; }
         .org-tree > ul > li { padding-top:0; }
-        .org-tree li::before, .org-tree li::after { content:''; position:absolute; top:0; height:20px; width:50%; border-top:2px solid #E6DAC5; }
-        .org-tree li::before { right:50%; } .org-tree li::after { left:50%; border-left:2px solid #E6DAC5; }
+        .org-tree li::before, .org-tree li::after { content:''; position:absolute; top:0; height:20px; width:50%; border-top:2px solid #E9E1D2; }
+        .org-tree li::before { right:50%; } .org-tree li::after { left:50%; border-left:2px solid #E9E1D2; }
         .org-tree li:only-child::before, .org-tree li:only-child::after { display:none; }
         .org-tree li:only-child { padding-top:0; }
         .org-tree li:first-child::before, .org-tree li:last-child::after { border:0 none; }
-        .org-tree li:last-child::before { border-right:2px solid #E6DAC5; border-radius:0 8px 0 0; }
+        .org-tree li:last-child::before { border-right:2px solid #E9E1D2; border-radius:0 8px 0 0; }
         .org-tree li:first-child::after { border-radius:8px 0 0 0; }
         .org-tree > ul > li::before, .org-tree > ul > li::after { display:none; }
       `}</style>

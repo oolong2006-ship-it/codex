@@ -15,7 +15,7 @@ import { asArray, type AttendanceRecord } from '@/components/ess/types';
 // status → [dot/bg colour, soft bg, text]
 const STATUS_STYLE: Record<string, { dot: string; soft: string; text: string }> = {
   PRESENT: { dot: 'bg-success', soft: 'bg-success-50', text: 'text-success' },
-  LATE: { dot: 'bg-warning', soft: 'bg-warning-50', text: 'text-[#9a7400]' },
+  LATE: { dot: 'bg-warning', soft: 'bg-warning-50', text: 'text-warning' },
   ABSENT: { dot: 'bg-danger', soft: 'bg-danger-50', text: 'text-danger' },
   ON_LEAVE: { dot: 'bg-info', soft: 'bg-info-50', text: 'text-info' },
   INCOMPLETE: { dot: 'bg-accent', soft: 'bg-accent-50', text: 'text-accent-600' },
@@ -55,7 +55,7 @@ export default function MyAttendancePage() {
 
   const chips = [
     { label: t('حضور', 'Present'), value: summary.present, cls: 'bg-success-50 text-success' },
-    { label: t('تأخير', 'Late'), value: summary.late, cls: 'bg-warning-50 text-[#9a7400]' },
+    { label: t('تأخير', 'Late'), value: summary.late, cls: 'bg-warning-50 text-warning' },
     { label: t('غياب', 'Absent'), value: summary.absent, cls: 'bg-danger-50 text-danger' },
     { label: t('إضافي (س)', 'Overtime (h)'), value: minutesToHours(summary.ot), cls: 'bg-info-50 text-info' },
   ];
@@ -140,7 +140,7 @@ function DayRow({ r }: { r: AttendanceRecord }) {
           {fmtTime(r.checkIn)} → {fmtTime(r.checkOut)}
         </p>
         <div className="mt-1 flex flex-wrap gap-2 text-[11px]">
-          {r.lateMinutes > 0 && <span className="rounded-full bg-warning-50 px-2 py-0.5 text-[#9a7400]">{t(`تأخير ${r.lateMinutes} د`, `Late ${r.lateMinutes}m`)}</span>}
+          {r.lateMinutes > 0 && <span className="rounded-full bg-warning-50 px-2 py-0.5 text-warning">{t(`تأخير ${r.lateMinutes} د`, `Late ${r.lateMinutes}m`)}</span>}
           {r.overtimeMinutes > 0 && <span className="rounded-full bg-info-50 px-2 py-0.5 text-info">{t(`إضافي ${minutesToHours(r.overtimeMinutes)}`, `OT ${minutesToHours(r.overtimeMinutes)}`)}</span>}
         </div>
       </div>

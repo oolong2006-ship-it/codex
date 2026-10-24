@@ -3,16 +3,16 @@ import { useLang } from '@/lib/i18n';
 import { num } from '@/lib/format';
 
 export const CHART = {
-  primary: '#0F3D3E',
-  teal: '#1F7A7C',
-  tealLight: '#7FB7B5',
-  accent: '#F2A541',
-  success: '#2E8B57',
-  warning: '#E0A800',
-  danger: '#C8553D',
-  info: '#3B7EA1',
+  primary: '#0C1F24',
+  teal: '#0B7A6B',
+  tealLight: '#8FD3C4',
+  accent: '#FFB547',
+  success: '#1B7F53',
+  warning: '#D99A1E',
+  danger: '#C2412D',
+  info: '#2F6F9F',
   grid: '#EFE8DC',
-  axis: '#8A9893',
+  axis: '#5E6E69',
 };
 export const SERIES = [CHART.primary, CHART.accent, CHART.teal, CHART.info, CHART.success, CHART.danger, '#6B5B95', CHART.tealLight];
 

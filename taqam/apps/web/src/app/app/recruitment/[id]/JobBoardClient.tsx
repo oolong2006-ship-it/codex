@@ -16,7 +16,7 @@ import { CANDIDATE_STAGE, label } from '@/lib/labels';
 import type { Candidate, CandidateStage, Job } from '@/lib/types';
 
 const STAGES: CandidateStage[] = ['APPLIED', 'SCREENING', 'INTERVIEW', 'OFFER', 'HIRED', 'REJECTED'];
-const STAGE_COLOR: Record<CandidateStage, string> = { APPLIED: '#8A9893', SCREENING: '#3B7EA1', INTERVIEW: '#E0A800', OFFER: '#F2A541', HIRED: '#2E8B57', REJECTED: '#C8553D' };
+const STAGE_COLOR: Record<CandidateStage, string> = { APPLIED: '#5E6E69', SCREENING: '#2F6F9F', INTERVIEW: '#D99A1E', OFFER: '#FFB547', HIRED: '#1B7F53', REJECTED: '#C2412D' };
 
 export default function JobBoardPage() {
   const { id } = useParams<{ id: string }>();

@@ -143,7 +143,7 @@ export function EosbCalculator() {
                       <span className="rounded-full bg-white/10 px-3 py-1 text-xs ring-1 ring-white/15">
                         {t('مدة الخدمة', 'Service')}: <b className="num">{result.service.years}</b> {t('سنة', 'y')} · <b className="num">{result.service.months}</b> {t('شهر', 'm')} · <b className="num">{result.service.days}</b> {t('يوم', 'd')}
                       </span>
-                      <span className={clsx('rounded-full px-3 py-1 text-xs font-semibold', result.factor === 0 ? 'bg-danger text-white' : result.factor < 1 ? 'bg-accent text-primary' : 'bg-success text-white')}>
+                      <span className={clsx('rounded-full px-3 py-1 text-xs font-semibold', result.factor === 0 ? 'bg-danger text-white' : result.factor < 1 ? 'bg-accent text-night' : 'bg-success text-white')}>
                         {lang === 'ar' ? factorLabel[0] : factorLabel[1]}
                       </span>
                     </div>

@@ -78,7 +78,7 @@ export default function ReportsPage() {
                         <CartesianGrid stroke={CHART.grid} vertical={false} />
                         <XAxis dataKey="branchName" reversed={cd.reversed} {...axisProps} interval={0} />
                         <YAxis orientation={cd.yOrientation} {...axisProps} width={32} allowDecimals={false} />
-                        <Tooltip cursor={{ fill: '#F1E9DB80' }} content={<ChartTooltip />} />
+                        <Tooltip cursor={{ fill: '#E8EEEB80' }} content={<ChartTooltip />} />
                         <Bar dataKey="count" name={t('الموظفون', 'Employees')} fill={CHART.primary} radius={[6, 6, 0, 0]} maxBarSize={48} />
                         {hc.data.byBranch.some((b) => b.saudis !== undefined) && <Bar dataKey="saudis" name={t('السعوديون', 'Saudis')} fill={CHART.accent} radius={[6, 6, 0, 0]} maxBarSize={48} />}
                       </BarChart>
@@ -153,7 +153,7 @@ export default function ReportsPage() {
                         <CartesianGrid stroke={CHART.grid} vertical={false} />
                         <XAxis dataKey="period" reversed={cd.reversed} {...axisProps} tickFormatter={(p: string) => period(p, lang)} />
                         <YAxis orientation={cd.yOrientation} {...axisProps} width={48} tickFormatter={compact} />
-                        <Tooltip cursor={{ fill: '#F1E9DB80' }} content={<ChartTooltip labelFormatter={(l) => period(l, lang)} valueFormatter={(v) => money(v, { decimals: 0 })} />} />
+                        <Tooltip cursor={{ fill: '#E8EEEB80' }} content={<ChartTooltip labelFormatter={(l) => period(l, lang)} valueFormatter={(v) => money(v, { decimals: 0 })} />} />
                         <Bar dataKey="net" stackId="a" name={t('صافي الرواتب', 'Net')} fill={CHART.primary} maxBarSize={44} />
                         <Bar dataKey="deductions" stackId="a" name={t('استقطاعات', 'Deductions')} fill={CHART.tealLight} maxBarSize={44} />
                         <Bar dataKey="gosiEmployer" stackId="a" name={t('تأمينات المنشأة', 'Employer GOSI')} fill={CHART.accent} radius={[6, 6, 0, 0]} maxBarSize={44} />
@@ -183,7 +183,7 @@ export default function ReportsPage() {
                       <CartesianGrid stroke={CHART.grid} vertical={false} />
                       <XAxis dataKey="branchName" reversed={cd.reversed} {...axisProps} interval={0} />
                       <YAxis orientation={cd.yOrientation} {...axisProps} width={36} />
-                      <Tooltip cursor={{ fill: '#F1E9DB80' }} content={<ChartTooltip />} />
+                      <Tooltip cursor={{ fill: '#E8EEEB80' }} content={<ChartTooltip />} />
                       <Bar dataKey="presentDays" name={t('حضور', 'Present')} fill={CHART.teal} radius={[4, 4, 0, 0]} maxBarSize={28} />
                       <Bar dataKey="lateDays" name={t('تأخير', 'Late')} fill={CHART.accent} radius={[4, 4, 0, 0]} maxBarSize={28} />
                       <Bar dataKey="absentDays" name={t('غياب', 'Absent')} fill={CHART.danger} radius={[4, 4, 0, 0]} maxBarSize={28} />

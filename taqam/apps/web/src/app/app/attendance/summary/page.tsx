@@ -45,7 +45,7 @@ export default function AttendanceSummaryPage() {
   const columns: Column<AttendanceSummaryRow>[] = [
     { key: 'name', header: h('employeeName', t('الموظف', 'Employee')), render: (r) => <Link href={`/app/employees/${r.employeeId}?tab=attendance`} className="font-medium text-ink hover:text-primary-500">{r.employeeName}</Link> },
     { key: 'p', header: h('presentDays', t('حضور', 'Present')), render: (r) => <span className="num text-success">{num(r.presentDays)}</span> },
-    { key: 'l', header: h('lateDays', t('تأخير', 'Late')), render: (r) => <span className="num text-[#9a7400]">{num(r.lateDays)}</span> },
+    { key: 'l', header: h('lateDays', t('تأخير', 'Late')), render: (r) => <span className="num text-warning">{num(r.lateDays)}</span> },
     { key: 'a', header: h('absentDays', t('غياب', 'Absent')), render: (r) => <span className={`num ${r.absentDays ? 'font-semibold text-danger' : ''}`}>{num(r.absentDays)}</span> },
     { key: 'lm', header: h('lateMinutes', t('دقائق التأخير', 'Late min')), render: (r) => <span className="num">{num(r.lateMinutes)}</span> },
     { key: 'ot', header: h('overtimeMinutes', t('الإضافي', 'Overtime')), render: (r) => <span className="num text-info">{minutesToHours(r.overtimeMinutes)}</span> },

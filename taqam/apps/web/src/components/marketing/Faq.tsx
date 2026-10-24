@@ -21,7 +21,7 @@ export function Faq({ items, className }: { items: { q: T2; a: T2 }[]; className
                 className="flex w-full items-center justify-between gap-4 px-5 py-4 text-start text-base font-semibold text-ink transition-colors hover:text-primary focus-visible:bg-primary-50 focus-visible:outline-none sm:px-6 sm:py-5">
                 <span>{tt(it.q)}</span>
                 <span className={clsx('flex h-8 w-8 shrink-0 items-center justify-center rounded-full border transition-all',
-                  isOpen ? 'rotate-45 border-accent bg-accent text-primary' : 'border-line text-primary-500')}>
+                  isOpen ? 'rotate-45 border-accent bg-accent text-night' : 'border-line text-primary-500')}>
                   <Plus className="h-4 w-4" aria-hidden />
                 </span>
               </button>

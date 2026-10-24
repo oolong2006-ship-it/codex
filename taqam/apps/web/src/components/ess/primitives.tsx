@@ -54,7 +54,7 @@ export function ListSkeleton({ rows = 4 }: { rows?: number }) {
 }
 
 /** Circular progress ring. value/max clamped. */
-export function Ring({ value, max, size = 76, stroke = 8, color = '#F2A541', track = '#F1E9DB', children }:
+export function Ring({ value, max, size = 76, stroke = 8, color = '#FFB547', track = '#E8EEEB', children }:
   { value: number; max: number; size?: number; stroke?: number; color?: string; track?: string; children?: React.ReactNode }) {
   const r = (size - stroke) / 2;
   const c = 2 * Math.PI * r;
@@ -136,7 +136,7 @@ export function MonthPicker({ value, onChange, max }: { value: string; onChange:
 export function IconTile({ icon, tone = 'primary', className }: { icon: React.ReactNode; tone?: 'primary' | 'accent' | 'success' | 'danger' | 'info' | 'warning' | 'neutral'; className?: string }) {
   const map = {
     primary: 'bg-primary-50 text-primary', accent: 'bg-accent-50 text-accent-600', success: 'bg-success-50 text-success',
-    danger: 'bg-danger-50 text-danger', info: 'bg-info-50 text-info', warning: 'bg-warning-50 text-[#9a7400]', neutral: 'bg-sand text-ink-muted',
+    danger: 'bg-danger-50 text-danger', info: 'bg-info-50 text-info', warning: 'bg-warning-50 text-warning', neutral: 'bg-sand text-ink-muted',
   }[tone];
   return <div className={clsx('grid h-11 w-11 shrink-0 place-items-center rounded-2xl', map, className)}>{icon}</div>;
 }

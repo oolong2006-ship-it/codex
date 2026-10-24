@@ -66,7 +66,7 @@ export function ProductMock({ className }: { className?: string }) {
             <div className="rounded-xl bg-primary p-3 text-white">
               <div className="flex items-center justify-between">
                 <p className="text-[11px] text-white/70">{t('مسير سبتمبر', 'September payroll')}</p>
-                <span className="rounded-full bg-accent px-2 py-0.5 text-[10px] font-semibold text-primary">{t('معتمد', 'Approved')}</span>
+                <span className="rounded-full bg-accent px-2 py-0.5 text-[10px] font-semibold text-night">{t('معتمد', 'Approved')}</span>
               </div>
               <p className="num mt-1 text-lg font-bold">412,850 <span className="text-xs font-medium text-white/70">{t('ر.س', 'SAR')}</span></p>
               <div className="mt-2 flex h-10 items-end gap-1">
@@ -76,7 +76,7 @@ export function ProductMock({ className }: { className?: string }) {
               </div>
             </div>
             <div className="flex items-center gap-3 rounded-xl border border-line p-3">
-              <div className="relative h-12 w-12 shrink-0 rounded-full" style={{ background: 'conic-gradient(#2E8B57 0 34%, #F1E9DB 34% 100%)' }}>
+              <div className="relative h-12 w-12 shrink-0 rounded-full" style={{ background: 'conic-gradient(#1B7F53 0 34%, #E8EEEB 34% 100%)' }}>
                 <div className="absolute inset-1.5 flex items-center justify-center rounded-full bg-white">
                   <span className="num text-[10px] font-bold text-ink">34%</span>
                 </div>

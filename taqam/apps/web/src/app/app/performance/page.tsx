@@ -174,7 +174,7 @@ function ReviewModal({ review, onClose, onSaved }: { review: PerformanceReview; 
             <div className="mt-2 flex flex-wrap items-center gap-1.5">
               {[1, 2, 3, 4, 5].map((s) => (
                 <button key={s} type="button" onClick={() => upd(i, { score: s })} title={SCORE_LABEL[s - 1][lang === 'ar' ? 0 : 1]}
-                  className={clsx('num h-9 w-9 rounded-lg border text-sm font-semibold transition', g.score === s ? 'border-accent bg-accent text-primary' : 'border-line bg-white text-ink-muted hover:border-accent')}>{s}</button>
+                  className={clsx('num h-9 w-9 rounded-lg border text-sm font-semibold transition', g.score === s ? 'border-accent bg-accent text-night' : 'border-line bg-white text-ink-muted hover:border-accent')}>{s}</button>
               ))}
               {g.score && <span className="ms-1 text-xs text-ink-muted">{SCORE_LABEL[g.score - 1][lang === 'ar' ? 0 : 1]}</span>}
             </div>

@@ -10,3 +10,4 @@ export * from './Stat';
 export * from './Tabs';
 export * from './PageHeader';
 export * from './Logo';
+export * from './LogoMark';

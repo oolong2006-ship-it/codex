@@ -119,7 +119,7 @@ export function EmployeeFormModal({ open, onClose, employee, onSaved, initialSec
         {tabs.map((x, i) => (
           <button key={x.v} type="button" onClick={() => setSection(x.v)}
             className={`flex flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-medium transition-colors ${section === x.v ? 'bg-white text-primary shadow-soft' : 'text-ink-muted hover:text-primary'}`}>
-            <span className={`num flex h-5 w-5 items-center justify-center rounded-full text-[11px] ${section === x.v ? 'bg-accent text-primary' : 'bg-sand-300 text-ink-muted'}`}>{i + 1}</span>{x.l}
+            <span className={`num flex h-5 w-5 items-center justify-center rounded-full text-[11px] ${section === x.v ? 'bg-accent text-night' : 'bg-sand-300 text-ink-muted'}`}>{i + 1}</span>{x.l}
           </button>
         ))}
       </div>

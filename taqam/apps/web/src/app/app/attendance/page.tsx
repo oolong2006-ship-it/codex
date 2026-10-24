@@ -43,7 +43,7 @@ export default function AttendancePage() {
     { key: 'in', header: t('الدخول', 'In'), render: (r) => <span className="num">{time(r.checkIn)}</span> },
     { key: 'out', header: t('الخروج', 'Out'), render: (r) => <span className="num">{time(r.checkOut)}</span> },
     { key: 'worked', header: t('ساعات العمل', 'Worked'), render: (r) => <span className="num">{r.workedMinutes ? minutesToHours(r.workedMinutes) : '—'}</span> },
-    { key: 'late', header: t('التأخير', 'Late'), render: (r) => r.lateMinutes ? <span className="num text-[#9a7400]">{num(r.lateMinutes)} {t('د', 'm')}</span> : <span className="text-ink-soft">—</span> },
+    { key: 'late', header: t('التأخير', 'Late'), render: (r) => r.lateMinutes ? <span className="num text-warning">{num(r.lateMinutes)} {t('د', 'm')}</span> : <span className="text-ink-soft">—</span> },
     { key: 'ot', header: t('إضافي', 'OT'), render: (r) => r.overtimeMinutes ? <span className="num text-info">{minutesToHours(r.overtimeMinutes)}</span> : <span className="text-ink-soft">—</span> },
     { key: 'status', header: t('الحالة', 'Status'), render: (r) => <StatusBadge map={ATTENDANCE_STATUS} value={r.status} /> },
     { key: 'act', header: '', className: 'text-end', render: (r) => (

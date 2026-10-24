@@ -26,7 +26,7 @@ const ESS_CSS = `
 .ess-sheet { animation: ess-up .28s cubic-bezier(.2,.8,.2,1); }
 @keyframes ess-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
 .ess-pulse { animation: ess-pulse 2.4s ease-out infinite; }
-@keyframes ess-pulse { 0% { box-shadow: 0 0 0 0 rgba(242,165,65,.45); } 70% { box-shadow: 0 0 0 22px rgba(242,165,65,0); } 100% { box-shadow: 0 0 0 0 rgba(242,165,65,0); } }
+@keyframes ess-pulse { 0% { box-shadow: 0 0 0 0 rgba(255,181,71,.45); } 70% { box-shadow: 0 0 0 22px rgba(255,181,71,0); } 100% { box-shadow: 0 0 0 0 rgba(255,181,71,0); } }
 .ess-scroll-x { scrollbar-width: none; } .ess-scroll-x::-webkit-scrollbar { display: none; }
 @media print { html, body { background: #fff !important; } @page { size: A4; margin: 14mm; } }
 `;
@@ -109,7 +109,7 @@ export function EssShell({ children }: { children: React.ReactNode }) {
           <Link href="/me/notifications" className="relative grid h-11 w-11 place-items-center rounded-2xl bg-white/10 transition active:scale-95" aria-label={t('الإشعارات', 'Notifications')}>
             <Bell className="h-5 w-5" />
             {unread > 0 && (
-              <span className="num absolute -top-0.5 end-0 grid h-5 min-w-5 place-items-center rounded-full bg-accent px-1 text-[11px] font-bold text-primary ring-2 ring-primary">
+              <span className="num absolute -top-0.5 end-0 grid h-5 min-w-5 place-items-center rounded-full bg-accent px-1 text-[11px] font-bold text-night ring-2 ring-primary">
                 {unread > 9 ? '9+' : unread}
               </span>
             )}
@@ -147,7 +147,7 @@ export function EssShell({ children }: { children: React.ReactNode }) {
 function Frame({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-dvh bg-sand-200/70 print:bg-white">
-      <div className="relative mx-auto flex min-h-dvh w-full max-w-[440px] flex-col bg-sand shadow-[0_0_40px_rgba(15,61,62,0.08)] print:max-w-none print:bg-white print:shadow-none">
+      <div className="relative mx-auto flex min-h-dvh w-full max-w-[440px] flex-col bg-sand shadow-[0_0_40px_rgba(12,31,36,0.08)] print:max-w-none print:bg-white print:shadow-none">
         {children}
       </div>
     </div>

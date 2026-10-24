@@ -109,7 +109,7 @@ export default function LoginPage() {
 function CompanyBlockNotice({ code, message }: { code: CompanyBlock; message: string }) {
   const { t } = useLang();
   const cfg = {
-    COMPANY_PENDING: { icon: Hourglass, box: 'border-warning/40 bg-warning-50 text-[#9a7400]', title: t('حسابك قيد المراجعة', 'Account under review'), fallback: 'حساب منشأتك قيد المراجعة، وسيتم تفعيله قريباً' },
+    COMPANY_PENDING: { icon: Hourglass, box: 'border-warning/40 bg-warning-50 text-warning', title: t('حسابك قيد المراجعة', 'Account under review'), fallback: 'حساب منشأتك قيد المراجعة، وسيتم تفعيله قريباً' },
     COMPANY_SUSPENDED: { icon: Ban, box: 'border-danger/30 bg-danger-50 text-danger', title: t('الحساب موقوف', 'Account suspended'), fallback: 'تم إيقاف حساب منشأتك. تواصل مع الدعم' },
     COMPANY_EXPIRED: { icon: CalendarX2, box: 'border-line bg-sand-200 text-ink', title: t('انتهى الاشتراك', 'Subscription ended'), fallback: 'انتهى اشتراك منشأتك. تواصل معنا للتجديد' },
   }[code];

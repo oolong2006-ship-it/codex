@@ -269,7 +269,7 @@ export function ResetPasswordModal({ companyId, user, onClose }: { companyId: st
             <code dir="ltr" className="flex-1 select-all rounded-xl border border-line bg-sand px-3 py-2 text-center font-mono text-lg font-semibold tracking-wider text-ink">{temp}</code>
             <CopyButton value={temp} />
           </div>
-          <p className="flex items-start gap-2 rounded-xl bg-warning-50 px-3 py-2 text-xs text-[#9a7400]">
+          <p className="flex items-start gap-2 rounded-xl bg-warning-50 px-3 py-2 text-xs text-warning">
             <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
             {t('تظهر مرة واحدة فقط — انسخها وأرسلها للمستخدم بطريقة آمنة.', 'Shown only once — copy it and share it securely with the user.')}
           </p>

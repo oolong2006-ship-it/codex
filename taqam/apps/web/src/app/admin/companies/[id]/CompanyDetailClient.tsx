@@ -106,7 +106,7 @@ export default function CompanyDetailClient() {
                 </div>
               )}
               {c.status === 'PENDING' && (
-                <div className="mt-4 rounded-xl border border-warning/40 bg-warning-50 px-3 py-2.5 text-sm text-[#9a7400]">
+                <div className="mt-4 rounded-xl border border-warning/40 bg-warning-50 px-3 py-2.5 text-sm text-warning">
                   {t('هذه المنشأة بانتظار موافقتك — لا يمكن لمستخدميها الدخول حتى التفعيل.', 'This company awaits your approval — its users cannot sign in until activated.')}
                 </div>
               )}
