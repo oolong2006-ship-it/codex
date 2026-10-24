@@ -67,7 +67,7 @@ export function EssShell({ children }: { children: React.ReactNode }) {
     return (
       <Frame>
         <style>{ESS_CSS}</style>
-        <div className="flex min-h-dvh flex-col items-center justify-center gap-5 bg-primary">
+        <div className="flex min-h-dvh flex-col items-center justify-center gap-5 bg-night">
           <Logo light className="scale-125" />
           <Spinner className="h-6 w-6 text-accent" />
         </div>
@@ -97,7 +97,7 @@ export function EssShell({ children }: { children: React.ReactNode }) {
     <Frame>
       <style>{ESS_CSS}</style>
       {/* Top app bar */}
-      <header className="sticky top-0 z-30 bg-primary pt-[env(safe-area-inset-top)] text-white print:hidden">
+      <header className="sticky top-0 z-30 bg-night pt-[env(safe-area-inset-top)] text-white print:hidden">
         <div className="flex h-16 items-center gap-3 px-4">
           <Link href="/me/more" className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-white/10 text-lg font-bold text-accent" aria-label={t('حسابي', 'My account')}>
             {firstName.slice(0, 1)}

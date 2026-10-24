@@ -142,7 +142,7 @@ export function CheckInCard({ home, onChanged }: { home: MeHome; onChanged: () =
   const BtnIcon = btn.icon;
 
   return (
-    <div className="relative overflow-hidden rounded-[28px] bg-primary text-white shadow-lift">
+    <div className="relative overflow-hidden rounded-[28px] bg-night text-white shadow-lift">
       {/* subtle najdi pattern */}
       <div className="taqam-pattern pointer-events-none absolute inset-0 opacity-30" aria-hidden />
       <div className="relative px-5 pb-5 pt-5">

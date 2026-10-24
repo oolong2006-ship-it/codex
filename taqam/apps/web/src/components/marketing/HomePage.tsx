@@ -1,4 +1,5 @@
 'use client';
+import { NodeNetwork } from './NodeNetwork';
 import clsx from 'clsx';
 import Link from 'next/link';
 import {
@@ -37,7 +38,7 @@ function Hero() {
       <div aria-hidden className="pointer-events-none absolute inset-0">
         <div className="absolute -top-40 h-[520px] w-[520px] rounded-full bg-accent/15 blur-3xl ltr:-right-40 rtl:-left-40" />
         <div className="absolute -bottom-40 h-[420px] w-[420px] rounded-full bg-primary-500/10 blur-3xl ltr:-left-32 rtl:-right-32" />
-        <div className="taqam-pattern absolute inset-0 opacity-40 [mask-image:linear-gradient(to_bottom,black,transparent_70%)]" />
+        <NodeNetwork className="absolute inset-0 h-full w-full opacity-70 [mask-image:linear-gradient(to_bottom,black,transparent_80%)]" />
       </div>
       <Container className="relative grid items-center gap-14 pb-20 pt-12 sm:pt-16 lg:grid-cols-[1.05fr_1fr] lg:gap-12 lg:pb-28 lg:pt-20">
         <div>

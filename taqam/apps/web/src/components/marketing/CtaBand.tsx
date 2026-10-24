@@ -1,5 +1,6 @@
 'use client';
 import { ButtonLink } from '@/components/ui';
+import { NodeNetwork } from './NodeNetwork';
 import { ArrowForward, Container, GlassLink, StarMotif, useT2 } from './primitives';
 
 export function CtaBand({ title, subtitle }: { title?: string; subtitle?: string }) {
@@ -7,8 +8,8 @@ export function CtaBand({ title, subtitle }: { title?: string; subtitle?: string
   return (
     <section className="py-16 sm:py-20">
       <Container>
-        <div className="relative overflow-hidden rounded-[28px] bg-primary px-6 py-12 text-center text-white shadow-lift sm:px-12 sm:py-16">
-          <div aria-hidden className="taqam-pattern absolute inset-0" />
+        <div className="relative overflow-hidden rounded-[28px] bg-night px-6 py-12 text-center text-white shadow-lift sm:px-12 sm:py-16">
+          <NodeNetwork className="absolute inset-0 h-full w-full opacity-80" line="143,211,196" dot="214,239,234" density={7000} link={110} seed={3} />
           <StarMotif className="pointer-events-none absolute -top-20 h-64 w-64 text-accent/20 ltr:-left-20 rtl:-right-20" />
           <StarMotif className="pointer-events-none absolute -bottom-24 h-72 w-72 text-white/[0.07] ltr:-right-16 rtl:-left-16" />
           <div className="relative mx-auto max-w-2xl">
