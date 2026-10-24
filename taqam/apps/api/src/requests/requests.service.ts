@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Employee, Prisma } from '@prisma/client';
+import { Employee, Prisma, Role } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../shared/audit.service';
 import { NotifyService } from '../shared/notifications.service';
@@ -7,7 +7,7 @@ import { ScopeService } from '../shared/scope.service';
 import { AttendanceService } from '../attendance/attendance.service';
 import { AuthUser } from '../common/types';
 import { addMonths, periodOf, todayStr } from '../common/dates';
-import { badRequest, notFound } from '../common/errors';
+import { badRequest, conflict, forbidden, notFound } from '../common/errors';
 import { num, r2 } from '../common/money';
 import { pageParams } from '../common/pagination';
 import { fullName } from '../employees/employee.view';
@@ -17,6 +17,9 @@ const empSelect = { select: { id: true, firstNameAr: true, lastNameAr: true, emp
 
 type EmpLite = { id: string; firstNameAr: string; lastNameAr: string; employeeNumber: string; branchId: string | null; branch: { nameAr: string } | null };
 const empView = (e: EmpLite) => ({ id: e.id, name: fullName(e), employeeNumber: e.employeeNumber, branchId: e.branchId, branchName: e.branch?.nameAr ?? null });
+
+/** Roles that may approve a LOAN request (it creates a payroll deduction). */
+export const LOAN_APPROVERS: Role[] = ['OWNER', 'HR_ADMIN', 'PAYROLL'];
 
 export const REQUEST_TYPE_AR: Record<string, string> = {
   SALARY_CERTIFICATE: 'تعريف بالراتب',
@@ -91,38 +94,57 @@ export class RequestsService {
     const emp = await this.scope.employee(u, r.employeeId);
     if (r.status !== 'PENDING') throw badRequest('Only pending requests can be decided', 'يمكن البت في الطلبات المعلقة فقط');
     if (u.employeeId === r.employeeId && u.role === 'BRANCH_MANAGER') throw badRequest('You cannot approve your own request', 'لا يمكنك اعتماد طلبك بنفسك');
-    let loanId: string | undefined;
+
+    // ---- validate everything before claiming the request ----
+    let loanData: Prisma.LoanUncheckedCreateInput | undefined;
+    let months = 0;
     if (approve && r.type === 'LOAN') {
+      if (!LOAN_APPROVERS.includes(u.role)) {
+        throw forbidden('Loan approval requires HR or payroll', 'اعتماد السلف من صلاحية الموارد البشرية أو الرواتب');
+      }
       const amount = num(r.amount);
       if (amount <= 0) throw badRequest('Loan amount missing', 'مبلغ السلفة غير محدد');
       const payload = (r.payload ?? {}) as { months?: number };
-      const months = Math.max(1, Math.min(60, Number(payload.months) || 1));
-      const loan = await this.prisma.loan.create({
-        data: {
-          companyId: u.companyId,
-          employeeId: r.employeeId,
-          amount,
-          monthlyDeduction: r2(amount / months),
-          remaining: amount,
-          startPeriod: addMonths(periodOf(todayStr()), 1),
-          note: r.title,
-          requestId: r.id,
-        },
+      months = Math.max(1, Math.min(60, Number(payload.months) || 1));
+      loanData = {
+        companyId: u.companyId,
+        employeeId: r.employeeId,
+        amount,
+        monthlyDeduction: r2(amount / months),
+        remaining: amount,
+        startPeriod: addMonths(periodOf(todayStr()), 1),
+        note: r.title,
+        requestId: r.id,
+      };
+    }
+    const correction = approve && r.type === 'ATTENDANCE_CORRECTION' ? ((r.payload ?? {}) as { date?: string; checkIn?: string; checkOut?: string }) : null;
+    if (correction && (!correction.date || !correction.checkIn)) throw badRequest('Invalid correction payload', 'بيانات التصحيح غير مكتملة');
+
+    // ---- claim: only the first concurrent decision flips PENDING; side effects follow inside the same tx ----
+    const status = approve ? 'APPROVED' : 'REJECTED';
+    const loanId = await this.prisma.$transaction(async (tx) => {
+      const claimed = await tx.employeeRequest.updateMany({
+        where: { id, companyId: u.companyId, status: 'PENDING' },
+        data: { status, approverId: u.id, approverName: u.name, decidedAt: new Date(), comment },
       });
-      loanId = loan.id;
-      await this.audit.log(u, 'CREATE', 'Loan', loan.id, { fromRequest: r.id, amount, months });
-    }
-    if (approve && r.type === 'ATTENDANCE_CORRECTION') {
-      const p = (r.payload ?? {}) as { date?: string; checkIn?: string; checkOut?: string };
-      if (!p.date || !p.checkIn) throw badRequest('Invalid correction payload', 'بيانات التصحيح غير مكتملة');
-      const rec = await this.attendance.upsertRecord(u.companyId, emp, p.date, p.checkIn, p.checkOut, { source: 'CORRECTION', note: r.title });
-      await this.audit.log(u, 'CORRECTION', 'AttendanceRecord', rec.id, p);
-    }
-    const updated = await this.prisma.employeeRequest.update({
-      where: { id },
-      data: { status: approve ? 'APPROVED' : 'REJECTED', approverId: u.id, approverName: u.name, decidedAt: new Date(), comment },
-      include: { employee: empSelect },
+      if (claimed.count === 0) throw conflict('Request already processed', 'تمت معالجة هذا الطلب مسبقاً');
+      return loanData ? (await tx.loan.create({ data: loanData })).id : undefined;
     });
+    if (loanId) await this.audit.log(u, 'CREATE', 'Loan', loanId, { fromRequest: r.id, amount: loanData!.amount, months });
+    if (correction) {
+      try {
+        const rec = await this.attendance.upsertRecord(u.companyId, emp, correction.date!, correction.checkIn!, correction.checkOut, { source: 'CORRECTION', note: r.title });
+        await this.audit.log(u, 'CORRECTION', 'AttendanceRecord', rec.id, correction);
+      } catch (e) {
+        // the correction could not be applied → hand the request back for a new decision
+        await this.prisma.employeeRequest.updateMany({
+          where: { id, status },
+          data: { status: 'PENDING', approverId: null, approverName: null, decidedAt: null, comment: null },
+        });
+        throw e;
+      }
+    }
+    const updated = await this.prisma.employeeRequest.findUniqueOrThrow({ where: { id }, include: { employee: empSelect } });
     await this.audit.log(u, approve ? 'APPROVE' : 'REJECT', 'EmployeeRequest', id, { comment, loanId });
     await this.notify.toEmployees(
       u.companyId,

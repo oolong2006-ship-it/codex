@@ -10,7 +10,10 @@ import { ADMIN, ALL_ROLES, STAFF, PayrollStateError, Services, byNumber, fullNam
 
 const APPROVERS = ['OWNER', 'HR_ADMIN', 'BRANCH_MANAGER'] as const;
 const FINANCE = ['OWNER', 'HR_ADMIN', 'PAYROLL'] as const;
+const LOAN_APPROVERS = FINANCE;
 const DAY_RE = /^\d{4}-\d{2}-\d{2}$/;
+/** How far back a self check-out may reach to close an open (overnight) record. */
+const OVERNIGHT_WINDOW_MS = 16 * 3600 * 1000;
 export const REQUEST_TYPE_AR: Record<string, string> = {
   SALARY_CERTIFICATE: 'تعريف بالراتب', EXPENSE_CLAIM: 'مطالبة مصروفات', LOAN: 'سلفة', EXIT_REENTRY: 'خروج وعودة', ATTENDANCE_CORRECTION: 'تصحيح حضور', LETTER: 'خطاب', OTHER: 'طلب آخر',
 };
@@ -28,8 +31,11 @@ function weightedScore(goals: { weight: number; score?: number | null }[]): numb
   if (!w) return null;
   return Math.round((scored.reduce((s, g) => s + g.weight * (g.score as number), 0) / w) * 100) / 100;
 }
-function toCsv(rows: Record<string, unknown>[], columns?: string[]): string {
-  const field = (x: unknown) => { const s = x === null || x === undefined ? '' : String(x); return /[",\r\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; };
+export function toCsv(rows: Record<string, unknown>[], columns?: string[]): string {
+  const field = (x: unknown) => {
+    let s = x === null || x === undefined ? '' : String(x);
+    if (typeof x === 'string' && /^[=+\-@]/.test(s)) s = `'${s}`; // CSV/formula injection
+    return /[",\r\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; };
   const cols = columns ?? (rows[0] ? Object.keys(rows[0]) : []);
   return '﻿' + [cols.join(','), ...rows.map((r) => cols.map((c) => field(r[c])).join(','))].join('\n') + '\n';
 }
@@ -71,6 +77,7 @@ function decideRequest(svc: Services, u: AuthUser, id: string, approve: boolean,
   const emp = svc.scopedEmployee(u, r.employeeId);
   if (r.status !== 'PENDING') throw badRequest('Only pending requests can be decided', 'يمكن البت في الطلبات المعلقة فقط');
   if (u.employeeId === r.employeeId && u.role === 'BRANCH_MANAGER') throw badRequest('You cannot approve your own request', 'لا يمكنك اعتماد طلبك بنفسك');
+  if (approve && r.type === 'LOAN' && !(LOAN_APPROVERS as readonly string[]).includes(u.role)) throw forbidden('Loan approval requires HR or payroll', 'اعتماد السلف من صلاحية الموارد البشرية أو الرواتب');
   let loanId: string | undefined;
   if (approve && r.type === 'LOAN') {
     const amount = r.amount ?? 0;
@@ -107,6 +114,7 @@ function mapStateError(e: unknown): never {
   if (e instanceof PayrollStateError) {
     if (e.message === 'NOT_FOUND') throw notFound('Payroll run', 'مسير الرواتب غير موجود');
     if (e.message === 'LOCKED') throw badRequest('Run is already approved', 'لا يمكن إعادة احتساب مسير معتمد');
+    if (e.message === 'ALREADY_APPROVED') throw conflict('Run was already approved', 'تمت معالجة هذا الطلب مسبقاً');
     if (e.message === 'NOT_CALCULATED') throw badRequest('Run must be CALCULATED first', 'يجب احتساب المسير قبل اعتماده');
   }
   throw e;
@@ -623,11 +631,18 @@ export const moreRoutes: Route[] = [
     const e = me(svc, u);
     const loc = geofence(svc, e, body);
     const today = todayStr();
-    const rec = db.attendance.find((r) => r.employeeId === e.id && r.date === today);
+    const now = new Date();
+    let rec = db.attendance.find((r) => r.employeeId === e.id && r.date === today);
+    if (!rec) {
+      // Overnight shift: no record today → close the latest still-open record checked in within the last 16 hours.
+      const since = now.getTime() - OVERNIGHT_WINDOW_MS;
+      rec = db.attendance
+        .filter((r) => r.employeeId === e.id && r.checkIn && !r.checkOut && Date.parse(r.checkIn) >= since && Date.parse(r.checkIn) <= now.getTime())
+        .sort((a, b) => b.checkIn!.localeCompare(a.checkIn!))[0];
+    }
     if (!rec?.checkIn) throw badRequest('You have not checked in today', 'لم يتم تسجيل الحضور اليوم');
     if (rec.checkOut) throw conflict('Already checked out today', 'تم تسجيل الانصراف مسبقاً اليوم');
-    const shift = svc.shift(rec.shiftId) ?? svc.shiftFor(e, today);
-    const now = new Date();
+    const shift = svc.shift(rec.shiftId) ?? svc.shiftFor(e, rec.date);
     const m = svc.compute(shift, new Date(rec.checkIn), now);
     Object.assign(rec, { checkOut: now.toISOString(), checkOutLat: loc.lat, checkOutLng: loc.lng, workedMinutes: m.workedMinutes, lateMinutes: m.lateMinutes, earlyLeaveMinutes: m.earlyLeaveMinutes, overtimeMinutes: m.overtimeMinutes, status: m.status, updatedAt: now.toISOString() });
     svc.audit(u, 'CHECK_OUT', 'AttendanceRecord', rec.id, { ...loc, workedMinutes: m.workedMinutes });

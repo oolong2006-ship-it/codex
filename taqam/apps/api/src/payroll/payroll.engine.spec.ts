@@ -1,16 +1,20 @@
 import { Prisma } from '@prisma/client';
-import { calculatePayslip } from '@taqam/core';
+import { calculatePayslip, sickLeavePay } from '@taqam/core';
 import { approvePayrollRun, calculatePayrollRun, PayrollStateError } from './payroll.engine';
 
 const D = (s: string) => new Date(`${s}T00:00:00.000Z`);
 const dec = (n: number) => new Prisma.Decimal(n);
 
-function fakeDb(overrides: Record<string, unknown> = {}) {
+function fakeDb(overrides: Record<string, unknown> = {}, opts: { conditionalCount?: number } = {}) {
   const created: Prisma.PayslipCreateManyInput[] = [];
   const runUpdate = jest.fn(async ({ data }) => ({ id: 'run1', period: '2026-09', ...data }));
   const tx = {
     payslip: { deleteMany: jest.fn(), createMany: jest.fn(async ({ data }) => created.push(...data)) },
-    payrollRun: { update: runUpdate },
+    payrollRun: {
+      update: runUpdate,
+      updateMany: jest.fn(async () => ({ count: opts.conditionalCount ?? 1 })),
+      findUniqueOrThrow: jest.fn(async () => ({ id: 'run1', period: '2026-09' })),
+    },
     loan: { findUnique: jest.fn(async () => ({ id: 'loan1', remaining: dec(600), status: 'ACTIVE' })), update: jest.fn() },
   };
   const db = {
@@ -107,5 +111,80 @@ describe('payroll engine', () => {
     await approvePayrollRun(db as never, 'c1', 'run1', { id: 'u1', name: 'ماجد' });
     expect(tx.loan.update).toHaveBeenCalledWith({ where: { id: 'loan1' }, data: { remaining: 0, status: 'PAID' } });
     expect(tx.payrollRun.update.mock.calls[0][0].data.status).toBe('APPROVED');
+  });
+
+  it('UNPAID leave is deducted on calendar days: a whole-November unpaid leave deducts 30/30 of the wage (review #3)', async () => {
+    const { db, created } = fakeDb({
+      payrollRun: { findFirst: jest.fn(async () => ({ id: 'run1', companyId: 'c1', period: '2026-11', status: 'DRAFT' })) },
+      publicHoliday: { findMany: jest.fn(async () => []) },
+      attendanceRecord: { groupBy: jest.fn(async () => []) },
+      payrollAdjustment: { findMany: jest.fn(async () => []) },
+      loan: { findMany: jest.fn(async () => []) },
+      leaveRequest: {
+        findMany: jest.fn(async () => [
+          { employeeId: 'e1', startDate: D('2026-11-01'), endDate: D('2026-11-30'), leaveType: { code: 'UNPAID' } },
+        ]),
+      },
+    });
+    await calculatePayrollRun(db as never, 'c1', 'run1');
+    const slip = created[0];
+    expect((slip.inputs as Record<string, unknown>).unpaidLeaveDays).toBe(30);
+    const lines = slip.deductions as { code: string; labelAr: string; amount: number }[];
+    const unpaid = lines.find((d) => d.code === 'UNPAID_LEAVE')!;
+    expect(unpaid.labelAr).toContain('(30 يوم)');
+    // 30/30 of the 8100 wage is lost; core trims the line only by the GOSI share so net never goes negative
+    const gosi = lines.find((d) => d.code === 'GOSI')?.amount ?? 0;
+    expect(unpaid.amount + gosi).toBeCloseTo(8100, 2);
+    expect(slip.net).toBe(0);
+  });
+
+  it('SICK leave tiers (Art. 117) use calendar days, including the rolling-year history (review #3)', async () => {
+    const { db, created } = fakeDb({
+      payrollRun: { findFirst: jest.fn(async () => ({ id: 'run1', companyId: 'c1', period: '2026-11', status: 'DRAFT' })) },
+      publicHoliday: { findMany: jest.fn(async () => []) },
+      attendanceRecord: { groupBy: jest.fn(async () => []) },
+      payrollAdjustment: { findMany: jest.fn(async () => []) },
+      loan: { findMany: jest.fn(async () => []) },
+      leaveRequest: {
+        findMany: jest.fn(async () => [
+          // 28 calendar days earlier in the rolling year (only 20 working days)
+          { employeeId: 'e1', startDate: D('2026-08-01'), endDate: D('2026-08-28'), leaveType: { code: 'SICK' } },
+          // Sun 8 – Sat 14 Nov 2026: 7 calendar days (5 working days)
+          { employeeId: 'e1', startDate: D('2026-11-08'), endDate: D('2026-11-14'), leaveType: { code: 'SICK' } },
+        ]),
+      },
+    });
+    await calculatePayrollRun(db as never, 'c1', 'run1');
+    const inputs = created[0].inputs as Record<string, number>;
+    expect(inputs.sickDays).toBe(7);
+    expect(inputs.sickAlreadyTaken).toBe(28);
+    const wage = { basic: 6000, housing: 1500, transport: 600, other: 0 };
+    expect(inputs.sickLeaveDeduction).toBe(sickLeavePay(wage, 28, 7).deduction);
+    expect(inputs.sickLeaveDeduction).toBeGreaterThan(0);
+  });
+
+  it('approval is atomic: a concurrent approve that loses the CALCULATED→APPROVED race deducts nothing (review #1)', async () => {
+    const { db, tx } = fakeDb(
+      { payrollRun: { findFirst: jest.fn(async () => ({ id: 'run1', period: '2026-09', status: 'CALCULATED' })) } },
+      { conditionalCount: 0 },
+    );
+    const err = await approvePayrollRun(db as never, 'c1', 'run1', { id: 'u1', name: 'ماجد' }).catch((e) => e);
+    expect(err).toBeInstanceOf(PayrollStateError);
+    expect(err.message).toBe('ALREADY_PROCESSED');
+    expect(tx.payrollRun.updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { id: 'run1', status: 'CALCULATED' } }),
+    );
+    expect(tx.loan.update).not.toHaveBeenCalled();
+  });
+
+  it('calculation only writes payslips while the run is still DRAFT or CALCULATED (review #1)', async () => {
+    const { db, tx } = fakeDb({}, { conditionalCount: 0 });
+    const err = await calculatePayrollRun(db as never, 'c1', 'run1').catch((e) => e);
+    expect(err).toBeInstanceOf(PayrollStateError);
+    expect(err.message).toBe('ALREADY_PROCESSED');
+    expect(tx.payrollRun.updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { id: 'run1', status: { in: ['DRAFT', 'CALCULATED'] } } }),
+    );
+    expect(tx.payslip.createMany).not.toHaveBeenCalled();
   });
 });

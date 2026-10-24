@@ -295,6 +295,7 @@ export class Services {
   approveRun(companyId: string, runId: string, approver: { id: string; name: string }) {
     const run = this.run(companyId, runId);
     if (!run) throw new PayrollStateError('NOT_FOUND');
+    if (run.status === 'APPROVED' || run.status === 'PAID') throw new PayrollStateError('ALREADY_APPROVED');
     if (run.status !== 'CALCULATED') throw new PayrollStateError('NOT_CALCULATED');
     for (const s of this.db.payslips.filter((p) => p.companyId === companyId && p.payrollRunId === run.id)) {
       for (const ld of s.loanDeductions ?? []) {

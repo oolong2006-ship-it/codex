@@ -1,5 +1,10 @@
+/** Leading characters that make Excel/Sheets evaluate a cell as a formula (CSV/formula injection). */
+const FORMULA_START = /^[=+\-@\t\r]/;
+
 const field = (v: unknown) => {
-  const s = v === null || v === undefined ? '' : v instanceof Date ? v.toISOString().slice(0, 10) : String(v);
+  let s = v === null || v === undefined ? '' : v instanceof Date ? v.toISOString().slice(0, 10) : String(v);
+  // Neutralise formulas in text cells; numbers (e.g. -500) stay numeric.
+  if (typeof v === 'string' && FORMULA_START.test(s)) s = `'${s}`;
   return /[",\r\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
 };
 

@@ -22,6 +22,9 @@ import { payslipInclude, payslipView } from '../payroll/payroll.service';
 import { announcementsWhere } from '../comms/comms.controller';
 import { fullName } from '../employees/employee.view';
 
+/** How far back a self check-out may reach to close an open (overnight) record. */
+const OVERNIGHT_WINDOW_MS = 16 * 3600 * 1000;
+
 export class LocationDto {
   @ApiProperty({ example: 24.6911 }) @IsNumber() @Min(-90) @Max(90) lat: number;
   @ApiProperty({ example: 46.6853 }) @IsNumber() @Min(-180) @Max(180) lng: number;
@@ -145,11 +148,19 @@ export class MeController {
     this.geofence(e, dto);
     const today = todayStr();
     const d = day(today);
-    const rec = await this.prisma.attendanceRecord.findUnique({ where: { employeeId_date: { employeeId: e.id, date: d } }, include: { shift: true } });
+    const now = new Date();
+    let rec = await this.prisma.attendanceRecord.findUnique({ where: { employeeId_date: { employeeId: e.id, date: d } }, include: { shift: true } });
+    if (!rec) {
+      // Overnight shift: no record today → close the latest still-open record checked in within the last 16 hours.
+      rec = await this.prisma.attendanceRecord.findFirst({
+        where: { employeeId: e.id, checkIn: { gte: new Date(now.getTime() - OVERNIGHT_WINDOW_MS), lte: now }, checkOut: null },
+        orderBy: { checkIn: 'desc' },
+        include: { shift: true },
+      });
+    }
     if (!rec?.checkIn) throw badRequest('You have not checked in today', 'لم يتم تسجيل الحضور اليوم');
     if (rec.checkOut) throw conflict('Already checked out today', 'تم تسجيل الانصراف مسبقاً اليوم');
-    const shift = rec.shift ?? (await this.att.shiftFor(e, today));
-    const now = new Date();
+    const shift = rec.shift ?? (await this.att.shiftFor(e, rec.date));
     const m = this.att.compute(shift, rec.checkIn, now);
     const updated = await this.prisma.attendanceRecord.update({
       where: { id: rec.id },

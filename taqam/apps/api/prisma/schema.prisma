@@ -255,6 +255,8 @@ model User {
   role         Role
   employeeId   String?   @unique
   isActive     Boolean   @default(true)
+  /// bumped on password change/reset; tokens carrying an older `tv` claim are rejected
+  tokenVersion Int       @default(0)
   lastLoginAt  DateTime?
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt

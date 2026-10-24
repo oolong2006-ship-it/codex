@@ -45,4 +45,23 @@ describe('LeaveCalcService.validate', () => {
   it('rejects end before start', async () => {
     await expect(make({}).validate(emp, annual, '2026-11-05', '2026-11-01')).rejects.toBeInstanceOf(BadRequestException);
   });
+
+  it('counts MATERNITY in calendar days: 117 calendar days exceeds the 84-day maximum (review #15)', async () => {
+    const maternity = { id: 't2', code: 'MATERNITY', nameAr: 'إجازة وضع', maxDaysPerYear: 84 } as never;
+    // Wed 2026-11-04 → Sun 2027-02-28 = 117 calendar days but only 83 working days (Fri/Sat off)
+    const err = await make({}).validate(emp, maternity, '2026-11-04', '2027-02-28').catch((e) => e);
+    expect(err).toBeInstanceOf(BadRequestException);
+    expect(err.getResponse().messageAr).toContain('تتجاوز الحد السنوي');
+  });
+
+  it('returns calendar days for SICK, MATERNITY and UNPAID; ANNUAL stays in working days', async () => {
+    const sick = { id: 't3', code: 'SICK', nameAr: 'إجازة مرضية', maxDaysPerYear: 120 } as never;
+    const unpaid = { id: 't4', code: 'UNPAID', nameAr: 'إجازة بدون أجر', maxDaysPerYear: null } as never;
+    const maternity = { id: 't2', code: 'MATERNITY', nameAr: 'إجازة وضع', maxDaysPerYear: 84 } as never;
+    // Sun 1 Nov – Sat 7 Nov 2026: 7 calendar days, 5 working days
+    expect(await make({}).validate(emp, sick, '2026-11-01', '2026-11-07')).toBe(7);
+    expect(await make({}).validate(emp, unpaid, '2026-11-01', '2026-11-07')).toBe(7);
+    expect(await make({}).validate(emp, maternity, '2026-11-01', '2026-11-07')).toBe(7);
+    expect(await make({}).validate(emp, annual, '2026-11-01', '2026-11-07')).toBe(5);
+  });
 });

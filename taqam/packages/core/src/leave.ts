@@ -93,6 +93,15 @@ export function sickLeavePay(
   return { fullPayDays, partialPayDays, unpaidDays, deduction };
 }
 
+/**
+ * Calendar days inclusive (no weekend/holiday exclusion). Used where the law
+ * counts calendar days: Art. 117 sick tiers, maternity (84 days) and unpaid
+ * leave wage deductions on a 30-day basis.
+ */
+export function calendarDays(start: DateInput, end: DateInput): number {
+  return Math.max(0, diffDays(start, end) + 1);
+}
+
 /** Calendar days inclusive, optionally excluding weekend days (0=Sun..6=Sat) and holidays. */
 export function countLeaveDays(
   start: DateInput,

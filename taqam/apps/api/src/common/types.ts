@@ -36,6 +36,8 @@ export interface JwtPayload {
   branchId: string | null;
   /** Admin user id when this is an impersonation token. */
   impersonatedBy?: string;
+  /** User.tokenVersion at issue time; a password change/reset bumps it and revokes older tokens. */
+  tv?: number;
 }
 
 declare global {

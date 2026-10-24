@@ -210,7 +210,12 @@ export class AttendanceService {
       date,
       dto.checkIn !== undefined ? dto.checkIn : rec.checkIn?.toISOString(),
       dto.checkOut !== undefined ? dto.checkOut : rec.checkOut?.toISOString(),
-      { note: dto.note ?? rec.note ?? undefined, source: 'MANUAL', status: dto.status },
+      {
+        note: dto.note ?? rec.note ?? undefined,
+        source: 'MANUAL',
+        // Keep an ABSENT day absent unless the edit supplies a check-in.
+        status: dto.status ?? (rec.status === 'ABSENT' && dto.checkIn === undefined ? 'ABSENT' : undefined),
+      },
     );
     await this.audit.log(u, 'UPDATE', 'AttendanceRecord', id, dto);
     return r;

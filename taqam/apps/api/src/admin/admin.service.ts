@@ -487,7 +487,8 @@ export class AdminService {
     const user = await this.prisma.user.findFirst({ where: { id: userId, companyId: id } });
     if (!user) throw notFound('User', 'المستخدم غير موجود');
     const temporaryPassword = tempPassword();
-    await this.prisma.user.update({ where: { id: user.id }, data: { passwordHash: await bcrypt.hash(temporaryPassword, 10) } });
+    // tokenVersion bump revokes the user's existing sessions
+    await this.prisma.user.update({ where: { id: user.id }, data: { passwordHash: await bcrypt.hash(temporaryPassword, 10), tokenVersion: { increment: 1 } } });
     await this.audit.log({ id: admin.id, name: `${admin.name} (بوابة المنصة)`, companyId: id }, 'RESET_PASSWORD', 'User', user.id, { email: user.email });
     return { temporaryPassword };
   }

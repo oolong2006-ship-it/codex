@@ -57,6 +57,7 @@ export class AuthService {
       role: u.role,
       employeeId: u.employeeId,
       branchId: user.branchId,
+      tv: u.tokenVersion,
       ...(opts.impersonatedBy ? { impersonatedBy: opts.impersonatedBy } : {}),
     };
     return {
@@ -134,12 +135,15 @@ export class AuthService {
     if (!(await bcrypt.compare(dto.currentPassword, u.passwordHash))) {
       throw badRequest('Current password is incorrect', 'كلمة المرور الحالية غير صحيحة');
     }
-    await this.prisma.user.update({
+    // bumping tokenVersion revokes every token issued before the change (incl. a stolen one)
+    const updated = await this.prisma.user.update({
       where: { id: u.id },
-      data: { passwordHash: await bcrypt.hash(dto.newPassword, 10) },
+      data: { passwordHash: await bcrypt.hash(dto.newPassword, 10), tokenVersion: { increment: 1 } },
+      include: { company: true, employee: true },
     });
     if (authUser.companyId) await this.audit.log(authUser as AuthUser, 'CHANGE_PASSWORD', 'User', u.id);
-    return { ok: true };
+    // fresh token so the caller stays signed in (impersonation sessions are not re-issued)
+    return { ok: true, ...('impersonatedBy' in authUser && authUser.impersonatedBy ? {} : { accessToken: this.response(updated).accessToken }) };
   }
 
   /**
@@ -152,6 +156,7 @@ export class AuthService {
       include: { employee: { select: { branchId: true } }, company: true },
     });
     if (!u || !u.isActive || u.companyId !== (payload.companyId ?? null) || u.role !== payload.role) return null;
+    if ((payload.tv ?? 0) !== u.tokenVersion) return null; // revoked by a password change/reset
     if (u.role === 'SUPER_ADMIN') {
       if (u.companyId || payload.impersonatedBy) return null;
       return {

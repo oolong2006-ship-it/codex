@@ -6,7 +6,7 @@ import {
   sickLeavePay, countLeaveDays, calculateAttendance, haversineMeters, isWithinGeofence,
   calculatePayslip, validateSaudiIban, bankCodeFromIban, generateWpsCsv, makeSaudiIban,
   saudizationRate, nitaqatBand, hiresNeededForBand, DEFAULT_NITAQAT_THRESHOLDS,
-  daysUntil, expiryStatus, WageComponents, ShiftDef, WpsEmployeeRow,
+  daysUntil, expiryStatus, resignationFactor, calendarDays, WageComponents, ShiftDef, WpsEmployeeRow,
 } from './index';
 
 const W10K: WageComponents = { basic: 7000, housing: 2000, transport: 1000, other: 0 };
@@ -89,7 +89,13 @@ describe('payableDaysInPeriod / prorate', () => {
   it('joiner on day d → 30 - d + 1', () => {
     expect(payableDaysInPeriod('2024-03', '2024-03-10')).toBe(21);
     expect(payableDaysInPeriod('2024-03', '2024-03-01')).toBe(30);
-    expect(payableDaysInPeriod('2024-03', '2024-03-31')).toBe(0);
+    expect(payableDaysInPeriod('2024-03', '2024-03-31')).toBe(1);
+  });
+  it('joiner on the last day of the month is paid 1 day (review #6)', () => {
+    expect(payableDaysInPeriod('2026-01', '2026-01-31')).toBe(1);
+    expect(payableDaysInPeriod('2026-02', '2026-02-28')).toBe(1);
+    expect(payableDaysInPeriod('2026-01', '2026-01-15')).toBe(16);
+    expect(payableDaysInPeriod('2026-01', '2026-01-31', '2026-01-31')).toBe(1);
   });
   it('leaver on day d → d; Feb end-of-month → 30', () => {
     expect(payableDaysInPeriod('2024-03', '2020-01-01', '2024-03-15')).toBe(15);
@@ -134,6 +140,13 @@ describe('serviceDuration', () => {
   });
   it('end before start → zeros', () => {
     expect(serviceDuration('2024-01-01', '2023-01-01').totalDays).toBe(0);
+  });
+  it('leap year: remainder is divided by the length of the current service year (review #5)', () => {
+    const s = serviceDuration('2022-03-01', '2024-02-29');
+    expect(s.totalYears).toBeLessThan(2);
+    expect(s.totalYears).toBeCloseTo(1 + 365 / 366, 10);
+    expect(resignationFactor(s.totalYears)).toBe(0);
+    expect(serviceDuration('2020-01-01', '2023-01-01').totalYears).toBe(3);
   });
 });
 
@@ -192,7 +205,8 @@ describe('End of service (Arts. 84/85/80)', () => {
     expect(r.award).toBe(5000);
   });
   it('partial years pro-rata by days: 5 years + 73 days = 27,000', () => {
-    const r = calculateEndOfService({ startDate: '2015-01-01', endDate: '2020-03-14', wage, reason: 'EMPLOYER_TERMINATION' });
+    // service year 2021-01-01 → 2022-01-01 has 365 days (no Feb 29), so 73 days = 0.2 year
+    const r = calculateEndOfService({ startDate: '2016-01-01', endDate: '2021-03-15', wage, reason: 'EMPLOYER_TERMINATION' });
     expect(r.service.totalYears).toBeCloseTo(5.2, 10);
     expect(r.fullAward).toBe(27000);
   });
@@ -210,6 +224,12 @@ describe('End of service (Arts. 84/85/80)', () => {
 });
 
 describe('leave', () => {
+  it('calendarDays counts every calendar day inclusive (review #3)', () => {
+    expect(calendarDays('2026-11-01', '2026-11-30')).toBe(30);
+    expect(calendarDays('2024-02-01', '2024-02-29')).toBe(29);
+    expect(calendarDays('2026-11-05', '2026-11-05')).toBe(1);
+    expect(calendarDays('2026-11-06', '2026-11-05')).toBe(0);
+  });
   it('policies match Saudi law', () => {
     const p = Object.fromEntries(SAUDI_LEAVE_POLICIES.map((x) => [x.code, x]));
     expect(p.ANNUAL.maxDaysPerYear).toBe(21);

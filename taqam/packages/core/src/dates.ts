@@ -86,7 +86,7 @@ export interface ServiceDuration {
   years: number;
   months: number;
   days: number;
-  /** Fractional years: completed years + remaining days / 365 (pro-rata by days). */
+  /** Fractional years: completed years + remaining days / length of the current service year (365 or 366). */
   totalYears: number;
   /** Total calendar days from start to end (end exclusive). */
   totalDays: number;
@@ -95,7 +95,8 @@ export interface ServiceDuration {
 /**
  * Service duration from start to end. The end date is treated as exclusive
  * (e.g. 2020-01-01 → 2023-01-01 is exactly 3 years). totalYears counts completed
- * calendar years plus the remaining days (after the last anniversary) / 365.
+ * calendar years plus the remaining days (after the last anniversary) divided by
+ * the length of that service year (days to the next anniversary: 365 or 366).
  */
 export function serviceDuration(start: DateInput, end: DateInput): ServiceDuration {
   const s = toUtcDate(start);
@@ -109,14 +110,19 @@ export function serviceDuration(start: DateInput, end: DateInput): ServiceDurati
   const years = Math.floor(totalMonths / 12);
   const months = totalMonths - years * 12;
   const days = diffDays(addMonths(s, totalMonths), e);
-  const remainderAfterYears = diffDays(addYears(s, years), e);
-  const totalYears = years + remainderAfterYears / 365;
+  const lastAnniversary = addYears(s, years);
+  const remainderAfterYears = diffDays(lastAnniversary, e);
+  // Divide by the real length of the current service year (365 or 366) so a
+  // year that contains Feb 29 is not completed one day early.
+  const serviceYearLength = diffDays(lastAnniversary, addYears(s, years + 1));
+  const totalYears = years + remainderAfterYears / serviceYearLength;
   return { years, months, days, totalYears, totalDays: diffDays(s, e) };
 }
 
 /**
  * Payable days in a payroll period on a 30-day basis (0..30).
- * Full month = 30; joiner on day d → 30 - d + 1; leaver on day d → d
+ * Full month = 30; joiner on day d → 30 - min(d, 30) + 1, and a joiner on the
+ * month's last calendar day (31st, Feb 28/29) → 1; leaver on day d → d
  * (leaving on the last calendar day of the month → 30); both → combined.
  */
 export function payableDaysInPeriod(
@@ -131,7 +137,10 @@ export function payableDaysInPeriod(
   const hire = toUtcDate(hireDate);
   if (hire.getTime() > periodEnd) return 0;
   let startDay = 1;
-  if (hire.getTime() >= periodStart) startDay = hire.getUTCDate();
+  if (hire.getTime() >= periodStart) {
+    const d = hire.getUTCDate();
+    startDay = d >= lastDay ? 30 : Math.min(d, 30);
+  }
   let endDay = 30;
   if (terminationDate !== undefined && terminationDate !== null && terminationDate !== '') {
     const term = toUtcDate(terminationDate);

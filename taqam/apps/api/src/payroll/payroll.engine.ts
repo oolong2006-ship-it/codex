@@ -3,7 +3,7 @@
  * Kept framework-free (takes a PrismaClient) so the seed script runs the exact same logic.
  */
 import { AdjustmentType, Prisma, PrismaClient } from '@prisma/client';
-import { calculatePayslip, countLeaveDays, GosiRates, PayslipResult, sickLeavePay, WageComponents } from '@taqam/core';
+import { calculatePayslip, calendarDays, GosiRates, PayslipResult, sickLeavePay, WageComponents } from '@taqam/core';
 import { addDays, maxDate, minDate, periodRange } from '../common/dates';
 import { num, r2 } from '../common/money';
 
@@ -40,9 +40,6 @@ export async function calculatePayrollRun(db: PrismaClient, companyId: string, r
   if (run.status !== 'DRAFT' && run.status !== 'CALCULATED') throw new PayrollStateError('LOCKED');
 
   const { start, end } = periodRange(run.period);
-  const company = await db.company.findUniqueOrThrow({ where: { id: companyId } });
-  const holidays = (await db.publicHoliday.findMany({ where: { companyId }, select: { date: true } })).map((h) => h.date);
-  const leaveOpts = { weekendDays: company.weekendDays?.length ? company.weekendDays : [5, 6], holidays };
 
   const employees = await db.employee.findMany({
     where: {
@@ -81,10 +78,11 @@ export async function calculatePayrollRun(db: PrismaClient, companyId: string, r
     }),
   ]);
 
+  // UNPAID wage deductions (30-day basis) and Art. 117 sick tiers count calendar days, clipped to the window.
   const daysIn = (s: Date, e: Date, from: Date, to: Date) => {
     const a = maxDate(s, from);
     const b = minDate(e, to);
-    return b < a ? 0 : countLeaveDays(a, b, leaveOpts);
+    return b < a ? 0 : calendarDays(a, b);
   };
 
   const slips: Prisma.PayslipCreateManyInput[] = [];

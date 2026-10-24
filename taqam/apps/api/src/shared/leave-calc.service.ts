@@ -1,10 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { Employee, LeaveType } from '@prisma/client';
-import { annualLeaveBalance, countLeaveDays, serviceDuration } from '@taqam/core';
+import { annualLeaveBalance, calendarDays, countLeaveDays, serviceDuration } from '@taqam/core';
 import { PrismaService } from '../prisma/prisma.service';
 import { day, todayStr } from '../common/dates';
 import { badRequest } from '../common/errors';
 import { num } from '../common/money';
+
+/** Leave types the law counts in calendar days (Art. 117 sick tiers, Art. 151 maternity, unpaid wage deduction). */
+export const CALENDAR_DAY_CODES = ['SICK', 'MATERNITY', 'UNPAID'];
 
 export interface LeaveOpts {
   weekendDays: number[];
@@ -90,13 +93,18 @@ export class LeaveCalcService {
     });
   }
 
-  /** Validates a new leave request and returns the computed working days. Throws 400 with messageAr. */
+  /** Days a leave of this type consumes: calendar days for SICK/MATERNITY/UNPAID, working days otherwise. */
+  countDaysFor(code: string, start: Date | string, end: Date | string, opts: LeaveOpts): number {
+    return CALENDAR_DAY_CODES.includes(code) ? calendarDays(start, end) : this.countDays(start, end, opts);
+  }
+
+  /** Validates a new leave request and returns the days it consumes (see countDaysFor). Throws 400 with messageAr. */
   async validate(emp: Employee, type: LeaveType, startDate: string, endDate: string, excludeId?: string): Promise<number> {
     const start = day(startDate);
     const end = day(endDate);
     if (end < start) throw badRequest('endDate must be on or after startDate', 'تاريخ النهاية يجب أن يكون بعد تاريخ البداية');
     const opts = await this.opts(emp.companyId);
-    const days = this.countDays(start, end, opts);
+    const days = this.countDaysFor(type.code, start, end, opts);
     if (days <= 0) throw badRequest('Leave contains no working days', 'الفترة المختارة لا تحتوي على أيام عمل');
 
     const overlap = await this.prisma.leaveRequest.findFirst({

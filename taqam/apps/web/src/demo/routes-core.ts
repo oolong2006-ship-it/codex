@@ -751,7 +751,8 @@ export const coreRoutes: Route[] = [
     const rec = db.attendance.find((r) => r.id === params.id && r.companyId === u.companyId);
     if (!rec) throw notFound('Attendance record', 'سجل الحضور غير موجود');
     const e = svc.scopedEmployee(u, rec.employeeId);
-    const status = v.oneOf(body, 'status', ['ABSENT'] as const, true);
+    // Keep an ABSENT day absent unless the edit supplies a check-in.
+    const status = v.oneOf(body, 'status', ['ABSENT'] as const, true) ?? (rec.status === 'ABSENT' && body.checkIn === undefined ? 'ABSENT' : undefined);
     const r = upsertRecord(svc, u.companyId, e, dayStr(rec.date)!, body.checkIn !== undefined ? (body.checkIn as string) : rec.checkIn, body.checkOut !== undefined ? (body.checkOut as string) : rec.checkOut, { note: (body.note as string) ?? rec.note, source: 'MANUAL', status });
     svc.audit(u, 'UPDATE', 'AttendanceRecord', rec.id, pick(body, ['checkIn', 'checkOut', 'note', 'status']));
     return r;
