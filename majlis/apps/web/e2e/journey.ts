@@ -285,6 +285,64 @@ try {
   );
   await layout(client, "transcript");
 
+  // Analysis: the worker turns completed interviews into results and memory.
+  await new Promise<void>((resolve, reject) => {
+    const w = spawn("node", ["dist/main.js", "--once"], {
+      cwd: join(ROOT, "apps/worker"),
+      env: { ...process.env, DATABASE_URL: DB_URL, PERSONA_MIN_SESSIONS: "1" },
+      stdio: "ignore",
+    });
+    w.on("exit", (code) => (code === 0 ? resolve() : reject(new Error(`worker exited ${code}`))));
+  });
+  await client.goto(client.url().replace(/\/sessions\/[^/?]+.*$/, "?tab=results"));
+  await client
+    .locator("[data-theme]")
+    .first()
+    .waitFor({ timeout: 5000 })
+    .catch(async (e) => {
+      await client.screenshot({ path: join(ARTIFACTS, "debug-results.png"), fullPage: true });
+      console.log("URL:", client.url());
+      throw e;
+    });
+  const results = (await client.textContent("main")) ?? "";
+  check(
+    "results show themes from the guide",
+    results.includes("السعر") && results.includes("التحسين"),
+  );
+  check(
+    "results quote participants without personal data",
+    results.includes("الأسعار مقبولة") && !results.includes("0551234567"),
+  );
+  check(
+    "segment comparison table rendered",
+    (await client.locator('[data-testid="compare"] tbody tr').count()) > 0,
+  );
+  await layout(client, "results");
+
+  await client.goto(`${WEB}/ar/dashboard/memory`);
+  await client.getByRole("textbox").fill("وش رأي الأمهات في جدة بالأسعار؟");
+  await client.getByRole("button", { name: "اسأل", exact: true }).click();
+  const answerBox = client.locator('[data-testid="memory-answer"]');
+  await answerBox.waitFor({ timeout: 8000 });
+  const answerText = (await answerBox.textContent()) ?? "";
+  check(
+    "memory answers from the interview, citing the quote",
+    answerText.includes("الأسعار مقبولة"),
+  );
+  check(
+    "memory states that parenthood is not recorded",
+    answerText.includes("ما نسجّل إذا كان المشارك أباً أو أماً"),
+  );
+  check(
+    "memory applied the Jeddah + female filter",
+    answerText.includes("جدة") && answerText.includes("أنثى"),
+  );
+  check(
+    "persona built from the interview",
+    (await client.textContent("main"))!.includes("النسخة 1"),
+  );
+  await layout(client, "memory");
+
   // English stays LTR.
   await client.goto(`${WEB}/en/login`);
   await layout(client, "login-en", "ltr");

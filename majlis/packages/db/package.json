@@ -33,7 +33,8 @@
     "drizzle-orm": "^0.45.0",
     "pg": "^8.23.0",
     "@majlis/interviewer": "workspace:*",
-    "@majlis/providers": "workspace:*"
+    "@majlis/providers": "workspace:*",
+    "@majlis/analysis": "workspace:*"
   },
   "devDependencies": {
     "drizzle-kit": "^0.31.0",

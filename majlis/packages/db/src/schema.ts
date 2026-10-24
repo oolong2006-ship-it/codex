@@ -11,7 +11,11 @@ import {
   timestamp,
   uniqueIndex,
   uuid,
+  vector,
 } from "drizzle-orm/pg-core";
+
+/** Must match the embedding model (bge-m3 / multilingual-e5-large: 1024). */
+export const EMBEDDING_DIMENSIONS = 1024;
 
 /**
  * Core data model. Participant rows deliberately carry no identifying data:
@@ -159,6 +163,8 @@ export const interviewSessions = pgTable(
     status: sessionStatus("status").notNull().default("created"),
     dialectDetected: text("dialect_detected"),
     latencyStats: jsonb("latency_stats"),
+    /** Set once the worker has embedded and analyzed this interview. */
+    analyzedAt: timestamp("analyzed_at", { withTimezone: true }),
     startedAt: timestamp("started_at", { withTimezone: true }),
     endedAt: timestamp("ended_at", { withTimezone: true }),
     createdAt: createdAt(),
@@ -199,39 +205,88 @@ export const turns = pgTable(
     dialectTag: text("dialect_tag"),
     action: text("action"),
     questionId: text("question_id"),
+    /** Embedding of the redacted text, for semantic search over the consumer memory. */
+    embedding: vector("embedding", { dimensions: EMBEDDING_DIMENSIONS }),
     createdAt: createdAt(),
   },
-  (t) => [uniqueIndex("turns_session_idx").on(t.sessionId, t.idx)],
+  (t) => [
+    uniqueIndex("turns_session_idx").on(t.sessionId, t.idx),
+    index("turns_embedding_idx").using("hnsw", t.embedding.op("vector_cosine_ops")),
+  ],
 );
 
 export interface Quote {
   turnId: string;
   text: string;
+  sentiment?: string;
 }
 
-export const insights = pgTable("insights", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  studyId: uuid("study_id")
-    .notNull()
-    .references(() => studies.id, { onDelete: "cascade" }),
-  theme: text("theme").notNull(),
-  sentiment: text("sentiment").notNull(),
-  summary: text("summary"),
-  quotes: jsonb("quotes").$type<Quote[]>().notNull().default([]),
-  createdAt: createdAt(),
-});
+export const insights = pgTable(
+  "insights",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    studyId: uuid("study_id")
+      .notNull()
+      .references(() => studies.id, { onDelete: "cascade" }),
+    themeId: text("theme_id").notNull().default(""),
+    theme: text("theme").notNull(),
+    sentiment: text("sentiment").notNull(),
+    summary: text("summary"),
+    quotes: jsonb("quotes").$type<Quote[]>().notNull().default([]),
+    counts: jsonb("counts").notNull().default({}),
+    breakdown: jsonb("breakdown").notNull().default({}),
+    answers: integer("answers").notNull().default(0),
+    sessions: integer("sessions").notNull().default(0),
+    position: integer("position").notNull().default(0),
+    createdAt: createdAt(),
+  },
+  (t) => [index("insights_study_idx").on(t.studyId)],
+);
 
-export const personas = pgTable("personas", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  orgId: uuid("org_id")
-    .notNull()
-    .references(() => organizations.id, { onDelete: "cascade" }),
-  segment: jsonb("segment").notNull(),
-  attributes: jsonb("attributes").notNull(),
-  evidence: jsonb("evidence").$type<Quote[]>().notNull().default([]),
-  version: integer("version").notNull().default(1),
-  createdAt: createdAt(),
-});
+export const personas = pgTable(
+  "personas",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    orgId: uuid("org_id")
+      .notNull()
+      .references(() => organizations.id, { onDelete: "cascade" }),
+    segmentKey: text("segment_key").notNull().default(""),
+    segment: jsonb("segment").notNull(),
+    attributes: jsonb("attributes").notNull(),
+    evidence: jsonb("evidence").$type<Quote[]>().notNull().default([]),
+    /** Increases each time the memory behind this persona changes. */
+    version: integer("version").notNull().default(1),
+    createdAt: createdAt(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex("personas_org_segment_idx").on(t.orgId, t.segmentKey)],
+);
+
+export const jobStatus = pgEnum("job_status", ["pending", "running", "done", "failed"]);
+
+/** Background jobs, claimed with FOR UPDATE SKIP LOCKED (no separate queue service). */
+export const jobs = pgTable(
+  "jobs",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    kind: text("kind").notNull(),
+    payload: jsonb("payload").notNull().default({}),
+    /** Pending jobs with the same key are coalesced into one. */
+    dedupeKey: text("dedupe_key"),
+    status: jobStatus("status").notNull().default("pending"),
+    attempts: integer("attempts").notNull().default(0),
+    runAfter: timestamp("run_after", { withTimezone: true }).notNull().defaultNow(),
+    lockedAt: timestamp("locked_at", { withTimezone: true }),
+    lastError: text("last_error"),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    index("jobs_ready_idx").on(t.status, t.runAfter),
+    uniqueIndex("jobs_pending_dedupe_idx")
+      .on(t.dedupeKey)
+      .where(sql`${t.status} = 'pending' and ${t.dedupeKey} is not null`),
+  ],
+);
 
 export const qaFlags = pgTable(
   "qa_flags",

@@ -3,7 +3,7 @@
  * concrete vendors live behind adapters selected by environment variables.
  */
 
-export type ProviderKind = "asr" | "tts" | "llm" | "telephony" | "whatsapp";
+export type ProviderKind = "asr" | "tts" | "llm" | "embedding" | "telephony" | "whatsapp";
 
 export type VoiceGender = "male" | "female";
 
@@ -89,6 +89,18 @@ export interface LlmProvider {
   complete(request: LlmRequest): Promise<string>;
 }
 
+// ─── Embeddings (semantic search over the consumer memory) ─────────────────
+
+/** Vector size stored in the database. bge-m3 and multilingual-e5-large both produce 1024. */
+export const EMBEDDING_DIMENSIONS = 1024;
+
+export interface EmbeddingProvider {
+  readonly name: string;
+  readonly dimensions: number;
+  /** One unit-length vector per input, in order. */
+  embed(texts: readonly string[], kind: "document" | "query"): Promise<number[][]>;
+}
+
 // ─── Telephony (interface only in MVP) ──────────────────────────────────────
 
 export interface OutboundCallRequest {
@@ -127,6 +139,7 @@ export interface ProviderSet {
   asr: AsrProvider;
   tts: TtsProvider;
   llm: LlmProvider;
+  embedding: EmbeddingProvider;
   telephony: TelephonyProvider;
   whatsapp: WhatsAppProvider;
 }

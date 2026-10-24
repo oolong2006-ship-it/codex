@@ -1,16 +1,18 @@
 import {
+  OpenAiCompatibleEmbeddings,
   OpenAiCompatibleAsr,
   OpenAiCompatibleLlm,
   OpenAiCompatibleTts,
 } from "./adapters/openai-compatible.js";
 import {
+  MockEmbeddingProvider,
   MockAsrProvider,
   MockLlmProvider,
   MockTelephonyProvider,
   MockTtsProvider,
   MockWhatsAppProvider,
 } from "./mock/index.js";
-import type { ProviderKind, ProviderSet } from "./types.js";
+import { EMBEDDING_DIMENSIONS, type ProviderKind, type ProviderSet } from "./types.js";
 
 type Env = Readonly<Record<string, string | undefined>>;
 type Factory<K extends keyof ProviderSet> = (env: Env) => ProviderSet[K];
@@ -31,7 +33,7 @@ function required(env: Env, key: string): string {
   return value;
 }
 
-function endpoint(env: Env, prefix: "ASR" | "TTS" | "LLM") {
+function endpoint(env: Env, prefix: "ASR" | "TTS" | "LLM" | "EMBEDDING") {
   const apiKey = env[`${prefix}_API_KEY`]?.trim();
   const timeout = Number(env[`${prefix}_TIMEOUT_MS`]);
   return {
@@ -65,6 +67,16 @@ const factories: { [K in keyof ProviderSet]: Record<string, Factory<K>> } = {
   llm: {
     mock: () => new MockLlmProvider(),
     "openai-compatible": (env) => new OpenAiCompatibleLlm(endpoint(env, "LLM")),
+  },
+  embedding: {
+    mock: () => new MockEmbeddingProvider(),
+    "openai-compatible": (env) =>
+      new OpenAiCompatibleEmbeddings({
+        ...endpoint(env, "EMBEDDING"),
+        dimensions: EMBEDDING_DIMENSIONS,
+        ...(env.EMBEDDING_QUERY_PREFIX ? { queryPrefix: env.EMBEDDING_QUERY_PREFIX } : {}),
+        ...(env.EMBEDDING_DOCUMENT_PREFIX ? { documentPrefix: env.EMBEDDING_DOCUMENT_PREFIX } : {}),
+      }),
   },
   telephony: { mock: () => new MockTelephonyProvider() },
   whatsapp: { mock: () => new MockWhatsAppProvider() },
@@ -101,6 +113,7 @@ export function createProviders(env: Env = process.env): ProviderSet {
     asr: resolve("asr", env),
     tts: resolve("tts", env),
     llm: resolve("llm", env),
+    embedding: resolve("embedding", env),
     telephony: resolve("telephony", env),
     whatsapp: resolve("whatsapp", env),
   };

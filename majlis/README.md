@@ -2,12 +2,12 @@
 
 منصة سعودية لأبحاث المستهلك: مقابلات **صوتية** يديرها مساعد ذكي يُفصح عن هويته، باللهجات السعودية، مع تحليل يبني «ذاكرة مستهلك» تتراكم مع كل دراسة.
 
-> الحالة: **المرحلة 4** (لوحة العميل وتجربة المشارك). انظر [`CHANGELOG.md`](CHANGELOG.md) و [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
+> الحالة: **المرحلة 5** (التحليل وذاكرة المستهلك). انظر [`CHANGELOG.md`](CHANGELOG.md) و [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 
 ## المتطلبات
 
 - Node.js 22 أو أحدث، و pnpm 10 (`corepack enable`)
-- Docker (لقاعدة البيانات و Redis و MinIO محلياً)
+- Docker (لقاعدة البيانات و MinIO محلياً)
 - Python 3.11 أو أحدث (لمختبر الصوت فقط)
 
 ## التشغيل محلياً
@@ -20,7 +20,7 @@ pnpm install
 pnpm build
 pnpm --filter @majlis/db db:migrate
 SEED_EMAIL=you@example.com SEED_PASSWORD='12+ characters' pnpm --filter @majlis/db db:seed
-pnpm dev          # web على :3000 ، voice-gateway على :4100
+pnpm dev          # web على :3000 ، voice-gateway على :4100 ، والعامل الخلفي
 ```
 
 ثم ادخل من `http://localhost:3000/ar/login`.
@@ -30,6 +30,7 @@ pnpm dev          # web على :3000 ، voice-gateway على :4100
 | لوحة العميل  | `/ar/dashboard`                              |
 | دراسة جديدة  | `/ar/dashboard/studies/new`                  |
 | صفحة المشارك | `/ar/p/<رمز الدعوة>`، يظهر في تبويب «الدعوة» |
+| اسأل ذاكرتك  | `/ar/dashboard/memory`                       |
 
 ## الفحوصات
 

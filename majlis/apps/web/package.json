@@ -26,7 +26,8 @@
     "@majlis/providers": "workspace:*",
     "qrcode": "^1.5.4",
     "zod": "^3.25.0",
-    "server-only": "^0.0.1"
+    "server-only": "^0.0.1",
+    "@majlis/analysis": "workspace:*"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.3.0",

@@ -30,6 +30,7 @@ export default async function DashboardLayout({
           <nav className="flex items-center gap-4 text-sm">
             <Link href={`/${locale}/dashboard`}>{t(locale, "nav.studies")}</Link>
             <Link href={`/${locale}/dashboard/studies/new`}>{t(locale, "nav.newStudy")}</Link>
+            <Link href={`/${locale}/dashboard/memory`}>{t(locale, "nav.memory")}</Link>
             <form action={logoutAction.bind(null, locale)}>
               <button type="submit" className="underline underline-offset-4">
                 {t(locale, "auth.logout")}

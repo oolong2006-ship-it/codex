@@ -1,8 +1,10 @@
+/** Workspace packages that read data files next to their code; never bundle them. */
 const SERVER_EXTERNAL = [
   "@majlis/db",
   "@majlis/interviewer",
   "@majlis/dialect",
   "@majlis/providers",
+  "@majlis/analysis",
 ];
 
 /** @type {import('next').NextConfig} */
@@ -13,13 +15,7 @@ const nextConfig = {
   eslint: { ignoreDuringBuilds: true },
   // These read data files next to their code (lexicons, phrases, migrations) and
   // must run from node_modules as-is, not bundled.
-  serverExternalPackages: [
-    "@majlis/db",
-    "@majlis/interviewer",
-    "@majlis/dialect",
-    "@majlis/providers",
-    "pg",
-  ],
+  serverExternalPackages: [...SERVER_EXTERNAL, "pg"],
   webpack(config, { isServer }) {
     if (isServer) {
       // Workspace packages are symlinked outside node_modules, so serverExternalPackages

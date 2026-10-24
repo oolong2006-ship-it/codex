@@ -3,6 +3,7 @@ import type { AddressInfo } from "node:net";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import {
   OpenAiCompatibleAsr,
+  OpenAiCompatibleEmbeddings,
   OpenAiCompatibleLlm,
   OpenAiCompatibleTts,
   pcmToWav,
@@ -33,6 +34,16 @@ beforeAll(async () => {
     } else if (req.url === "/v1/audio/speech") {
       res.write(Buffer.alloc(640, 1));
       res.end(Buffer.alloc(640, 2));
+    } else if (req.url === "/v1/embeddings") {
+      const input = (JSON.parse(body.toString()) as { input: string[] }).input;
+      res.setHeader("Content-Type", "application/json");
+      res.end(
+        JSON.stringify({
+          data: input
+            .map((_, i) => ({ index: i, embedding: Array.from({ length: 1024 }, () => 2) }))
+            .reverse(),
+        }),
+      );
     } else if (req.url === "/v1/chat/completions") {
       res.setHeader("Content-Type", "text/event-stream");
       for (const t of ["إيه، ", "فاهم ", "عليك."]) {
@@ -89,6 +100,19 @@ describe("openai-compatible adapters", () => {
     expect(await llm.complete({ messages: [{ role: "user", content: "هلا" }] })).toBe(
       "إيه، فاهم عليك.",
     );
+  });
+
+  it("embeds in input order, normalized, and checks the dimension", async () => {
+    const emb = new OpenAiCompatibleEmbeddings({
+      baseUrl: base,
+      model: "bge-m3",
+      dimensions: 1024,
+    });
+    const vectors = await emb.embed(["أ", "ب"], "query");
+    expect(vectors).toHaveLength(2);
+    expect(Math.hypot(...vectors[0]!)).toBeCloseTo(1);
+    const wrong = new OpenAiCompatibleEmbeddings({ baseUrl: base, model: "x", dimensions: 768 });
+    await expect(wrong.embed(["أ"], "document")).rejects.toThrow(/768/);
   });
 
   it("builds a valid WAV header", () => {

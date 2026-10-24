@@ -1,0 +1,31 @@
+{
+  "name": "@majlis/analysis",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Interview analysis: sentiment, themes, segment comparison, personas, memory Q&A",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "lexicon"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@majlis/dialect": "workspace:*",
+    "@majlis/providers": "workspace:*",
+    "yaml": "^2.8.0",
+    "@majlis/i18n": "workspace:*"
+  }
+}

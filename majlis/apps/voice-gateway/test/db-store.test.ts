@@ -3,6 +3,7 @@ import { isolatedTestDb } from "@majlis/db/testing";
 import {
   consentRecords,
   createOrgWithOwner,
+  jobs,
   createStudyFromObjective,
   interviewSessions,
   startInterview,
@@ -126,6 +127,10 @@ describe.skipIf(!URL_TEST)("gateway with PostgreSQL", () => {
       .from(consentRecords)
       .where(eq(consentRecords.sessionId, id));
     expect(consents.map((c) => c.method).sort()).toEqual(["click", "verbal"]);
+
+    // The completed interview is queued for analysis.
+    const queued = await h.db.select().from(jobs).where(eq(jobs.kind, "analyze-session"));
+    expect(queued.map((j) => j.payload)).toContainEqual({ sessionId: id });
     ws.close();
   });
 });

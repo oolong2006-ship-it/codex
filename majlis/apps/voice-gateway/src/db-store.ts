@@ -1,4 +1,5 @@
 import {
+  enqueueJob,
   appendTurn,
   claimSession,
   loadSessionForGateway,
@@ -57,5 +58,14 @@ export class DbSessionStore implements SessionStore {
       latencyStats: latency,
       dialectDetected: dialect,
     });
+    // Completed interviews feed the analysis and the consumer memory.
+    if (status === "completed") {
+      await enqueueJob(
+        this.db,
+        "analyze-session",
+        { sessionId: id },
+        { dedupeKey: `analyze:${id}` },
+      );
+    }
   }
 }

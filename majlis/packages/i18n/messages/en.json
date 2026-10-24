@@ -30,7 +30,8 @@
   },
   "nav": {
     "studies": "Studies",
-    "newStudy": "New study"
+    "newStudy": "New study",
+    "memory": "Ask your memory"
   },
   "studies": {
     "title": "Studies",
@@ -66,7 +67,8 @@
       "guide": "Interview guide",
       "segment": "Segment & voice",
       "invite": "Invite",
-      "sessions": "Interviews"
+      "sessions": "Interviews",
+      "results": "Results"
     }
   },
   "guide": {
@@ -213,5 +215,47 @@
     "thanksTitle": "Thank you!",
     "thanksBody": "Thanks for your time and your views.",
     "thanksIncentive": "Incentive: {incentive}"
+  },
+  "results": {
+    "empty": "No results yet. They appear once interviews are completed and analyzed.",
+    "pending": "{count} interviews waiting for analysis",
+    "answers": "{answers} answers from {sessions} interviews",
+    "auto": "{positive} positive, {negative} negative, {mixed} mixed, {neutral} neutral",
+    "quotes": "In participants' words",
+    "compare": "Segment comparison",
+    "by": "By",
+    "segment": "Segment",
+    "baseline": "Sentiment is a baseline from a Saudi-dialect lexicon; its accuracy has not been measured on labelled data yet.",
+    "sentiment": {
+      "positive": "Positive",
+      "negative": "Negative",
+      "neutral": "Neutral",
+      "mixed": "Mixed"
+    },
+    "dims": {
+      "gender": "Gender",
+      "ageBand": "Age",
+      "city": "City",
+      "dialect": "Dialect"
+    }
+  },
+  "memory": {
+    "title": "Ask your memory",
+    "hint": "Ask about your customers, e.g. What do women in Jeddah think about our prices?",
+    "ask": "Ask",
+    "answer": "Answer",
+    "evidence": "Evidence from interviews",
+    "insufficient": "The interviews don't contain enough on this question.",
+    "extractive": "From {quotes} quotes in {sessions} interviews: {positive} positive, {negative} negative, {neutral} neutral.",
+    "llmNote": "Written only from the quotes below; bracketed numbers refer to them.",
+    "filters": "Segment: {filters}",
+    "everyone": "All participants",
+    "parenthood": "We don't record whether a participant is a parent, so only gender was used.",
+    "personas": "Consumer memory",
+    "personasEmpty": "Personas form once a segment has at least {min} completed interviews.",
+    "interviews": "{sessions} interviews in {studies} studies",
+    "praises": "Praise",
+    "complaints": "Complain about",
+    "version": "Version {version}"
   }
 }

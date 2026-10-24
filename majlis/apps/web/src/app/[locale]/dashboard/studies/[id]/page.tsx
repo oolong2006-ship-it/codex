@@ -8,10 +8,11 @@ import { AGE_BANDS, CITIES, DIALECT_CODES, GENDERS } from "@/lib/options";
 import { db, publicBaseUrl, requireUser } from "@/lib/server";
 import { saveSettingsAction, setStatusAction } from "../../actions";
 import { GuideEditor } from "./guide-editor";
+import { ResultsTab } from "./results";
 
 export const dynamic = "force-dynamic";
 
-const TABS = ["guide", "segment", "invite", "sessions"] as const;
+const TABS = ["guide", "segment", "invite", "sessions", "results"] as const;
 type Tab = (typeof TABS)[number];
 
 export default async function StudyPage({
@@ -19,7 +20,7 @@ export default async function StudyPage({
   searchParams,
 }: {
   params: Promise<{ locale: string; id: string }>;
-  searchParams: Promise<{ tab?: string; saved?: string }>;
+  searchParams: Promise<{ tab?: string; saved?: string; by?: string }>;
 }) {
   const { locale, id } = await params;
   if (!isLocale(locale)) notFound();
@@ -74,6 +75,9 @@ export default async function StudyPage({
         {tab === "invite" && <InviteTab locale={locale} study={study} />}
         {tab === "sessions" && (
           <SessionsTab locale={locale} orgId={user.orgId} studyId={study.id} />
+        )}
+        {tab === "results" && (
+          <ResultsTab locale={locale} orgId={user.orgId} studyId={study.id} by={sp.by} />
         )}
       </Card>
     </div>

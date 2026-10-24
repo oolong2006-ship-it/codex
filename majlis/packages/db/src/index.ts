@@ -6,3 +6,5 @@ export * from "./repos/studies.js";
 export * from "./repos/participation.js";
 export * from "./repos/gateway.js";
 export * from "./repos/client-views.js";
+export * from "./repos/jobs.js";
+export * from "./repos/analysis.js";

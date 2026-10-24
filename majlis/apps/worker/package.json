@@ -10,9 +10,15 @@
     "start": "node dist/main.js",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
-    "test": "vitest run"
+    "test": "vitest run",
+    "start:once": "node dist/main.js --once"
   },
   "devDependencies": {
     "tsx": "^4.23.0"
+  },
+  "dependencies": {
+    "@majlis/analysis": "workspace:*",
+    "@majlis/db": "workspace:*",
+    "@majlis/providers": "workspace:*"
   }
 }

@@ -1,4 +1,5 @@
 import type {
+  EmbeddingProvider,
   AsrOptions,
   AsrProvider,
   AsrResult,
@@ -233,5 +234,45 @@ export class OpenAiCompatibleLlm implements LlmProvider {
     let out = "";
     for await (const delta of this.stream(request)) out += delta;
     return out;
+  }
+}
+
+export interface EmbeddingEndpointConfig extends EndpointConfig {
+  dimensions: number;
+  /** Prefixes some models expect (e5: "query: " / "passage: "); bge-m3 needs none. */
+  queryPrefix?: string;
+  documentPrefix?: string;
+}
+
+export class OpenAiCompatibleEmbeddings implements EmbeddingProvider {
+  readonly name = "openai-compatible";
+  readonly dimensions: number;
+  constructor(private readonly cfg: EmbeddingEndpointConfig) {
+    this.dimensions = cfg.dimensions;
+  }
+
+  async embed(texts: readonly string[], kind: "document" | "query"): Promise<number[][]> {
+    if (texts.length === 0) return [];
+    const prefix = (kind === "query" ? this.cfg.queryPrefix : this.cfg.documentPrefix) ?? "";
+    const res = await fetch(url(this.cfg, "/v1/embeddings"), {
+      method: "POST",
+      headers: headers(this.cfg, { "Content-Type": "application/json" }),
+      body: JSON.stringify({ model: this.cfg.model, input: texts.map((t) => prefix + t) }),
+      signal: withTimeout(this.cfg),
+    });
+    await ensureOk(res, "embeddings");
+    const body = (await res.json()) as { data: { index: number; embedding: number[] }[] };
+    const vectors = [...body.data].sort((a, b) => a.index - b.index).map((d) => d.embedding);
+    for (const v of vectors) {
+      if (v.length !== this.dimensions) {
+        throw new Error(
+          `embedding model returned ${v.length} dimensions, the database expects ${this.dimensions}`,
+        );
+      }
+    }
+    return vectors.map((v) => {
+      const norm = Math.hypot(...v) || 1;
+      return v.map((x) => x / norm);
+    });
   }
 }

@@ -10,13 +10,8 @@ import {
 describe("createProviders", () => {
   it("defaults every kind to mock", () => {
     const providers = createProviders({});
-    expect(Object.values(providers).map((p) => p.name)).toEqual([
-      "mock",
-      "mock",
-      "mock",
-      "mock",
-      "mock",
-    ]);
+    expect(new Set(Object.values(providers).map((p) => p.name))).toEqual(new Set(["mock"]));
+    expect(Object.keys(providers)).toContain("embedding");
   });
 
   it("rejects an unknown provider with an actionable message", () => {
@@ -81,5 +76,20 @@ describe("mock providers", () => {
     const llm = new MockLlmProvider(["أهلين", "زين"]);
     expect(await llm.complete({ messages: [] })).toBe("أهلين");
     expect(await llm.complete({ messages: [] })).toBe("زين");
+  });
+});
+
+describe("MockEmbeddingProvider", () => {
+  it("returns unit vectors where shared words mean higher similarity", async () => {
+    const { MockEmbeddingProvider } = await import("../src/index.js");
+    const e = new MockEmbeddingProvider();
+    const [q, near, far] = await e.embed(
+      ["الأسعار غالية", "بصراحة الأسعار غالية مرة", "الموظفين محترمين"],
+      "document",
+    );
+    const dot = (a: number[], b: number[]) => a.reduce((s, x, i) => s + x * b[i]!, 0);
+    expect(q!.length).toBe(1024);
+    expect(dot(q!, q!)).toBeCloseTo(1);
+    expect(dot(q!, near!)).toBeGreaterThan(dot(q!, far!));
   });
 });

@@ -1,3 +1,4 @@
+import { EMBEDDING_DIMENSIONS, type EmbeddingProvider } from "../types.js";
 import type {
   AsrOptions,
   AsrProvider,
@@ -186,5 +187,45 @@ export class MockWhatsAppProvider implements WhatsAppProvider {
   parseWebhook(rawBody: string): WhatsAppInboundMessage[] {
     const parsed = JSON.parse(rawBody) as { messages?: WhatsAppInboundMessage[] };
     return (parsed.messages ?? []).map((m) => ({ ...m, receivedAt: new Date(m.receivedAt) }));
+  }
+}
+
+/**
+ * Deterministic lexical embedding (feature hashing of normalized words and
+ * word pairs). It captures word overlap only, not meaning: good enough to test
+ * search plumbing, never a substitute for a real model.
+ */
+export class MockEmbeddingProvider implements EmbeddingProvider {
+  readonly name = "mock";
+  readonly dimensions = EMBEDDING_DIMENSIONS;
+
+  async embed(texts: readonly string[], _kind?: "document" | "query"): Promise<number[][]> {
+    return texts.map((t) => this.vector(t));
+  }
+
+  private vector(text: string): number[] {
+    const v = new Array<number>(this.dimensions).fill(0);
+    const words = text
+      .normalize("NFKC")
+      .replace(/[\u0610-\u061A\u064B-\u065F\u0670\u0640]/g, "")
+      .replace(/[أإآ]/g, "ا")
+      .replace(/ة/g, "ه")
+      .replace(/ى/g, "ي")
+      .toLowerCase()
+      .split(/[^\p{L}\p{N}]+/u)
+      .filter((w) => w.length > 1)
+      // Light Arabic affix stripping so "بالأسعار", "الأسعار" and "أسعارنا" meet.
+      .map((w) => (w.length > 4 ? w.replace(/^(وال|بال|فال|كال|لل|ال)/u, "") : w))
+      .map((w) => (w.length > 5 ? w.replace(/^[وفبلك]/u, "") : w))
+      .map((w) => (w.length > 4 ? w.replace(/(هم|ها|نا|كم|ات|ين|ون|يه|ه)$/u, "") : w));
+    const features = [...words, ...words.slice(1).map((w, i) => `${words[i]}_${w}`)];
+    for (const f of features) {
+      let h = 2166136261;
+      for (let i = 0; i < f.length; i++) h = Math.imul(h ^ f.charCodeAt(i), 16777619);
+      const idx = (h >>> 0) % this.dimensions;
+      v[idx]! += (h & 1) === 0 ? 1 : -1;
+    }
+    const norm = Math.hypot(...v) || 1;
+    return v.map((x) => x / norm);
   }
 }
