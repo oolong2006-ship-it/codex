@@ -3,26 +3,27 @@
 <head>
 <meta charset="utf-8">
 <title>طاقم — الملف التعريفي للخدمات | Taqam Services Profile</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alexandria:wght@300;500;600;700;800&family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap">
 <style>
   @page { size: A4; margin: 0; }
   :root {
-    --primary:#0F3D3E; --primary-600:#145A5C; --primary-500:#1F7A7C; --primary-100:#DCEBEA; --primary-50:#EEF6F5;
-    --accent:#F2A541; --accent-600:#D98B23; --accent-100:#FDEBD0;
-    --sand:#FAF6EF; --sand-200:#F1E9DB; --line:#E7E1D6;
-    --ink:#1B2421; --muted:#4A5853; --soft:#7D8B86; --on-dark:#CFE3E0;
+    --primary:#0C1F24; --primary-600:#16313A; --primary-500:#0B7A6B; --primary-100:#D6EFEA; --primary-50:#ECF7F4;
+    --accent:#FFB547; --accent-600:#A1640F; --accent-100:#FFEBC9;
+    --sand:#F4F7F5; --sand-200:#E8EEEB; --line:#DCE4E0;
+    --ink:#0C1F24; --muted:#50645F; --soft:#5E6E69; --on-dark:#D6EFEA;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { background: #888; }
   body { font-family: 'IBM Plex Sans Arabic', Tahoma, sans-serif; color: var(--ink); -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   .page { width: 210mm; height: 297mm; position: relative; overflow: hidden; background: var(--sand); padding: 22mm 18mm 24mm; page-break-after: always; display: flex; flex-direction: column; gap: 7mm; }
   .page:last-child { page-break-after: auto; }
-  .dark { background: linear-gradient(150deg, var(--primary) 0%, var(--primary-600) 100%); color: #FAF6EF; }
-  .pattern { position: absolute; inset: 0; background-image: repeating-linear-gradient(45deg, rgba(242,165,65,.10) 0 1.5px, transparent 1.5px 18px); pointer-events: none; }
+  .dark { background: linear-gradient(150deg, var(--primary) 0%, var(--primary-600) 100%); color: #F4F7F5; }
+  .pattern { position: absolute; inset: 0; background-image: radial-gradient(circle at 1.5px 1.5px, rgba(255,181,71,.45) 1.6px, transparent 2.2px), radial-gradient(circle at 1px 1px, rgba(143,211,196,.28) 1.1px, transparent 1.6px); background-size: 14mm 14mm, 7mm 7mm; background-position: 0 0, 3.5mm 3.5mm; pointer-events: none; }
   .en { direction: ltr; text-align: left; font-family: 'IBM Plex Sans Arabic', Arial, sans-serif; }
   .footer { position: absolute; bottom: 10mm; left: 18mm; right: 18mm; display: flex; justify-content: space-between; font-size: 8.5pt; color: var(--soft); border-top: 1px solid var(--line); padding-top: 3mm; }
   .dark .footer { color: var(--on-dark); border-color: rgba(255,255,255,.15); }
 
+  h1, h2, h4, .num { font-family: 'Alexandria', 'IBM Plex Sans Arabic', Tahoma, sans-serif; }
   /* headings */
   .head { display: flex; justify-content: space-between; align-items: flex-end; gap: 8mm; border-bottom: 2px solid var(--accent); padding-bottom: 4mm; }
   .head .ar .eyebrow { font-size: 10pt; color: var(--accent-600); font-weight: 600; }
@@ -37,8 +38,8 @@
   .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 4.5mm; }
   .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4mm; }
   .card { background: #FFFDF9; border: 1px solid var(--line); border-radius: 4mm; padding: 5mm 5.5mm; display: flex; flex-direction: column; gap: 2mm; }
-  .card.hl { background: var(--primary); color: #FAF6EF; border: none; }
-  .card.ac { background: var(--accent-100); border-color: #F5D7A6; }
+  .card.hl { background: var(--primary); color: #F4F7F5; border: none; }
+  .card.ac { background: var(--accent-100); border-color: #FFD99A; }
   .card h4 { font-size: 12.5pt; font-weight: 700; color: var(--primary); }
   .card.hl h4 { color: var(--accent); }
   .card p { font-size: 9.5pt; line-height: 1.75; color: var(--muted); }
@@ -64,11 +65,11 @@
   .tag { display: inline-block; font-size: 8.5pt; background: var(--accent); color: var(--primary); padding: .8mm 3mm; border-radius: 99px; font-weight: 600; }
 
   table { width: 100%; border-collapse: collapse; font-size: 9.5pt; }
-  th { background: var(--primary); color: #FAF6EF; font-weight: 600; padding: 2.6mm 3mm; text-align: right; }
+  th { background: var(--primary); color: #F4F7F5; font-weight: 600; padding: 2.6mm 3mm; text-align: right; }
   td { padding: 2.4mm 3mm; border-bottom: 1px solid var(--line); color: var(--muted); background: #FFFDF9; vertical-align: top; }
   td .en, th .en { display: block; font-size: 8pt; color: var(--soft); font-weight: 400; }
   th .en { color: var(--on-dark); }
-  .yes { color: #2E8B57; font-weight: 700; }
+  .yes { color: #1B7F53; font-weight: 700; }
   .no { color: var(--soft); }
   .note { font-size: 8.5pt; color: var(--soft); line-height: 1.6; }
 </style>
@@ -84,7 +85,7 @@
   </div>
   <div style="position:relative">
     <div style="display:flex;align-items:center;gap:6mm">
-      <svg viewBox="0 0 64 64" width="70" height="70"><rect width="64" height="64" rx="16" fill="#FAF6EF"/><path d="M18 22h28v6H35v20h-6V28H18z" fill="#0F3D3E"/><circle cx="46" cy="44" r="5" fill="#F2A541"/></svg>
+      <svg viewBox="0 0 64 64" width="70" height="70"><rect width="64" height="64" rx="18" fill="#0E8C7A"/><path d="M17 23H47M32 23V43" stroke="#FFFFFF" stroke-width="5" stroke-linecap="round" fill="none"/><circle cx="17" cy="23" r="6" fill="#FFFFFF"/><circle cx="47" cy="23" r="6" fill="#FFFFFF"/><circle cx="32" cy="46" r="7.5" fill="#FFB547"/></svg>
       <h1 style="font-size:78pt;font-weight:700;line-height:1">طاقم</h1>
     </div>
     <p class="en" style="font-size:22pt;font-weight:300;letter-spacing:10px;color:var(--on-dark);margin-top:3mm;text-align:right;direction:ltr">TAQAM</p>
@@ -93,7 +94,7 @@
     <p style="font-size:28pt;font-weight:700;color:var(--accent);line-height:1.3">كل فروعك… فريق واحد.</p>
     <p style="font-size:13pt;color:var(--on-dark);line-height:1.8">منصة سعودية متكاملة للموارد البشرية والرواتب والحضور، مصممة للمنشآت متعددة الفروع ذات الفرق الميدانية.</p>
     <div class="en" style="margin-top:4mm">
-      <p style="font-size:16pt;font-weight:600;color:#FAF6EF">All your branches. One team.</p>
+      <p style="font-size:16pt;font-weight:600;color:#F4F7F5">All your branches. One team.</p>
       <p style="font-size:10pt;color:var(--on-dark);line-height:1.6">An integrated Saudi HR, payroll &amp; attendance platform built for multi-branch businesses with frontline teams.</p>
     </div>
   </div>
@@ -326,21 +327,21 @@
 <section class="page dark">
   <div class="pattern" style="right:auto;width:40%"></div>
   <div class="head" style="position:relative;border-color:var(--accent)">
-    <div class="ar"><div class="eyebrow">12</div><h2 style="color:#FAF6EF">تطبيق الموظف</h2></div>
+    <div class="ar"><div class="eyebrow">12</div><h2 style="color:#F4F7F5">تطبيق الموظف</h2></div>
     <div class="en"><div class="eyebrow">Self-service</div><h3 style="color:var(--on-dark)">Employee app</h3></div>
   </div>
   <div style="position:relative;display:flex;gap:10mm;align-items:center;flex:1">
-    <div style="width:62mm;height:122mm;background:#0B2E2F;border-radius:9mm;padding:5mm;display:flex;flex-direction:column;align-items:center;gap:4mm;box-shadow:0 10mm 25mm rgba(0,0,0,.35);border:1.5mm solid #145A5C">
-      <div style="width:18mm;height:1.6mm;border-radius:9px;background:#145A5C"></div>
-      <p style="font-size:10pt;color:#FAF6EF">مساء الخير، سعود</p>
-      <p class="en" style="font-size:22pt;font-weight:700;color:#FAF6EF;text-align:center">08:02</p>
+    <div style="width:62mm;height:122mm;background:#081619;border-radius:9mm;padding:5mm;display:flex;flex-direction:column;align-items:center;gap:4mm;box-shadow:0 10mm 25mm rgba(0,0,0,.35);border:1.5mm solid #16313A">
+      <div style="width:18mm;height:1.6mm;border-radius:9px;background:#16313A"></div>
+      <p style="font-size:10pt;color:#F4F7F5">مساء الخير، سعود</p>
+      <p class="en" style="font-size:22pt;font-weight:700;color:#F4F7F5;text-align:center">08:02</p>
       <div style="width:36mm;height:36mm;border-radius:50%;background:var(--accent);display:flex;flex-direction:column;align-items:center;justify-content:center"><span style="font-size:20pt;color:var(--primary)">✓</span><span style="font-size:10pt;font-weight:700;color:var(--primary)">تسجيل الحضور</span></div>
-      <span style="font-size:8pt;background:#145A5C;color:var(--on-dark);padding:1mm 3mm;border-radius:9px">داخل نطاق الفرع · 15 م</span>
+      <span style="font-size:8pt;background:#16313A;color:var(--on-dark);padding:1mm 3mm;border-radius:9px">داخل نطاق الفرع · 15 م</span>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:2mm;width:100%;margin-top:auto">
-        <span style="font-size:8pt;background:#FAF6EF;color:var(--primary);padding:2mm;border-radius:2mm;text-align:center">إجازاتي</span>
-        <span style="font-size:8pt;background:#FAF6EF;color:var(--primary);padding:2mm;border-radius:2mm;text-align:center">رواتبي</span>
-        <span style="font-size:8pt;background:#FAF6EF;color:var(--primary);padding:2mm;border-radius:2mm;text-align:center">طلباتي</span>
-        <span style="font-size:8pt;background:#FAF6EF;color:var(--primary);padding:2mm;border-radius:2mm;text-align:center">حسابي</span>
+        <span style="font-size:8pt;background:#F4F7F5;color:var(--primary);padding:2mm;border-radius:2mm;text-align:center">إجازاتي</span>
+        <span style="font-size:8pt;background:#F4F7F5;color:var(--primary);padding:2mm;border-radius:2mm;text-align:center">رواتبي</span>
+        <span style="font-size:8pt;background:#F4F7F5;color:var(--primary);padding:2mm;border-radius:2mm;text-align:center">طلباتي</span>
+        <span style="font-size:8pt;background:#F4F7F5;color:var(--primary);padding:2mm;border-radius:2mm;text-align:center">حسابي</span>
       </div>
     </div>
     <div style="flex:1;display:flex;flex-direction:column;gap:5mm">
@@ -474,7 +475,7 @@
   </div>
   <div style="position:relative;display:flex;justify-content:space-between;align-items:center">
     <span class="tag" style="font-size:11pt;padding:2mm 6mm">اطلب عرضاً تجريبياً · Book a demo</span>
-    <div style="display:flex;align-items:center;gap:3mm"><svg viewBox="0 0 64 64" width="36" height="36"><rect width="64" height="64" rx="16" fill="#FAF6EF"/><path d="M18 22h28v6H35v20h-6V28H18z" fill="#0F3D3E"/><circle cx="46" cy="44" r="5" fill="#F2A541"/></svg><span style="font-size:22pt;font-weight:700">طاقم</span></div>
+    <div style="display:flex;align-items:center;gap:3mm"><svg viewBox="0 0 64 64" width="36" height="36"><rect width="64" height="64" rx="18" fill="#0E8C7A"/><path d="M17 23H47M32 23V43" stroke="#FFFFFF" stroke-width="5" stroke-linecap="round" fill="none"/><circle cx="17" cy="23" r="6" fill="#FFFFFF"/><circle cx="47" cy="23" r="6" fill="#FFFFFF"/><circle cx="32" cy="46" r="7.5" fill="#FFB547"/></svg><span style="font-size:22pt;font-weight:700">طاقم</span></div>
   </div>
 </section>
 
