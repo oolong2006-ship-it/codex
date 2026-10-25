@@ -118,7 +118,7 @@ function AdminsCard() {
   const cols: Column<PlatformAdmin>[] = [
     { key: 'name', header: t('المدير', 'Admin'), render: (a) => (
       <div className="flex items-center gap-2.5">
-        <Avatar name={a.name} color="#172C46" size="sm" />
+        <Avatar name={a.name} color="#0F2747" size="sm" />
         <div className="min-w-0">
           <p className="font-medium text-ink">{a.name}{a.id === user?.id && <Badge tone="primary" className="ms-2">{t('أنت', 'You')}</Badge>}</p>
           <p className="text-xs text-ink-soft" dir="ltr">{a.email}</p>

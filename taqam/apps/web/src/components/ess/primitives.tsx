@@ -54,7 +54,7 @@ export function ListSkeleton({ rows = 4 }: { rows?: number }) {
 }
 
 /** Circular progress ring. value/max clamped. */
-export function Ring({ value, max, size = 76, stroke = 8, color = '#19C7B4', track = '#EDF1F6', children }:
+export function Ring({ value, max, size = 76, stroke = 8, color = '#14D1C3', track = '#EDF1F6', children }:
   { value: number; max: number; size?: number; stroke?: number; color?: string; track?: string; children?: React.ReactNode }) {
   const r = (size - stroke) / 2;
   const c = 2 * Math.PI * r;

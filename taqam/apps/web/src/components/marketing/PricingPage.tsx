@@ -101,7 +101,7 @@ export function PricingPage() {
               </label>
               <input id="headcount" type="range" min={10} max={1000} step={10} value={headcount}
                 onChange={(e) => setHeadcount(Number(e.target.value))}
-                className="mt-3 w-full accent-[#172C46]" />
+                className="mt-3 w-full accent-[#0F2747]" />
               <div className="num mt-1 flex justify-between text-xs text-ink-soft"><span>10</span><span>1000</span></div>
             </div>
             <div className="grid gap-3 sm:grid-cols-2">

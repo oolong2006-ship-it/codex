@@ -34,7 +34,7 @@ function saudiIban(bankCode: string): string {
 }
 
 const BANKS = ['80', '10', '20', '05', '45', '55', '15', '30'];
-const COLORS = ['#172C46', '#213A5A', '#0E776D', '#19C7B4', '#2F6F9F', '#1B7F53', '#C2412D', '#7A5C99'];
+const COLORS = ['#0F2747', '#1B3A63', '#0E7490', '#14D1C3', '#0369A1', '#1B7F53', '#C2412D', '#7A5C99'];
 
 type BranchKey = 'OLAYA' | 'MALQA' | 'JEDDAH' | 'DAMMAM';
 type DeptKey = 'KITCHEN' | 'SERVICE' | 'ADMIN' | 'FINHR' | 'DELIVERY';
@@ -164,9 +164,9 @@ export function buildSeed(now: Date = new Date()): DB {
       return s;
     };
     shifts[k] = {
-      M: mk('M', 'الوردية الصباحية', '08:00', '16:00', 10, ALL_WEEK, '#19C7B4'),
-      E: mk('E', 'الوردية المسائية', '16:00', '00:00', 10, ALL_WEEK, '#213A5A'),
-      A: mk('A', 'الدوام الإداري', '09:00', '17:00', 15, [0, 1, 2, 3, 4], '#2F6F9F'),
+      M: mk('M', 'الوردية الصباحية', '08:00', '16:00', 10, ALL_WEEK, '#14D1C3'),
+      E: mk('E', 'الوردية المسائية', '16:00', '00:00', 10, ALL_WEEK, '#1B3A63'),
+      A: mk('A', 'الدوام الإداري', '09:00', '17:00', 15, [0, 1, 2, 3, 4], '#0369A1'),
     };
   }
 

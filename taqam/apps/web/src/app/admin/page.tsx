@@ -45,7 +45,7 @@ export default function AdminOverviewPage() {
                 <div className="flex items-center gap-2">
                   <BellRing className="h-5 w-5 text-warning" />
                   <h2 className="text-base font-bold text-ink">{t('تحتاج إجراء', 'Needs action')}</h2>
-                  <span className="num rounded-full bg-warning px-2 text-xs font-bold text-[#172C46]">{d.companies.pending + d.expiringSoon.length + d.newLeads}</span>
+                  <span className="num rounded-full bg-warning px-2 text-xs font-bold text-[#0F2747]">{d.companies.pending + d.expiringSoon.length + d.newLeads}</span>
                 </div>
                 <p className="text-xs text-ink-muted">{t('موافقات معلّقة، اشتراكات توشك على الانتهاء، وعملاء جدد', 'Pending approvals, expiring subscriptions and new leads')}</p>
               </div>

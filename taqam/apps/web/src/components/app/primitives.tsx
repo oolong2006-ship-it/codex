@@ -14,7 +14,7 @@ export function StatusBadge({ map, value, className }: { map: L; value: string |
   return <Badge tone={statusTone(value)} className={className}>{label(map, value, lang)}</Badge>;
 }
 
-const AVATAR_COLORS = ['#172C46', '#0E776D', '#E89A22', '#2F6F9F', '#1B7F53', '#C2412D', '#6B5B95', '#213A5A'];
+const AVATAR_COLORS = ['#0F2747', '#0E7490', '#E89A22', '#0369A1', '#1B7F53', '#C2412D', '#6B5B95', '#1B3A63'];
 export function Avatar({ name, color, size = 'md', className }: { name: string; color?: string | null; size?: 'sm' | 'md' | 'lg' | 'xl'; className?: string }) {
   const c = color || AVATAR_COLORS[Math.abs([...(name || '?')].reduce((a, ch) => a + ch.charCodeAt(0), 0)) % AVATAR_COLORS.length];
   const s = { sm: 'h-7 w-7 text-[11px]', md: 'h-9 w-9 text-xs', lg: 'h-12 w-12 text-base', xl: 'h-16 w-16 text-xl' }[size];
@@ -122,7 +122,7 @@ export function Stepper({ steps, current }: { steps: { key: string; label: strin
 }
 
 /** Semi-circle gauge (0..100). */
-export function Gauge({ value, label: lbl, color = '#0E776D', size = 180 }: { value: number; label?: React.ReactNode; color?: string; size?: number }) {
+export function Gauge({ value, label: lbl, color = '#0E7490', size = 180 }: { value: number; label?: React.ReactNode; color?: string; size?: number }) {
   const v = Math.max(0, Math.min(100, value || 0));
   const r = 70; const c = Math.PI * r;
   return (
@@ -140,7 +140,7 @@ export function Gauge({ value, label: lbl, color = '#0E776D', size = 180 }: { va
   );
 }
 
-export const BAND_COLOR: Record<string, string> = { PLATINUM: '#172C46', HIGH_GREEN: '#1B7F53', MID_GREEN: '#5BAE7E', LOW_GREEN: '#D99A1E', RED: '#C2412D' };
+export const BAND_COLOR: Record<string, string> = { PLATINUM: '#0F2747', HIGH_GREEN: '#1B7F53', MID_GREEN: '#5BAE7E', LOW_GREEN: '#D99A1E', RED: '#C2412D' };
 
 export function SectionTitle({ children, action }: { children: React.ReactNode; action?: React.ReactNode }) {
   return (

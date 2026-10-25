@@ -1,24 +1,47 @@
+import { useId } from 'react';
 import { BRAND } from '@/lib/brand';
 
-type Tone = 'oasis' | 'night' | 'white';
-// oasis: primary navy tile · night: lifted tile for dark surfaces (kit's reverse logo) · white: white tile
-const TONES: Record<Tone, { tile: string; stroke: string }> = {
-  oasis: { tile: BRAND.night, stroke: BRAND.white },
-  night: { tile: '#24405B', stroke: BRAND.white },
-  white: { tile: BRAND.white, stroke: BRAND.night },
-};
+type Tone = 'color' | 'tile' | 'mono' | 'white';
 
-/** The Shuoon app icon (Brand Kit v1.0): three dots for people over a connected path linking people, processes and data. */
-export function LogoMark({ size = 32, tone = 'oasis', className }: { size?: number; tone?: Tone; className?: string }) {
-  const { tile, stroke } = TONES[tone];
+/** Shuoon symbol paths in a 200×140 box: three people (blue centre head, teal sides) joined by one flowing path. */
+function Symbol({ id, tone }: { id: string; tone: Tone }) {
+  const flat = tone === 'mono' ? BRAND.night : tone === 'white' ? BRAND.white : null;
+  const teal = flat ?? `url(#${id}t)`;
+  const blue = flat ?? `url(#${id}b)`;
+  const wave = flat ?? `url(#${id}w)`;
   return (
-    <svg viewBox="0 0 220 220" width={size} height={size} className={className} aria-hidden>
-      <rect width="220" height="220" rx="52" fill={tile} />
-      <circle cx="65" cy="71" r="13" fill={BRAND.saffron} />
-      <circle cx="110" cy="71" r="13" fill={BRAND.saffron} />
-      <circle cx="155" cy="71" r="13" fill={BRAND.saffron} />
-      <path d="M46 120C61 151 85 152 110 120C134 152 159 151 174 120" fill="none" stroke={stroke} strokeWidth="14" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M60 158C79 178 140 178 160 158" fill="none" stroke={stroke} strokeWidth="10" strokeLinecap="round" opacity=".94" />
+    <>
+      {!flat && (
+        <defs>
+          <linearGradient id={`${id}t`} x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#1EDBC9" /><stop offset="1" stopColor="#10C4BA" /></linearGradient>
+          <linearGradient id={`${id}b`} x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#0C93D6" /><stop offset="1" stopColor="#0377BE" /></linearGradient>
+          <linearGradient id={`${id}w`} x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#0A8FD3" /><stop offset=".55" stopColor="#0378C0" /><stop offset="1" stopColor="#143A7A" /></linearGradient>
+        </defs>
+      )}
+      <circle cx="100" cy="21" r="19" fill={blue} />
+      <circle cx="37" cy="45" r="17" fill={teal} />
+      <circle cx="163" cy="45" r="17" fill={teal} />
+      <path d="M13 97C20 130 50 142 72 125C86 114 92 94 100 78C108 94 114 114 128 124C150 142 180 130 187 97C178 112 160 118 146 108C128 92 118 56 100 56C82 56 72 92 54 108C40 118 22 112 13 97Z" fill={wave} />
+      <circle cx="37" cy="95" r="25" fill={teal} />
+      <circle cx="163" cy="95" r="25" fill={teal} />
+    </>
+  );
+}
+
+/** The Shuoon mark. `color` (default) and `mono`/`white` are the bare symbol; `tile` is the navy app icon. */
+export function LogoMark({ size = 32, tone = 'color', className }: { size?: number; tone?: Tone; className?: string }) {
+  const id = `sh${useId().replace(/[^a-zA-Z0-9]/g, '')}`;
+  if (tone === 'tile') {
+    return (
+      <svg viewBox="0 0 220 220" width={size} height={size} className={className} aria-hidden>
+        <rect width="220" height="220" rx="52" fill={BRAND.night} />
+        <g transform="translate(32 56) scale(.78)"><Symbol id={id} tone="color" /></g>
+      </svg>
+    );
+  }
+  return (
+    <svg viewBox="0 0 200 140" width={size} height={(size * 140) / 200} className={className} aria-hidden>
+      <Symbol id={id} tone={tone} />
     </svg>
   );
 }

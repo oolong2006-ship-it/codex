@@ -48,7 +48,7 @@ const TITLES: Record<string, string[]> = {
 const CITY_GEO: Record<string, [number, number]> = {
   'الرياض': [24.7136, 46.6753], 'جدة': [21.5433, 39.1728], 'الدمام': [26.4207, 50.0888], 'بريدة': [26.3592, 43.9818], 'الخبر': [26.2172, 50.1971],
 };
-const COLORS = ['#172C46', '#213A5A', '#0E776D', '#19C7B4', '#2F6F9F', '#1B7F53', '#C2412D', '#7A5C99'];
+const COLORS = ['#0F2747', '#1B3A63', '#0E7490', '#14D1C3', '#0369A1', '#1B7F53', '#C2412D', '#7A5C99'];
 
 interface EventDef { type: 'REGISTERED' | 'ACTIVATED' | 'SUSPENDED' | 'REACTIVATED' | 'PLAN_CHANGED' | 'EXTENDED' | 'NOTE' | 'IMPERSONATED' | 'EXPIRED'; daysAgo: number; from?: CompanyStatus | null; to?: CompanyStatus | null; data?: Record<string, unknown>; system?: boolean; support?: boolean }
 interface CompanyDef {
@@ -187,7 +187,7 @@ export function seedPlatform(db: DB, svc: Services, now: Date) {
     const [lat, lng] = CITY_GEO[d.city] ?? CITY_GEO['الرياض'];
     const branchId = nextId(db, 'br');
     db.branches.push({ id: branchId, companyId, nameAr: `الفرع الرئيسي — ${d.city}`, nameEn: 'Main branch', city: d.city, address: null, lat, lng, radiusMeters: 200, managerEmployeeId: null, createdAt: created, updatedAt: createdAt });
-    const shift = { id: nextId(db, 'sh'), companyId, branchId, name: 'الدوام الرسمي', startTime: '08:00', endTime: '17:00', breakMinutes: 60, graceMinutes: 15, days: [0, 1, 2, 3, 4, 6], color: '#2F6F9F', createdAt: created };
+    const shift = { id: nextId(db, 'sh'), companyId, branchId, name: 'الدوام الرسمي', startTime: '08:00', endTime: '17:00', breakMinutes: 60, graceMinutes: 15, days: [0, 1, 2, 3, 4, 6], color: '#0369A1', createdAt: created };
     db.shifts.push(shift);
 
     // employees

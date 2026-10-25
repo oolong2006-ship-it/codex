@@ -1,6 +1,11 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 220" width="512" height="512"><rect x="0" y="0" width="220" height="220" rx="52" fill="#172C46"/>
-<circle cx="65" cy="71" r="13" fill="#19C7B4"/>
-<circle cx="110" cy="71" r="13" fill="#19C7B4"/>
-<circle cx="155" cy="71" r="13" fill="#19C7B4"/>
-<path d="M 46 120 C 61 151, 85 152, 110 120 C 134 152, 159 151, 174 120" fill="none" stroke="#FFFFFF" stroke-width="14" stroke-linecap="round" stroke-linejoin="round" />
-<path d="M 60 158 C 79 178, 140 178, 160 158" fill="none" stroke="#FFFFFF" stroke-width="10" stroke-linecap="round" opacity=".94" /></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 220"><rect width="220" height="220" rx="52" fill="#0F2747"/><g transform="translate(32 56) scale(.78)"><defs>
+<linearGradient id="t" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1EDBC9"/><stop offset="1" stop-color="#10C4BA"/></linearGradient>
+<linearGradient id="b" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0C93D6"/><stop offset="1" stop-color="#0377BE"/></linearGradient>
+<linearGradient id="w" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0A8FD3"/><stop offset=".55" stop-color="#0378C0"/><stop offset="1" stop-color="#143A7A"/></linearGradient>
+</defs>
+<circle cx="100" cy="21" r="19" fill="url(#b)"/>
+<circle cx="37" cy="45" r="17" fill="url(#t)"/>
+<circle cx="163" cy="45" r="17" fill="url(#t)"/>
+<path d="M13 97 C20 130 50 142 72 125 C86 114 92 94 100 78 C108 94 114 114 128 124 C150 142 180 130 187 97 C178 112 160 118 146 108 C128 92 118 56 100 56 C82 56 72 92 54 108 C40 118 22 112 14 98 Z" fill="url(#w)"/>
+<circle cx="37" cy="95" r="25" fill="url(#t)"/>
+<circle cx="163" cy="95" r="25" fill="url(#t)"/></g></svg>

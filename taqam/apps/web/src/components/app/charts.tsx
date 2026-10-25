@@ -6,7 +6,7 @@ import { BRAND } from '@/lib/brand';
 export const CHART = {
   primary: BRAND.night,
   teal: BRAND.oasis600,
-  tealLight: '#A9DFD7',
+  tealLight: '#7DD3FC',
   accent: BRAND.saffron,
   success: BRAND.success,
   warning: BRAND.saffron600,
