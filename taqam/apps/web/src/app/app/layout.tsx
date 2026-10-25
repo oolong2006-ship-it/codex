@@ -1,7 +1,7 @@
 'use client';
 import { useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import { useAuth } from '@/lib/auth';
+import { goToLogin, useAuth } from '@/lib/auth';
 import { PageLoader } from '@/components/ui';
 import { AppShell } from '@/components/app/AppShell';
 import { navItemFor } from '@/components/app/nav';
@@ -14,7 +14,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (loading) return;
-    if (!user) router.replace(`/login?next=${encodeURIComponent(pathname)}`);
+    if (!user) goToLogin(pathname);
     else if (user.role === 'SUPER_ADMIN') router.replace('/admin');
     else if (user.role === 'EMPLOYEE') router.replace('/me');
   }, [user, loading, router, pathname]);

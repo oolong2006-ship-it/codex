@@ -3,6 +3,16 @@ import { createContext, useCallback, useContext, useEffect, useState } from 'rea
 import { api, getToken, setToken } from './api';
 import { withBase } from './paths';
 
+/**
+ * Full page load of /login (optionally ?next=…). Used instead of router.replace by the auth guards:
+ * a client-side navigation that fails mid-flight (unload, flaky mobile network) makes Next's static
+ * export load the route's RSC payload (login/index.txt) as the page.
+ */
+export function goToLogin(next?: string) {
+  const path = process.env.NEXT_PUBLIC_DEMO === '1' ? '/login/' : '/login';
+  window.location.replace(withBase(path) + (next ? `?next=${encodeURIComponent(next)}` : ''));
+}
+
 export type Role = 'OWNER' | 'HR_ADMIN' | 'PAYROLL' | 'BRANCH_MANAGER' | 'EMPLOYEE' | 'SUPER_ADMIN';
 export interface SessionUser {
   id: string; email: string; name: string; role: Role;
@@ -53,7 +63,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = () => {
     setToken(null);
     if (typeof window === 'undefined') { setUser(null); return; }
-    window.location.replace(withBase(process.env.NEXT_PUBLIC_DEMO === '1' ? '/login/' : '/login'));
+    goToLogin();
   };
 
   return <Ctx.Provider value={{ user, loading, login, register, logout, refresh }}>{children}</Ctx.Provider>;

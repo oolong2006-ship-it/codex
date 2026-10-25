@@ -1,10 +1,10 @@
 'use client';
 import clsx from 'clsx';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { Bell, CalendarDays, Clock4, Home, LayoutGrid, Wallet } from 'lucide-react';
-import { useAuth } from '@/lib/auth';
+import { goToLogin, useAuth } from '@/lib/auth';
 import { useLang } from '@/lib/i18n';
 import { api } from '@/lib/api';
 import { IS_DEMO, withBase } from '@/lib/paths';
@@ -38,13 +38,12 @@ function isActive(pathname: string, href: string) {
 export function EssShell({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
   const { t } = useLang();
-  const router = useRouter();
   const pathname = usePathname() || '/me';
   const [unread, setUnread] = useState(0);
 
   useEffect(() => {
-    if (!loading && !user) router.replace('/login');
-  }, [loading, user, router]);
+    if (!loading && !user) goToLogin();
+  }, [loading, user]);
 
   // Unread notifications badge; refreshed on navigation.
   useEffect(() => {

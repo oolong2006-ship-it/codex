@@ -9,7 +9,7 @@ import {
 import { Logo, PageLoader } from '@/components/ui';
 import { Avatar } from '@/components/app/primitives';
 import { api, type Paginated } from '@/lib/api';
-import { homeFor, useAuth } from '@/lib/auth';
+import { goToLogin, homeFor, useAuth } from '@/lib/auth';
 import { useLang } from '@/lib/i18n';
 import { clearAdminToken } from './ImpersonationBanner';
 
@@ -58,7 +58,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (loading) return;
-    if (!user) router.replace(`/login?next=${encodeURIComponent(pathname)}`);
+    if (!user) goToLogin(pathname);
     else if (user.role !== 'SUPER_ADMIN') router.replace(homeFor(user));
     else clearAdminToken(); // back in the portal: any impersonation is over
   }, [user, loading, router, pathname]);
