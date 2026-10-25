@@ -32,7 +32,7 @@ export function ProductMock({ className }: { className?: string }) {
           <span className="h-2.5 w-2.5 rounded-full bg-danger/70" />
           <span className="h-2.5 w-2.5 rounded-full bg-accent/80" />
           <span className="h-2.5 w-2.5 rounded-full bg-success/70" />
-          <span className="mx-auto rounded-md bg-white px-3 py-0.5 text-[10px] text-ink-soft" dir="ltr">app.shuoon.sa/branches</span>
+          <span className="mx-auto rounded-md bg-white px-3 py-0.5 text-[10px] text-ink-soft" dir="ltr">app.shuoon.net/branches</span>
         </div>
         <div className="grid gap-3 p-3 sm:grid-cols-5 sm:p-4">
           {/* branches */}

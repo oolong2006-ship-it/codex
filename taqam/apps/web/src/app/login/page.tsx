@@ -120,7 +120,7 @@ function CompanyBlockNotice({ code, message }: { code: CompanyBlock; message: st
       <div className="text-sm">
         <p className="font-semibold">{cfg.title}</p>
         <p className="mt-0.5 opacity-90">{message || cfg.fallback}</p>
-        {code !== 'COMPANY_PENDING' && <a href="mailto:hello@shuoon.sa" className="mt-1 inline-block text-xs font-medium underline" dir="ltr">hello@shuoon.sa</a>}
+        {code !== 'COMPANY_PENDING' && <a href="mailto:hello@shuoon.net" className="mt-1 inline-block text-xs font-medium underline" dir="ltr">hello@shuoon.net</a>}
       </div>
     </div>
   );

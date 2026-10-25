@@ -53,7 +53,7 @@ export function SiteFooter() {
             </p>
             <ul className="mt-5 space-y-2 text-sm text-white/70">
               <li className="flex items-center gap-2"><MapPin className="h-4 w-4 text-accent" aria-hidden />{t('الرياض، المملكة العربية السعودية', 'Riyadh, Saudi Arabia')}</li>
-              <li className="flex items-center gap-2"><Mail className="h-4 w-4 text-accent" aria-hidden /><a href="mailto:hello@shuoon.sa" className="hover:text-white" dir="ltr">hello@shuoon.sa</a></li>
+              <li className="flex items-center gap-2"><Mail className="h-4 w-4 text-accent" aria-hidden /><a href="mailto:hello@shuoon.net" className="hover:text-white" dir="ltr">hello@shuoon.net</a></li>
               <li className="flex items-center gap-2"><Phone className="h-4 w-4 text-accent" aria-hidden /><a href="tel:+966550421235" className="hover:text-white" dir="ltr">+966 55 042 1235</a></li>
             </ul>
           </div>

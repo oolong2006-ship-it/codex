@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 
-export const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || 'https://shuoon.sa').replace(/\/$/, '');
+export const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || 'https://www.shuoon.net').replace(/\/$/, '');
 
 /** Per-page SEO metadata (Arabic-first). */
 export function pageMeta(title: string, description: string, path: string, opts: { absoluteTitle?: boolean } = {}): Metadata {

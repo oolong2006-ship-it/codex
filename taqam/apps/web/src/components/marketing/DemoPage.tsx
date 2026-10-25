@@ -67,8 +67,8 @@ export function DemoPage() {
       if (err instanceof ApiError && err.status >= 400 && err.status < 500) {
         toast(lang === 'ar' ? err.display : err.message, 'error');
       } else {
-        toast(t('تعذّر إرسال طلبك الآن بسبب مشكلة في الاتصال. حاول مجدداً بعد قليل أو راسلنا على hello@shuoon.sa',
-          'We couldn’t send your request due to a connection issue. Please try again shortly or email hello@shuoon.sa'), 'error');
+        toast(t('تعذّر إرسال طلبك الآن بسبب مشكلة في الاتصال. حاول مجدداً بعد قليل أو راسلنا على hello@shuoon.net',
+          'We couldn’t send your request due to a connection issue. Please try again shortly or email hello@shuoon.net'), 'error');
       }
     } finally {
       setLoading(false);

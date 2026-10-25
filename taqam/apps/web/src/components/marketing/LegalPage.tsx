@@ -36,7 +36,7 @@ export function LegalPage({ title, intro, updated, sections }: { title: T2; intr
             ))}
             <div className="mt-10 rounded-xl bg-sand p-5 text-sm leading-7 text-ink-muted">
               {t('لأي استفسار يتعلق بهذه الوثيقة تواصل معنا عبر', 'For any questions about this document, contact us at')}{' '}
-              <a href="mailto:privacy@shuoon.sa" className="font-semibold text-primary underline decoration-accent underline-offset-4" dir="ltr">privacy@shuoon.sa</a>
+              <a href="mailto:privacy@shuoon.net" className="font-semibold text-primary underline decoration-accent underline-offset-4" dir="ltr">privacy@shuoon.net</a>
               {' '}{t('أو من خلال', 'or via')}{' '}
               <Link href="/demo" className="font-semibold text-primary underline decoration-accent underline-offset-4">{t('نموذج التواصل', 'the contact form')}</Link>.
             </div>
