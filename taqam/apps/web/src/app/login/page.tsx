@@ -10,6 +10,7 @@ import { errMsg } from '@/components/app/utils';
 import { homeFor, useAuth, type SessionUser } from '@/lib/auth';
 import { useLang } from '@/lib/i18n';
 import { label, ROLE } from '@/lib/labels';
+import { CONTACT } from '@/components/marketing/data';
 
 const DEMO = [
   { email: 'owner@shuoon.demo', role: 'OWNER' },
@@ -120,7 +121,7 @@ function CompanyBlockNotice({ code, message }: { code: CompanyBlock; message: st
       <div className="text-sm">
         <p className="font-semibold">{cfg.title}</p>
         <p className="mt-0.5 opacity-90">{message || cfg.fallback}</p>
-        {code !== 'COMPANY_PENDING' && <a href="mailto:hello@shuoon.net" className="mt-1 inline-block text-xs font-medium underline" dir="ltr">hello@shuoon.net</a>}
+        {code !== 'COMPANY_PENDING' && <a href={`mailto:${CONTACT.email}`} className="mt-1 inline-block text-xs font-medium underline" dir="ltr">{CONTACT.email}</a>}
       </div>
     </div>
   );

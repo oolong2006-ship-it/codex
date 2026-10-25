@@ -1,10 +1,11 @@
 'use client';
 import { useState } from 'react';
-import { CalendarCheck, CheckCircle2, Clock3, Headphones, Route, ShieldCheck } from 'lucide-react';
+import { CalendarCheck, CheckCircle2, Clock3, Globe, Headphones, Mail, MessageCircle, Phone, Route, ShieldCheck } from 'lucide-react';
 import { Button, ButtonLink, Input, Select, Textarea, useToast } from '@/components/ui';
 import { api, ApiError } from '@/lib/api';
 import { SECTOR } from '@/lib/labels';
 import { Container, StarMotif, useT2 } from './primitives';
+import { CONTACT } from './data';
 
 interface Form { name: string; company: string; email: string; phone: string; employeesCount: string; sector: string; message: string }
 const EMPTY: Form = { name: '', company: '', email: '', phone: '', employeesCount: '', sector: '', message: '' };
@@ -67,8 +68,8 @@ export function DemoPage() {
       if (err instanceof ApiError && err.status >= 400 && err.status < 500) {
         toast(lang === 'ar' ? err.display : err.message, 'error');
       } else {
-        toast(t('تعذّر إرسال طلبك الآن بسبب مشكلة في الاتصال. حاول مجدداً بعد قليل أو راسلنا على hello@shuoon.net',
-          'We couldn’t send your request due to a connection issue. Please try again shortly or email hello@shuoon.net'), 'error');
+        toast(t(`تعذّر إرسال طلبك الآن بسبب مشكلة في الاتصال. حاول مجدداً بعد قليل أو راسلنا على ${CONTACT.email}`,
+          `We couldn’t send your request due to a connection issue. Please try again shortly or email ${CONTACT.email}`), 'error');
       }
     } finally {
       setLoading(false);
@@ -108,6 +109,15 @@ export function DemoPage() {
               </li>
             ))}
           </ul>
+          <div className="mt-6 rounded-2xl border border-line bg-white p-5 text-ink shadow-soft">
+            <h2 className="font-semibold">{t('تفضّل بالتواصل المباشر', 'Prefer to talk directly?')}</h2>
+            <ul className="mt-3 grid gap-2.5 text-sm sm:grid-cols-2">
+              <li><a href={CONTACT.phoneHref} className="flex items-center gap-2 text-ink-muted hover:text-primary"><Phone className="h-4 w-4 text-primary" aria-hidden /><span dir="ltr">{CONTACT.phone}</span></a></li>
+              <li><a href={CONTACT.whatsappHref} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-ink-muted hover:text-primary"><MessageCircle className="h-4 w-4 text-primary" aria-hidden />{t('واتساب', 'WhatsApp')}</a></li>
+              <li><a href={`mailto:${CONTACT.email}`} className="flex items-center gap-2 text-ink-muted hover:text-primary"><Mail className="h-4 w-4 text-primary" aria-hidden /><span dir="ltr">{CONTACT.email}</span></a></li>
+              <li className="flex items-center gap-2 text-ink-muted"><Globe className="h-4 w-4 text-primary" aria-hidden /><span dir="ltr">{CONTACT.website}</span></li>
+            </ul>
+          </div>
         </div>
 
         <div className="lg:pt-4">

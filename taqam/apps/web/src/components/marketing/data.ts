@@ -7,6 +7,16 @@ import {
 
 export type T2 = readonly [ar: string, en: string];
 
+/** Official Shuoon contact details, used across the website. */
+export const CONTACT = {
+  phone: '+966 55 042 1235',
+  phoneHref: 'tel:+966550421235',
+  whatsappHref: 'https://wa.me/966550421235',
+  email: 'hello@shuoon.net',
+  privacyEmail: 'privacy@shuoon.net',
+  website: 'www.shuoon.net',
+} as const;
+
 export const NAV_LINKS: { href: string; label: T2 }[] = [
   { href: '/features', label: ['المزايا', 'Features'] },
   { href: '/pricing', label: ['الأسعار', 'Pricing'] },
