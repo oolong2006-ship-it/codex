@@ -1,0 +1,560 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<title>شؤون | SHUOON — الملف التعريفي الشامل</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Kufi+Arabic:wght@400;500;600;700;800&family=Noto+Sans+Arabic:wght@300;400;500;600;700&display=swap">
+<style>
+  @page { size: A4; margin: 0; }
+  :root {
+    --navy:#0F2747; --navy-2:#1B3A63; --teal:#14D1C3; --sky:#0284C7; --cyan:#0E7490; --cyan-700:#155E75;
+    --mint:#E6FAF8; --mint-2:#CCF5F1; --bg:#F6F8FB; --bg-2:#EDF1F6; --line:#DDE3EC;
+    --ink:#0F2747; --muted:#475569; --soft:#5B6B80; --neutral:#94A3B8; --on-dark:#CFE3F3;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: #8a94a6; }
+  body { font-family: 'Noto Sans Arabic', Tahoma, sans-serif; color: var(--ink); -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .page { width: 210mm; height: 297mm; position: relative; overflow: hidden; background: var(--bg); padding: 20mm 17mm 24mm; page-break-after: always; display: flex; flex-direction: column; gap: 6mm; }
+  .page:last-child { page-break-after: auto; }
+  .dark { background: radial-gradient(120% 80% at 100% 0%, #1B3A63 0%, #0F2747 55%, #0B1E38 100%); color: #FFFFFF; }
+  .glow { position: absolute; border-radius: 50%; filter: blur(2px); pointer-events: none; }
+  .rings { position: absolute; border-radius: 50%; border: 1px solid rgba(20,209,195,.18); pointer-events: none; }
+  .en { direction: ltr; text-align: left; }
+  .footer { position: absolute; bottom: 9mm; left: 17mm; right: 17mm; display: flex; justify-content: space-between; align-items: center; font-size: 8pt; color: var(--soft); border-top: 1px solid var(--line); padding-top: 3mm; }
+  .footer .brand { display: flex; align-items: center; gap: 2mm; }
+  .dark .footer { color: var(--on-dark); border-color: rgba(255,255,255,.14); }
+  h1, h2, h3, h4, .num, .kufi { font-family: 'Noto Kufi Arabic', 'Noto Sans Arabic', Tahoma, sans-serif; }
+
+  .head { display: flex; justify-content: space-between; align-items: flex-end; gap: 8mm; padding-bottom: 4mm; border-bottom: 1px solid var(--line); position: relative; }
+  .head::after { content: ''; position: absolute; bottom: -1px; right: 0; width: 28mm; height: 3px; border-radius: 3px; background: linear-gradient(90deg, var(--sky), var(--teal)); }
+  .head .ar .eyebrow { font-size: 9.5pt; color: var(--cyan); font-weight: 600; margin-bottom: 1mm; }
+  .head .ar h2 { font-size: 21pt; font-weight: 700; color: var(--navy); line-height: 1.45; }
+  .head .en .eyebrow { font-size: 7.5pt; letter-spacing: 2px; color: var(--cyan); font-weight: 600; text-transform: uppercase; }
+  .head .en h3 { font-size: 12pt; font-weight: 500; color: var(--sky); font-family: 'Noto Sans Arabic', Arial, sans-serif; }
+  .dark .head { border-color: rgba(255,255,255,.14); }
+  .dark .head .ar h2 { color: #fff; } .dark .head .en h3 { color: var(--on-dark); } .dark .head .eyebrow { color: var(--teal) !important; }
+
+  .num { font-size: 30pt; font-weight: 700; line-height: 1; color: var(--sky); }
+  .dark .num, .card.hl .num { color: var(--teal); }
+  p.lead { font-size: 11pt; line-height: 1.95; color: var(--muted); }
+  p.lead-en { font-size: 9pt; line-height: 1.6; color: var(--soft); }
+
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 4mm; }
+  .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 3.5mm; }
+  .grid4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 3mm; }
+  .card { background: #FFFFFF; border: 1px solid var(--line); border-radius: 4mm; padding: 4.5mm 5mm; display: flex; flex-direction: column; gap: 1.8mm; }
+  .card.hl { background: var(--navy); color: #fff; border: none; }
+  .card.mint { background: var(--mint); border-color: var(--mint-2); }
+  .card h4 { font-size: 11.5pt; font-weight: 700; color: var(--navy); line-height: 1.5; }
+  .card.hl h4 { color: var(--teal); }
+  .card p { font-size: 9.2pt; line-height: 1.75; color: var(--muted); }
+  .card.hl p, .card.hl li { color: var(--on-dark) !important; }
+  .card .en { font-size: 8pt; color: var(--soft); line-height: 1.5; border-top: 1px dashed var(--line); padding-top: 1.5mm; margin-top: auto; }
+  .card.hl .en { color: var(--on-dark); border-color: rgba(255,255,255,.2); }
+  ul.dots { list-style: none; display: flex; flex-direction: column; gap: 1.1mm; }
+  ul.dots li { font-size: 9.2pt; line-height: 1.6; color: var(--muted); padding-right: 4mm; position: relative; }
+  ul.dots li::before { content: ''; position: absolute; right: 0; top: 2.3mm; width: 1.6mm; height: 1.6mm; border-radius: 50%; background: var(--teal); }
+
+  .service { display: grid; grid-template-columns: 1.15fr 1fr; gap: 6mm; background: #FFFFFF; border: 1px solid var(--line); border-radius: 4mm; padding: 5mm 6mm; }
+  .service .ar h4 { font-size: 12.5pt; color: var(--navy); font-weight: 700; margin-bottom: 1.5mm; }
+  .service .en h4 { font-size: 10pt; color: var(--sky); font-weight: 600; margin-bottom: 1.5mm; font-family: 'Noto Sans Arabic', Arial, sans-serif; }
+  .service ul { list-style: none; display: flex; flex-direction: column; gap: 1.1mm; }
+  .service .ar li { font-size: 9.4pt; line-height: 1.65; color: var(--muted); padding-right: 4.5mm; position: relative; }
+  .service .ar li::before { content: ''; position: absolute; right: 0; top: 2.5mm; width: 1.7mm; height: 1.7mm; border-radius: 50%; background: var(--teal); }
+  .service .en li { font-size: 8.3pt; line-height: 1.55; color: var(--soft); padding-left: 4mm; position: relative; }
+  .service .en li::before { content: ''; position: absolute; left: 0; top: 2.1mm; width: 1.4mm; height: 1.4mm; border-radius: 50%; background: var(--sky); }
+  .tag { display: inline-block; font-size: 8.5pt; background: var(--teal); color: var(--navy); padding: .8mm 3mm; border-radius: 99px; font-weight: 600; }
+  .tag.ghost { background: rgba(255,255,255,.08); color: #fff; border: 1px solid rgba(255,255,255,.18); }
+  .chip { display: inline-flex; align-items: center; gap: 1.5mm; font-size: 8.8pt; background: #fff; border: 1px solid var(--line); color: var(--navy); padding: 1.4mm 3.2mm; border-radius: 99px; }
+  .chip::before { content: '✓'; color: var(--cyan); font-weight: 700; }
+
+  table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 9.2pt; border: 1px solid var(--line); border-radius: 4mm; overflow: hidden; }
+  th { background: var(--navy); color: #fff; font-weight: 600; padding: 2.4mm 3mm; text-align: right; }
+  td { padding: 2.2mm 3mm; border-top: 1px solid var(--line); color: var(--muted); background: #FFFFFF; vertical-align: top; }
+  tr.group td { background: var(--mint); color: var(--navy); font-weight: 700; font-size: 9pt; }
+  td .en, th .en { display: block; font-size: 7.6pt; color: var(--soft); font-weight: 400; }
+  th .en { color: var(--on-dark); }
+  .yes { color: var(--cyan); font-weight: 700; text-align: center; }
+  .no { color: var(--neutral); text-align: center; }
+  td.c { text-align: center; }
+  .note { font-size: 8pt; color: var(--soft); line-height: 1.6; }
+
+  .shot { border-radius: 3mm; overflow: hidden; border: 1px solid var(--line); background: #fff; box-shadow: 0 2mm 6mm rgba(15,39,71,.10); }
+  .shot img { display: block; width: 100%; }
+  .browser { border-radius: 3.5mm; overflow: hidden; border: 1px solid var(--line); background: #fff; box-shadow: 0 3mm 9mm rgba(15,39,71,.14); }
+  .browser .bar { height: 6mm; background: var(--bg-2); display: flex; align-items: center; gap: 1.4mm; padding: 0 3mm; direction: ltr; }
+  .browser .bar i { width: 2mm; height: 2mm; border-radius: 50%; background: #c9d2de; display: block; }
+  .browser .bar span { margin-left: 3mm; font-size: 6.5pt; color: var(--soft); background: #fff; border-radius: 99px; padding: .4mm 3mm; }
+  .browser img { display: block; width: 100%; }
+  .cap { font-size: 8.5pt; color: var(--soft); margin-top: 1.5mm; display: flex; justify-content: space-between; }
+  .cap b { color: var(--navy); font-weight: 600; }
+  .phone { width: 100%; border-radius: 7mm; padding: 2mm; background: #0B1E38; box-shadow: 0 4mm 10mm rgba(0,0,0,.35); border: 1px solid #2A4A75; }
+  .phone img { display: block; width: 100%; border-radius: 5.5mm; }
+  .q { font-weight: 700; color: var(--navy); font-size: 10pt; font-family: 'Noto Kufi Arabic', sans-serif; line-height: 1.6; }
+  .a { font-size: 9pt; color: var(--muted); line-height: 1.75; }
+</style>
+</head>
+<body>
+
+<!-- COVER -->
+<section class="page dark" style="justify-content:space-between;padding-top:18mm">
+  <div class="rings" style="width:190mm;height:190mm;left:-80mm;top:-60mm"></div>
+  <div class="rings" style="width:150mm;height:150mm;left:-60mm;top:-40mm"></div>
+  <div class="glow" style="width:120mm;height:120mm;left:-30mm;bottom:-50mm;background:radial-gradient(circle, rgba(20,209,195,.22), transparent 65%)"></div>
+  <div style="display:flex;justify-content:space-between;align-items:center;position:relative">
+    <span class="tag ghost">الملف التعريفي الشامل · 2026</span>
+    <span class="en" style="font-size:8.5pt;letter-spacing:3px;color:var(--on-dark);font-weight:600">SHUOON / COMPANY PROFILE</span>
+  </div>
+  <div style="position:relative;display:flex;flex-direction:column;gap:9mm;margin-top:12mm">
+    <p style="font-size:11pt;color:var(--teal);font-weight:600">منصة شؤون لإدارة الموارد البشرية</p>
+    <div style="display:flex;align-items:center;gap:8mm">
+      <svg viewBox="0 0 200 140" width="150" height="105"><defs><linearGradient id="t" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1EDBC9"/><stop offset="1" stop-color="#10C4BA"/></linearGradient><linearGradient id="b" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0C93D6"/><stop offset="1" stop-color="#0377BE"/></linearGradient><linearGradient id="w" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0A8FD3"/><stop offset=".55" stop-color="#0378C0"/><stop offset="1" stop-color="#143A7A"/></linearGradient></defs><circle cx="100" cy="21" r="19" fill="url(#b)"/><circle cx="37" cy="45" r="17" fill="url(#t)"/><circle cx="163" cy="45" r="17" fill="url(#t)"/><path d="M13 97C20 130 50 142 72 125C86 114 92 94 100 78C108 94 114 114 128 124C150 142 180 130 187 97C178 112 160 118 146 108C128 92 118 56 100 56C82 56 72 92 54 108C40 118 22 112 13 97Z" fill="url(#w)"/><circle cx="37" cy="95" r="25" fill="url(#t)"/><circle cx="163" cy="95" r="25" fill="url(#t)"/></svg>
+      <div style="display:flex;flex-direction:column;gap:4mm">
+        <svg viewBox="446 75 370 147" style="height:30mm;width:auto;display:block;align-self:flex-end"><path d="m 764.89803,92.862 q -3.024,0 -5.166,-1.89 -2.016,-1.89 -2.016,-5.796 0,-4.032 2.016,-5.796 2.142,-1.89 5.166,-1.89 3.276,0 5.166,2.016 2.016,2.016 2.016,5.67 0,3.402 -2.016,5.544 -1.89,2.142 -5.166,2.142 z m -10.71,20.286 q -3.906,0 -6.174,-2.394 -2.268,-2.52 -2.268,-6.678 0,-4.284 2.268,-6.678 2.268,-2.394 6.174,-2.394 3.906,0 6.048,2.394 2.268,2.394 2.268,6.678 0,4.158 -2.268,6.678 -2.268,2.394 -6.048,2.394 z m 21.42,0 q -3.906,0 -6.174,-2.394 -2.268,-2.52 -2.268,-6.678 0,-4.284 2.142,-6.678 2.268,-2.394 6.3,-2.394 3.78,0 6.048,2.394 2.268,2.394 2.268,6.678 0,4.158 -2.268,6.678 -2.268,2.394 -6.048,2.394 z m 12.474,75.852 q -10.71,0 -19.782,-9.45 -7.056,9.45 -21.042,9.45 h -49.392 q -0.63,0 -0.63,-0.63 v -13.986 q 0,-0.504 0.63,-0.504 h 15.75 v -37.422 h 18.774 v 37.422 h 10.71 q 6.3,0 9.198,-3.402 2.898,-3.528 2.898,-11.214 v -22.806 h 18.774 v 24.318 q 0,3.024 -0.378,5.67 3.15,4.158 6.174,5.796 3.024,1.638 7.938,1.638 h 7.812 v -47.25 h 18.774 V 189 Z m -137.97008,30.24 q -8.568,0 -14.868,-1.386 -6.174,-1.26 -11.97,-4.662 l 7.308,-13.734 q 5.166,2.646 9.702,3.654 4.536,1.134 9.45,1.134 7.182,0 10.962,-3.78 3.906,-3.654 3.906,-9.198 V 189 h -12.474 q -13.482,0 -20.79,-7.56 -7.182,-7.686 -7.182,-21.798 0,-10.71 5.166,-18.018 5.292,-7.434 14.364,-11.214 9.072,-3.78 20.538,-3.78 h 19.152 v 47.25 h 15.75 q 0.63,0 0.63,0.504 v 13.986 q 0,0.63 -0.63,0.63 h -15.75 v 2.268 q -0.126,12.726 -8.82,20.286 -8.694,7.686 -24.444,7.686 z m 14.49,-45.36 v -32.13 h -4.032 q -8.064,0 -12.6,4.536 -4.536,4.536 -4.536,12.852 0,14.742 12.474,14.742 z m -23.436,-60.984 7.182,-1.134 q -2.52,-1.26 -4.158,-3.402 -1.512,-2.268 -1.512,-5.166 0,-5.418 3.78,-8.442 3.78,-3.024 10.08,-3.024 6.174,0 10.332,2.268 l -2.52,6.426 q -3.15,-1.638 -6.804,-1.638 -2.772,0 -4.41,1.638 -1.638,1.638 -1.638,4.41 0,2.016 1.008,3.528 1.134,1.386 2.772,2.142 l 2.268,-0.378 q 6.426,-1.008 10.206,-1.26 v 7.308 q -2.268,0.126 -6.426,0.63 -4.032,0.378 -8.442,0.882 -4.41,0.504 -7.686,1.008 -3.276,0.378 -4.032,0.63 z m -70.0561,106.344 q -8.568,0 -14.868,-1.386 -6.174,-1.26 -11.97,-4.662 l 7.308,-13.734 q 5.166,2.646 9.702,3.654 4.536,1.134 9.45,1.134 7.182,0 10.962,-3.906 3.906,-3.906 3.906,-10.71 V 189 h -12.474 q -13.482,0 -20.79,-7.56 -7.182,-7.686 -7.182,-21.798 0,-10.71 5.166,-18.018 5.292,-7.434 14.364,-11.214 9.072,-3.78 20.538,-3.78 h 19.152 v 62.748 q 0,14.364 -8.694,22.05 -8.694,7.812 -24.57,7.812 z m 14.49,-45.36 v -32.13 h -4.032 q -8.064,0 -12.6,4.536 -4.536,4.536 -4.536,12.852 0,14.742 12.474,14.742 z m -98.78396,-47.376 q -3.906,0 -6.174,-2.394 -2.268,-2.52 -2.268,-6.678 0,-4.284 2.142,-6.678 2.268,-2.394 6.3,-2.394 3.906,0 6.048,2.394 2.268,2.394 2.268,6.678 0,4.158 -2.268,6.678 -2.268,2.394 -6.048,2.394 z m -4.158,92.736 q -10.584,0 -18.27,-4.41 -7.812,-4.41 -11.97,-12.474 -4.032,-8.064 -4.032,-18.396 0,-7.182 1.638,-14.49 1.764,-7.434 4.788,-13.356 h 16.632 q -2.016,6.678 -3.15,14.112 -1.134,7.434 -1.134,13.86 0,9.198 4.536,14.616 4.662,5.418 12.222,5.418 h 3.78 q 9.702,0 14.238,-5.292 4.662,-5.166 4.662,-14.742 V 126.63 h 18.774 v 57.96 q 0,34.65 -37.17,34.65 z" fill="#FFFFFF"/></svg>
+        <svg viewBox="616 255 196 27" style="height:4.2mm;width:auto;display:block;align-self:flex-end"><path d="m 637.87939,273.45801 q 0,3.33545 -2.48144,5.10791 -2.46533,1.75635 -7.25098,1.75635 -4.3667,0 -6.84814,-1.54688 -2.48145,-1.54687 -3.19043,-4.68896 l 4.59228,-0.75733 q 0.46729,1.80469 1.8208,2.62647 1.35352,0.80566 3.7544,0.80566 4.979,0 4.979,-3.0293 0,-0.96679 -0.58008,-1.59521 -0.56396,-0.62842 -1.61132,-1.04736 -1.03125,-0.41895 -3.97998,-1.01514 -2.5459,-0.59619 -3.54493,-0.95068 -0.99902,-0.37061 -1.80468,-0.85401 -0.80567,-0.49951 -1.36963,-1.19238 -0.56397,-0.69287 -0.88623,-1.62744 -0.30616,-0.93457 -0.30616,-2.14307 0,-3.07764 2.3042,-4.70508 2.32032,-1.64355 6.73536,-1.64355 4.22168,0 6.33252,1.32129 2.12695,1.32129 2.73925,4.3667 l -4.6084,0.62841 q -0.35449,-1.4663 -1.45019,-2.20752 -1.07959,-0.74121 -3.10986,-0.74121 -4.31836,0 -4.31836,2.70703 0,0.88624 0.45117,1.4502 0.46728,0.56396 1.36963,0.9668 0.90234,0.40283 3.65771,0.98291 3.271,0.69287 4.67285,1.28906 1.41797,0.58008 2.23975,1.36963 0.82178,0.77344 1.25684,1.86914 0.43505,1.07959 0.43505,2.49756 z M 666.02295,280 v -9.73242 h -9.89356 V 280 h -4.75341 v -22.70361 h 4.75341 v 9.03955 h 9.89356 v -9.03955 h 4.75342 V 280 Z m 28.62695,0.32227 q -4.68896,0 -7.18652,-2.28809 -2.48145,-2.28809 -2.48145,-6.54199 v -14.1958 h 4.75342 v 13.82519 q 0,2.69092 1.27295,4.09278 1.28906,1.38574 3.77051,1.38574 2.5459,0 3.91553,-1.4502 1.36962,-1.46631 1.36962,-4.18945 v -13.66406 h 4.75342 v 13.9541 q 0,4.31836 -2.6748,6.70312 -2.65869,2.36866 -7.49268,2.36866 z m 46.46436,-11.77881 q 0,3.54492 -1.40186,6.23584 -1.40185,2.69091 -4.0122,4.125 -2.61036,1.41797 -6.09083,1.41797 -5.3496,0 -8.39501,-3.14209 -3.0293,-3.15821 -3.0293,-8.63672 0,-5.46241 3.0293,-8.52393 3.02929,-3.06152 8.42724,-3.06152 5.39795,0 8.42725,3.09375 3.04541,3.09375 3.04541,8.4917 z m -4.8501,0 q 0,-3.67383 -1.74023,-5.75244 -1.74024,-2.09473 -4.88233,-2.09473 -3.19043,0 -4.93066,2.07861 -1.74024,2.0625 -1.74024,5.76856 0,3.73828 1.77246,5.89746 1.78858,2.14306 4.86621,2.14306 3.19043,0 4.91456,-2.09472 1.74023,-2.09473 1.74023,-5.9458 z m 40.51855,0 q 0,3.54492 -1.40185,6.23584 -1.40186,2.69091 -4.01221,4.125 -2.61035,1.41797 -6.09082,1.41797 -5.34961,0 -8.39502,-3.14209 -3.02929,-3.15821 -3.02929,-8.63672 0,-5.46241 3.02929,-8.52393 3.0293,-3.06152 8.42725,-3.06152 5.39795,0 8.42724,3.09375 3.04541,3.09375 3.04541,8.4917 z m -4.85009,0 q 0,-3.67383 -1.74024,-5.75244 -1.74023,-2.09473 -4.88232,-2.09473 -3.19043,0 -4.93067,2.07861 -1.74023,2.0625 -1.74023,5.76856 0,3.73828 1.77246,5.89746 1.78858,2.14306 4.86621,2.14306 3.19043,0 4.91455,-2.09472 1.74024,-2.09473 1.74024,-5.9458 z M 804.20117,280 794.30762,262.51709 q 0.29004,2.5459 0.29004,4.09277 V 280 h -4.22168 v -22.70361 h 5.43017 l 10.03858,17.62793 q -0.29004,-2.43311 -0.29004,-4.43116 v -13.19677 h 4.22168 V 280 Z" fill="#14D1C3"/></svg>
+      </div>
+    </div>
+    <div style="width:30mm;height:1.2mm;border-radius:2mm;background:linear-gradient(90deg,var(--sky),var(--teal))"></div>
+    <h1 style="font-size:34pt;font-weight:700;line-height:1.55">كل شؤون موظفيك،<br>في مكان واحد.</h1>
+    <p class="en" style="font-size:15pt;font-weight:500;color:var(--on-dark)">All your people matters, in one place.</p>
+  </div>
+  <div style="position:relative;display:flex;flex-direction:column;gap:5mm">
+    <p style="font-size:11.5pt;color:var(--on-dark);line-height:1.9;max-width:150mm">منصة سعودية سحابية متكاملة للموارد البشرية والرواتب والحضور، مصممة للمنشآت متعددة الفروع ذات الفرق الميدانية: لوحة تحكم للإدارة، وتطبيق خدمة ذاتية للموظف، ومحرك احتساب وفق نظام العمل السعودي.</p>
+    <div style="display:flex;gap:2.5mm;flex-wrap:wrap">
+      <span class="tag">الموارد البشرية</span><span class="tag">الرواتب وحماية الأجور</span><span class="tag">الحضور بالموقع</span><span class="tag">الإجازات والطلبات</span><span class="tag">السعودة</span><span class="tag">الأداء والتوظيف</span><span class="tag">تطبيق الموظف</span>
+    </div>
+  </div>
+</section>
+
+<!-- CONTENTS -->
+<section class="page">
+  <div class="head">
+    <div class="ar"><div class="eyebrow">المحتويات</div><h2>ما ستجده في هذا الملف</h2></div>
+    <div class="en"><div class="eyebrow">Contents</div><h3>What’s inside</h3></div>
+  </div>
+  <div class="grid2" style="gap:3mm 6mm">
+    <div style="display:flex;align-items:center;gap:4mm;padding:2.6mm 0;border-bottom:1px dashed var(--line)"><span class="num" style="font-size:15pt;min-width:11mm">03</span><span class="kufi" style="font-size:10.5pt;font-weight:600;color:var(--navy);flex:1">عن شؤون وفكرتها</span><span class="en" style="font-size:8pt;color:var(--soft)">About</span></div><div style="display:flex;align-items:center;gap:4mm;padding:2.6mm 0;border-bottom:1px dashed var(--line)"><span class="num" style="font-size:15pt;min-width:11mm">04</span><span class="kufi" style="font-size:10.5pt;font-weight:600;color:var(--navy);flex:1">التحدي والحل</span><span class="en" style="font-size:8pt;color:var(--soft)">Challenge</span></div><div style="display:flex;align-items:center;gap:4mm;padding:2.6mm 0;border-bottom:1px dashed var(--line)"><span class="num" style="font-size:15pt;min-width:11mm">05</span><span class="kufi" style="font-size:10.5pt;font-weight:600;color:var(--navy);flex:1">ثلاث واجهات… منظومة واحدة</span><span class="en" style="font-size:8pt;color:var(--soft)">Platform</span></div><div style="display:flex;align-items:center;gap:4mm;padding:2.6mm 0;border-bottom:1px dashed var(--line)"><span class="num" style="font-size:15pt;min-width:11mm">06</span><span class="kufi" style="font-size:10.5pt;font-weight:600;color:var(--navy);flex:1">الوحدات الـ12</span><span class="en" style="font-size:8pt;color:var(--soft)">Modules</span></div><div style="display:flex;align-items:center;gap:4mm;padding:2.6mm 0;border-bottom:1px dashed var(--line)"><span class="num" style="font-size:15pt;min-width:11mm">07</span><span class="kufi" style="font-size:10.5pt;font-weight:600;color:var(--navy);flex:1">الفروع والموظفون والمستندات</span><span class="en" style="font-size:8pt;color:var(--soft)">Core HR</span></div><div style="display:flex;align-items:center;gap:4mm;padding:2.6mm 0;border-bottom:1px dashed var(--line)"><span class="num" style="font-size:15pt;min-width:11mm">08</span><span class="kufi" style="font-size:10.5pt;font-weight:600;color:var(--navy);flex:1">الحضور والورديات</span><span class="en" style="font-size:8pt;color:var(--soft)">Attendance</span></div><div style="display:flex;align-items:center;gap:4mm;padding:2.6mm 0;border-bottom:1px dashed var(--line)"><span class="num" style="font-size:15pt;min-width:11mm">09</span><span class="kufi" style="font-size:10.5pt;font-weight:600;color:var(--navy);flex:1">الإجازات والطلبات والسلف</span><span class="en" style="font-size:8pt;color:var(--soft)">Leave & requests</span></div><div style="display:flex;align-items:center;gap:4mm;padding:2.6mm 0;border-bottom:1px dashed var(--line)"><span class="num" style="font-size:15pt;min-width:11mm">10</span><span class="kufi" style="font-size:10.5pt;font-weight:600;color:var(--navy);flex:1">الرواتب وحماية الأجور ونهاية الخدمة</span><span class="en" style="font-size:8pt;color:var(--soft)">Payroll</span></div><div style="display:flex;align-items:center;gap:4mm;padding:2.6mm 0;border-bottom:1px dashed var(--line)"><span class="num" style="font-size:15pt;min-width:11mm">11</span><span class="kufi" style="font-size:10.5pt;font-weight:600;color:var(--navy);flex:1">السعودة والأداء والتوظيف</span><span class="en" style="font-size:8pt;color:var(--soft)">Talent</span></div><div style="display:flex;align-items:center;gap:4mm;padding:2.6mm 0;border-bottom:1px dashed var(--line)"><span class="num" style="font-size:15pt;min-width:11mm">12</span><span class="kufi" style="font-size:10.5pt;font-weight:600;color:var(--navy);flex:1">تطبيق الموظف</span><span class="en" style="font-size:8pt;color:var(--soft)">Employee app</span></div><div style="display:flex;align-items:center;gap:4mm;padding:2.6mm 0;border-bottom:1px dashed var(--line)"><span class="num" style="font-size:15pt;min-width:11mm">13</span><span class="kufi" style="font-size:10.5pt;font-weight:600;color:var(--navy);flex:1">التقارير والصلاحيات والأمان</span><span class="en" style="font-size:8pt;color:var(--soft)">Control</span></div><div style="display:flex;align-items:center;gap:4mm;padding:2.6mm 0;border-bottom:1px dashed var(--line)"><span class="num" style="font-size:15pt;min-width:11mm">14</span><span class="kufi" style="font-size:10.5pt;font-weight:600;color:var(--navy);flex:1">الامتثال والأدوات المجانية</span><span class="en" style="font-size:8pt;color:var(--soft)">Compliance</span></div><div style="display:flex;align-items:center;gap:4mm;padding:2.6mm 0;border-bottom:1px dashed var(--line)"><span class="num" style="font-size:15pt;min-width:11mm">15</span><span class="kufi" style="font-size:10.5pt;font-weight:600;color:var(--navy);flex:1">حلول القطاعات</span><span class="en" style="font-size:8pt;color:var(--soft)">Industries</span></div><div style="display:flex;align-items:center;gap:4mm;padding:2.6mm 0;border-bottom:1px dashed var(--line)"><span class="num" style="font-size:15pt;min-width:11mm">17</span><span class="kufi" style="font-size:10.5pt;font-weight:600;color:var(--navy);flex:1">التشغيل والدعم</span><span class="en" style="font-size:8pt;color:var(--soft)">Onboarding</span></div><div style="display:flex;align-items:center;gap:4mm;padding:2.6mm 0;border-bottom:1px dashed var(--line)"><span class="num" style="font-size:15pt;min-width:11mm">18</span><span class="kufi" style="font-size:10.5pt;font-weight:600;color:var(--navy);flex:1">الباقات ومقارنتها</span><span class="en" style="font-size:8pt;color:var(--soft)">Pricing</span></div><div style="display:flex;align-items:center;gap:4mm;padding:2.6mm 0;border-bottom:1px dashed var(--line)"><span class="num" style="font-size:15pt;min-width:11mm">20</span><span class="kufi" style="font-size:10.5pt;font-weight:600;color:var(--navy);flex:1">أسئلة شائعة</span><span class="en" style="font-size:8pt;color:var(--soft)">FAQ</span></div><div style="display:flex;align-items:center;gap:4mm;padding:2.6mm 0;border-bottom:1px dashed var(--line)"><span class="num" style="font-size:15pt;min-width:11mm">21</span><span class="kufi" style="font-size:10.5pt;font-weight:600;color:var(--navy);flex:1">تواصل معنا والنسخة التجريبية</span><span class="en" style="font-size:8pt;color:var(--soft)">Contact</span></div>
+  </div>
+  <div class="card mint" style="margin-top:auto;flex-direction:row;align-items:center;gap:6mm;padding:6mm">
+    <div style="flex:1"><h4 style="font-size:13pt">جرّب المنصة بنفسك الآن</h4><p>نسخة تجريبية كاملة تعمل من المتصفح ببيانات وهمية لشركة «مطاعم ورد الشام» (4 فروع، 40 موظفاً). سجّل الدخول بأي حساب من الصفحة الأخيرة.</p></div>
+    <div class="en" style="flex:.7;font-size:9pt;color:var(--navy);font-weight:600;line-height:1.7;border-left:3px solid var(--teal);padding-left:4mm">Live demo<br><span style="color:var(--cyan)">oolong2006-ship-it.github.io/codex</span></div>
+  </div>
+  <div class="footer"><span class="brand"><svg viewBox="0 0 200 140" width="22" height="15.4"><defs><linearGradient id="t" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1EDBC9"/><stop offset="1" stop-color="#10C4BA"/></linearGradient><linearGradient id="b" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0C93D6"/><stop offset="1" stop-color="#0377BE"/></linearGradient><linearGradient id="w" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0A8FD3"/><stop offset=".55" stop-color="#0378C0"/><stop offset="1" stop-color="#143A7A"/></linearGradient></defs><circle cx="100" cy="21" r="19" fill="url(#b)"/><circle cx="37" cy="45" r="17" fill="url(#t)"/><circle cx="163" cy="45" r="17" fill="url(#t)"/><path d="M13 97C20 130 50 142 72 125C86 114 92 94 100 78C108 94 114 114 128 124C150 142 180 130 187 97C178 112 160 118 146 108C128 92 118 56 100 56C82 56 72 92 54 108C40 118 22 112 13 97Z" fill="url(#w)"/><circle cx="37" cy="95" r="25" fill="url(#t)"/><circle cx="163" cy="95" r="25" fill="url(#t)"/></svg><b style="color:#fff">شؤون</b> · SHUOON — كل شؤون موظفيك، في مكان واحد</span><span>02</span></div>
+</section>
+
+<!-- ABOUT -->
+<section class="page">
+  <div class="head">
+    <div class="ar"><div class="eyebrow">من نحن</div><h2>عن شؤون</h2></div>
+    <div class="en"><div class="eyebrow">Who we are</div><h3>About Shuoon</h3></div>
+  </div>
+  <p class="lead">شؤون منصة سعودية سحابية للموارد البشرية والرواتب، وُلدت من احتياج حقيقي لدى المنشآت التي تدير فروعاً متعددة: مطاعم ومحلات تجزئة ومواقع مقاولات وعيادات وأساطيل توصيل. في هذه المنشآت يعمل الفريق في الميدان لا في المكتب، وتتوزع المسؤولية بين مدراء الفروع، وتتعقد الرواتب مع الورديات والإضافي والغياب. شؤون تجمع كل ذلك في مكان واحد.</p>
+  <p class="lead-en en">Shuoon is a Saudi cloud HR &amp; payroll platform for multi-branch businesses — restaurants, retail, contracting, clinics and logistics — where teams work in the field, responsibility is spread across branch managers, and payroll is complicated by shifts, overtime and absence.</p>
+  <div class="grid3">
+    <div class="card hl"><h4>رؤيتنا</h4><p>أن يدير صاحب أي منشأة سعودية كل فروعه وفريقه من شاشة واحدة، بثقة ووضوح.</p><div class="en">Vision — every Saudi business runs all its branches and people from one screen.</div></div>
+    <div class="card"><h4>رسالتنا</h4><p>أتمتة الموارد البشرية والرواتب وفق نظام العمل السعودي، بتجربة عربية بسيطة تناسب الفرق الميدانية.</p><div class="en">Mission — automate HR &amp; payroll per Saudi Labor Law, Arabic-first and field-friendly.</div></div>
+    <div class="card mint"><h4>قيمنا</h4><ul class="dots"><li>الدقة قبل كل شيء</li><li>البساطة للجميع</li><li>الشفافية مع الموظف</li><li>حماية البيانات</li></ul><div class="en">Accuracy · simplicity · transparency · data protection</div></div>
+  </div>
+  <div class="card" style="flex-direction:row;align-items:center;gap:6mm;padding:6mm">
+    <div style="flex:1.2"><h4 style="font-size:13.5pt">فكرتنا المختلفة: الفرع هو قلب النظام</h4><p style="font-size:9.8pt">معظم الأنظمة تبدأ من الموظف وتنتهي عنده. شؤون تبدأ من الفرع: لكل فرع نطاقه الجغرافي للبصمة، ووردياته، ومديره الذي يرى فريقه فقط، ونسبة سعودته الخاصة، وتكلفة رواتبه.</p></div>
+    <div class="en" style="flex:.8;font-size:8.6pt;color:var(--soft);line-height:1.6;border-left:3px solid var(--teal);padding-left:4mm"><b style="color:var(--navy)">The branch is the core.</b> Each branch has its own check-in geofence, shifts, a manager who sees only their team, its own Saudization rate and payroll cost.</div>
+  </div>
+  <div class="grid4">
+    <div class="card" style="align-items:center;text-align:center"><div class="num">12</div><p>وحدة متكاملة</p></div>
+    <div class="card" style="align-items:center;text-align:center"><div class="num">5</div><p>أدوار وصلاحيات</p></div>
+    <div class="card" style="align-items:center;text-align:center"><div class="num">2</div><p>لغتان: عربي وإنجليزي</p></div>
+    <div class="card" style="align-items:center;text-align:center"><div class="num">14</div><p>يوماً تجربة مجانية</p></div>
+  </div>
+  <div class="footer"><span class="brand"><svg viewBox="0 0 200 140" width="22" height="15.4"><defs><linearGradient id="t" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1EDBC9"/><stop offset="1" stop-color="#10C4BA"/></linearGradient><linearGradient id="b" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0C93D6"/><stop offset="1" stop-color="#0377BE"/></linearGradient><linearGradient id="w" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0A8FD3"/><stop offset=".55" stop-color="#0378C0"/><stop offset="1" stop-color="#143A7A"/></linearGradient></defs><circle cx="100" cy="21" r="19" fill="url(#b)"/><circle cx="37" cy="45" r="17" fill="url(#t)"/><circle cx="163" cy="45" r="17" fill="url(#t)"/><path d="M13 97C20 130 50 142 72 125C86 114 92 94 100 78C108 94 114 114 128 124C150 142 180 130 187 97C178 112 160 118 146 108C128 92 118 56 100 56C82 56 72 92 54 108C40 118 22 112 13 97Z" fill="url(#w)"/><circle cx="37" cy="95" r="25" fill="url(#t)"/><circle cx="163" cy="95" r="25" fill="url(#t)"/></svg><b style="color:var(--navy)">شؤون</b> · SHUOON — كل شؤون موظفيك، في مكان واحد</span><span>03</span></div>
+</section>
+
+<!-- CHALLENGE -->
+<section class="page">
+  <div class="head">
+    <div class="ar"><div class="eyebrow">التحدي والحل</div><h2>لماذا تحتاج المنشآت متعددة الفروع إلى شؤون</h2></div>
+    <div class="en"><div class="eyebrow">Challenge &amp; solution</div><h3>Why multi-branch businesses need Shuoon</h3></div>
+  </div>
+  <table>
+    <tr><th style="width:48%">التحدي اليومي<span class="en">The daily challenge</span></th><th>كيف تحله شؤون<span class="en">How Shuoon solves it</span></th></tr>
+    <tr><td>حضور لا يمكن التحقق منه، وبصمة بالنيابة عن الزملاء<span class="en">Unverifiable attendance and buddy punching</span></td><td>بصمة من جوال الموظف داخل نطاق جغرافي محدد لكل فرع<span class="en">Mobile check-in inside each branch’s geofence</span></td></tr>
+    <tr><td>ورديات ليلية تمتد بعد منتصف الليل وتربك الحسابات<span class="en">Overnight shifts that break the math</span></td><td>احتساب صحيح للساعات والتأخير والإضافي مهما كان توقيت الوردية<span class="en">Correct hours, lateness and overtime across midnight</span></td></tr>
+    <tr><td>رواتب تُحسب يدوياً في جداول، وأخطاء في الإضافي والغياب<span class="en">Manual spreadsheet payroll and errors</span></td><td>مسير آلي يقرأ الحضور والإجازات والسلف ويطبق نظام العمل<span class="en">Automated run reading attendance, leave and loans</span></td></tr>
+    <tr><td>ملف حماية الأجور يُجهَّز يدوياً لكل بنك<span class="en">WPS files prepared by hand</span></td><td>ملف جاهز مع فحص الآيبان ورقم الهوية قبل التنزيل<span class="en">Generated file with IBAN and ID validation</span></td></tr>
+    <tr><td>لا أحد يعرف نسبة السعودة في كل فرع<span class="en">No branch-level Saudization picture</span></td><td>نسبة ونطاق لكل فرع، ومحاكٍ لأثر التوظيف<span class="en">Rate and band per branch, plus a hiring simulator</span></td></tr>
+    <tr><td>إقامات وجوازات وتراخيص تنتهي دون تنبيه<span class="en">Iqamas, passports and licences expiring unnoticed</span></td><td>مركز مستندات بتنبيهات قبل 90 و30 يوماً<span class="en">Documents centre with 90 and 30-day alerts</span></td></tr>
+    <tr><td>طلبات ورقية تضيع بين الفرع والإدارة<span class="en">Paper requests lost between branch and HQ</span></td><td>طلبات رقمية من الجوال مع سير اعتماد عبر مدير الفرع<span class="en">Digital requests with branch-manager approval</span></td></tr>
+    <tr><td>دوران مرتفع للعمالة ومخالصات متكررة<span class="en">High turnover and frequent settlements</span></td><td>احتساب نسبي آلي للمنضمين والمغادرين، ونهاية خدمة بمعاينة قبل التنفيذ<span class="en">Automatic pro-rating and end-of-service preview</span></td></tr>
+    <tr><td>مدير الفرع بلا أدوات، والإدارة غارقة في التفاصيل<span class="en">Branch managers without tools; HQ drowning in detail</span></td><td>صلاحيات لمدير الفرع على فريقه فقط، ولوحة قيادة للإدارة<span class="en">Scoped branch-manager role and an executive dashboard</span></td></tr>
+  </table>
+  <div class="footer"><span class="brand"><svg viewBox="0 0 200 140" width="22" height="15.4"><defs><linearGradient id="t" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1EDBC9"/><stop offset="1" stop-color="#10C4BA"/></linearGradient><linearGradient id="b" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0C93D6"/><stop offset="1" stop-color="#0377BE"/></linearGradient><linearGradient id="w" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0A8FD3"/><stop offset=".55" stop-color="#0378C0"/><stop offset="1" stop-color="#143A7A"/></linearGradient></defs><circle cx="100" cy="21" r="19" fill="url(#b)"/><circle cx="37" cy="45" r="17" fill="url(#t)"/><circle cx="163" cy="45" r="17" fill="url(#t)"/><path d="M13 97C20 130 50 142 72 125C86 114 92 94 100 78C108 94 114 114 128 124C150 142 180 130 187 97C178 112 160 118 146 108C128 92 118 56 100 56C82 56 72 92 54 108C40 118 22 112 13 97Z" fill="url(#w)"/><circle cx="37" cy="95" r="25" fill="url(#t)"/><circle cx="163" cy="95" r="25" fill="url(#t)"/></svg><b style="color:var(--navy)">شؤون</b> · SHUOON — كل شؤون موظفيك، في مكان واحد</span><span>04</span></div>
+</section>
+
+<!-- PLATFORM AT A GLANCE -->
+<section class="page">
+  <div class="head">
+    <div class="ar"><div class="eyebrow">المنصة</div><h2>ثلاث واجهات… منظومة واحدة</h2></div>
+    <div class="en"><div class="eyebrow">The platform</div><h3>Three experiences, one system</h3></div>
+  </div>
+  <div class="browser"><div class="bar"><i></i><i></i><i></i><span>app.shuoon.sa</span></div><img src="assets/app-dash.jpg"></div>
+  <div class="cap"><b>لوحة القيادة للإدارة</b><span class="en">Executive dashboard — headcount, attendance, approvals, payroll trend, Saudization</span></div>
+  <div class="grid3">
+    <div class="card hl"><h4>لوحة تحكم المنشأة</h4><p>الموظفون والفروع والحضور والإجازات والطلبات والرواتب والسلف والسعودة والأداء والتوظيف والتقارير والإعدادات.</p><div class="en">Company dashboard for owners, HR, payroll and branch managers.</div></div>
+    <div class="card"><h4>تطبيق الموظف</h4><p>بصمة بالموقع، وإجازات، وقسائم رواتب، وطلبات، وإشعارات، يعمل من متصفح الجوال ويُثبَّت كتطبيق.</p><div class="en">Self-service web app — no app store needed.</div></div>
+    <div class="card mint"><h4>الموقع والأدوات المجانية</h4><p>الحلول لكل قطاع، والأسعار، وطلب عرض، والتسجيل للتجربة، وحاسبة نهاية الخدمة المجانية.</p><div class="en">Website, sector solutions, pricing, free end-of-service calculator.</div></div>
+  </div>
+  <div class="footer"><span class="brand"><svg viewBox="0 0 200 140" width="22" height="15.4"><defs><linearGradient id="t" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1EDBC9"/><stop offset="1" stop-color="#10C4BA"/></linearGradient><linearGradient id="b" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0C93D6"/><stop offset="1" stop-color="#0377BE"/></linearGradient><linearGradient id="w" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0A8FD3"/><stop offset=".55" stop-color="#0378C0"/><stop offset="1" stop-color="#143A7A"/></linearGradient></defs><circle cx="100" cy="21" r="19" fill="url(#b)"/><circle cx="37" cy="45" r="17" fill="url(#t)"/><circle cx="163" cy="45" r="17" fill="url(#t)"/><path d="M13 97C20 130 50 142 72 125C86 114 92 94 100 78C108 94 114 114 128 124C150 142 180 130 187 97C178 112 160 118 146 108C128 92 118 56 100 56C82 56 72 92 54 108C40 118 22 112 13 97Z" fill="url(#w)"/><circle cx="37" cy="95" r="25" fill="url(#t)"/><circle cx="163" cy="95" r="25" fill="url(#t)"/></svg><b style="color:var(--navy)">شؤون</b> · SHUOON — كل شؤون موظفيك، في مكان واحد</span><span>05</span></div>
+</section>
+
+<!-- MODULES INDEX -->
+<section class="page" style="gap:4.4mm">
+  <div class="head">
+    <div class="ar"><div class="eyebrow">خدماتنا</div><h2>منظومة متكاملة من 12 وحدة</h2></div>
+    <div class="en"><div class="eyebrow">Our services</div><h3>An integrated suite of 12 modules</h3></div>
+  </div>
+  <div class="grid3">
+    <div class="card"><div class="num">01</div><h4>الفروع والأقسام</h4><p>كل فرع وحدة مستقلة بموقعه ومديره ونسبة سعودته.</p><div class="en">Branches &amp; departments</div></div>
+    <div class="card"><div class="num">02</div><h4>الموظفون والمستندات</h4><p>ملف رقمي كامل مع تنبيهات انتهاء الإقامات والعقود.</p><div class="en">Employees &amp; documents</div></div>
+    <div class="card"><div class="num">03</div><h4>الحضور والورديات</h4><p>بصمة بالموقع وجدول ورديات أسبوعي لكل فرع.</p><div class="en">Attendance &amp; shifts</div></div>
+    <div class="card"><div class="num">04</div><h4>الإجازات</h4><p>أنواع الإجازات وفق نظام العمل مع الأرصدة والاعتماد.</p><div class="en">Leave management</div></div>
+    <div class="card"><div class="num">05</div><h4>الطلبات والسلف</h4><p>خطابات ومطالبات وسلف بأقساط تُخصم آلياً.</p><div class="en">Requests &amp; loans</div></div>
+    <div class="card hl"><div class="num">06</div><h4>الرواتب وحماية الأجور</h4><p>مسير آلي وقسائم وملف حماية الأجور.</p><div class="en">Payroll &amp; WPS</div></div>
+    <div class="card"><div class="num">07</div><h4>نهاية الخدمة</h4><p>مكافأة وفق المادتين 84 و85 مع المخالصة.</p><div class="en">End of service</div></div>
+    <div class="card"><div class="num">08</div><h4>السعودة ونطاقات</h4><p>نسبة ونطاق لكل فرع ومحاكاة التوظيف.</p><div class="en">Saudization (Nitaqat)</div></div>
+    <div class="card"><div class="num">09</div><h4>تقييم الأداء</h4><p>دورات تقييم وأهداف موزونة ونتائج محسوبة.</p><div class="en">Performance</div></div>
+    <div class="card"><div class="num">10</div><h4>التوظيف</h4><p>وظائف شاغرة ولوحة مرشحين بالمراحل.</p><div class="en">Recruitment</div></div>
+    <div class="card"><div class="num">11</div><h4>التقارير والتعاميم</h4><p>لوحة قيادة وتقارير قابلة للتصدير وتعاميم للموظفين.</p><div class="en">Reports &amp; announcements</div></div>
+    <div class="card mint"><div class="num">12</div><h4>تطبيق الموظف</h4><p>خدمة ذاتية كاملة من الجوال.</p><div class="en">Employee self-service app</div></div>
+  </div>
+  <p class="note">إضافة إلى خدمات التهيئة وترحيل البيانات والتدريب والدعم الفني، وحاسبة نهاية الخدمة المجانية على الموقع. · Plus onboarding, migration, training and support services, and a free end-of-service calculator.</p>
+  <div class="footer"><span class="brand"><svg viewBox="0 0 200 140" width="22" height="15.4"><defs><linearGradient id="t" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1EDBC9"/><stop offset="1" stop-color="#10C4BA"/></linearGradient><linearGradient id="b" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0C93D6"/><stop offset="1" stop-color="#0377BE"/></linearGradient><linearGradient id="w" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0A8FD3"/><stop offset=".55" stop-color="#0378C0"/><stop offset="1" stop-color="#143A7A"/></linearGradient></defs><circle cx="100" cy="21" r="19" fill="url(#b)"/><circle cx="37" cy="45" r="17" fill="url(#t)"/><circle cx="163" cy="45" r="17" fill="url(#t)"/><path d="M13 97C20 130 50 142 72 125C86 114 92 94 100 78C108 94 114 114 128 124C150 142 180 130 187 97C178 112 160 118 146 108C128 92 118 56 100 56C82 56 72 92 54 108C40 118 22 112 13 97Z" fill="url(#w)"/><circle cx="37" cy="95" r="25" fill="url(#t)"/><circle cx="163" cy="95" r="25" fill="url(#t)"/></svg><b style="color:var(--navy)">شؤون</b> · SHUOON — كل شؤون موظفيك، في مكان واحد</span><span>06</span></div>
+</section>
+
+<!-- CORE HR -->
+<section class="page">
+  <div class="head">
+    <div class="ar"><div class="eyebrow">01 — 02</div><h2>الفروع والموظفون والمستندات</h2></div>
+    <div class="en"><div class="eyebrow">Core HR</div><h3>Branches, employees &amp; documents</h3></div>
+  </div>
+  <div class="service">
+    <div class="ar"><h4>الفروع والأقسام والهيكل التنظيمي</h4><ul>
+      <li>فروع بإحداثيات ونطاق جغرافي قابل للضبط للبصمة ومدير لكل فرع</li>
+      <li>أقسام هرمية وهيكل تنظيمي تفاعلي مرئي</li>
+      <li>مؤشرات التكلفة والحضور والسعودة لكل فرع مباشرة</li></ul></div>
+    <div class="en"><h4>Branches, departments &amp; org chart</h4><ul>
+      <li>Branches with coordinates, adjustable geofence and a manager</li>
+      <li>Hierarchical departments and a visual org chart</li>
+      <li>Cost, attendance and Saudization per branch</li></ul></div>
+  </div>
+  <div class="service">
+    <div class="ar"><h4>ملف الموظف الكامل</h4><ul>
+      <li>البيانات الشخصية والوظيفية والعقد وفترة التجربة</li>
+      <li>الراتب الأساسي وبدلات السكن والنقل والبدلات الأخرى</li>
+      <li>الآيبان ورمز البنك وحالة التسجيل في التأمينات</li>
+      <li>سجل تغييرات كامل، واستيراد جماعي للموظفين</li>
+      <li>إنهاء الخدمة مع معاينة المكافأة قبل التنفيذ</li></ul></div>
+    <div class="en"><h4>Complete employee record</h4><ul>
+      <li>Personal, job and contract details, probation</li>
+      <li>Basic salary, housing, transport and other allowances</li>
+      <li>IBAN, bank code and GOSI registration</li>
+      <li>Full change history and bulk import</li>
+      <li>Termination with end-of-service preview</li></ul></div>
+  </div>
+  <div class="service">
+    <div class="ar"><h4>مركز المستندات والتنبيهات</h4><ul>
+      <li>الإقامة والهوية والجواز والعقد والتأمين الطبي والتراخيص والشهادات</li>
+      <li>تنبيه تلقائي للمستندات المنتهية أو التي تنتهي خلال 30 و90 يوماً</li></ul></div>
+    <div class="en"><h4>Documents centre &amp; alerts</h4><ul>
+      <li>Iqama/ID, passport, contract, insurance, licences</li>
+      <li>Alerts for expired and 30/90-day expiries</li></ul></div>
+  </div>
+  <div class="grid2" style="align-items:start">
+    <div><div class="shot"><img src="assets/app-employees.jpg" style="height:44mm;object-fit:cover;object-position:top"></div><div class="cap"><b>قائمة الموظفين</b><span class="en">Employees</span></div></div>
+    <div><div class="shot"><img src="assets/app-org.jpg" style="height:44mm;object-fit:cover;object-position:top"></div><div class="cap"><b>الهيكل التنظيمي</b><span class="en">Org chart</span></div></div>
+  </div>
+  <div class="footer"><span class="brand"><svg viewBox="0 0 200 140" width="22" height="15.4"><defs><linearGradient id="t" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1EDBC9"/><stop offset="1" stop-color="#10C4BA"/></linearGradient><linearGradient id="b" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0C93D6"/><stop offset="1" stop-color="#0377BE"/></linearGradient><linearGradient id="w" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0A8FD3"/><stop offset=".55" stop-color="#0378C0"/><stop offset="1" stop-color="#143A7A"/></linearGradient></defs><circle cx="100" cy="21" r="19" fill="url(#b)"/><circle cx="37" cy="45" r="17" fill="url(#t)"/><circle cx="163" cy="45" r="17" fill="url(#t)"/><path d="M13 97C20 130 50 142 72 125C86 114 92 94 100 78C108 94 114 114 128 124C150 142 180 130 187 97C178 112 160 118 146 108C128 92 118 56 100 56C82 56 72 92 54 108C40 118 22 112 13 97Z" fill="url(#w)"/><circle cx="37" cy="95" r="25" fill="url(#t)"/><circle cx="163" cy="95" r="25" fill="url(#t)"/></svg><b style="color:var(--navy)">شؤون</b> · SHUOON — كل شؤون موظفيك، في مكان واحد</span><span>07</span></div>
+</section>
+
+<!-- ATTENDANCE -->
+<section class="page">
+  <div class="head">
+    <div class="ar"><div class="eyebrow">03</div><h2>الحضور والورديات</h2></div>
+    <div class="en"><div class="eyebrow">Time &amp; attendance</div><h3>Attendance &amp; shifts</h3></div>
+  </div>
+  <p class="lead">بصمة تثبت الحضور فعلاً: يسجل الموظف حضوره من جواله، وتتحقق شؤون من موقعه داخل نطاق الفرع، ثم تحسب التأخير والإضافي تلقائياً وترسلها مباشرة إلى مسير الرواتب.</p>
+  <div class="browser"><div class="bar"><i></i><i></i><i></i><span>app.shuoon.sa/attendance</span></div><img src="assets/app-attendance.jpg"></div>
+  <div class="grid2">
+    <div class="card"><h4>البصمة بالموقع الجغرافي</h4><ul class="dots"><li>نطاق جغرافي لكل فرع بنصف قطر قابل للضبط</li><li>رفض البصمة من خارج النطاق مع توضيح المسافة</li><li>السماح بالبصمة من عدة مراكز معتمدة</li></ul><div class="en">Geofenced check-in, distance on rejection, multiple approved hubs.</div></div>
+    <div class="card"><h4>الورديات وجدول الدوام</h4><ul class="dots"><li>ورديات لكل فرع مع وقت السماح والاستراحة</li><li>ورديات ليلية تتجاوز منتصف الليل</li><li>جدول أسبوعي قابل للنسخ لمواسم الذروة</li></ul><div class="en">Per-branch shifts, overnight shifts, copyable weekly roster.</div></div>
+    <div class="card"><h4>لوحة الحضور اليومية</h4><ul class="dots"><li>من حضر ومن تأخر ومن غاب، لكل فرع لحظياً</li><li>تصحيح يدوي من المدير مع توثيق</li><li>ملخص شهري لكل موظف بالساعات</li></ul><div class="en">Live board by branch, documented corrections, monthly summary.</div></div>
+    <div class="card hl"><h4>ربط مباشر بالرواتب</h4><ul class="dots"><li>أيام الغياب تُخصم تلقائياً</li><li>الإضافي يُحسب وفق المادة 107</li><li>بلا إدخال يدوي ولا جداول</li></ul><div class="en">Absence and overtime flow into payroll automatically.</div></div>
+  </div>
+  <div class="footer"><span class="brand"><svg viewBox="0 0 200 140" width="22" height="15.4"><defs><linearGradient id="t" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1EDBC9"/><stop offset="1" stop-color="#10C4BA"/></linearGradient><linearGradient id="b" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0C93D6"/><stop offset="1" stop-color="#0377BE"/></linearGradient><linearGradient id="w" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0A8FD3"/><stop offset=".55" stop-color="#0378C0"/><stop offset="1" stop-color="#143A7A"/></linearGradient></defs><circle cx="100" cy="21" r="19" fill="url(#b)"/><circle cx="37" cy="45" r="17" fill="url(#t)"/><circle cx="163" cy="45" r="17" fill="url(#t)"/><path d="M13 97C20 130 50 142 72 125C86 114 92 94 100 78C108 94 114 114 128 124C150 142 180 130 187 97C178 112 160 118 146 108C128 92 118 56 100 56C82 56 72 92 54 108C40 118 22 112 13 97Z" fill="url(#w)"/><circle cx="37" cy="95" r="25" fill="url(#t)"/><circle cx="163" cy="95" r="25" fill="url(#t)"/></svg><b style="color:var(--navy)">شؤون</b> · SHUOON — كل شؤون موظفيك، في مكان واحد</span><span>08</span></div>
+</section>
+
+<!-- LEAVE & REQUESTS -->
+<section class="page">
+  <div class="head">
+    <div class="ar"><div class="eyebrow">04 — 05</div><h2>الإجازات والطلبات والسلف</h2></div>
+    <div class="en"><div class="eyebrow">Employee requests</div><h3>Leave, requests &amp; loans</h3></div>
+  </div>
+  <table>
+    <tr><th>نوع الإجازة<span class="en">Leave type</span></th><th>الاستحقاق في شؤون<span class="en">Entitlement in Shuoon</span></th></tr>
+    <tr><td>السنوية<span class="en">Annual</span></td><td>21 يوماً، و30 يوماً بعد خمس سنوات (م109)، مع استحقاق تدريجي ورصيد مرحّل<span class="en">21 days, 30 after five years (Art. 109), accrued with carry-over</span></td></tr>
+    <tr><td>المرضية<span class="en">Sick</span></td><td>30 يوماً بأجر كامل، ثم 60 يوماً بثلاثة أرباع الأجر، ثم 30 بدون أجر (م117)<span class="en">30 full pay, 60 at 75%, 30 unpaid (Art. 117)</span></td></tr>
+    <tr><td>الوضع<span class="en">Maternity</span></td><td>12 أسبوعاً (84 يوماً تقويمياً)<span class="en">12 weeks (84 calendar days)</span></td></tr>
+    <tr><td>الزواج · الوفاة · المولود<span class="en">Marriage · Bereavement · Paternity</span></td><td>5 · 5 · 3 أيام<span class="en">5 · 5 · 3 days</span></td></tr>
+    <tr><td>الحج · الامتحان · بدون أجر<span class="en">Hajj · Exam · Unpaid</span></td><td>15 يوماً مرة واحدة · حسب الحاجة · حسب الموافقة<span class="en">15 days once · as needed · on approval</span></td></tr>
+  </table>
+  <div class="grid2">
+    <div class="card"><h4>ذكاء في الإجازات</h4><ul class="dots"><li>احتساب الأيام مع استثناء عطلة نهاية الأسبوع والعطل الرسمية</li><li>منع الطلبات المتداخلة أو التي تتجاوز الرصيد</li><li>اعتماد من مدير الفرع أو الموارد البشرية</li><li>تحديث حالة الموظف إلى «في إجازة» تلقائياً</li></ul><div class="en">Working-day counting, overlap and balance checks, auto on-leave status.</div></div>
+    <div class="card"><h4>الطلبات الرقمية</h4><ul class="dots"><li>تعريف بالراتب، ومطالبة مصروفات بصورة الفاتورة، وخروج وعودة</li><li>سلفة بأقساط شهرية تُخصم تلقائياً من الراتب</li><li>تصحيح حضور يُعتمد فيُحدِّث السجل مباشرة</li><li>اعتماد السلف من صلاحية الموارد البشرية أو الرواتب فقط</li></ul><div class="en">Letters, expenses, exit/re-entry, loans with auto installments, corrections.</div></div>
+  </div>
+  <p class="note">جميع الاستحقاقات قابلة للتعديل من إعدادات المنشأة. · All entitlements are configurable per company.</p>
+  <div class="footer"><span class="brand"><svg viewBox="0 0 200 140" width="22" height="15.4"><defs><linearGradient id="t" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1EDBC9"/><stop offset="1" stop-color="#10C4BA"/></linearGradient><linearGradient id="b" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0C93D6"/><stop offset="1" stop-color="#0377BE"/></linearGradient><linearGradient id="w" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0A8FD3"/><stop offset=".55" stop-color="#0378C0"/><stop offset="1" stop-color="#143A7A"/></linearGradient></defs><circle cx="100" cy="21" r="19" fill="url(#b)"/><circle cx="37" cy="45" r="17" fill="url(#t)"/><circle cx="163" cy="45" r="17" fill="url(#t)"/><path d="M13 97C20 130 50 142 72 125C86 114 92 94 100 78C108 94 114 114 128 124C150 142 180 130 187 97C178 112 160 118 146 108C128 92 118 56 100 56C82 56 72 92 54 108C40 118 22 112 13 97Z" fill="url(#w)"/><circle cx="37" cy="95" r="25" fill="url(#t)"/><circle cx="163" cy="95" r="25" fill="url(#t)"/></svg><b style="color:var(--navy)">شؤون</b> · SHUOON — كل شؤون موظفيك، في مكان واحد</span><span>09</span></div>
+</section>
+
+<!-- PAYROLL -->
+<section class="page">
+  <div class="head">
+    <div class="ar"><div class="eyebrow">06 — 07</div><h2>الرواتب وحماية الأجور ونهاية الخدمة</h2></div>
+    <div class="en"><div class="eyebrow">Payroll &amp; compliance</div><h3>Payroll, WPS &amp; end of service</h3></div>
+  </div>
+  <div style="display:flex;gap:3mm">
+    <div class="card hl" style="flex:1;align-items:center;text-align:center;padding:3.5mm"><div class="num">1</div><h4>إنشاء المسير</h4></div>
+    <div class="card hl" style="flex:1;align-items:center;text-align:center;padding:3.5mm"><div class="num">2</div><h4>احتساب آلي</h4></div>
+    <div class="card hl" style="flex:1;align-items:center;text-align:center;padding:3.5mm"><div class="num">3</div><h4>اعتماد</h4></div>
+    <div class="card mint" style="flex:1;align-items:center;text-align:center;padding:3.5mm"><div class="num">4</div><h4>حماية الأجور والدفع</h4></div>
+  </div>
+  <div class="browser"><div class="bar"><i></i><i></i><i></i><span>app.shuoon.sa/payroll</span></div><img src="assets/app-payroll.jpg" style="height:68mm;object-fit:cover;object-position:top"></div>
+  <div class="service">
+    <div class="ar"><h4>محرك احتساب وفق نظام العمل السعودي</h4><ul>
+      <li>التأمينات الاجتماعية لحصتي الموظف والمنشأة، للسعوديين وغير السعوديين، مع الحدين الأدنى والأعلى</li>
+      <li>العمل الإضافي: أجر الساعة الشامل مضافاً إليه نصف الأجر الأساسي (م107)</li>
+      <li>خصم الغياب والإجازات بدون أجر والمرضية حسب الشرائح وبالأيام التقويمية</li>
+      <li>سقف الخصومات بنصف الأجر (م92) مع ترحيل الفرق</li>
+      <li>احتساب نسبي للمنضمين والمغادرين خلال الشهر، والمكافآت والعمولات والجزاءات والسلف</li></ul></div>
+    <div class="en"><h4>Saudi Labor Law engine</h4><ul>
+      <li>GOSI shares with wage floor and cap</li>
+      <li>Overtime per Art. 107</li>
+      <li>Absence, unpaid and tiered sick deductions</li>
+      <li>50% deduction cap (Art. 92), remainder carried</li>
+      <li>Pro-rating, bonuses, commissions, penalties, loans</li></ul></div>
+  </div>
+  <div class="grid2">
+    <div class="card"><h4>ملف حماية الأجور</h4><p>ملف جاهز للرفع مع فحص الآيبان السعودي ورقم الهوية وصافي الراتب، بصيغة قابلة للتخصيص حسب البنك، وملفات متوافقة مع مُدد.</p><div class="en">WPS file with IBAN/ID validation; Mudad-compatible.</div></div>
+    <div class="card"><h4>مكافأة نهاية الخدمة</h4><p>نصف راتب عن كل سنة من الخمس الأولى وراتب كامل بعدها (م84)، ونسب الاستقالة (م85)، وتعويض رصيد الإجازات، مع المخالصة.</p><div class="en">Art. 84/85 award, leave encashment and final settlement.</div></div>
+  </div>
+  <div class="footer"><span class="brand"><svg viewBox="0 0 200 140" width="22" height="15.4"><defs><linearGradient id="t" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1EDBC9"/><stop offset="1" stop-color="#10C4BA"/></linearGradient><linearGradient id="b" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0C93D6"/><stop offset="1" stop-color="#0377BE"/></linearGradient><linearGradient id="w" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0A8FD3"/><stop offset=".55" stop-color="#0378C0"/><stop offset="1" stop-color="#143A7A"/></linearGradient></defs><circle cx="100" cy="21" r="19" fill="url(#b)"/><circle cx="37" cy="45" r="17" fill="url(#t)"/><circle cx="163" cy="45" r="17" fill="url(#t)"/><path d="M13 97C20 130 50 142 72 125C86 114 92 94 100 78C108 94 114 114 128 124C150 142 180 130 187 97C178 112 160 118 146 108C128 92 118 56 100 56C82 56 72 92 54 108C40 118 22 112 13 97Z" fill="url(#w)"/><circle cx="37" cy="95" r="25" fill="url(#t)"/><circle cx="163" cy="95" r="25" fill="url(#t)"/></svg><b style="color:var(--navy)">شؤون</b> · SHUOON — كل شؤون موظفيك، في مكان واحد</span><span>10</span></div>
+</section>
+
+<!-- TALENT -->
+<section class="page">
+  <div class="head">
+    <div class="ar"><div class="eyebrow">08 — 10</div><h2>السعودة والأداء والتوظيف</h2></div>
+    <div class="en"><div class="eyebrow">Talent</div><h3>Saudization, performance &amp; recruitment</h3></div>
+  </div>
+  <div class="browser"><div class="bar"><i></i><i></i><i></i><span>app.shuoon.sa/saudization</span></div><img src="assets/app-saudization.jpg" style="height:72mm;object-fit:cover;object-position:top"></div>
+  <div class="service">
+    <div class="ar"><h4>السعودة ونطاقات</h4><ul>
+      <li>نسبة السعودة والنطاق للمنشأة ولكل فرع على حدة</li>
+      <li>عدد التعيينات السعودية اللازمة للانتقال للنطاق التالي</li>
+      <li>محاكٍ يوضح أثر أي توظيف قبل اتخاذ القرار</li></ul></div>
+    <div class="en"><h4>Saudization (Nitaqat)</h4><ul>
+      <li>Rate and band for the company and each branch</li>
+      <li>Saudi hires needed for the next band</li>
+      <li>Hiring impact simulator</li></ul></div>
+  </div>
+  <div class="grid2">
+    <div class="card"><h4>تقييم الأداء</h4><ul class="dots"><li>دورات تقييم تنشئ تقييماً لكل موظف تلقائياً</li><li>أهداف موزونة ودرجات من 1 إلى 5 ونتيجة محسوبة</li><li>المدير المباشر هو المقيّم مع متابعة نسبة الإنجاز</li></ul><div class="en">Review cycles, weighted goals, line-manager reviews.</div></div>
+    <div class="card"><h4>التوظيف</h4><ul class="dots"><li>وظائف شاغرة مرتبطة بالفرع والقسم</li><li>لوحة مرشحين: تقديم، فرز، مقابلة، عرض، تعيين</li><li>نقل المرشحين بين المراحل بالسحب والإفلات</li></ul><div class="en">Openings, Kanban candidate board, drag &amp; drop.</div></div>
+  </div>
+  <p class="note">حدود نطاقات المعروضة توضيحية، والحدود الفعلية تختلف حسب النشاط وحجم المنشأة. · Band thresholds are illustrative and vary by activity and size.</p>
+  <div class="footer"><span class="brand"><svg viewBox="0 0 200 140" width="22" height="15.4"><defs><linearGradient id="t" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1EDBC9"/><stop offset="1" stop-color="#10C4BA"/></linearGradient><linearGradient id="b" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0C93D6"/><stop offset="1" stop-color="#0377BE"/></linearGradient><linearGradient id="w" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0A8FD3"/><stop offset=".55" stop-color="#0378C0"/><stop offset="1" stop-color="#143A7A"/></linearGradient></defs><circle cx="100" cy="21" r="19" fill="url(#b)"/><circle cx="37" cy="45" r="17" fill="url(#t)"/><circle cx="163" cy="45" r="17" fill="url(#t)"/><path d="M13 97C20 130 50 142 72 125C86 114 92 94 100 78C108 94 114 114 128 124C150 142 180 130 187 97C178 112 160 118 146 108C128 92 118 56 100 56C82 56 72 92 54 108C40 118 22 112 13 97Z" fill="url(#w)"/><circle cx="37" cy="95" r="25" fill="url(#t)"/><circle cx="163" cy="95" r="25" fill="url(#t)"/></svg><b style="color:var(--navy)">شؤون</b> · SHUOON — كل شؤون موظفيك، في مكان واحد</span><span>11</span></div>
+</section>
+
+<!-- ESS -->
+<section class="page dark">
+  <div class="rings" style="width:170mm;height:170mm;left:-90mm;bottom:-70mm"></div>
+  <div class="head" style="position:relative">
+    <div class="ar"><div class="eyebrow">12</div><h2>تطبيق الموظف</h2></div>
+    <div class="en"><div class="eyebrow">Self-service</div><h3>Employee app</h3></div>
+  </div>
+  <p style="position:relative;font-size:17pt;font-weight:700;line-height:1.6" class="kufi">كل ما يحتاجه الموظف الميداني… في جواله</p>
+  <div style="position:relative;display:grid;grid-template-columns:1fr 1fr 1fr;gap:5mm;align-items:start">
+    <div><div class="phone"><img src="assets/ess-home.jpg"></div><p style="font-size:9pt;color:var(--on-dark);text-align:center;margin-top:2mm">البصمة بالموقع</p></div>
+    <div><div class="phone"><img src="assets/ess-leaves.jpg"></div><p style="font-size:9pt;color:var(--on-dark);text-align:center;margin-top:2mm">الإجازات والأرصدة</p></div>
+    <div><div class="phone"><img src="assets/ess-payslips.jpg"></div><p style="font-size:9pt;color:var(--on-dark);text-align:center;margin-top:2mm">قسائم الرواتب</p></div>
+  </div>
+  <div style="position:relative" class="grid2">
+    <div class="card" style="background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.14)"><h4 style="color:var(--teal)">الحضور</h4><p style="color:var(--on-dark)">بصمة بالموقع، ووردية اليوم بالتاريخين الميلادي والهجري، وسجل الحضور، وطلب تصحيح.</p></div>
+    <div class="card" style="background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.14)"><h4 style="color:var(--teal)">الإجازات والطلبات</h4><p style="color:var(--on-dark)">الأرصدة، وطلب إجازة بحساب الأيام فوراً، وسلفة، وتعريف بالراتب، وخروج وعودة.</p></div>
+    <div class="card" style="background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.14)"><h4 style="color:var(--teal)">الرواتب</h4><p style="color:var(--on-dark)">قسائم الرواتب بالتفصيل مع الطباعة والحفظ بصيغة PDF.</p></div>
+    <div class="card" style="background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.14)"><h4 style="color:var(--teal)">بلا متجر تطبيقات</h4><p style="color:var(--on-dark)">يعمل من متصفح الجوال ويُثبَّت على الشاشة الرئيسية، بالعربية والإنجليزية، مع إشعارات للاعتمادات والقسائم.</p></div>
+  </div>
+  <div class="footer"><span class="brand"><svg viewBox="0 0 200 140" width="22" height="15.4"><defs><linearGradient id="t" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1EDBC9"/><stop offset="1" stop-color="#10C4BA"/></linearGradient><linearGradient id="b" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0C93D6"/><stop offset="1" stop-color="#0377BE"/></linearGradient><linearGradient id="w" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0A8FD3"/><stop offset=".55" stop-color="#0378C0"/><stop offset="1" stop-color="#143A7A"/></linearGradient></defs><circle cx="100" cy="21" r="19" fill="url(#b)"/><circle cx="37" cy="45" r="17" fill="url(#t)"/><circle cx="163" cy="45" r="17" fill="url(#t)"/><path d="M13 97C20 130 50 142 72 125C86 114 92 94 100 78C108 94 114 114 128 124C150 142 180 130 187 97C178 112 160 118 146 108C128 92 118 56 100 56C82 56 72 92 54 108C40 118 22 112 13 97Z" fill="url(#w)"/><circle cx="37" cy="95" r="25" fill="url(#t)"/><circle cx="163" cy="95" r="25" fill="url(#t)"/></svg><b style="color:#fff">شؤون</b> · SHUOON — كل شؤون موظفيك، في مكان واحد</span><span>12</span></div>
+</section>
+
+<!-- REPORTS, ROLES, SECURITY -->
+<section class="page">
+  <div class="head">
+    <div class="ar"><div class="eyebrow">11</div><h2>التقارير والصلاحيات والأمان</h2></div>
+    <div class="en"><div class="eyebrow">Control</div><h3>Reports, roles &amp; security</h3></div>
+  </div>
+  <div class="grid2" style="align-items:stretch">
+    <div class="shot"><img src="assets/app-reports.jpg" style="height:52mm;object-fit:cover;object-position:top"></div>
+    <div class="card"><h4>التقارير والتعاميم</h4><ul class="dots"><li>توزيع الموظفين حسب الفرع والقسم والجنسية</li><li>تكلفة الرواتب لأي فترة، والحضور حسب الفرع</li><li>تصدير التقارير بصيغة CSV</li><li>تعاميم وإعلانات تصل لكل الموظفين أو فرع محدد</li></ul><div class="en">Breakdowns, payroll cost, attendance, CSV export, announcements.</div></div>
+  </div>
+  <table>
+    <tr><th>الصلاحية<span class="en">Permission</span></th><th class="c">المالك<span class="en">Owner</span></th><th class="c">الموارد البشرية<span class="en">HR</span></th><th class="c">الرواتب<span class="en">Payroll</span></th><th class="c">مدير الفرع<span class="en">Branch mgr</span></th><th class="c">الموظف<span class="en">Employee</span></th></tr>
+    <tr><td>إدارة الموظفين<span class="en">Manage employees</span></td><td class="yes">✓</td><td class="yes">✓</td><td class="no">قراءة</td><td class="no">فرعه</td><td class="no">—</td></tr>
+    <tr><td>الرواتب والسلف<span class="en">Payroll &amp; loans</span></td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td class="no">—</td><td class="no">قسائمه</td></tr>
+    <tr><td>اعتماد الإجازات والطلبات<span class="en">Approve leave &amp; requests</span></td><td class="yes">✓</td><td class="yes">✓</td><td class="no">—</td><td class="yes">فرعه</td><td class="no">—</td></tr>
+    <tr><td>الحضور والورديات<span class="en">Attendance &amp; shifts</span></td><td class="yes">✓</td><td class="yes">✓</td><td class="no">قراءة</td><td class="yes">فرعه</td><td class="no">بصمته</td></tr>
+    <tr><td>الإعدادات والمستخدمون<span class="en">Settings &amp; users</span></td><td class="yes">✓</td><td class="yes">✓</td><td class="no">—</td><td class="no">—</td><td class="no">—</td></tr>
+  </table>
+  <div class="card mint"><h4>حماية البيانات والأمان</h4><ul class="dots"><li>عزل كامل لبيانات كل منشأة عن غيرها</li><li>سجل تدقيق لكل عملية إضافة وتعديل واعتماد</li><li>كلمات مرور مشفرة وجلسات تُلغى فور تغيير كلمة المرور</li><li>حماية من الاعتماد المزدوج وتصدير آمن للملفات</li><li>التزام بنظام حماية البيانات الشخصية والاستضافة داخل المملكة</li></ul><div class="en">Tenant isolation, audit log, hashed passwords with session revocation, double-approval protection, safe exports, PDPL and in-Kingdom hosting.</div></div>
+  <div class="footer"><span class="brand"><svg viewBox="0 0 200 140" width="22" height="15.4"><defs><linearGradient id="t" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1EDBC9"/><stop offset="1" stop-color="#10C4BA"/></linearGradient><linearGradient id="b" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0C93D6"/><stop offset="1" stop-color="#0377BE"/></linearGradient><linearGradient id="w" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0A8FD3"/><stop offset=".55" stop-color="#0378C0"/><stop offset="1" stop-color="#143A7A"/></linearGradient></defs><circle cx="100" cy="21" r="19" fill="url(#b)"/><circle cx="37" cy="45" r="17" fill="url(#t)"/><circle cx="163" cy="45" r="17" fill="url(#t)"/><path d="M13 97C20 130 50 142 72 125C86 114 92 94 100 78C108 94 114 114 128 124C150 142 180 130 187 97C178 112 160 118 146 108C128 92 118 56 100 56C82 56 72 92 54 108C40 118 22 112 13 97Z" fill="url(#w)"/><circle cx="37" cy="95" r="25" fill="url(#t)"/><circle cx="163" cy="95" r="25" fill="url(#t)"/></svg><b style="color:var(--navy)">شؤون</b> · SHUOON — كل شؤون موظفيك، في مكان واحد</span><span>13</span></div>
+</section>
+
+<!-- COMPLIANCE & TOOLS -->
+<section class="page">
+  <div class="head">
+    <div class="ar"><div class="eyebrow">الامتثال والأدوات</div><h2>مهيأة لمنظومة الامتثال السعودية</h2></div>
+    <div class="en"><div class="eyebrow">Compliance &amp; tools</div><h3>Ready for the Saudi compliance ecosystem</h3></div>
+  </div>
+  <div style="display:flex;flex-wrap:wrap;gap:2.5mm">
+    <span class="chip">متوافق مع نظام العمل السعودي</span><span class="chip">جاهز لملفات حماية الأجور</span><span class="chip">يحتسب اشتراكات التأمينات الاجتماعية</span><span class="chip">ملفات رواتب متوافقة مع مُدد</span><span class="chip">بيانات جاهزة لمنصة قوى</span><span class="chip">نظام حماية البيانات الشخصية</span>
+  </div>
+  <table>
+    <tr><th style="width:34%">المادة / الجهة<span class="en">Article / body</span></th><th>التطبيق في شؤون<span class="en">How Shuoon applies it</span></th></tr>
+    <tr><td>المادة 84 و85<span class="en">Art. 84 &amp; 85</span></td><td>مكافأة نهاية الخدمة ونسب الاستقالة<span class="en">End-of-service award and resignation factors</span></td></tr>
+    <tr><td>المادة 92<span class="en">Art. 92</span></td><td>سقف الخصومات بنصف الأجر مع ترحيل الفرق<span class="en">Deduction cap with carry-over</span></td></tr>
+    <tr><td>المادة 107<span class="en">Art. 107</span></td><td>أجر العمل الإضافي<span class="en">Overtime pay</span></td></tr>
+    <tr><td>المادتان 109 و117<span class="en">Art. 109 &amp; 117</span></td><td>الإجازة السنوية والمرضية بالشرائح<span class="en">Annual and tiered sick leave</span></td></tr>
+    <tr><td>التأمينات الاجتماعية<span class="en">GOSI</span></td><td>حصتا الموظف والمنشأة مع حدود الأجر الخاضع<span class="en">Employee and employer shares with wage limits</span></td></tr>
+    <tr><td>نطاقات<span class="en">Nitaqat</span></td><td>نسبة ونطاق لكل فرع ومحاكاة التوظيف<span class="en">Per-branch rate, band and simulator</span></td></tr>
+  </table>
+  <div class="grid2">
+    <div class="card hl"><h4>حاسبة نهاية الخدمة المجانية</h4><p>أداة عامة على موقع شؤون يحسب بها أي موظف أو صاحب منشأة مكافأة نهاية الخدمة وفق المادتين 84 و85، بإدخال تاريخ المباشرة والانتهاء والأجر وسبب الإنهاء.</p><div class="en">Free public calculator on the website.</div></div>
+    <div class="card"><h4>جرّب قبل أن تشترك</h4><ul class="dots"><li>تجربة مجانية 14 يوماً دون بطاقة ائتمانية</li><li>عرض تجريبي مع فريقنا عند الطلب</li><li>نسخة تجريبية مباشرة ببيانات وهمية</li><li>عربي أولاً مع واجهة إنجليزية كاملة</li></ul><div class="en">14-day free trial, guided demo, live sandbox, Arabic + English.</div></div>
+  </div>
+  <div class="footer"><span class="brand"><svg viewBox="0 0 200 140" width="22" height="15.4"><defs><linearGradient id="t" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1EDBC9"/><stop offset="1" stop-color="#10C4BA"/></linearGradient><linearGradient id="b" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0C93D6"/><stop offset="1" stop-color="#0377BE"/></linearGradient><linearGradient id="w" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0A8FD3"/><stop offset=".55" stop-color="#0378C0"/><stop offset="1" stop-color="#143A7A"/></linearGradient></defs><circle cx="100" cy="21" r="19" fill="url(#b)"/><circle cx="37" cy="45" r="17" fill="url(#t)"/><circle cx="163" cy="45" r="17" fill="url(#t)"/><path d="M13 97C20 130 50 142 72 125C86 114 92 94 100 78C108 94 114 114 128 124C150 142 180 130 187 97C178 112 160 118 146 108C128 92 118 56 100 56C82 56 72 92 54 108C40 118 22 112 13 97Z" fill="url(#w)"/><circle cx="37" cy="95" r="25" fill="url(#t)"/><circle cx="163" cy="95" r="25" fill="url(#t)"/></svg><b style="color:var(--navy)">شؤون</b> · SHUOON — كل شؤون موظفيك، في مكان واحد</span><span>14</span></div>
+</section>
+
+<!-- SECTORS -->
+<section class="page" style="gap:4mm">
+  <div class="head">
+    <div class="ar"><div class="eyebrow">القطاعات</div><h2>حلول مصممة لقطاعك</h2></div>
+    <div class="en"><div class="eyebrow">Industries</div><h3>Built for your sector</h3></div>
+  </div>
+  <div class="service" style="padding:3.6mm 5.5mm;gap:5mm">
+  <div class="ar"><h4 style="font-size:11.5pt;margin-bottom:.6mm">المطاعم والمقاهي</h4><p style="font-size:8.6pt;color:var(--cyan);margin-bottom:1.2mm">ورديات متغيرة، وفروع كثيرة، ودوران عالٍ للعمالة.</p><ul><li style="font-size:8.6pt;line-height:1.55"><b style="color:var(--navy)">ورديات تمتد بعد منتصف الليل:</b> احتساب صحيح للساعات والتأخير والإضافي مهما كان توقيت الوردية.</li><li style="font-size:8.6pt;line-height:1.55"><b style="color:var(--navy)">بصمة داخل نطاق الفرع:</b> لا تُقبل البصمة إلا من داخل الفرع، مع تسجيل الموقع.</li><li style="font-size:8.6pt;line-height:1.55"><b style="color:var(--navy)">جدول أسبوعي لكل فرع:</b> مدير الفرع يوزع الورديات ويرى النقص قبل حدوثه.</li><li style="font-size:8.6pt;line-height:1.55"><b style="color:var(--navy)">مسير يراعي التعيين المتأخر:</b> أيام مستحقة تُحتسب آلياً لمن انضم أو غادر خلال الشهر.</li></ul></div>
+  <div class="en"><h4 style="font-size:9.5pt">Restaurants &amp; cafés</h4><ul><li style="font-size:7.8pt">Shifts that cross midnight</li><li style="font-size:7.8pt">Check-in inside the geofence</li><li style="font-size:7.8pt">Weekly roster per branch</li><li style="font-size:7.8pt">Prorated payroll</li></ul></div></div><div class="service" style="padding:3.6mm 5.5mm;gap:5mm">
+  <div class="ar"><h4 style="font-size:11.5pt;margin-bottom:.6mm">التجزئة</h4><p style="font-size:8.6pt;color:var(--cyan);margin-bottom:1.2mm">معارض في مدن متعددة ونسب سعودة يجب ضبطها.</p><ul><li style="font-size:8.6pt;line-height:1.55"><b style="color:var(--navy)">سعودة لكل معرض:</b> لوحة تبين نسبة كل معرض ونطاقه مع محاكاة التوظيف.</li><li style="font-size:8.6pt;line-height:1.55"><b style="color:var(--navy)">ورديات المواسم:</b> انسخ جدول الأسبوع وعدّله للمواسم في دقائق.</li><li style="font-size:8.6pt;line-height:1.55"><b style="color:var(--navy)">صلاحيات مدير المعرض:</b> يعتمد إجازات فريقه ويرى حضورهم دون الوصول لبقية الفروع.</li><li style="font-size:8.6pt;line-height:1.55"><b style="color:var(--navy)">تكلفة رواتب لكل معرض:</b> اعرف تكلفة القوى العاملة لكل معرض شهرياً.</li></ul></div>
+  <div class="en"><h4 style="font-size:9.5pt">Retail</h4><ul><li style="font-size:7.8pt">Saudization per store</li><li style="font-size:7.8pt">Seasonal rosters</li><li style="font-size:7.8pt">Store manager rights</li><li style="font-size:7.8pt">Payroll cost per store</li></ul></div></div><div class="service" style="padding:3.6mm 5.5mm;gap:5mm">
+  <div class="ar"><h4 style="font-size:11.5pt;margin-bottom:.6mm">المقاولات</h4><p style="font-size:8.6pt;color:var(--cyan);margin-bottom:1.2mm">مواقع مشاريع متنقلة وعمالة ميدانية كبيرة.</p><ul><li style="font-size:8.6pt;line-height:1.55"><b style="color:var(--navy)">موقع المشروع = فرع:</b> أنشئ موقعاً جديداً بنطاقه في دقيقة وانقل العمالة إليه.</li><li style="font-size:8.6pt;line-height:1.55"><b style="color:var(--navy)">بصمة ميدانية بالجوال:</b> العامل يبصم من جواله داخل الموقع، والمشرف يرى الحضور لحظياً.</li><li style="font-size:8.6pt;line-height:1.55"><b style="color:var(--navy)">تنبيهات المستندات:</b> قائمة بالإقامات التي تنتهي خلال 30 و90 يوماً.</li><li style="font-size:8.6pt;line-height:1.55"><b style="color:var(--navy)">سلف تُخصم تلقائياً:</b> أقساط السلف تدخل المسير دون تدخل يدوي.</li></ul></div>
+  <div class="en"><h4 style="font-size:9.5pt">Contracting</h4><ul><li style="font-size:7.8pt">Project site = branch</li><li style="font-size:7.8pt">Mobile field check-in</li><li style="font-size:7.8pt">Document alerts</li><li style="font-size:7.8pt">Auto-deducted loans</li></ul></div></div>
+  <div class="footer"><span class="brand"><svg viewBox="0 0 200 140" width="22" height="15.4"><defs><linearGradient id="t" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1EDBC9"/><stop offset="1" stop-color="#10C4BA"/></linearGradient><linearGradient id="b" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0C93D6"/><stop offset="1" stop-color="#0377BE"/></linearGradient><linearGradient id="w" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0A8FD3"/><stop offset=".55" stop-color="#0378C0"/><stop offset="1" stop-color="#143A7A"/></linearGradient></defs><circle cx="100" cy="21" r="19" fill="url(#b)"/><circle cx="37" cy="45" r="17" fill="url(#t)"/><circle cx="163" cy="45" r="17" fill="url(#t)"/><path d="M13 97C20 130 50 142 72 125C86 114 92 94 100 78C108 94 114 114 128 124C150 142 180 130 187 97C178 112 160 118 146 108C128 92 118 56 100 56C82 56 72 92 54 108C40 118 22 112 13 97Z" fill="url(#w)"/><circle cx="37" cy="95" r="25" fill="url(#t)"/><circle cx="163" cy="95" r="25" fill="url(#t)"/></svg><b style="color:var(--navy)">شؤون</b> · SHUOON — كل شؤون موظفيك، في مكان واحد</span><span>15</span></div>
+</section>
+
+<section class="page" style="gap:4mm">
+  <div class="head">
+    <div class="ar"><div class="eyebrow">القطاعات</div><h2>حلول مصممة لقطاعك (تابع)</h2></div>
+    <div class="en"><div class="eyebrow">Industries</div><h3>Built for your sector (cont.)</h3></div>
+  </div>
+  <div class="service" style="padding:3.6mm 5.5mm;gap:5mm">
+  <div class="ar"><h4 style="font-size:11.5pt;margin-bottom:.6mm">العيادات والصحة</h4><p style="font-size:8.6pt;color:var(--cyan);margin-bottom:1.2mm">كوادر طبية بورديات دقيقة وتراخيص يجب متابعتها.</p><ul><li style="font-size:8.6pt;line-height:1.55"><b style="color:var(--navy)">جدول مناوبات أسبوعي:</b> وزّع المناوبات لكل عيادة واطّلع على التغطية.</li><li style="font-size:8.6pt;line-height:1.55"><b style="color:var(--navy)">مستندات وشهادات مهنية:</b> أرشف التراخيص والشهادات مع تنبيهات الانتهاء.</li><li style="font-size:8.6pt;line-height:1.55"><b style="color:var(--navy)">سياسة موحدة لكل الفروع:</b> فترات سماح وقواعد إضافي موحدة أو مخصصة لكل عيادة.</li><li style="font-size:8.6pt;line-height:1.55"><b style="color:var(--navy)">تقييم أداء الكوادر:</b> دورات تقييم بمعايير تناسب الأدوار الطبية والإدارية.</li></ul></div>
+  <div class="en"><h4 style="font-size:9.5pt">Clinics &amp; healthcare</h4><ul><li style="font-size:7.8pt">Weekly on-call roster</li><li style="font-size:7.8pt">Professional documents</li><li style="font-size:7.8pt">One policy for all branches</li><li style="font-size:7.8pt">Staff performance reviews</li></ul></div></div><div class="service" style="padding:3.6mm 5.5mm;gap:5mm">
+  <div class="ar"><h4 style="font-size:11.5pt;margin-bottom:.6mm">النقل والخدمات اللوجستية</h4><p style="font-size:8.6pt;color:var(--cyan);margin-bottom:1.2mm">مستودعات ومراكز توزيع وسائقون على الطريق.</p><ul><li style="font-size:8.6pt;line-height:1.55"><b style="color:var(--navy)">ثلاث ورديات بلا أخطاء:</b> احتساب دقيق للإضافي وفق المادة 107 لكل وردية.</li><li style="font-size:8.6pt;line-height:1.55"><b style="color:var(--navy)">بصمة من أي مركز:</b> اسمح للسائق بالبصمة من عدة مراكز معتمدة.</li><li style="font-size:8.6pt;line-height:1.55"><b style="color:var(--navy)">مطالبات مصروفات رقمية:</b> صورة الفاتورة من الجوال واعتماد سريع.</li><li style="font-size:8.6pt;line-height:1.55"><b style="color:var(--navy)">تقارير تكلفة لكل مركز:</b> تكلفة القوى العاملة والإضافي لكل مستودع.</li></ul></div>
+  <div class="en"><h4 style="font-size:9.5pt">Logistics</h4><ul><li style="font-size:7.8pt">Three shifts, no errors</li><li style="font-size:7.8pt">Check in at any hub</li><li style="font-size:7.8pt">Digital expense claims</li><li style="font-size:7.8pt">Cost reports per hub</li></ul></div></div>
+  <div class="footer"><span class="brand"><svg viewBox="0 0 200 140" width="22" height="15.4"><defs><linearGradient id="t" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1EDBC9"/><stop offset="1" stop-color="#10C4BA"/></linearGradient><linearGradient id="b" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0C93D6"/><stop offset="1" stop-color="#0377BE"/></linearGradient><linearGradient id="w" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0A8FD3"/><stop offset=".55" stop-color="#0378C0"/><stop offset="1" stop-color="#143A7A"/></linearGradient></defs><circle cx="100" cy="21" r="19" fill="url(#b)"/><circle cx="37" cy="45" r="17" fill="url(#t)"/><circle cx="163" cy="45" r="17" fill="url(#t)"/><path d="M13 97C20 130 50 142 72 125C86 114 92 94 100 78C108 94 114 114 128 124C150 142 180 130 187 97C178 112 160 118 146 108C128 92 118 56 100 56C82 56 72 92 54 108C40 118 22 112 13 97Z" fill="url(#w)"/><circle cx="37" cy="95" r="25" fill="url(#t)"/><circle cx="163" cy="95" r="25" fill="url(#t)"/></svg><b style="color:var(--navy)">شؤون</b> · SHUOON — كل شؤون موظفيك، في مكان واحد</span><span>16</span></div>
+</section>
+
+<!-- IMPLEMENTATION -->
+<section class="page">
+  <div class="head">
+    <div class="ar"><div class="eyebrow">خدمات مرافقة</div><h2>التشغيل خلال أسبوع</h2></div>
+    <div class="en"><div class="eyebrow">Professional services</div><h3>Live within a week</h3></div>
+  </div>
+  <p class="lead">لا نسلمك نظاماً ونغادر. فريقنا يرافقك من أول يوم حتى يعمل كل فرع على شؤون بثقة. أغلب المنشآت تبدأ خلال أسبوع: استيراد الموظفين، وإعداد الفروع ونطاقاتها، ثم أول مسير.</p>
+  <div style="display:flex;flex-direction:column;gap:3.2mm">
+    <div class="card" style="flex-direction:row;gap:5mm;align-items:flex-start"><div class="num" style="min-width:14mm">1</div><div style="flex:1"><h4>سجّل منشأتك وأضف فروعك</h4><p>بيانات المنشأة، والفروع ونطاقاتها الجغرافية، والأقسام، والورديات، وأنواع الإجازات، والعطل الرسمية، والمستخدمون والصلاحيات.</p><div class="en">Company, branches, geofences, shifts, leave types, holidays, users and roles.</div></div></div>
+    <div class="card" style="flex-direction:row;gap:5mm;align-items:flex-start"><div class="num" style="min-width:14mm">2</div><div style="flex:1"><h4>أضف فريقك وانقل بياناتك</h4><p>استيراد الموظفين والرواتب والأرصدة والمستندات من الجداول أو الأنظمة السابقة.</p><div class="en">Import employees, salaries, balances and documents.</div></div></div>
+    <div class="card" style="flex-direction:row;gap:5mm;align-items:flex-start"><div class="num" style="min-width:14mm">3</div><div style="flex:1"><h4>درّب فريقك</h4><p>جلسات لإدارة الموارد البشرية والرواتب ومدراء الفروع، وأدلة مختصرة للموظفين لاستخدام التطبيق.</p><div class="en">Training for HR, payroll and branch managers; quick guides for staff.</div></div></div>
+    <div class="card" style="flex-direction:row;gap:5mm;align-items:flex-start"><div class="num" style="min-width:14mm">4</div><div style="flex:1"><h4>انطلق بأول مسير موازٍ</h4><p>نراجع معك أول مسير مقارنة بطريقتك الحالية قبل الاعتماد النهائي.</p><div class="en">First payroll run in parallel and reconciled before go-live.</div></div></div>
+    <div class="card hl" style="flex-direction:row;gap:5mm;align-items:flex-start"><div class="num" style="min-width:14mm">5</div><div style="flex:1"><h4>دعم مستمر بالعربية</h4><p>بريد ومحادثة في الباقة الأساسية، وأولوية في باقة النمو، ومدير حساب مع اتفاقية مستوى خدمة لباقة المؤسسات.</p><div class="en">Email &amp; chat, priority support, or a dedicated account manager with SLA.</div></div></div>
+  </div>
+  <div class="footer"><span class="brand"><svg viewBox="0 0 200 140" width="22" height="15.4"><defs><linearGradient id="t" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1EDBC9"/><stop offset="1" stop-color="#10C4BA"/></linearGradient><linearGradient id="b" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0C93D6"/><stop offset="1" stop-color="#0377BE"/></linearGradient><linearGradient id="w" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0A8FD3"/><stop offset=".55" stop-color="#0378C0"/><stop offset="1" stop-color="#143A7A"/></linearGradient></defs><circle cx="100" cy="21" r="19" fill="url(#b)"/><circle cx="37" cy="45" r="17" fill="url(#t)"/><circle cx="163" cy="45" r="17" fill="url(#t)"/><path d="M13 97C20 130 50 142 72 125C86 114 92 94 100 78C108 94 114 114 128 124C150 142 180 130 187 97C178 112 160 118 146 108C128 92 118 56 100 56C82 56 72 92 54 108C40 118 22 112 13 97Z" fill="url(#w)"/><circle cx="37" cy="95" r="25" fill="url(#t)"/><circle cx="163" cy="95" r="25" fill="url(#t)"/></svg><b style="color:var(--navy)">شؤون</b> · SHUOON — كل شؤون موظفيك، في مكان واحد</span><span>17</span></div>
+</section>
+
+<!-- PRICING -->
+<section class="page" style="gap:4.5mm">
+  <div class="head">
+    <div class="ar"><div class="eyebrow">الباقات</div><h2>سعر واضح لكل موظف</h2></div>
+    <div class="en"><div class="eyebrow">Plans</div><h3>Simple per-employee pricing</h3></div>
+  </div>
+  <div class="grid3">
+    <div class="card"><h4>أساسي <span class="en" style="font-size:8.5pt;color:var(--soft);font-weight:400">Essential</span></h4><div style="display:flex;align-items:baseline;gap:2mm"><span class="num">19</span><span style="font-size:8.5pt;color:var(--soft)">ريال / موظف / شهر</span></div><p>للمنشآت التي تبدأ بفرع أو فرعين.</p></div>
+    <div class="card hl"><span class="tag" style="align-self:flex-start">الأكثر طلباً</span><h4>نمو <span class="en" style="font-size:8.5pt;color:var(--on-dark);font-weight:400">Growth</span></h4><div style="display:flex;align-items:baseline;gap:2mm"><span class="num">29</span><span style="font-size:8.5pt;color:var(--on-dark)">ريال / موظف / شهر</span></div><p>للمنشآت متعددة الفروع التي تتوسع.</p></div>
+    <div class="card"><h4>مؤسسات <span class="en" style="font-size:8.5pt;color:var(--soft);font-weight:400">Enterprise</span></h4><div class="kufi" style="font-size:17pt;font-weight:700;color:var(--navy);line-height:1.5">تواصل معنا</div><p>للمجموعات الكبيرة ومتطلبات التكامل الخاصة.</p></div>
+  </div>
+  <div class="grid3"><div class="card"><h4>أساسي: ما تشمله</h4><ul class="dots"><li>ملفات الموظفين والمستندات</li><li>الحضور بالموقع والورديات</li><li>الإجازات والطلبات</li><li>مسير الرواتب وملف حماية الأجور</li><li>تطبيق الخدمة الذاتية للموظف</li></ul><div class="en">Employee files &amp; documents · Location attendance &amp; shifts · Leave &amp; requests · Payroll &amp; WPS file · Employee self-service app</div></div><div class="card mint"><h4>نمو: ما تشمله</h4><ul class="dots"><li>كل ما في الباقة الأساسية</li><li>فروع غير محدودة ومديرو فروع</li><li>السعودة لكل فرع ومحاكاة التوظيف</li><li>الأداء والتوظيف</li><li>تقارير متقدمة وتصدير</li></ul><div class="en">Everything in Essential · Unlimited branches &amp; branch managers · Per-branch Saudization &amp; simulation · Performance &amp; recruitment · Advanced reports &amp; export</div></div><div class="card"><h4>مؤسسات: ما تشمله</h4><ul class="dots"><li>كل ما في باقة النمو</li><li>مدير حساب مخصص</li><li>تكاملات مع أنظمة المحاسبة</li><li>اتفاقية مستوى خدمة (SLA)</li><li>تهيئة وترحيل بيانات بالكامل</li></ul><div class="en">Everything in Growth · Dedicated account manager · Accounting system integrations · Service level agreement (SLA) · Full onboarding &amp; data migration</div></div></div>
+<div class="card hl" style="flex-direction:row;align-items:center;gap:6mm"><div style="flex:1"><h4>مثال: منشأة بـ 40 موظفاً على باقة النمو</h4><p>40 موظفاً × 29 ريالاً = 1,160 ريالاً شهرياً، أو 986 ريالاً شهرياً عند الاشتراك السنوي (خصم 15%)، قبل ضريبة القيمة المضافة.</p></div><div class="num" style="font-size:24pt">1,160</div></div>
+  <p class="note">خصم 15% على الاشتراك السنوي · السعر لكل موظف نشط شهرياً · الحد الأدنى للفوترة 10 موظفين في الأساسية والنمو · الأسعار لا تشمل ضريبة القيمة المضافة (15%).</p>
+  <p class="note en">15% off annual billing · per active employee · minimum 10 employees · prices exclude VAT.</p>
+  <div class="footer"><span class="brand"><svg viewBox="0 0 200 140" width="22" height="15.4"><defs><linearGradient id="t" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1EDBC9"/><stop offset="1" stop-color="#10C4BA"/></linearGradient><linearGradient id="b" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0C93D6"/><stop offset="1" stop-color="#0377BE"/></linearGradient><linearGradient id="w" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0A8FD3"/><stop offset=".55" stop-color="#0378C0"/><stop offset="1" stop-color="#143A7A"/></linearGradient></defs><circle cx="100" cy="21" r="19" fill="url(#b)"/><circle cx="37" cy="45" r="17" fill="url(#t)"/><circle cx="163" cy="45" r="17" fill="url(#t)"/><path d="M13 97C20 130 50 142 72 125C86 114 92 94 100 78C108 94 114 114 128 124C150 142 180 130 187 97C178 112 160 118 146 108C128 92 118 56 100 56C82 56 72 92 54 108C40 118 22 112 13 97Z" fill="url(#w)"/><circle cx="37" cy="95" r="25" fill="url(#t)"/><circle cx="163" cy="95" r="25" fill="url(#t)"/></svg><b style="color:var(--navy)">شؤون</b> · SHUOON — كل شؤون موظفيك، في مكان واحد</span><span>18</span></div>
+</section>
+
+<!-- COMPARISON -->
+<section class="page" style="gap:4mm">
+  <div class="head">
+    <div class="ar"><div class="eyebrow">مقارنة الباقات</div><h2>كل الباقات بالتفصيل</h2></div>
+    <div class="en"><div class="eyebrow">Compare plans</div><h3>Every plan in detail</h3></div>
+  </div>
+  <table style="line-height:1.35"><tr><th style="width:30%">المزايا</th><th class="en" style="width:24%;text-align:left">Features</th><th class="c">أساسي<span class="en">Essential</span></th><th class="c">نمو<span class="en">Growth</span></th><th class="c">مؤسسات<span class="en">Enterprise</span></th></tr><tr class="group"><td colspan="5">الأساسيات · <span style="font-weight:400;color:var(--soft)">Core</span></td></tr><tr><td style="padding:1.6mm 3mm">ملفات الموظفين والمستندات</td><td style="padding:1.6mm 3mm;font-size:7.8pt;color:var(--soft)" class="en">Employee files &amp; documents</td><td class="yes" style="padding:1.6mm 2mm">✓</td><td class="yes" style="padding:1.6mm 2mm">✓</td><td class="yes" style="padding:1.6mm 2mm">✓</td></tr><tr><td style="padding:1.6mm 3mm">عدد الفروع</td><td style="padding:1.6mm 3mm;font-size:7.8pt;color:var(--soft)" class="en">Branches</td><td class="c" style="font-size:8.4pt;padding:1.6mm 2mm">حتى 2</td><td class="c" style="font-size:8.4pt;padding:1.6mm 2mm">غير محدود</td><td class="c" style="font-size:8.4pt;padding:1.6mm 2mm">غير محدود</td></tr><tr><td style="padding:1.6mm 3mm">تطبيق الخدمة الذاتية</td><td style="padding:1.6mm 3mm;font-size:7.8pt;color:var(--soft)" class="en">Self-service app</td><td class="yes" style="padding:1.6mm 2mm">✓</td><td class="yes" style="padding:1.6mm 2mm">✓</td><td class="yes" style="padding:1.6mm 2mm">✓</td></tr><tr><td style="padding:1.6mm 3mm">الطلبات والخطابات</td><td style="padding:1.6mm 3mm;font-size:7.8pt;color:var(--soft)" class="en">Requests &amp; letters</td><td class="yes" style="padding:1.6mm 2mm">✓</td><td class="yes" style="padding:1.6mm 2mm">✓</td><td class="yes" style="padding:1.6mm 2mm">✓</td></tr><tr class="group"><td colspan="5">الحضور والإجازات · <span style="font-weight:400;color:var(--soft)">Attendance &amp; leave</span></td></tr><tr><td style="padding:1.6mm 3mm">بصمة بالموقع (Geofence)</td><td style="padding:1.6mm 3mm;font-size:7.8pt;color:var(--soft)" class="en">Geofenced check-in</td><td class="yes" style="padding:1.6mm 2mm">✓</td><td class="yes" style="padding:1.6mm 2mm">✓</td><td class="yes" style="padding:1.6mm 2mm">✓</td></tr><tr><td style="padding:1.6mm 3mm">جدول ورديات أسبوعي</td><td style="padding:1.6mm 3mm;font-size:7.8pt;color:var(--soft)" class="en">Weekly roster</td><td class="yes" style="padding:1.6mm 2mm">✓</td><td class="yes" style="padding:1.6mm 2mm">✓</td><td class="yes" style="padding:1.6mm 2mm">✓</td></tr><tr><td style="padding:1.6mm 3mm">مديرو فروع بصلاحيات محصورة</td><td style="padding:1.6mm 3mm;font-size:7.8pt;color:var(--soft)" class="en">Scoped branch managers</td><td class="no" style="padding:1.6mm 2mm">—</td><td class="yes" style="padding:1.6mm 2mm">✓</td><td class="yes" style="padding:1.6mm 2mm">✓</td></tr><tr><td style="padding:1.6mm 3mm">الإجازات وفق نظام العمل</td><td style="padding:1.6mm 3mm;font-size:7.8pt;color:var(--soft)" class="en">Labor-law leave types</td><td class="yes" style="padding:1.6mm 2mm">✓</td><td class="yes" style="padding:1.6mm 2mm">✓</td><td class="yes" style="padding:1.6mm 2mm">✓</td></tr><tr class="group"><td colspan="5">الرواتب والامتثال · <span style="font-weight:400;color:var(--soft)">Payroll &amp; compliance</span></td></tr><tr><td style="padding:1.6mm 3mm">مسير الرواتب والقسائم</td><td style="padding:1.6mm 3mm;font-size:7.8pt;color:var(--soft)" class="en">Payroll &amp; payslips</td><td class="yes" style="padding:1.6mm 2mm">✓</td><td class="yes" style="padding:1.6mm 2mm">✓</td><td class="yes" style="padding:1.6mm 2mm">✓</td></tr><tr><td style="padding:1.6mm 3mm">ملف حماية الأجور (WPS)</td><td style="padding:1.6mm 3mm;font-size:7.8pt;color:var(--soft)" class="en">WPS file</td><td class="yes" style="padding:1.6mm 2mm">✓</td><td class="yes" style="padding:1.6mm 2mm">✓</td><td class="yes" style="padding:1.6mm 2mm">✓</td></tr><tr><td style="padding:1.6mm 3mm">نهاية الخدمة والمخالصة</td><td style="padding:1.6mm 3mm;font-size:7.8pt;color:var(--soft)" class="en">End of service &amp; settlement</td><td class="yes" style="padding:1.6mm 2mm">✓</td><td class="yes" style="padding:1.6mm 2mm">✓</td><td class="yes" style="padding:1.6mm 2mm">✓</td></tr><tr><td style="padding:1.6mm 3mm">السعودة لكل فرع ومحاكاة</td><td style="padding:1.6mm 3mm;font-size:7.8pt;color:var(--soft)" class="en">Per-branch Saudization &amp; simulation</td><td class="no" style="padding:1.6mm 2mm">—</td><td class="yes" style="padding:1.6mm 2mm">✓</td><td class="yes" style="padding:1.6mm 2mm">✓</td></tr><tr class="group"><td colspan="5">النمو والتحليل · <span style="font-weight:400;color:var(--soft)">Growth &amp; analytics</span></td></tr><tr><td style="padding:1.6mm 3mm">الأداء والتقييم</td><td style="padding:1.6mm 3mm;font-size:7.8pt;color:var(--soft)" class="en">Performance reviews</td><td class="no" style="padding:1.6mm 2mm">—</td><td class="yes" style="padding:1.6mm 2mm">✓</td><td class="yes" style="padding:1.6mm 2mm">✓</td></tr><tr><td style="padding:1.6mm 3mm">التوظيف (Kanban)</td><td style="padding:1.6mm 3mm;font-size:7.8pt;color:var(--soft)" class="en">Recruitment (Kanban)</td><td class="no" style="padding:1.6mm 2mm">—</td><td class="yes" style="padding:1.6mm 2mm">✓</td><td class="yes" style="padding:1.6mm 2mm">✓</td></tr><tr><td style="padding:1.6mm 3mm">تقارير متقدمة</td><td style="padding:1.6mm 3mm;font-size:7.8pt;color:var(--soft)" class="en">Advanced reports</td><td class="no" style="padding:1.6mm 2mm">—</td><td class="yes" style="padding:1.6mm 2mm">✓</td><td class="yes" style="padding:1.6mm 2mm">✓</td></tr><tr><td style="padding:1.6mm 3mm">تكاملات مخصصة</td><td style="padding:1.6mm 3mm;font-size:7.8pt;color:var(--soft)" class="en">Custom integrations</td><td class="no" style="padding:1.6mm 2mm">—</td><td class="no" style="padding:1.6mm 2mm">—</td><td class="yes" style="padding:1.6mm 2mm">✓</td></tr><tr class="group"><td colspan="5">الدعم · <span style="font-weight:400;color:var(--soft)">Support</span></td></tr><tr><td style="padding:1.6mm 3mm">دعم بالعربية</td><td style="padding:1.6mm 3mm;font-size:7.8pt;color:var(--soft)" class="en">Arabic support</td><td class="c" style="font-size:8.4pt;padding:1.6mm 2mm">بريد ومحادثة</td><td class="c" style="font-size:8.4pt;padding:1.6mm 2mm">أولوية</td><td class="c" style="font-size:8.4pt;padding:1.6mm 2mm">مدير حساب</td></tr><tr><td style="padding:1.6mm 3mm">تهيئة وترحيل بيانات</td><td style="padding:1.6mm 3mm;font-size:7.8pt;color:var(--soft)" class="en">Onboarding &amp; migration</td><td class="c" style="font-size:8.4pt;padding:1.6mm 2mm">ذاتية</td><td class="c" style="font-size:8.4pt;padding:1.6mm 2mm">بمساعدة</td><td class="c" style="font-size:8.4pt;padding:1.6mm 2mm">كاملة</td></tr><tr><td style="padding:1.6mm 3mm">اتفاقية مستوى خدمة</td><td style="padding:1.6mm 3mm;font-size:7.8pt;color:var(--soft)" class="en">SLA</td><td class="no" style="padding:1.6mm 2mm">—</td><td class="no" style="padding:1.6mm 2mm">—</td><td class="yes" style="padding:1.6mm 2mm">✓</td></tr></table>
+  <div class="footer"><span class="brand"><svg viewBox="0 0 200 140" width="22" height="15.4"><defs><linearGradient id="t" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1EDBC9"/><stop offset="1" stop-color="#10C4BA"/></linearGradient><linearGradient id="b" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0C93D6"/><stop offset="1" stop-color="#0377BE"/></linearGradient><linearGradient id="w" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0A8FD3"/><stop offset=".55" stop-color="#0378C0"/><stop offset="1" stop-color="#143A7A"/></linearGradient></defs><circle cx="100" cy="21" r="19" fill="url(#b)"/><circle cx="37" cy="45" r="17" fill="url(#t)"/><circle cx="163" cy="45" r="17" fill="url(#t)"/><path d="M13 97C20 130 50 142 72 125C86 114 92 94 100 78C108 94 114 114 128 124C150 142 180 130 187 97C178 112 160 118 146 108C128 92 118 56 100 56C82 56 72 92 54 108C40 118 22 112 13 97Z" fill="url(#w)"/><circle cx="37" cy="95" r="25" fill="url(#t)"/><circle cx="163" cy="95" r="25" fill="url(#t)"/></svg><b style="color:var(--navy)">شؤون</b> · SHUOON — كل شؤون موظفيك، في مكان واحد</span><span>19</span></div>
+</section>
+
+<!-- FAQ -->
+<section class="page" style="gap:4mm">
+  <div class="head">
+    <div class="ar"><div class="eyebrow">أسئلة شائعة</div><h2>إجابات سريعة</h2></div>
+    <div class="en"><div class="eyebrow">FAQ</div><h3>Quick answers</h3></div>
+  </div>
+  <div class="grid2" style="gap:3mm 5mm"><div style="background:#fff;border:1px solid var(--line);border-radius:3mm;padding:3mm 4mm"><p class="q">ما الذي يميز شؤون عن أنظمة الموارد البشرية العامة؟</p><p class="a">شؤون تجعل الفرع هو الوحدة الأساسية: لكل فرع نطاق جغرافي للبصمة، وورديات، ومدير يرى فريقه فقط، ونسبة سعودة خاصة به. هذا ما تحتاجه المنشآت ذات العمالة الميدانية.</p></div><div style="background:#fff;border:1px solid var(--line);border-radius:3mm;padding:3mm 4mm"><p class="q">هل يحتاج الموظف لتحميل تطبيق من المتجر؟</p><p class="a">لا. تطبيق الخدمة الذاتية يعمل من متصفح الجوال ويمكن إضافته للشاشة الرئيسية كأي تطبيق.</p></div><div style="background:#fff;border:1px solid var(--line);border-radius:3mm;padding:3mm 4mm"><p class="q">هل يدعم شؤون ملف حماية الأجور؟</p><p class="a">نعم، بعد اعتماد المسير يمكنك تصدير ملف حماية الأجور بصيغة جاهزة للرفع عبر بنكك أو المنصات المعتمدة.</p></div><div style="background:#fff;border:1px solid var(--line);border-radius:3mm;padding:3mm 4mm"><p class="q">كم يستغرق التشغيل؟</p><p class="a">أغلب المنشآت تبدأ خلال أسبوع: استيراد الموظفين، وإعداد الفروع ونطاقاتها، ثم أول مسير.</p></div><div style="background:#fff;border:1px solid var(--line);border-radius:3mm;padding:3mm 4mm"><p class="q">أين تُستضاف بياناتنا؟</p><p class="a">نلتزم باستضافة البيانات داخل المملكة العربية السعودية وبالتعامل معها وفق نظام حماية البيانات الشخصية.</p></div><div style="background:#fff;border:1px solid var(--line);border-radius:3mm;padding:3mm 4mm"><p class="q">هل يمكنني التجربة قبل الاشتراك؟</p><p class="a">بالتأكيد. ابدأ تجربة مجانية لمدة 14 يوماً دون بطاقة ائتمانية، أو اطلب عرضاً تجريبياً مع فريقنا.</p></div><div style="background:#fff;border:1px solid var(--line);border-radius:3mm;padding:3mm 4mm"><p class="q">كيف يُحتسب السعر؟</p><p class="a">السعر لكل موظف نشط شهرياً. الموظفون المنتهية خدماتهم لا يُحتسبون.</p></div><div style="background:#fff;border:1px solid var(--line);border-radius:3mm;padding:3mm 4mm"><p class="q">هل الأسعار تشمل ضريبة القيمة المضافة؟</p><p class="a">الأسعار المعروضة لا تشمل ضريبة القيمة المضافة (15%)، وتُضاف في الفاتورة.</p></div><div style="background:#fff;border:1px solid var(--line);border-radius:3mm;padding:3mm 4mm"><p class="q">هل يوجد حد أدنى لعدد الموظفين؟</p><p class="a">الحد الأدنى للفوترة 10 موظفين في الباقتين الأساسية والنمو.</p></div><div style="background:#fff;border:1px solid var(--line);border-radius:3mm;padding:3mm 4mm"><p class="q">هل يمكنني تغيير الباقة لاحقاً؟</p><p class="a">نعم، يمكنك الترقية في أي وقت ويُحتسب الفرق بالتناسب.</p></div><div style="background:#fff;border:1px solid var(--line);border-radius:3mm;padding:3mm 4mm"><p class="q">ماذا يحدث لبياناتي إذا ألغيت الاشتراك؟</p><p class="a">يمكنك تصدير بياناتك كاملة، ونحذفها بعد 30 يوماً من الإلغاء ما لم يُطلب غير ذلك نظاماً.</p></div></div>
+  <div class="card mint" style="margin-top:auto"><h4>آراء عملائنا (أمثلة توضيحية)</h4><div class="grid3" style="gap:3mm"><div><p style="font-size:9pt;color:var(--navy);line-height:1.7">«أول مرة نقفل المسير لأربعة عشر فرعاً في يوم واحد.»</p><p style="font-size:8pt;color:var(--soft);margin-top:1mm">سارة العتيبي — مديرة الموارد البشرية، سلسلة مطاعم (مثال)</p></div><div><p style="font-size:9pt;color:var(--navy);line-height:1.7">«مديرو الفروع صاروا يعتمدون إجازات فرقهم بأنفسهم، والإدارة تتابع فقط.»</p><p style="font-size:8pt;color:var(--soft);margin-top:1mm">فهد القحطاني — المدير التنفيذي، متاجر تجزئة (مثال)</p></div><div><p style="font-size:9pt;color:var(--navy);line-height:1.7">«البصمة بالموقع أنهت جدل الحضور في مواقع المشاريع.»</p><p style="font-size:8pt;color:var(--soft);margin-top:1mm">م. خالد الزهراني — مدير المشاريع، شركة مقاولات (مثال)</p></div></div></div>
+  <div class="footer"><span class="brand"><svg viewBox="0 0 200 140" width="22" height="15.4"><defs><linearGradient id="t" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1EDBC9"/><stop offset="1" stop-color="#10C4BA"/></linearGradient><linearGradient id="b" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0C93D6"/><stop offset="1" stop-color="#0377BE"/></linearGradient><linearGradient id="w" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0A8FD3"/><stop offset=".55" stop-color="#0378C0"/><stop offset="1" stop-color="#143A7A"/></linearGradient></defs><circle cx="100" cy="21" r="19" fill="url(#b)"/><circle cx="37" cy="45" r="17" fill="url(#t)"/><circle cx="163" cy="45" r="17" fill="url(#t)"/><path d="M13 97C20 130 50 142 72 125C86 114 92 94 100 78C108 94 114 114 128 124C150 142 180 130 187 97C178 112 160 118 146 108C128 92 118 56 100 56C82 56 72 92 54 108C40 118 22 112 13 97Z" fill="url(#w)"/><circle cx="37" cy="95" r="25" fill="url(#t)"/><circle cx="163" cy="95" r="25" fill="url(#t)"/></svg><b style="color:var(--navy)">شؤون</b> · SHUOON — كل شؤون موظفيك، في مكان واحد</span><span>20</span></div>
+</section>
+
+<!-- CONTACT -->
+<section class="page dark" style="justify-content:space-between">
+  <div class="rings" style="width:200mm;height:200mm;left:-100mm;top:-80mm"></div>
+  <div class="glow" style="width:130mm;height:130mm;right:-40mm;bottom:-60mm;background:radial-gradient(circle, rgba(2,132,199,.28), transparent 65%)"></div>
+  <div style="position:relative;display:flex;align-items:center;gap:5mm"><svg viewBox="0 0 200 140" width="84" height="58.8"><defs><linearGradient id="t" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1EDBC9"/><stop offset="1" stop-color="#10C4BA"/></linearGradient><linearGradient id="b" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0C93D6"/><stop offset="1" stop-color="#0377BE"/></linearGradient><linearGradient id="w" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0A8FD3"/><stop offset=".55" stop-color="#0378C0"/><stop offset="1" stop-color="#143A7A"/></linearGradient></defs><circle cx="100" cy="21" r="19" fill="url(#b)"/><circle cx="37" cy="45" r="17" fill="url(#t)"/><circle cx="163" cy="45" r="17" fill="url(#t)"/><path d="M13 97C20 130 50 142 72 125C86 114 92 94 100 78C108 94 114 114 128 124C150 142 180 130 187 97C178 112 160 118 146 108C128 92 118 56 100 56C82 56 72 92 54 108C40 118 22 112 13 97Z" fill="url(#w)"/><circle cx="37" cy="95" r="25" fill="url(#t)"/><circle cx="163" cy="95" r="25" fill="url(#t)"/></svg><div style="display:flex;flex-direction:column;gap:2mm"><svg viewBox="446 75 370 147" style="height:15mm;width:auto;display:block;align-self:flex-end"><path d="m 764.89803,92.862 q -3.024,0 -5.166,-1.89 -2.016,-1.89 -2.016,-5.796 0,-4.032 2.016,-5.796 2.142,-1.89 5.166,-1.89 3.276,0 5.166,2.016 2.016,2.016 2.016,5.67 0,3.402 -2.016,5.544 -1.89,2.142 -5.166,2.142 z m -10.71,20.286 q -3.906,0 -6.174,-2.394 -2.268,-2.52 -2.268,-6.678 0,-4.284 2.268,-6.678 2.268,-2.394 6.174,-2.394 3.906,0 6.048,2.394 2.268,2.394 2.268,6.678 0,4.158 -2.268,6.678 -2.268,2.394 -6.048,2.394 z m 21.42,0 q -3.906,0 -6.174,-2.394 -2.268,-2.52 -2.268,-6.678 0,-4.284 2.142,-6.678 2.268,-2.394 6.3,-2.394 3.78,0 6.048,2.394 2.268,2.394 2.268,6.678 0,4.158 -2.268,6.678 -2.268,2.394 -6.048,2.394 z m 12.474,75.852 q -10.71,0 -19.782,-9.45 -7.056,9.45 -21.042,9.45 h -49.392 q -0.63,0 -0.63,-0.63 v -13.986 q 0,-0.504 0.63,-0.504 h 15.75 v -37.422 h 18.774 v 37.422 h 10.71 q 6.3,0 9.198,-3.402 2.898,-3.528 2.898,-11.214 v -22.806 h 18.774 v 24.318 q 0,3.024 -0.378,5.67 3.15,4.158 6.174,5.796 3.024,1.638 7.938,1.638 h 7.812 v -47.25 h 18.774 V 189 Z m -137.97008,30.24 q -8.568,0 -14.868,-1.386 -6.174,-1.26 -11.97,-4.662 l 7.308,-13.734 q 5.166,2.646 9.702,3.654 4.536,1.134 9.45,1.134 7.182,0 10.962,-3.78 3.906,-3.654 3.906,-9.198 V 189 h -12.474 q -13.482,0 -20.79,-7.56 -7.182,-7.686 -7.182,-21.798 0,-10.71 5.166,-18.018 5.292,-7.434 14.364,-11.214 9.072,-3.78 20.538,-3.78 h 19.152 v 47.25 h 15.75 q 0.63,0 0.63,0.504 v 13.986 q 0,0.63 -0.63,0.63 h -15.75 v 2.268 q -0.126,12.726 -8.82,20.286 -8.694,7.686 -24.444,7.686 z m 14.49,-45.36 v -32.13 h -4.032 q -8.064,0 -12.6,4.536 -4.536,4.536 -4.536,12.852 0,14.742 12.474,14.742 z m -23.436,-60.984 7.182,-1.134 q -2.52,-1.26 -4.158,-3.402 -1.512,-2.268 -1.512,-5.166 0,-5.418 3.78,-8.442 3.78,-3.024 10.08,-3.024 6.174,0 10.332,2.268 l -2.52,6.426 q -3.15,-1.638 -6.804,-1.638 -2.772,0 -4.41,1.638 -1.638,1.638 -1.638,4.41 0,2.016 1.008,3.528 1.134,1.386 2.772,2.142 l 2.268,-0.378 q 6.426,-1.008 10.206,-1.26 v 7.308 q -2.268,0.126 -6.426,0.63 -4.032,0.378 -8.442,0.882 -4.41,0.504 -7.686,1.008 -3.276,0.378 -4.032,0.63 z m -70.0561,106.344 q -8.568,0 -14.868,-1.386 -6.174,-1.26 -11.97,-4.662 l 7.308,-13.734 q 5.166,2.646 9.702,3.654 4.536,1.134 9.45,1.134 7.182,0 10.962,-3.906 3.906,-3.906 3.906,-10.71 V 189 h -12.474 q -13.482,0 -20.79,-7.56 -7.182,-7.686 -7.182,-21.798 0,-10.71 5.166,-18.018 5.292,-7.434 14.364,-11.214 9.072,-3.78 20.538,-3.78 h 19.152 v 62.748 q 0,14.364 -8.694,22.05 -8.694,7.812 -24.57,7.812 z m 14.49,-45.36 v -32.13 h -4.032 q -8.064,0 -12.6,4.536 -4.536,4.536 -4.536,12.852 0,14.742 12.474,14.742 z m -98.78396,-47.376 q -3.906,0 -6.174,-2.394 -2.268,-2.52 -2.268,-6.678 0,-4.284 2.142,-6.678 2.268,-2.394 6.3,-2.394 3.906,0 6.048,2.394 2.268,2.394 2.268,6.678 0,4.158 -2.268,6.678 -2.268,2.394 -6.048,2.394 z m -4.158,92.736 q -10.584,0 -18.27,-4.41 -7.812,-4.41 -11.97,-12.474 -4.032,-8.064 -4.032,-18.396 0,-7.182 1.638,-14.49 1.764,-7.434 4.788,-13.356 h 16.632 q -2.016,6.678 -3.15,14.112 -1.134,7.434 -1.134,13.86 0,9.198 4.536,14.616 4.662,5.418 12.222,5.418 h 3.78 q 9.702,0 14.238,-5.292 4.662,-5.166 4.662,-14.742 V 126.63 h 18.774 v 57.96 q 0,34.65 -37.17,34.65 z" fill="#FFFFFF"/></svg><svg viewBox="616 255 196 27" style="height:2.4mm;width:auto;display:block;align-self:flex-end"><path d="m 637.87939,273.45801 q 0,3.33545 -2.48144,5.10791 -2.46533,1.75635 -7.25098,1.75635 -4.3667,0 -6.84814,-1.54688 -2.48145,-1.54687 -3.19043,-4.68896 l 4.59228,-0.75733 q 0.46729,1.80469 1.8208,2.62647 1.35352,0.80566 3.7544,0.80566 4.979,0 4.979,-3.0293 0,-0.96679 -0.58008,-1.59521 -0.56396,-0.62842 -1.61132,-1.04736 -1.03125,-0.41895 -3.97998,-1.01514 -2.5459,-0.59619 -3.54493,-0.95068 -0.99902,-0.37061 -1.80468,-0.85401 -0.80567,-0.49951 -1.36963,-1.19238 -0.56397,-0.69287 -0.88623,-1.62744 -0.30616,-0.93457 -0.30616,-2.14307 0,-3.07764 2.3042,-4.70508 2.32032,-1.64355 6.73536,-1.64355 4.22168,0 6.33252,1.32129 2.12695,1.32129 2.73925,4.3667 l -4.6084,0.62841 q -0.35449,-1.4663 -1.45019,-2.20752 -1.07959,-0.74121 -3.10986,-0.74121 -4.31836,0 -4.31836,2.70703 0,0.88624 0.45117,1.4502 0.46728,0.56396 1.36963,0.9668 0.90234,0.40283 3.65771,0.98291 3.271,0.69287 4.67285,1.28906 1.41797,0.58008 2.23975,1.36963 0.82178,0.77344 1.25684,1.86914 0.43505,1.07959 0.43505,2.49756 z M 666.02295,280 v -9.73242 h -9.89356 V 280 h -4.75341 v -22.70361 h 4.75341 v 9.03955 h 9.89356 v -9.03955 h 4.75342 V 280 Z m 28.62695,0.32227 q -4.68896,0 -7.18652,-2.28809 -2.48145,-2.28809 -2.48145,-6.54199 v -14.1958 h 4.75342 v 13.82519 q 0,2.69092 1.27295,4.09278 1.28906,1.38574 3.77051,1.38574 2.5459,0 3.91553,-1.4502 1.36962,-1.46631 1.36962,-4.18945 v -13.66406 h 4.75342 v 13.9541 q 0,4.31836 -2.6748,6.70312 -2.65869,2.36866 -7.49268,2.36866 z m 46.46436,-11.77881 q 0,3.54492 -1.40186,6.23584 -1.40185,2.69091 -4.0122,4.125 -2.61036,1.41797 -6.09083,1.41797 -5.3496,0 -8.39501,-3.14209 -3.0293,-3.15821 -3.0293,-8.63672 0,-5.46241 3.0293,-8.52393 3.02929,-3.06152 8.42724,-3.06152 5.39795,0 8.42725,3.09375 3.04541,3.09375 3.04541,8.4917 z m -4.8501,0 q 0,-3.67383 -1.74023,-5.75244 -1.74024,-2.09473 -4.88233,-2.09473 -3.19043,0 -4.93066,2.07861 -1.74024,2.0625 -1.74024,5.76856 0,3.73828 1.77246,5.89746 1.78858,2.14306 4.86621,2.14306 3.19043,0 4.91456,-2.09472 1.74023,-2.09473 1.74023,-5.9458 z m 40.51855,0 q 0,3.54492 -1.40185,6.23584 -1.40186,2.69091 -4.01221,4.125 -2.61035,1.41797 -6.09082,1.41797 -5.34961,0 -8.39502,-3.14209 -3.02929,-3.15821 -3.02929,-8.63672 0,-5.46241 3.02929,-8.52393 3.0293,-3.06152 8.42725,-3.06152 5.39795,0 8.42724,3.09375 3.04541,3.09375 3.04541,8.4917 z m -4.85009,0 q 0,-3.67383 -1.74024,-5.75244 -1.74023,-2.09473 -4.88232,-2.09473 -3.19043,0 -4.93067,2.07861 -1.74023,2.0625 -1.74023,5.76856 0,3.73828 1.77246,5.89746 1.78858,2.14306 4.86621,2.14306 3.19043,0 4.91455,-2.09472 1.74024,-2.09473 1.74024,-5.9458 z M 804.20117,280 794.30762,262.51709 q 0.29004,2.5459 0.29004,4.09277 V 280 h -4.22168 v -22.70361 h 5.43017 l 10.03858,17.62793 q -0.29004,-2.43311 -0.29004,-4.43116 v -13.19677 h 4.22168 V 280 Z" fill="#14D1C3"/></svg></div></div>
+  <div style="position:relative">
+    <h2 style="font-size:28pt;font-weight:700;line-height:1.55">جاهز تجمع كل شؤون موظفيك<br>في مكان واحد؟</h2>
+    <p class="en" style="font-size:13pt;color:var(--on-dark);margin-top:2mm">Ready to bring all your people matters into one place?</p>
+  </div>
+  <div style="position:relative" class="grid2">
+    <div class="card" style="background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.14);gap:2.5mm">
+      <h4 style="color:var(--teal)">تواصل معنا</h4>
+      <p style="color:#fff;font-size:10.5pt">الموقع: <span dir="ltr">www.shuoon.sa</span></p>
+      <p style="color:#fff;font-size:10.5pt">البريد: <span dir="ltr">hello@shuoon.sa</span></p>
+      <p style="color:#fff;font-size:10.5pt">الهاتف: <span dir="ltr">800 000 0000</span></p>
+      <p style="color:#fff;font-size:10.5pt">الرياض، المملكة العربية السعودية</p>
+    </div>
+    <div class="card" style="background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.14);gap:2mm">
+      <h4 style="color:var(--teal)">جرّب النسخة التجريبية</h4>
+      <p class="en" style="color:#fff;font-size:9.5pt;font-weight:600">oolong2006-ship-it.github.io/codex</p>
+      <p style="color:var(--on-dark);font-size:8.8pt">كلمة المرور لكل الحسابات: <span dir="ltr" style="color:#fff;font-weight:600">Shuoon@2026</span></p>
+      <p class="en" style="color:var(--on-dark);font-size:8.2pt;line-height:1.8">owner@shuoon.demo — المالك<br>hr@shuoon.demo — الموارد البشرية<br>manager@shuoon.demo — مدير فرع<br>employee@shuoon.demo — تطبيق الموظف</p>
+    </div>
+  </div>
+  <div style="position:relative;display:flex;justify-content:space-between;align-items:center">
+    <span class="tag" style="font-size:11pt;padding:2mm 6mm">اطلب عرضاً تجريبياً · Book a demo</span>
+    <span style="font-size:8.5pt;color:var(--on-dark)">© 2026 شؤون. جميع الحقوق محفوظة.</span>
+  </div>
+</section>
+
+</body>
+</html>
