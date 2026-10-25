@@ -76,7 +76,7 @@ export function ProductMock({ className }: { className?: string }) {
               </div>
             </div>
             <div className="flex items-center gap-3 rounded-xl border border-line p-3">
-              <div className="relative h-12 w-12 shrink-0 rounded-full" style={{ background: 'conic-gradient(#1B7F53 0 34%, #E8EEEB 34% 100%)' }}>
+              <div className="relative h-12 w-12 shrink-0 rounded-full" style={{ background: 'conic-gradient(#1B7F53 0 34%, #EDF1F6 34% 100%)' }}>
                 <div className="absolute inset-1.5 flex items-center justify-center rounded-full bg-white">
                   <span className="num text-[10px] font-bold text-ink">34%</span>
                 </div>

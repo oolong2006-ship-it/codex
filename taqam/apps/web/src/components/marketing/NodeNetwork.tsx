@@ -2,7 +2,7 @@
 import { useEffect, useRef } from 'react';
 
 /** The brand's node-network texture: deterministic nodes, nearest links, one saffron node in ten. */
-export function NodeNetwork({ className, line = '11,122,107', dot = '11,122,107', density = 9000, link = 130, seed = 7 }:
+export function NodeNetwork({ className, line = '14,119,109', dot = '14,119,109', density = 9000, link = 130, seed = 7 }:
   { className?: string; line?: string; dot?: string; density?: number; link?: number; seed?: number }) {
   const ref = useRef<HTMLCanvasElement>(null);
   useEffect(() => {
@@ -32,7 +32,7 @@ export function NodeNetwork({ className, line = '11,122,107', dot = '11,122,107'
         for (let n = 0; n < b.length; n += 2) { ctx.moveTo(xy[b[n]][0], xy[b[n]][1]); ctx.lineTo(xy[b[n + 1]][0], xy[b[n + 1]][1]); }
         ctx.stroke();
       });
-      pts.forEach((q, i) => { ctx.fillStyle = q.hot ? '#FFB547' : `rgba(${dot},0.55)`; ctx.beginPath(); ctx.arc(xy[i][0], xy[i][1], q.hot ? 3.2 : 1.9, 0, 6.28); ctx.fill(); });
+      pts.forEach((q, i) => { ctx.fillStyle = q.hot ? '#19C7B4' : `rgba(${dot},0.55)`; ctx.beginPath(); ctx.arc(xy[i][0], xy[i][1], q.hot ? 3.2 : 1.9, 0, 6.28); ctx.fill(); });
     };
     const stop = () => { cancelAnimationFrame(raf); raf = 0; };
     const loop = () => { t += 0.005; draw(); raf = requestAnimationFrame(loop); };

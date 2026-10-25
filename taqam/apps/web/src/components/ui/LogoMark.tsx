@@ -1,24 +1,24 @@
 import { BRAND } from '@/lib/brand';
 
 type Tone = 'oasis' | 'night' | 'white';
-const TONES: Record<Tone, { tile: string; glyph: string }> = {
-  oasis: { tile: BRAND.oasis, glyph: BRAND.white },
-  night: { tile: BRAND.night, glyph: BRAND.white },
-  white: { tile: BRAND.white, glyph: BRAND.oasis },
+// oasis: primary navy tile · night: lifted tile for dark surfaces (kit's reverse logo) · white: white tile
+const TONES: Record<Tone, { tile: string; stroke: string }> = {
+  oasis: { tile: BRAND.night, stroke: BRAND.white },
+  night: { tile: '#24405B', stroke: BRAND.white },
+  white: { tile: BRAND.white, stroke: BRAND.night },
 };
 
-/** The Shuoon mark: the letter «ش» — its three dots are three connected people (saffron on top), over the letter's three teeth. */
+/** The Shuoon app icon (Brand Kit v1.0): three dots for people over a connected path linking people, processes and data. */
 export function LogoMark({ size = 32, tone = 'oasis', className }: { size?: number; tone?: Tone; className?: string }) {
-  const { tile, glyph } = TONES[tone];
+  const { tile, stroke } = TONES[tone];
   return (
-    <svg viewBox="0 0 64 64" width={size} height={size} className={className} aria-hidden>
-      <rect width="64" height="64" rx="18" fill={tile} />
-      <path d="M25.5 25 L32 15.5 L38.5 25 Z" fill="none" stroke={glyph} strokeOpacity=".55" strokeWidth="2.2" strokeLinejoin="round" />
-      <circle cx="25.5" cy="25" r="4.2" fill={glyph} />
-      <circle cx="38.5" cy="25" r="4.2" fill={glyph} />
-      <circle cx="32" cy="15.5" r="4.8" fill={BRAND.saffron} />
-      <path d="M16.5 34.5v3.2a5 5 0 0 0 10 0v-3.2M26.5 37.7a5 5 0 0 0 10 0v-3.2M36.5 37.7a5 5 0 0 0 10 0v-3.2" fill="none" stroke={glyph} strokeWidth="4.4" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M46.5 37.7c0 7-4 11.3-10.5 11.3h-9" fill="none" stroke={glyph} strokeWidth="4.4" strokeLinecap="round" />
+    <svg viewBox="0 0 220 220" width={size} height={size} className={className} aria-hidden>
+      <rect width="220" height="220" rx="52" fill={tile} />
+      <circle cx="65" cy="71" r="13" fill={BRAND.saffron} />
+      <circle cx="110" cy="71" r="13" fill={BRAND.saffron} />
+      <circle cx="155" cy="71" r="13" fill={BRAND.saffron} />
+      <path d="M46 120C61 151 85 152 110 120C134 152 159 151 174 120" fill="none" stroke={stroke} strokeWidth="14" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M60 158C79 178 140 178 160 158" fill="none" stroke={stroke} strokeWidth="10" strokeLinecap="round" opacity=".94" />
     </svg>
   );
 }

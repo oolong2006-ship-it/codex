@@ -199,7 +199,7 @@ export function CheckInCard({ home, onChanged }: { home: MeHome; onChanged: () =
 
         {IS_DEMO && mode !== 'done' && branch && (
           <label className="mx-auto mt-3 flex w-fit cursor-pointer items-center gap-2 rounded-full bg-white/[.08] px-3 py-1.5 text-xs text-white/85 ring-1 ring-white/15">
-            <input type="checkbox" className="h-4 w-4 accent-[#FFB547]" checked={sim} onChange={(e) => setSimulateLocation(e.target.checked)} />
+            <input type="checkbox" className="h-4 w-4 accent-[#19C7B4]" checked={sim} onChange={(e) => setSimulateLocation(e.target.checked)} />
             {t('محاكاة الموقع داخل الفرع', 'Simulate being at the branch')}
             <span className="rounded-full bg-accent/20 px-1.5 text-[10px] text-accent">{t('تجريبي', 'demo')}</span>
           </label>

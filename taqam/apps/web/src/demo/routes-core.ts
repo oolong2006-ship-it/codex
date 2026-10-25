@@ -13,7 +13,7 @@ import { ADMIN, ALL_ROLES, STAFF, Services, byNumber, fullName, nowIso, type Aut
 
 export const TERMINATION_REASONS: TerminationReason[] = ['EMPLOYER_TERMINATION', 'CONTRACT_END', 'RESIGNATION', 'ARTICLE_80', 'ARTICLE_81', 'FORCE_MAJEURE', 'FEMALE_MARRIAGE_CHILDBIRTH', 'RETIREMENT', 'DEATH'];
 const ROLES: Role[] = ['OWNER', 'HR_ADMIN', 'PAYROLL', 'BRANCH_MANAGER', 'EMPLOYEE'];
-const AVATAR_COLORS = ['#0C1F24', '#16313A', '#0B7A6B', '#FFB547', '#2F6F9F', '#1B7F53', '#C2412D', '#7A5C99'];
+const AVATAR_COLORS = ['#172C46', '#213A5A', '#0E776D', '#19C7B4', '#2F6F9F', '#1B7F53', '#C2412D', '#7A5C99'];
 const MANAGERS: Role[] = ['OWNER', 'HR_ADMIN', 'BRANCH_MANAGER'];
 
 // ---------- auth helpers ----------
@@ -665,7 +665,7 @@ export const coreRoutes: Route[] = [
     const dto = shiftDto(body, false);
     svc.scopedBranch(u, String(dto.branchId));
     svc.assertBranch(u, String(dto.branchId));
-    const s = { id: nextId(db, 'sh'), companyId: u.companyId, branchId: String(dto.branchId), name: String(dto.name), startTime: String(dto.startTime), endTime: String(dto.endTime), breakMinutes: (dto.breakMinutes as number) ?? 60, graceMinutes: (dto.graceMinutes as number) ?? 15, days: dto.days as number[], color: (dto.color as string) ?? '#0B7A6B', createdAt: nowIso() };
+    const s = { id: nextId(db, 'sh'), companyId: u.companyId, branchId: String(dto.branchId), name: String(dto.name), startTime: String(dto.startTime), endTime: String(dto.endTime), breakMinutes: (dto.breakMinutes as number) ?? 60, graceMinutes: (dto.graceMinutes as number) ?? 15, days: dto.days as number[], color: (dto.color as string) ?? '#0E776D', createdAt: nowIso() };
     db.shifts.push(s);
     svc.audit(u, 'CREATE', 'Shift', s.id, dto);
     return s;

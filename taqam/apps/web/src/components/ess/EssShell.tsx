@@ -26,7 +26,7 @@ const ESS_CSS = `
 .ess-sheet { animation: ess-up .28s cubic-bezier(.2,.8,.2,1); }
 @keyframes ess-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
 .ess-pulse { animation: ess-pulse 2.4s ease-out infinite; }
-@keyframes ess-pulse { 0% { box-shadow: 0 0 0 0 rgba(255,181,71,.45); } 70% { box-shadow: 0 0 0 22px rgba(255,181,71,0); } 100% { box-shadow: 0 0 0 0 rgba(255,181,71,0); } }
+@keyframes ess-pulse { 0% { box-shadow: 0 0 0 0 rgba(25,199,180,.45); } 70% { box-shadow: 0 0 0 22px rgba(25,199,180,0); } 100% { box-shadow: 0 0 0 0 rgba(25,199,180,0); } }
 .ess-scroll-x { scrollbar-width: none; } .ess-scroll-x::-webkit-scrollbar { display: none; }
 @media print { html, body { background: #fff !important; } @page { size: A4; margin: 14mm; } }
 `;
@@ -147,7 +147,7 @@ export function EssShell({ children }: { children: React.ReactNode }) {
 function Frame({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-dvh bg-sand-200/70 print:bg-white">
-      <div className="relative mx-auto flex min-h-dvh w-full max-w-[440px] flex-col bg-sand shadow-[0_0_40px_rgba(12,31,36,0.08)] print:max-w-none print:bg-white print:shadow-none">
+      <div className="relative mx-auto flex min-h-dvh w-full max-w-[440px] flex-col bg-sand shadow-[0_0_40px_rgba(23,44,70,0.08)] print:max-w-none print:bg-white print:shadow-none">
         {children}
       </div>
     </div>

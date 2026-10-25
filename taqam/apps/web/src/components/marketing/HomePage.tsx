@@ -46,7 +46,7 @@ function Hero() {
             <Sparkles className="h-4 w-4 text-accent-600" aria-hidden />
             {t('منصة شؤون لإدارة الموارد البشرية', 'Shuoon HR management platform')}
           </span>
-          <h1 className="mt-6 text-balance text-4xl font-bold leading-[1.2] tracking-tight text-ink sm:text-5xl lg:text-[2.75rem] xl:text-[3.15rem]">
+          <h1 className="mt-6 text-balance text-4xl font-bold leading-[1.4] tracking-tight text-ink sm:text-5xl lg:text-[2.75rem] xl:text-[3.15rem]">
             <span className="whitespace-nowrap">{t('كل شؤون موظفيك،', 'All your people matters,')}</span>
             <br />
             <span className="relative inline-block text-primary">

@@ -143,7 +143,7 @@ export default function RosterPage() {
                           <td key={d} className="px-1 py-1.5">
                             <select value={v ?? ''} onChange={(ev) => setCell(e.id, d, ev.target.value || null)}
                               className={`h-9 w-full cursor-pointer rounded-lg border px-1.5 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-primary-100 ${changed ? 'ring-2 ring-accent' : ''}`}
-                              style={s ? { background: `${s.color}22`, borderColor: `${s.color}88`, color: '#0C1F24' } : { background: '#F4F7F5', borderColor: '#DCE4E0', color: '#5E6E69' }}>
+                              style={s ? { background: `${s.color}22`, borderColor: `${s.color}88`, color: '#172C46' } : { background: '#F6F8FB', borderColor: '#DDE3EC', color: '#5B6B80' }}>
                               <option value="">{t('راحة', 'Off')}</option>
                               {shifts.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}
                             </select>

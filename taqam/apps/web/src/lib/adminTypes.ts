@@ -95,7 +95,7 @@ export const EVENT_TONE: Record<CompanyEventType, Tone> = {
   NOTE: 'neutral', IMPERSONATED: 'warning', EXPIRED: 'neutral', DELETED: 'danger',
 };
 /** Chart colours per plan. */
-export const PLAN_COLOR: Record<Plan, string> = { ESSENTIALS: '#8FD3C4', GROWTH: '#0B7A6B', ENTERPRISE: '#FFB547' };
+export const PLAN_COLOR: Record<Plan, string> = { ESSENTIALS: '#A9DFD7', GROWTH: '#0E776D', ENTERPRISE: '#19C7B4' };
 /** Default list prices if settings are unavailable. */
 export const DEFAULT_PRICES: Record<Plan, number | null> = { ESSENTIALS: 19, GROWTH: 29, ENTERPRISE: null };
 

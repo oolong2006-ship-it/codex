@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   appleWebApp: { capable: true, title: 'شؤون', statusBarStyle: 'black-translucent' },
 };
 
-export const viewport: Viewport = { themeColor: '#0C1F24', width: 'device-width', initialScale: 1, viewportFit: 'cover' };
+export const viewport: Viewport = { themeColor: '#172C46', width: 'device-width', initialScale: 1, viewportFit: 'cover' };
 
 export default function MeLayout({ children }: { children: React.ReactNode }) {
   return <SuperAdminRedirect><EssShell>{children}</EssShell></SuperAdminRedirect>;

@@ -93,7 +93,7 @@ export default function DashboardPage() {
                           <CartesianGrid stroke={CHART.grid} vertical={false} />
                           <XAxis dataKey="period" reversed={cd.reversed} {...axisProps} tickFormatter={(p: string) => period(p, lang)} />
                           <YAxis orientation={cd.yOrientation} {...axisProps} width={44} tickFormatter={compact} />
-                          <Tooltip cursor={{ fill: '#E8EEEB80' }} content={<ChartTooltip labelFormatter={(l) => period(l, lang)} valueFormatter={(v) => money(v, { decimals: 0 })} />} />
+                          <Tooltip cursor={{ fill: '#EDF1F680' }} content={<ChartTooltip labelFormatter={(l) => period(l, lang)} valueFormatter={(v) => money(v, { decimals: 0 })} />} />
                           <Bar dataKey="gross" name={t('الإجمالي', 'Gross')} fill={CHART.primary} radius={[6, 6, 0, 0]} maxBarSize={28} />
                           <Bar dataKey="net" name={t('الصافي', 'Net')} fill={CHART.accent} radius={[6, 6, 0, 0]} maxBarSize={28} />
                         </BarChart>
@@ -105,7 +105,7 @@ export default function DashboardPage() {
 
               <Card>
                 <CardHeader title={t('الموظفون حسب الفرع', 'Headcount by branch')}
-                  action={<Legend items={[{ label: t('سعودي', 'Saudi'), color: CHART.teal }, { label: t('غير سعودي', 'Non-Saudi'), color: '#E9E1D2' }]} />} />
+                  action={<Legend items={[{ label: t('سعودي', 'Saudi'), color: CHART.teal }, { label: t('غير سعودي', 'Non-Saudi'), color: '#E9EEF5' }]} />} />
                 <CardBody className="space-y-4">
                   {!data.headcountByBranch.length && <EmptyState />}
                   {data.headcountByBranch.map((b) => {

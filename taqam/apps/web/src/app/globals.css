@@ -3,15 +3,15 @@
 @tailwind utilities;
 
 :root { color-scheme: light; }
-html, body { background: #F4F7F5; color: #0C1F24; }
+html, body { background: #F6F8FB; color: #172C46; }
 body { -webkit-font-smoothing: antialiased; }
-h1, h2, h3 { font-family: var(--font-display), var(--font-plex), system-ui, sans-serif; letter-spacing: -0.01em; }
+h1, h2, h3 { font-family: var(--font-display), var(--font-sans), system-ui, sans-serif; letter-spacing: -0.01em; }
 
 /* Node-network texture from the brand book: saffron and oasis nodes on a quiet grid */
 .taqam-pattern {
   background-image:
-    radial-gradient(circle at 1.5px 1.5px, rgba(255,181,71,0.35) 1.5px, transparent 2px),
-    radial-gradient(circle at 1.5px 1.5px, rgba(14,140,122,0.22) 1.2px, transparent 1.7px);
+    radial-gradient(circle at 1.5px 1.5px, rgba(25,199,180,0.35) 1.5px, transparent 2px),
+    radial-gradient(circle at 1.5px 1.5px, rgba(22,184,166,0.22) 1.2px, transparent 1.7px);
   background-size: 48px 48px, 24px 24px;
   background-position: 0 0, 12px 12px;
 }

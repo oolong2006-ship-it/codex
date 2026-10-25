@@ -68,13 +68,13 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen bg-sand">
-      <aside className="fixed inset-y-0 start-0 z-30 hidden w-64 flex-col bg-[#0C1F24] lg:flex">
+      <aside className="fixed inset-y-0 start-0 z-30 hidden w-64 flex-col bg-[#172C46] lg:flex">
         <Sidebar counts={counts} />
       </aside>
       {drawer && (
         <div className="fixed inset-0 z-40 lg:hidden">
-          <div className="absolute inset-0 bg-[#0C1F24]/50 backdrop-blur-sm" onClick={() => setDrawer(false)} />
-          <aside className="absolute inset-y-0 start-0 flex w-72 max-w-[85vw] flex-col bg-[#0C1F24] shadow-lift">
+          <div className="absolute inset-0 bg-[#172C46]/50 backdrop-blur-sm" onClick={() => setDrawer(false)} />
+          <aside className="absolute inset-y-0 start-0 flex w-72 max-w-[85vw] flex-col bg-[#172C46] shadow-lift">
             <Sidebar counts={counts} onClose={() => setDrawer(false)} />
           </aside>
         </div>
@@ -118,7 +118,7 @@ function Sidebar({ counts, onClose }: { counts: { pending: number; leads: number
                   <span className="flex-1 truncate">{lang === 'ar' ? i.label[0] : i.label[1]}</span>
                   {n > 0 && (
                     <span className={clsx('num min-w-5 rounded-full px-1.5 text-center text-[11px] font-bold',
-                      i.badge === 'pending' ? 'bg-warning text-[#0C1F24]' : 'bg-accent text-[#0C1F24]')}
+                      i.badge === 'pending' ? 'bg-warning text-[#172C46]' : 'bg-accent text-[#172C46]')}
                       title={i.badge === 'pending' ? t('بانتظار الموافقة', 'Pending approval') : t('عملاء جدد', 'New leads')}>{n}</span>
                   )}
                 </Link>
@@ -138,7 +138,7 @@ function Topbar({ onMenu }: { onMenu: () => void }) {
     <header className="sticky top-0 z-20 flex h-16 items-center gap-3 border-b border-line bg-white/90 px-4 backdrop-blur sm:px-6 lg:px-8">
       <button onClick={onMenu} className="rounded-lg p-2 text-ink-muted hover:bg-sand lg:hidden" aria-label="menu"><Menu className="h-5 w-5" /></button>
       <div className="flex min-w-0 flex-1 items-center gap-2">
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-[#0C1F24] px-2.5 py-1 text-[11px] font-semibold text-white">
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-[#172C46] px-2.5 py-1 text-[11px] font-semibold text-white">
           <ShieldCheck className="h-3.5 w-3.5 text-accent" />{t('بوابة المنصة', 'Platform portal')}
         </span>
       </div>
@@ -165,7 +165,7 @@ function UserMenu() {
   return (
     <div ref={ref} className="relative">
       <button onClick={() => setOpen((o) => !o)} className="flex items-center gap-2 rounded-xl p-1 hover:bg-sand sm:pe-2">
-        <Avatar name={user.name} color="#0C1F24" size="sm" />
+        <Avatar name={user.name} color="#172C46" size="sm" />
         <span className="hidden text-start leading-tight sm:block">
           <span className="block max-w-[140px] truncate text-sm font-medium text-ink">{user.name}</span>
           <span className="block text-[11px] text-ink-soft">{t('مدير المنصة', 'Super admin')}</span>

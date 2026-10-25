@@ -28,6 +28,8 @@ describe('brand palette is readable where the UI uses it', () => {
     ['danger text on white', BRAND.danger, BRAND.white],
     ['warning text on white', BRAND.warning, BRAND.white],
     ['success text on white', BRAND.success, BRAND.white],
+    ['accent badge text on its tint', BRAND.saffron600, BRAND.saffron100],
+    ['white text on accent hover', BRAND.white, BRAND.saffron600],
   ];
   it.each(pairs)('%s meets AA', (_label, fg, bg) => {
     expect(contrastRatio(fg, bg)).toBeGreaterThanOrEqual(AA);

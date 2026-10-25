@@ -40,13 +40,13 @@ export function ImpersonationBanner() {
   if (!active || !user || user.role === 'SUPER_ADMIN') return null;
   const company = user.company ? (lang === 'en' ? user.company.nameEn || user.company.nameAr : user.company.nameAr) : '';
   return (
-    <div role="status" className="flex min-h-10 flex-wrap items-center justify-center gap-x-3 gap-y-1 bg-[#0C1F24] px-4 py-1.5 text-xs text-white sm:text-sm print:hidden">
+    <div role="status" className="flex min-h-10 flex-wrap items-center justify-center gap-x-3 gap-y-1 bg-[#172C46] px-4 py-1.5 text-xs text-white sm:text-sm print:hidden">
       <span className="inline-flex items-center gap-1.5">
         <Eye className="h-4 w-4 shrink-0 text-accent" />
         <span>{t('أنت تتصفح كـ', 'You are browsing as')} <b className="font-semibold">{user.name}</b>{company && <> — <span className="text-white/80">{company}</span></>}</span>
       </span>
       <button type="button" onClick={returnToAdmin}
-        className="inline-flex items-center gap-1 rounded-full bg-accent px-3 py-1 text-xs font-semibold text-[#0C1F24] hover:bg-accent-600 hover:text-white">
+        className="inline-flex items-center gap-1 rounded-full bg-accent px-3 py-1 text-xs font-semibold text-[#172C46] hover:bg-accent-600 hover:text-white">
         <ArrowRight className="h-3.5 w-3.5 ltr:rotate-180" />{t('العودة إلى بوابة المنصة', 'Back to platform portal')}
       </button>
     </div>

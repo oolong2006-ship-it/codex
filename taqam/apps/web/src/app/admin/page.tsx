@@ -45,7 +45,7 @@ export default function AdminOverviewPage() {
                 <div className="flex items-center gap-2">
                   <BellRing className="h-5 w-5 text-warning" />
                   <h2 className="text-base font-bold text-ink">{t('تحتاج إجراء', 'Needs action')}</h2>
-                  <span className="num rounded-full bg-warning px-2 text-xs font-bold text-[#0C1F24]">{d.companies.pending + d.expiringSoon.length + d.newLeads}</span>
+                  <span className="num rounded-full bg-warning px-2 text-xs font-bold text-[#172C46]">{d.companies.pending + d.expiringSoon.length + d.newLeads}</span>
                 </div>
                 <p className="text-xs text-ink-muted">{t('موافقات معلّقة، اشتراكات توشك على الانتهاء، وعملاء جدد', 'Pending approvals, expiring subscriptions and new leads')}</p>
               </div>
@@ -135,7 +135,7 @@ export default function AdminOverviewPage() {
                         <CartesianGrid stroke={CHART.grid} vertical={false} />
                         <XAxis dataKey="period" reversed={cd.reversed} {...axisProps} minTickGap={4} tickFormatter={(p: string) => period(p, lang).split(' ')[0].slice(0, lang === 'ar' ? 6 : 3)} />
                         <YAxis orientation={cd.yOrientation} {...axisProps} width={28} allowDecimals={false} />
-                        <Tooltip cursor={{ fill: '#E8EEEB80' }} content={<ChartTooltip labelFormatter={(l) => period(l, lang)} />} />
+                        <Tooltip cursor={{ fill: '#EDF1F680' }} content={<ChartTooltip labelFormatter={(l) => period(l, lang)} />} />
                         <Bar dataKey="count" name={t('منشآت جديدة', 'New companies')} fill={CHART.teal} radius={[6, 6, 0, 0]} maxBarSize={26} />
                       </BarChart>
                     </ResponsiveContainer>

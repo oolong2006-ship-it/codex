@@ -39,7 +39,7 @@ export default function MorePage() {
       {/* Profile header */}
       {loading && !p ? <Skeleton className="h-36 rounded-[28px]" /> : (
         <div className="flex items-center gap-4 rounded-[28px] border border-line bg-white p-5 shadow-soft">
-          <div className="grid h-16 w-16 shrink-0 place-items-center rounded-3xl text-2xl font-bold text-white" style={{ background: p?.avatarColor || '#16313A' }}>
+          <div className="grid h-16 w-16 shrink-0 place-items-center rounded-3xl text-2xl font-bold text-white" style={{ background: p?.avatarColor || '#213A5A' }}>
             {fullName.trim().slice(0, 1)}
           </div>
           <div className="min-w-0 flex-1">

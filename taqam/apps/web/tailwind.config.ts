@@ -1,7 +1,7 @@
 import type { Config } from 'tailwindcss';
 import { BRAND } from './src/lib/brand';
 
-// Taqam design tokens — mapped from src/lib/brand.ts (see taqam/brand/brand-book.html).
+// Shuoon design tokens — mapped from src/lib/brand.ts (SHUOON Brand Kit v1.0).
 const config: Config = {
   content: ['./src/**/*.{ts,tsx}'],
   theme: {
@@ -20,13 +20,13 @@ const config: Config = {
         line: BRAND.line,
       },
       fontFamily: {
-        sans: ['var(--font-plex)', 'system-ui', 'sans-serif'],
-        display: ['var(--font-display)', 'var(--font-plex)', 'system-ui', 'sans-serif'],
+        sans: ['var(--font-sans)', 'system-ui', 'sans-serif'],
+        display: ['var(--font-display)', 'var(--font-sans)', 'system-ui', 'sans-serif'],
       },
       borderRadius: { xl: '14px', '2xl': '20px', '3xl': '28px' },
       boxShadow: {
-        soft: '0 1px 2px rgba(12,31,36,0.04), 0 6px 20px rgba(12,31,36,0.06)',
-        lift: '0 12px 36px rgba(12,31,36,0.14)',
+        soft: '0 1px 2px rgba(23,44,70,0.04), 0 6px 20px rgba(23,44,70,0.06)',
+        lift: '0 12px 36px rgba(23,44,70,0.14)',
       },
     },
   },

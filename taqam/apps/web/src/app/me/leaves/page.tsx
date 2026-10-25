@@ -14,7 +14,7 @@ import { IconTile, ListSkeleton, PageTitle, Ring, Section, Segmented, Skeleton }
 import { useConsumeParam } from '@/components/ess/hooks';
 import type { LeaveRequest, MyLeaves } from '@/components/ess/types';
 
-const RING_COLORS = ['#FFB547', '#0B7A6B', '#2F6F9F', '#1B7F53', '#C2412D', '#5E6E69'];
+const RING_COLORS = ['#19C7B4', '#0E776D', '#2F6F9F', '#1B7F53', '#C2412D', '#5B6B80'];
 
 export default function MyLeavesPage() {
   const { t, lang } = useLang();

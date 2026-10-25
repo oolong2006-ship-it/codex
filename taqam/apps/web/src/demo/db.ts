@@ -160,7 +160,7 @@ export interface DB {
 }
 
 export const STORAGE_KEY = 'taqam.demo.v2';
-export const DB_VERSION = 3;
+export const DB_VERSION = 4;
 /** Seeded data is relative to "today"; a snapshot older than this is re-seeded so attendance and payroll stay current. */
 export const MAX_AGE_DAYS = 7;
 
