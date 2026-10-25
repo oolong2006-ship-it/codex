@@ -1,4 +1,4 @@
-# Taqam REST API — Contract (v1)
+# Shuoon REST API — Contract (v1)
 
 Base URL: `http://localhost:4100/api` (env `NEXT_PUBLIC_API_URL` in web = `http://localhost:4100/api`).
 Swagger UI at `/api/docs`.
@@ -161,6 +161,6 @@ Swagger UI at `/api/docs`.
 `npm run db:seed` creates company **"مطاعم ورد الشام" / Ward Al-Sham Restaurants**:
 - 4 branches (Riyadh Olaya, Riyadh Al-Malqa, Jeddah Tahlia, Dammam Corniche) with real-ish coordinates.
 - 5 departments, ~40 employees (mixed Saudi/non-Saudi, realistic Arabic names), shifts, 30 days attendance, leaves, requests, 3 approved payroll runs, loans, a performance cycle, 2 job openings with candidates, announcements, expiring documents.
-- Logins (password `Taqam@2026` for all):
-  - `owner@taqam.demo` (OWNER), `hr@taqam.demo` (HR_ADMIN), `payroll@taqam.demo` (PAYROLL),
-  - `manager@taqam.demo` (BRANCH_MANAGER, Riyadh Olaya), `employee@taqam.demo` (EMPLOYEE, Riyadh Olaya).
+- Logins (password `Shuoon@2026` for all):
+  - `owner@shuoon.demo` (OWNER), `hr@shuoon.demo` (HR_ADMIN), `payroll@shuoon.demo` (PAYROLL),
+  - `manager@shuoon.demo` (BRANCH_MANAGER, Riyadh Olaya), `employee@shuoon.demo` (EMPLOYEE, Riyadh Olaya).

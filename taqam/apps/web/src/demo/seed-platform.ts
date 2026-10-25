@@ -28,8 +28,8 @@ function saudiIban(bankCode: string): string {
   return `SA${String(98 - rem).padStart(2, '0')}${bban}`;
 }
 
-export const PLATFORM_ADMIN = { id: 'adm-01', email: 'admin@taqam.demo', name: 'مدير المنصة' };
-const SUPPORT_ADMIN = { id: 'adm-02', email: 'support@taqam.demo', name: 'سارة المطيري' };
+export const PLATFORM_ADMIN = { id: 'adm-01', email: 'admin@shuoon.demo', name: 'مدير المنصة' };
+const SUPPORT_ADMIN = { id: 'adm-02', email: 'support@shuoon.demo', name: 'سارة المطيري' };
 
 const SAUDI_M = ['محمد', 'عبدالله', 'فهد', 'سعد', 'تركي', 'نايف', 'بندر', 'ياسر', 'مشعل', 'عمر', 'مازن', 'راشد'];
 const SAUDI_F = ['نوف', 'لمى', 'أمل', 'هند', 'جواهر', 'منيرة', 'العنود', 'رهف'];
@@ -142,8 +142,8 @@ export function seedPlatform(db: DB, svc: Services, now: Date) {
 
   // ---------- platform admins ----------
   db.admins.push(
-    { ...PLATFORM_ADMIN, password: 'Taqam@2026', isActive: true, lastLoginAt: ago(1), createdAt: ago(400), updatedAt: createdAt },
-    { ...SUPPORT_ADMIN, password: 'Taqam@2026', isActive: true, lastLoginAt: ago(2, 4), createdAt: ago(180), updatedAt: createdAt },
+    { ...PLATFORM_ADMIN, password: 'Shuoon@2026', isActive: true, lastLoginAt: ago(1), createdAt: ago(400), updatedAt: createdAt },
+    { ...SUPPORT_ADMIN, password: 'Shuoon@2026', isActive: true, lastLoginAt: ago(2, 4), createdAt: ago(180), updatedAt: createdAt },
   );
   const adminActor: Actor = { id: PLATFORM_ADMIN.id, name: PLATFORM_ADMIN.name };
   const supportActor: Actor = { id: SUPPORT_ADMIN.id, name: SUPPORT_ADMIN.name };
@@ -220,11 +220,11 @@ export function seedPlatform(db: DB, svc: Services, now: Date) {
     // users
     const ownerId = nextId(db, 'usr');
     db.users.push({
-      id: ownerId, companyId, email: d.owner.email, password: 'Taqam@2026', name: d.owner.name, role: 'OWNER', employeeId: null, isActive: true, phone: d.owner.phone,
+      id: ownerId, companyId, email: d.owner.email, password: 'Shuoon@2026', name: d.owner.name, role: 'OWNER', employeeId: null, isActive: true, phone: d.owner.phone,
       lastLoginAt: d.lastActivityHoursAgo === null ? created : ago(0, d.lastActivityHoursAgo), createdAt: created, updatedAt: createdAt,
     });
     if (d.hr) {
-      db.users.push({ id: nextId(db, 'usr'), companyId, email: d.hr.email, password: 'Taqam@2026', name: d.hr.name, role: 'HR_ADMIN', employeeId: emps[1]?.id ?? null, isActive: true, lastLoginAt: ago(1, 2), createdAt: ago(d.createdDaysAgo - 2), updatedAt: createdAt });
+      db.users.push({ id: nextId(db, 'usr'), companyId, email: d.hr.email, password: 'Shuoon@2026', name: d.hr.name, role: 'HR_ADMIN', employeeId: emps[1]?.id ?? null, isActive: true, lastLoginAt: ago(1, 2), createdAt: ago(d.createdDaysAgo - 2), updatedAt: createdAt });
     }
 
     // usage: attendance

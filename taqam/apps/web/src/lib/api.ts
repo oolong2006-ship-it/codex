@@ -1,4 +1,4 @@
-// Thin fetch client for the Taqam API (see docs/API_CONTRACT.md).
+// Thin fetch client for the Shuoon API (see docs/API_CONTRACT.md).
 // In the static demo build (NEXT_PUBLIC_DEMO=1) every call is answered by an in-browser mock (src/demo), loaded lazily.
 import { IS_DEMO } from './paths';
 

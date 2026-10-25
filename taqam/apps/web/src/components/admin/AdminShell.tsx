@@ -127,7 +127,7 @@ function Sidebar({ counts, onClose }: { counts: { pending: number; leads: number
           })}
         </ul>
       </nav>
-      <p className="border-t border-white/10 px-5 py-3 text-[11px] text-white/35">{t('للاستخدام الداخلي لفريق طاقم', 'Internal — Taqam team only')}</p>
+      <p className="border-t border-white/10 px-5 py-3 text-[11px] text-white/35">{t('للاستخدام الداخلي لفريق شؤون', 'Internal — Shuoon team only')}</p>
     </>
   );
 }

@@ -361,7 +361,7 @@ export class AdminService {
     await this.notify.toUsers(
       id,
       owners.map((o) => o.id),
-      'تم تفعيل حساب منشأتك في طاقم',
+      'تم تفعيل حساب منشأتك في شؤون',
       trial ? 'بدأت الفترة التجريبية — مرحباً بك' : 'اشتراكك فعّال الآن — مرحباً بك',
       '/app',
     );

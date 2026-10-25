@@ -193,7 +193,7 @@ function OverviewTab({ c }: { c: AdminCompanyDetail }) {
   return (
     <div className="grid gap-4 lg:grid-cols-3">
       <Card className="lg:col-span-2">
-        <CardHeader title={t('الاستخدام', 'Usage')} subtitle={t('نشاط المنشأة على المنصة', 'How the company uses Taqam')} />
+        <CardHeader title={t('الاستخدام', 'Usage')} subtitle={t('نشاط المنشأة على المنصة', 'How the company uses Shuoon')} />
         <CardBody>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             <UsageStat label={t('الموظفون', 'Employees')} value={num(u.employees)} />

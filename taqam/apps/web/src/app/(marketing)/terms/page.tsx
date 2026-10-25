@@ -4,7 +4,7 @@ import { pageMeta } from '@/components/marketing/seo';
 
 export const metadata = pageMeta(
   'الشروط والأحكام',
-  'شروط استخدام منصة طاقم للموارد البشرية والرواتب: الخدمة، والحسابات، والفوترة، والبيانات، وحدود المسؤولية، والنظام الواجب التطبيق.',
+  'شروط استخدام منصة شؤون للموارد البشرية والرواتب: الخدمة، والحسابات، والفوترة، والبيانات، وحدود المسؤولية، والنظام الواجب التطبيق.',
   '/terms',
 );
 
@@ -12,7 +12,7 @@ export default function Page() {
   return (
     <LegalPage
       title={['الشروط والأحكام', 'Terms of service']}
-      intro={['الشروط التي تنظم استخدامك لمنصة طاقم وخدماتها.', 'The terms that govern your use of Taqam and its services.']}
+      intro={['الشروط التي تنظم استخدامك لمنصة شؤون وخدماتها.', 'The terms that govern your use of Shuoon and its services.']}
       updated={LEGAL_UPDATED}
       sections={TERMS}
     />

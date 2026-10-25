@@ -25,14 +25,14 @@ function LiveDot({ kind, i }: { kind: Dot; i: number }) {
 export function ProductMock({ className }: { className?: string }) {
   const { t } = useT2();
   return (
-    <div className={clsx('relative', className)} aria-label={t('معاينة توضيحية للوحة تحكم طاقم', 'Illustrative preview of the Taqam dashboard')} role="img">
+    <div className={clsx('relative', className)} aria-label={t('معاينة توضيحية للوحة تحكم شؤون', 'Illustrative preview of the Shuoon dashboard')} role="img">
       {/* window */}
       <div className="overflow-hidden rounded-2xl border border-line bg-white shadow-lift">
         <div className="flex items-center gap-2 border-b border-line bg-sand/70 px-4 py-2.5">
           <span className="h-2.5 w-2.5 rounded-full bg-danger/70" />
           <span className="h-2.5 w-2.5 rounded-full bg-accent/80" />
           <span className="h-2.5 w-2.5 rounded-full bg-success/70" />
-          <span className="mx-auto rounded-md bg-white px-3 py-0.5 text-[10px] text-ink-soft" dir="ltr">app.taqam.sa/branches</span>
+          <span className="mx-auto rounded-md bg-white px-3 py-0.5 text-[10px] text-ink-soft" dir="ltr">app.shuoon.sa/branches</span>
         </div>
         <div className="grid gap-3 p-3 sm:grid-cols-5 sm:p-4">
           {/* branches */}

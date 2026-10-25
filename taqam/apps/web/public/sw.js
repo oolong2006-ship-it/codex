@@ -1,4 +1,4 @@
-/* Taqam ESS service worker — offline shell caching for /me.
+/* Shuoon ESS service worker — offline shell caching for /me.
  * - Navigations under /me: network-first, fall back to cached page (or cached /me shell).
  * - Next static assets (/_next/static, icons, manifest): cache-first (immutable, hashed).
  * - API calls and other origins are never cached.

@@ -36,7 +36,7 @@ export function SectorPage({ slug }: { slug: SectorSlug }) {
 
       <section className="bg-white py-16 sm:py-20">
         <Container>
-          <SectionHeading eyebrow={t('كيف يساعد طاقم', 'How Taqam helps')} title={t(`مصمم لإيقاع ${s.name[0]}`, `Tuned for ${s.name[1].toLowerCase()}`)} />
+          <SectionHeading eyebrow={t('كيف يساعد شؤون', 'How Shuoon helps')} title={t(`مصمم لإيقاع ${s.name[0]}`, `Tuned for ${s.name[1].toLowerCase()}`)} />
           <ul className="mt-10 grid gap-5 sm:grid-cols-2">
             {s.features.map((f, i) => (
               <li key={f.title[1]} className="group flex gap-4 rounded-2xl border border-line bg-sand/40 p-6 transition-colors hover:bg-white hover:shadow-soft">

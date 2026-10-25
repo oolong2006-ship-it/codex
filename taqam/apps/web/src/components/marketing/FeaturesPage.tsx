@@ -79,8 +79,8 @@ export function FeaturesPage() {
     <>
       <PageHero eyebrow={t('المزايا', 'Features')}
         title={t('اثنتا عشرة وحدة، ومحور واحد: الفرع', 'Twelve modules, one centre: the branch')}
-        subtitle={t('من البصمة الأولى صباحاً حتى ملف حماية الأجور نهاية الشهر، كل وحدة في طاقم تعرف إلى أي فرع ينتمي الموظف ومن يعتمد طلبه.',
-          'From the first morning check-in to the month-end WPS file, every Taqam module knows which branch an employee belongs to and who approves their requests.')}>
+        subtitle={t('من البصمة الأولى صباحاً حتى ملف حماية الأجور نهاية الشهر، كل وحدة في شؤون تعرف إلى أي فرع ينتمي الموظف ومن يعتمد طلبه.',
+          'From the first morning check-in to the month-end WPS file, every Shuoon module knows which branch an employee belongs to and who approves their requests.')}>
         <div className="flex flex-col gap-3 sm:flex-row">
           <ButtonLink href="/signup" variant="accent" size="lg">{t('ابدأ تجربتك المجانية', 'Start free trial')}<ArrowForward /></ButtonLink>
         </div>

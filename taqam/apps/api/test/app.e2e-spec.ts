@@ -20,7 +20,7 @@ function nextSunday(offsetWeeks = 1) {
   return addDays(t, ((7 - weekday(t)) % 7) + 7 * offsetWeeks);
 }
 
-describe('Taqam API (e2e)', () => {
+describe('Shuoon API (e2e)', () => {
   let app: INestApplication;
   let http: ReturnType<typeof request>;
   const stamp = Date.now();

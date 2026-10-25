@@ -4,12 +4,12 @@ export const LEGAL_UPDATED = '2026-10-01';
 
 export const PRIVACY: LegalSection[] = [
   { id: 'scope', title: ['نطاق السياسة', 'Scope'], body: [
-    ['توضح هذه السياسة كيف تجمع منصة «طاقم» البيانات الشخصية وتستخدمها وتحميها، سواء بيانات زوار الموقع أو بيانات المنشآت العميلة وموظفيها التي تُعالج داخل المنصة.', 'This policy explains how Taqam collects, uses and protects personal data — both website visitors’ data and the data of customer businesses and their employees processed in the platform.'],
+    ['توضح هذه السياسة كيف تجمع منصة «شؤون» البيانات الشخصية وتستخدمها وتحميها، سواء بيانات زوار الموقع أو بيانات المنشآت العميلة وموظفيها التي تُعالج داخل المنصة.', 'This policy explains how Shuoon collects, uses and protects personal data — both website visitors’ data and the data of customer businesses and their employees processed in the platform.'],
     ['نلتزم في معالجتنا للبيانات بنظام حماية البيانات الشخصية الصادر في المملكة العربية السعودية ولوائحه التنفيذية والضوابط ذات العلاقة.', 'We process data in compliance with the Saudi Personal Data Protection Law (PDPL), its implementing regulations and related controls.'],
   ] },
   { id: 'roles', title: ['أدوارنا في المعالجة', 'Our processing roles'], body: [
-    ['بالنسبة لبيانات موظفي المنشأة العميلة، تكون المنشأة هي «جهة التحكم» ويكون «طاقم» «جهة معالجة» تعالج البيانات وفق تعليمات العميل والعقد المبرم معه.', 'For customer employees’ data, the customer business is the controller and Taqam is the processor, processing data on the customer’s instructions and under our agreement.'],
-    ['أما بيانات زوار الموقع وطالبي العروض التجريبية فيكون «طاقم» جهة التحكم فيها.', 'For website visitors and demo requesters, Taqam is the controller.'],
+    ['بالنسبة لبيانات موظفي المنشأة العميلة، تكون المنشأة هي «جهة التحكم» ويكون «شؤون» «جهة معالجة» تعالج البيانات وفق تعليمات العميل والعقد المبرم معه.', 'For customer employees’ data, the customer business is the controller and Shuoon is the processor, processing data on the customer’s instructions and under our agreement.'],
+    ['أما بيانات زوار الموقع وطالبي العروض التجريبية فيكون «شؤون» جهة التحكم فيها.', 'For website visitors and demo requesters, Shuoon is the controller.'],
   ] },
   { id: 'data', title: ['البيانات التي نجمعها', 'Data we collect'], body: [
     ['بيانات التواصل: الاسم واسم المنشأة والبريد الإلكتروني ورقم الجوال عند طلب عرض تجريبي أو التسجيل.', 'Contact data: name, company, email and mobile number when requesting a demo or signing up.'],
@@ -43,10 +43,10 @@ export const PRIVACY: LegalSection[] = [
 
 export const TERMS: LegalSection[] = [
   { id: 'acceptance', title: ['القبول', 'Acceptance'], body: [
-    ['باستخدامك منصة «طاقم» أو التسجيل فيها فإنك توافق على هذه الشروط نيابة عن نفسك وعن المنشأة التي تمثلها، وتقر بأن لديك الصلاحية لذلك.', 'By using or signing up for Taqam you agree to these terms on behalf of yourself and the business you represent, and confirm you are authorised to do so.'],
+    ['باستخدامك منصة «شؤون» أو التسجيل فيها فإنك توافق على هذه الشروط نيابة عن نفسك وعن المنشأة التي تمثلها، وتقر بأن لديك الصلاحية لذلك.', 'By using or signing up for Shuoon you agree to these terms on behalf of yourself and the business you represent, and confirm you are authorised to do so.'],
   ] },
   { id: 'service', title: ['وصف الخدمة', 'The service'], body: [
-    ['«طاقم» منصة سحابية لإدارة الموارد البشرية والرواتب والحضور تُقدم بنظام الاشتراك (SaaS)، وقد نطور مزاياها أو نعدلها من وقت لآخر.', 'Taqam is a cloud HR, payroll and attendance platform offered as a subscription (SaaS); we may develop or change features from time to time.'],
+    ['«شؤون» منصة سحابية لإدارة الموارد البشرية والرواتب والحضور تُقدم بنظام الاشتراك (SaaS)، وقد نطور مزاياها أو نعدلها من وقت لآخر.', 'Shuoon is a cloud HR, payroll and attendance platform offered as a subscription (SaaS); we may develop or change features from time to time.'],
     ['الحاسبات والأدوات المجانية في الموقع، ومنها حاسبة نهاية الخدمة، تقدم نتائج تقديرية استرشادية ولا تُعد استشارة قانونية أو محاسبية.', 'Free tools on the website, including the end-of-service calculator, provide indicative estimates and are not legal or accounting advice.'],
   ] },
   { id: 'accounts', title: ['الحسابات والصلاحيات', 'Accounts & access'], body: [
@@ -54,7 +54,7 @@ export const TERMS: LegalSection[] = [
   ] },
   { id: 'compliance', title: ['الامتثال النظامي', 'Regulatory compliance'], body: [
     ['تساعد المنصة على الالتزام بنظام العمل السعودي ومتطلبات حماية الأجور والتأمينات الاجتماعية، لكن المسؤولية النهائية عن الالتزام النظامي وصرف الأجور تبقى على المنشأة العميلة.', 'The platform helps businesses comply with Saudi Labor Law, WPS and GOSI requirements, but final responsibility for compliance and wage payment remains with the customer.'],
-    ['«طاقم» ليس جهة حكومية ولا يمثل أي جهة حكومية، والإشارة إلى الأنظمة والمنصات الرسمية لبيان التوافق فقط.', 'Taqam is not, and does not represent, any government entity; references to official systems and platforms indicate compatibility only.'],
+    ['«شؤون» ليس جهة حكومية ولا يمثل أي جهة حكومية، والإشارة إلى الأنظمة والمنصات الرسمية لبيان التوافق فقط.', 'Shuoon is not, and does not represent, any government entity; references to official systems and platforms indicate compatibility only.'],
   ] },
   { id: 'fees', title: ['الرسوم والفوترة', 'Fees & billing'], body: [
     ['تُحتسب الرسوم لكل موظف نشط شهرياً وفق الباقة المختارة، وتضاف ضريبة القيمة المضافة. يجدد الاشتراك تلقائياً ما لم يُلغَ قبل نهاية الفترة.', 'Fees are charged per active employee per month according to the selected plan, plus VAT. Subscriptions renew automatically unless cancelled before the period ends.'],
@@ -66,7 +66,7 @@ export const TERMS: LegalSection[] = [
     ['نسعى لتوفير الخدمة على مدار الساعة، وقد تتوقف مؤقتاً لأعمال الصيانة المجدولة التي نُشعر بها مسبقاً قدر الإمكان.', 'We aim for round-the-clock availability; the service may pause for scheduled maintenance, announced in advance where possible.'],
   ] },
   { id: 'liability', title: ['حدود المسؤولية', 'Limitation of liability'], body: [
-    ['لا تتجاوز مسؤولية «طاقم» في جميع الأحوال قيمة الرسوم المدفوعة خلال الأشهر الاثني عشر السابقة للمطالبة.', 'In all cases, Taqam’s liability shall not exceed the fees paid in the twelve months preceding the claim.'],
+    ['لا تتجاوز مسؤولية «شؤون» في جميع الأحوال قيمة الرسوم المدفوعة خلال الأشهر الاثني عشر السابقة للمطالبة.', 'In all cases, Shuoon’s liability shall not exceed the fees paid in the twelve months preceding the claim.'],
   ] },
   { id: 'law', title: ['النظام الواجب التطبيق', 'Governing law'], body: [
     ['تخضع هذه الشروط لأنظمة المملكة العربية السعودية، وتختص الجهات القضائية في مدينة الرياض بالنظر في أي نزاع ينشأ عنها.', 'These terms are governed by the laws of Saudi Arabia, and the courts of Riyadh have jurisdiction over any dispute.'],

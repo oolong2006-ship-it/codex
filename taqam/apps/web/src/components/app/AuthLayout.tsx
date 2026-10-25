@@ -25,7 +25,7 @@ export function AuthLayout({ children }: { children: React.ReactNode }) {
         <div className="flex flex-1 items-center justify-center py-10">
           <div className="w-full max-w-md">{children}</div>
         </div>
-        <p className="text-center text-xs text-ink-soft">© {new Date().getFullYear()} {t('طاقم — صُنع في السعودية', 'Taqam — made in Saudi Arabia')}</p>
+        <p className="text-center text-xs text-ink-soft">© {new Date().getFullYear()} {t('شؤون — صُنع في السعودية', 'Shuoon — made in Saudi Arabia')}</p>
       </div>
       <div className="taqam-pattern relative hidden overflow-hidden bg-night lg:block">
         <div className="absolute inset-0 bg-gradient-to-br from-night via-night/95 to-night-800/90" />
@@ -34,8 +34,8 @@ export function AuthLayout({ children }: { children: React.ReactNode }) {
             <span className="h-1.5 w-1.5 rounded-full bg-accent" />{t('للمنشآت متعددة الفروع', 'Built for multi-branch businesses')}
           </span>
           <h2 className="max-w-lg text-4xl font-bold leading-tight">
-            {t('فريقك في كل فرع،', 'Your team in every branch,')}<br />
-            <span className="text-accent">{t('تحت إدارة واحدة.', 'managed in one place.')}</span>
+            {t('كل شؤون موظفيك،', 'All your people matters,')}<br />
+            <span className="text-accent">{t('في مكان واحد.', 'in one place.')}</span>
           </h2>
           <p className="mt-4 max-w-md text-white/70">{t('الموارد البشرية والرواتب والحضور مصممة للمطاعم والتجزئة والمقاولات والعيادات.', 'HR, payroll and attendance designed for restaurants, retail, contracting and clinics.')}</p>
           <ul className="mt-10 space-y-4">

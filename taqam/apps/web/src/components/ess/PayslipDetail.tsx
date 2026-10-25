@@ -101,7 +101,7 @@ export function PayslipDetail({ id }: { id: string }) {
             </div>
           )}
 
-          <p className="hidden pt-6 text-center text-[11px] text-ink-soft print:block">{t('هذه القسيمة صادرة إلكترونياً من منصة طاقم ولا تحتاج إلى توقيع.', 'This payslip was generated electronically by Taqam and requires no signature.')}</p>
+          <p className="hidden pt-6 text-center text-[11px] text-ink-soft print:block">{t('هذه القسيمة صادرة إلكترونياً من منصة شؤون ولا تحتاج إلى توقيع.', 'This payslip was generated electronically by Shuoon and requires no signature.')}</p>
         </article>
       ) : null}
     </div>

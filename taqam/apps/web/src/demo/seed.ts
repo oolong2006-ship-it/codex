@@ -10,7 +10,7 @@ import { addDays, addMonths, day, eachDay, periodOf, periodRange, riyadhDateTime
 import { emptyDb, nextId, type Approval, type DB, type Employee, type Goal, type Role } from './db';
 import { Services, fullName } from './services';
 
-export const DEMO_PASSWORD = 'Taqam@2026';
+export const DEMO_PASSWORD = 'Shuoon@2026';
 /** First id of the admin-portal company pool (src/demo/ids.ts COMPANY_IDS). */
 export const DEMO_COMPANY_ID = companyPoolId(1);
 
@@ -215,11 +215,11 @@ export function buildSeed(now: Date = new Date()): DB {
 
   // ---------- users ----------
   const userDefs: { id: string; email: string; name: string; role: Role; empKey?: string }[] = [
-    { id: 'usr-owner', email: 'owner@taqam.demo', name: 'عبدالله الراشد', role: 'OWNER' },
-    { id: 'usr-hr', email: 'hr@taqam.demo', name: 'نورة القحطاني', role: 'HR_ADMIN', empKey: 'hr' },
-    { id: 'usr-payroll', email: 'payroll@taqam.demo', name: 'ماجد الحربي', role: 'PAYROLL', empKey: 'payroll' },
-    { id: 'usr-manager', email: 'manager@taqam.demo', name: 'فهد العتيبي', role: 'BRANCH_MANAGER', empKey: 'mgrOlaya' },
-    { id: 'usr-employee', email: 'employee@taqam.demo', name: 'سعود الدوسري', role: 'EMPLOYEE', empKey: 'emp' },
+    { id: 'usr-owner', email: 'owner@shuoon.demo', name: 'عبدالله الراشد', role: 'OWNER' },
+    { id: 'usr-hr', email: 'hr@shuoon.demo', name: 'نورة القحطاني', role: 'HR_ADMIN', empKey: 'hr' },
+    { id: 'usr-payroll', email: 'payroll@shuoon.demo', name: 'ماجد الحربي', role: 'PAYROLL', empKey: 'payroll' },
+    { id: 'usr-manager', email: 'manager@shuoon.demo', name: 'فهد العتيبي', role: 'BRANCH_MANAGER', empKey: 'mgrOlaya' },
+    { id: 'usr-employee', email: 'employee@shuoon.demo', name: 'سعود الدوسري', role: 'EMPLOYEE', empKey: 'emp' },
   ];
   const users = {} as Record<Role, { id: string; name: string; companyId: string }>;
   for (const u of userDefs) {
@@ -447,8 +447,8 @@ export function buildSeed(now: Date = new Date()): DB {
   const owner = users.OWNER;
   const ann = (title: string, body: string, author: { id: string; name: string }, at: string, branchId: string | null = null) =>
     db.announcements.push({ id: nextId(db, 'ann'), companyId, title, body, branchId, authorId: author.id, authorName: author.name, createdAt: at });
-  ann('قائمة الشتاء الجديدة 🍲', 'نطلق قائمة الشتاء (شوربة العدس، الفتّة الشامية، السحلب) بداية الشهر القادم. التدريب الإلزامي لطاقم المطبخ والصالة يوم الأحد الساعة 3 عصراً.', owner, ts(rel(-2)));
-  ann('تحديث سياسة الحضور', 'يرجى تسجيل الحضور والانصراف من تطبيق طاقم داخل نطاق الفرع فقط. فترة السماح 10 دقائق للورديات التشغيلية.', hrU, ts(rel(-9)));
+  ann('قائمة الشتاء الجديدة 🍲', 'نطلق قائمة الشتاء (شوربة العدس، الفتّة الشامية، السحلب) بداية الشهر القادم. التدريب الإلزامي لشؤون المطبخ والصالة يوم الأحد الساعة 3 عصراً.', owner, ts(rel(-2)));
+  ann('تحديث سياسة الحضور', 'يرجى تسجيل الحضور والانصراف من تطبيق شؤون داخل نطاق الفرع فقط. فترة السماح 10 دقائق للورديات التشغيلية.', hrU, ts(rel(-9)));
   ann('زيارة تفتيش البلدية', 'زيارة تفتيش متوقعة هذا الأسبوع في فرع العليا. تأكدوا من سريان الشهادات الصحية ونظافة المطبخ.', hrU, ts(rel(-1)), 'br-olaya');
   ann('تهنئة باليوم الوطني 🇸🇦', 'كل عام والوطن بخير. تم صرف مكافأة اليوم الوطني مع راتب الشهر.', owner, ts(`${year}-09-22`));
   const n2 = (userId: string, title: string, body: string, link: string, daysAgo: number, read = false) =>

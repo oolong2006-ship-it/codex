@@ -6,7 +6,7 @@ import { toCsv } from './routes-more';
 type Body = Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
 const call = async (method: string, path: string, token: string | null, body?: unknown) =>
   (await demoFetch(method, path, { token, body })) as { status: number; data: Body };
-const login = async (email: string) => (await call('POST', '/auth/login', null, { email, password: 'Taqam@2026' })).data;
+const login = async (email: string) => (await call('POST', '/auth/login', null, { email, password: 'Shuoon@2026' })).data;
 
 /** Fake only the clock; real setTimeout keeps demoFetch's latency sleep working. */
 const freezeClock = (at: Date) => {
@@ -20,8 +20,8 @@ describe('demo mock mirrors the 2026-10-24 review fixes', () => {
   it('overnight shift: check-out after midnight closes the previous day record', async () => {
     const D = addDays(todayStr(), 2);
     const D1 = addDays(D, 1);
-    const owner = await login('owner@taqam.demo');
-    const emp = await login('employee@taqam.demo');
+    const owner = await login('owner@shuoon.demo');
+    const emp = await login('employee@shuoon.demo');
     const branchId = emp.user.branchId as string;
     const shift = await call('POST', '/shifts', owner.accessToken, { branchId, name: 'ليلية', startTime: '22:00', endTime: '06:00', breakMinutes: 0, graceMinutes: 10, days: [0, 1, 2, 3, 4, 5, 6] });
     expect(shift.status).toBe(201);
@@ -41,8 +41,8 @@ describe('demo mock mirrors the 2026-10-24 review fixes', () => {
   });
 
   it('PATCH {note} on an ABSENT attendance record keeps it ABSENT', async () => {
-    const owner = await login('owner@taqam.demo');
-    const emp = await login('employee@taqam.demo');
+    const owner = await login('owner@shuoon.demo');
+    const emp = await login('employee@shuoon.demo');
     const rec = await call('POST', '/attendance/manual', owner.accessToken, { employeeId: emp.user.employeeId, date: addDays(todayStr(), 5), status: 'ABSENT' });
     expect(rec.data.status).toBe('ABSENT');
     const res = await call('PATCH', `/attendance/${rec.data.id}`, owner.accessToken, { note: 'غياب بعذر طبي' });
@@ -51,7 +51,7 @@ describe('demo mock mirrors the 2026-10-24 review fixes', () => {
   });
 
   it('payroll approve only from CALCULATED; a second approve → 409', async () => {
-    const payroll = await login('payroll@taqam.demo');
+    const payroll = await login('payroll@shuoon.demo');
     const run = await call('POST', '/payroll/runs', payroll.accessToken, { period: addMonths(todayStr().slice(0, 7), 3) });
     expect(run.status).toBe(201);
     expect((await call('POST', `/payroll/runs/${run.data.id}/approve`, payroll.accessToken)).status).toBe(400);
@@ -63,9 +63,9 @@ describe('demo mock mirrors the 2026-10-24 review fixes', () => {
   });
 
   it('LOAN approval only by OWNER/HR_ADMIN/PAYROLL', async () => {
-    const emp = await login('employee@taqam.demo');
-    const manager = await login('manager@taqam.demo');
-    const hr = await login('hr@taqam.demo');
+    const emp = await login('employee@shuoon.demo');
+    const manager = await login('manager@shuoon.demo');
+    const hr = await login('hr@shuoon.demo');
     const req = await call('POST', '/me/requests', emp.accessToken, { type: 'LOAN', title: 'سلفة طارئة', amount: 1200, payload: { months: 3 } });
     expect(req.status).toBe(201);
     const denied = await call('POST', `/requests/${req.data.id}/approve`, manager.accessToken);

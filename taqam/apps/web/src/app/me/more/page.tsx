@@ -133,7 +133,7 @@ export default function MorePage() {
         </div>
       </Section>
 
-      <p className="text-center text-xs text-ink-soft">{user?.email} · {t('طاقم — الخدمة الذاتية', 'Taqam self-service')}</p>
+      <p className="text-center text-xs text-ink-soft">{user?.email} · {t('شؤون — الخدمة الذاتية', 'Shuoon self-service')}</p>
 
       <ChangePasswordSheet open={pwOpen} onClose={() => setPwOpen(false)} />
     </div>

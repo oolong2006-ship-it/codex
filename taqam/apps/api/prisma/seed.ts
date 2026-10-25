@@ -2,7 +2,7 @@
 /**
  * Demo seed — "مطاعم ورد الشام" / Ward Al-Sham Restaurants.
  * Idempotent: wipes the demo companies (cascade) + their platform events/leads and recreates them.
- * Platform admin portal data (admin@taqam.demo, 7 extra companies, leads) comes from ./seed-platform.ts.
+ * Platform admin portal data (admin@shuoon.demo, 7 extra companies, leads) comes from ./seed-platform.ts.
  * Payroll runs are produced by the real payroll engine (src/payroll/payroll.engine.ts → @taqam/core).
  */
 import 'dotenv/config';
@@ -14,8 +14,8 @@ import { EXTRA_COMPANY_NAMES_EN, EXTRA_OWNER_EMAILS, seedPlatform, wipePlatformD
 import { addDays, addMonths, day, dayStr, eachDay, periodOf, periodRange, riyadhDateTime, todayStr, weekday } from '../src/common/dates';
 
 const prisma = new PrismaClient();
-const PASSWORD = 'Taqam@2026';
-const DEMO_EMAILS = ['owner@taqam.demo', 'hr@taqam.demo', 'payroll@taqam.demo', 'manager@taqam.demo', 'employee@taqam.demo'];
+const PASSWORD = 'Shuoon@2026';
+const DEMO_EMAILS = ['owner@shuoon.demo', 'hr@shuoon.demo', 'payroll@shuoon.demo', 'manager@shuoon.demo', 'employee@shuoon.demo'];
 
 // ---------- deterministic PRNG ----------
 let seedState = 20260223;
@@ -138,7 +138,7 @@ async function wipe() {
 }
 
 async function main() {
-  console.log('🌱 Seeding Taqam demo data…');
+  console.log('🌱 Seeding Shuoon demo data…');
   await wipe();
 
   const today = todayStr();
@@ -305,11 +305,11 @@ async function main() {
 
   // ---------- users ----------
   const userDefs: { email: string; name: string; role: Role; empKey?: string }[] = [
-    { email: 'owner@taqam.demo', name: 'عبدالله الراشد', role: 'OWNER' },
-    { email: 'hr@taqam.demo', name: 'نورة القحطاني', role: 'HR_ADMIN', empKey: 'hr' },
-    { email: 'payroll@taqam.demo', name: 'ماجد الحربي', role: 'PAYROLL', empKey: 'payroll' },
-    { email: 'manager@taqam.demo', name: 'فهد العتيبي', role: 'BRANCH_MANAGER', empKey: 'mgrOlaya' },
-    { email: 'employee@taqam.demo', name: 'سعود الدوسري', role: 'EMPLOYEE', empKey: 'emp' },
+    { email: 'owner@shuoon.demo', name: 'عبدالله الراشد', role: 'OWNER' },
+    { email: 'hr@shuoon.demo', name: 'نورة القحطاني', role: 'HR_ADMIN', empKey: 'hr' },
+    { email: 'payroll@shuoon.demo', name: 'ماجد الحربي', role: 'PAYROLL', empKey: 'payroll' },
+    { email: 'manager@shuoon.demo', name: 'فهد العتيبي', role: 'BRANCH_MANAGER', empKey: 'mgrOlaya' },
+    { email: 'employee@shuoon.demo', name: 'سعود الدوسري', role: 'EMPLOYEE', empKey: 'emp' },
   ];
   const users: Record<string, { id: string; name: string }> = {};
   for (const u of userDefs) {
@@ -580,8 +580,8 @@ async function main() {
   const owner = users.OWNER;
   await prisma.announcement.createMany({
     data: [
-      { companyId, title: 'قائمة الشتاء الجديدة 🍲', body: 'نطلق قائمة الشتاء (شوربة العدس، الفتّة الشامية، السحلب) بداية الشهر القادم. التدريب الإلزامي لطاقم المطبخ والصالة يوم الأحد الساعة 3 عصراً.', authorId: owner.id, authorName: owner.name, createdAt: rel(-2) },
-      { companyId, title: 'تحديث سياسة الحضور', body: 'يرجى تسجيل الحضور والانصراف من تطبيق طاقم داخل نطاق الفرع فقط. فترة السماح 10 دقائق للورديات التشغيلية.', authorId: users.HR_ADMIN.id, authorName: users.HR_ADMIN.name, createdAt: rel(-9) },
+      { companyId, title: 'قائمة الشتاء الجديدة 🍲', body: 'نطلق قائمة الشتاء (شوربة العدس، الفتّة الشامية، السحلب) بداية الشهر القادم. التدريب الإلزامي لشؤون المطبخ والصالة يوم الأحد الساعة 3 عصراً.', authorId: owner.id, authorName: owner.name, createdAt: rel(-2) },
+      { companyId, title: 'تحديث سياسة الحضور', body: 'يرجى تسجيل الحضور والانصراف من تطبيق شؤون داخل نطاق الفرع فقط. فترة السماح 10 دقائق للورديات التشغيلية.', authorId: users.HR_ADMIN.id, authorName: users.HR_ADMIN.name, createdAt: rel(-9) },
       { companyId, branchId: branches.OLAYA.id, title: 'زيارة تفتيش البلدية', body: 'زيارة تفتيش متوقعة هذا الأسبوع في فرع العليا. تأكدوا من سريان الشهادات الصحية ونظافة المطبخ.', authorId: users.HR_ADMIN.id, authorName: users.HR_ADMIN.name, createdAt: rel(-1) },
       { companyId, title: 'تهنئة باليوم الوطني 🇸🇦', body: 'كل عام والوطن بخير. تم صرف مكافأة اليوم الوطني مع راتب الشهر.', authorId: owner.id, authorName: owner.name, createdAt: day(`${year}-09-22`) },
     ],
@@ -633,7 +633,7 @@ async function main() {
   console.log(`   ${Object.keys(emp).length} employees, ${docs.length} documents, ${assignments.length} roster slots, ${records.length} attendance records`);
   console.log(`   ${leaves.length} leave requests, ${reqs.length} employee requests, ${loanDefs.length} loans`);
   for (const t of totals) console.log(`   payroll ${t.period}: ${t.status} — ${t.employeesCount} payslips, net ${t.totalNet.toString()} SAR`);
-  console.log(`   Logins (password ${PASSWORD}): ${DEMO_EMAILS.join(', ')}, admin@taqam.demo (SUPER_ADMIN)`);
+  console.log(`   Logins (password ${PASSWORD}): ${DEMO_EMAILS.join(', ')}, admin@shuoon.demo (SUPER_ADMIN)`);
 }
 
 main()

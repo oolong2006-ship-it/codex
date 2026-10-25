@@ -56,7 +56,7 @@ export default function SignupPage() {
           <div className="mt-6 rounded-2xl border border-line bg-sand p-4 text-start text-sm text-ink-muted">
             <p className="font-medium text-ink">{t('ماذا بعد؟', 'What next?')}</p>
             <ul className="mt-2 list-disc space-y-1 ps-5">
-              <li>{t('يراجع فريق طاقم بيانات منشأتك', 'The Taqam team reviews your company details')}</li>
+              <li>{t('يراجع فريق شؤون بيانات منشأتك', 'The Shuoon team reviews your company details')}</li>
               <li>{t('نفعّل لك فترة تجريبية مجانية', 'We activate a free trial for you')}</li>
               <li>{t('تسجّل الدخول بنفس البريد وكلمة المرور', 'Sign in with the same email and password')}</li>
             </ul>

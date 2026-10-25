@@ -44,21 +44,21 @@ function Hero() {
         <div>
           <span className="inline-flex items-center gap-2 rounded-full border border-accent/40 bg-white/70 px-3 py-1 text-xs font-semibold text-primary shadow-soft sm:text-sm">
             <Sparkles className="h-4 w-4 text-accent-600" aria-hidden />
-            {t('منصة الموارد البشرية والرواتب للمنشآت متعددة الفروع', 'HR & payroll for multi-branch businesses')}
+            {t('منصة شؤون لإدارة الموارد البشرية', 'Shuoon HR management platform')}
           </span>
-          <h1 className="mt-6 text-balance text-4xl font-bold leading-[1.2] tracking-tight text-ink sm:text-5xl lg:text-6xl">
-            {t('كل فروعك…', 'Every branch…')}
+          <h1 className="mt-6 text-balance text-4xl font-bold leading-[1.2] tracking-tight text-ink sm:text-5xl lg:text-[2.75rem] xl:text-[3.15rem]">
+            <span className="whitespace-nowrap">{t('كل شؤون موظفيك،', 'All your people matters,')}</span>
             <br />
             <span className="relative inline-block text-primary">
-              {t('فريق واحد.', 'one team.')}
+              {t('في مكان واحد.', 'in one place.')}
               <svg aria-hidden viewBox="0 0 200 12" preserveAspectRatio="none" className="absolute -bottom-2 h-3 w-full text-accent ltr:left-0 rtl:right-0">
                 <path d="M2 9 C 50 2, 150 2, 198 8" stroke="currentColor" strokeWidth="4" fill="none" strokeLinecap="round" />
               </svg>
             </span>
           </h1>
           <p className="mt-6 max-w-xl text-lg leading-8 text-ink-muted">
-            {t('طاقم يجعل الفرع قلب نظام الموارد البشرية: حضور بالموقع داخل نطاق كل فرع، وورديات ومدير لكل فريق، ومسير رواتب وملف حماية أجور يُقفل في يوم واحد — مهما تعددت مدنك.',
-              'Taqam puts the branch at the heart of HR: geofenced attendance per branch, shifts and a manager for every team, and payroll with a WPS file closed in a single day — however many cities you operate in.')}
+            {t('شؤون تجعل الفرع قلب نظام الموارد البشرية: حضور بالموقع داخل نطاق كل فرع، وورديات ومدير لكل فريق، ومسير رواتب وملف حماية أجور يُقفل في يوم واحد — مهما تعددت مدنك.',
+              'Shuoon puts the branch at the heart of HR: geofenced attendance per branch, shifts and a manager for every team, and payroll with a WPS file closed in a single day — however many cities you operate in.')}
           </p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
             <ButtonLink href="/signup" size="lg" className="shadow-lift">{t('ابدأ تجربتك المجانية', 'Start your free trial')}<ArrowForward /></ButtonLink>
@@ -114,12 +114,12 @@ function ProblemSolution() {
   return (
     <section className="py-20 sm:py-24">
       <Container>
-        <SectionHeading center eyebrow={t('لماذا طاقم؟', 'Why Taqam?')}
+        <SectionHeading center eyebrow={t('لماذا شؤون؟', 'Why Shuoon?')}
           title={t('أنظمة الموارد البشرية العامة صُممت للمكتب. فريقك في الميدان.', 'Generic HR tools were built for the office. Your team is in the field.')}
           subtitle={t('عندما تدير عشرات الفروع والورديات، تتحول التفاصيل الصغيرة إلى ساعات ضائعة وتكلفة خفية.', 'When you run dozens of branches and shifts, small details become lost hours and hidden cost.')} />
         <div className="mt-12 grid gap-5 lg:grid-cols-2">
           <div className="rounded-2xl border border-line bg-white/70 p-6 sm:p-8">
-            <p className="text-sm font-semibold text-danger">{t('قبل طاقم', 'Before Taqam')}</p>
+            <p className="text-sm font-semibold text-danger">{t('قبل شؤون', 'Before Shuoon')}</p>
             <ul className="mt-5 space-y-4">
               {before.map((x) => (
                 <li key={x} className="flex gap-3 text-ink-muted"><XCircle className="mt-0.5 h-5 w-5 shrink-0 text-danger/70" aria-hidden />{x}</li>
@@ -128,7 +128,7 @@ function ProblemSolution() {
           </div>
           <div className="relative overflow-hidden rounded-2xl bg-night p-6 text-white shadow-lift sm:p-8">
             <StarMotif className="pointer-events-none absolute -bottom-10 h-48 w-48 text-white/[0.07] ltr:-right-10 rtl:-left-10" />
-            <p className="text-sm font-semibold text-accent">{t('مع طاقم', 'With Taqam')}</p>
+            <p className="text-sm font-semibold text-accent">{t('مع شؤون', 'With Shuoon')}</p>
             <ul className="relative mt-5 space-y-4">
               {after.map((x) => (
                 <li key={x} className="flex gap-3 text-white/90"><CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-accent" aria-hidden />{x}</li>
@@ -208,7 +208,7 @@ function Sectors() {
       <Container>
         <SectionHeading eyebrow={t('حلول حسب القطاع', 'Built for your sector')}
           title={t('صُمم لمن يعمل فريقه خارج المكتب', 'Made for teams that work beyond the office')}
-          subtitle={t('كل قطاع له إيقاعه. اختر قطاعك لترى كيف يتكيف طاقم معه.', 'Every sector has its own rhythm. Pick yours to see how Taqam adapts.')} />
+          subtitle={t('كل قطاع له إيقاعه. اختر قطاعك لترى كيف يتكيف شؤون معه.', 'Every sector has its own rhythm. Pick yours to see how Shuoon adapts.')} />
         <ul className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
           {SECTORS.map((s, i) => (
             <li key={s.slug} className={clsx(i === 0 && 'sm:col-span-2 lg:col-span-1')}>

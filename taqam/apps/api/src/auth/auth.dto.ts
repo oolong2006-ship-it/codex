@@ -16,8 +16,8 @@ export class RegisterDto {
 }
 
 export class LoginDto {
-  @ApiProperty({ example: 'owner@taqam.demo' }) @Transform(lower) @IsEmail() email: string;
-  @ApiProperty({ example: 'Taqam@2026' }) @IsString() password: string;
+  @ApiProperty({ example: 'owner@shuoon.demo' }) @Transform(lower) @IsEmail() email: string;
+  @ApiProperty({ example: 'Shuoon@2026' }) @IsString() password: string;
 }
 
 export class ChangePasswordDto {

@@ -13,10 +13,10 @@ export function AboutPage() {
   ];
   return (
     <>
-      <PageHero eyebrow={t('عن طاقم', 'About Taqam')}
-        title={t('بنينا طاقم لأن الفريق الميداني يستحق أدوات أفضل', 'We built Taqam because field teams deserve better tools')}
-        subtitle={t('طاقم شركة سعودية ناشئة تعمل من الرياض، هدفها أن تجعل إدارة الموارد البشرية للمنشآت متعددة الفروع بسيطة ودقيقة ومتوافقة.',
-          'Taqam is a Saudi startup based in Riyadh, on a mission to make HR for multi-branch businesses simple, accurate and compliant.')} />
+      <PageHero eyebrow={t('عن شؤون', 'About Shuoon')}
+        title={t('بنينا شؤون لأن الفريق الميداني يستحق أدوات أفضل', 'We built Shuoon because field teams deserve better tools')}
+        subtitle={t('شؤون شركة سعودية ناشئة تعمل من الرياض، هدفها أن تجعل إدارة الموارد البشرية للمنشآت متعددة الفروع بسيطة ودقيقة ومتوافقة.',
+          'Shuoon is a Saudi startup based in Riyadh, on a mission to make HR for multi-branch businesses simple, accurate and compliant.')} />
 
       <section className="py-16 sm:py-20">
         <Container className="grid gap-12 lg:grid-cols-2 lg:items-center">
@@ -27,8 +27,8 @@ export function AboutPage() {
                 'It started with a familiar scene: an HR manager at a restaurant chain collecting timesheets from twenty branches via messages and photos, then spending a week reconciling them before payroll.')}</p>
               <p>{t('الأنظمة المتاحة كانت تعامل الفرع كحقل نصي في ملف الموظف. نحن قررنا أن يكون الفرع هو نقطة البداية: نطاقه الجغرافي، ووردياته، ومديره، وتكلفته، ونسبة سعودته.',
                 'Available systems treated the branch as a text field on an employee file. We decided the branch should be the starting point: its geofence, shifts, manager, cost and Saudization.')}</p>
-              <p>{t('اليوم، يجمع طاقم الحضور والإجازات والطلبات والرواتب ونهاية الخدمة في منصة واحدة، مع تطبيق خدمة ذاتية يعمل على أي جوال.',
-                'Today Taqam brings attendance, leave, requests, payroll and end of service into one platform, with a self-service app that runs on any phone.')}</p>
+              <p>{t('اليوم، يجمع شؤون الحضور والإجازات والطلبات والرواتب ونهاية الخدمة في منصة واحدة، مع تطبيق خدمة ذاتية يعمل على أي جوال.',
+                'Today Shuoon brings attendance, leave, requests, payroll and end of service into one platform, with a self-service app that runs on any phone.')}</p>
             </div>
           </div>
           <div className="relative overflow-hidden rounded-[28px] bg-night p-8 text-white shadow-lift sm:p-10">

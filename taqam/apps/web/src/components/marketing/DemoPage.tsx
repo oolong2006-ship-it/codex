@@ -67,8 +67,8 @@ export function DemoPage() {
       if (err instanceof ApiError && err.status >= 400 && err.status < 500) {
         toast(lang === 'ar' ? err.display : err.message, 'error');
       } else {
-        toast(t('تعذّر إرسال طلبك الآن بسبب مشكلة في الاتصال. حاول مجدداً بعد قليل أو راسلنا على hello@taqam.sa',
-          'We couldn’t send your request due to a connection issue. Please try again shortly or email hello@taqam.sa'), 'error');
+        toast(t('تعذّر إرسال طلبك الآن بسبب مشكلة في الاتصال. حاول مجدداً بعد قليل أو راسلنا على hello@shuoon.sa',
+          'We couldn’t send your request due to a connection issue. Please try again shortly or email hello@shuoon.sa'), 'error');
       }
     } finally {
       setLoading(false);
@@ -77,7 +77,7 @@ export function DemoPage() {
 
   const perks = [
     { icon: Clock3, title: t('30 دقيقة فقط', 'Just 30 minutes'), body: t('جولة مركزة على ما يهم منشأتك، دون عرض عام.', 'A focused tour of what matters to you, not a generic pitch.') },
-    { icon: Route, title: t('سيناريو قطاعك', 'Your sector’s scenario'), body: t('نعرض طاقم على فروع وورديات تشبه واقعك.', 'We show Taqam on branches and shifts like yours.') },
+    { icon: Route, title: t('سيناريو قطاعك', 'Your sector’s scenario'), body: t('نعرض شؤون على فروع وورديات تشبه واقعك.', 'We show Shuoon on branches and shifts like yours.') },
     { icon: CalendarCheck, title: t('خطة تشغيل واضحة', 'A clear rollout plan'), body: t('تخرج بخطة لنقل بياناتك وتشغيل أول مسير.', 'Leave with a plan to migrate data and run your first payroll.') },
     { icon: Headphones, title: t('فريق يتحدث لغتك', 'A team that speaks your language'), body: t('مختصون في نظام العمل السعودي والرواتب.', 'Specialists in Saudi labor law and payroll.') },
   ];
@@ -95,7 +95,7 @@ export function DemoPage() {
           </span>
           <h1 className="mt-3 text-3xl font-bold leading-tight sm:text-4xl lg:text-5xl">{t('شاهد فروعك تعمل كفريق واحد', 'See your branches work as one team')}</h1>
           <p className="mt-4 text-base leading-8 text-white/75 sm:text-lg">
-            {t('احجز جلسة مع مختص من طاقم، وسنريك كيف تُدار الورديات والحضور والرواتب لمنشأة بحجمك.', 'Book a session with a Taqam specialist and we’ll show you how shifts, attendance and payroll run for a business your size.')}
+            {t('احجز جلسة مع مختص من شؤون، وسنريك كيف تُدار الورديات والحضور والرواتب لمنشأة بحجمك.', 'Book a session with a Shuoon specialist and we’ll show you how shifts, attendance and payroll run for a business your size.')}
           </p>
           <ul className="mt-10 grid gap-3 sm:grid-cols-2">
             {perks.map((p) => (

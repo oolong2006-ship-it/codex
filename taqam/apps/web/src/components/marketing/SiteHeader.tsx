@@ -50,8 +50,8 @@ export function SiteHeader() {
         {t('تخطَّ إلى المحتوى', 'Skip to content')}
       </a>
       <Container className="flex h-16 items-center gap-4">
-        <Link href="/" aria-label={t('طاقم — الصفحة الرئيسية', 'Taqam — home')} className="shrink-0 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent">
-          <Logo />
+        <Link href="/" aria-label={t('شؤون — الصفحة الرئيسية', 'Shuoon — home')} className="shrink-0 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent">
+          <Logo showLatin />
         </Link>
 
         <nav aria-label={t('التنقل الرئيسي', 'Main navigation')} className="hidden flex-1 items-center gap-1 lg:flex ltr:ml-6 rtl:mr-6">

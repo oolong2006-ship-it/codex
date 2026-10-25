@@ -11,7 +11,7 @@ export const NAV_LINKS: { href: string; label: T2 }[] = [
   { href: '/features', label: ['المزايا', 'Features'] },
   { href: '/pricing', label: ['الأسعار', 'Pricing'] },
   { href: '/tools/end-of-service', label: ['أدوات مجانية', 'Free tools'] },
-  { href: '/about', label: ['عن طاقم', 'About'] },
+  { href: '/about', label: ['عن شؤون', 'About'] },
 ];
 
 export interface Module {
@@ -28,7 +28,7 @@ export const MODULES: Module[] = [
     id: 'branches', icon: Building2,
     name: ['الفروع والأقسام', 'Branches & departments'],
     short: ['كل فرع وحدة مستقلة بموقعه ومديره ونسبة سعودته.', 'Every branch is a unit with its own location, manager and Saudization rate.'],
-    long: ['الفرع في طاقم ليس مجرد حقل في ملف الموظف؛ إنه وحدة التشغيل الأساسية. حدّد إحداثيات كل فرع ونطاقه الجغرافي ومديره، وابنِ أقسامك بشكل هرمي، ودع كل مدير يرى فريقه فقط.', 'In Taqam the branch is the core operating unit, not just a field. Set each branch’s coordinates, geofence and manager, build departments hierarchically, and let each manager see only their team.'],
+    long: ['الفرع في شؤون ليس مجرد حقل في ملف الموظف؛ إنه وحدة التشغيل الأساسية. حدّد إحداثيات كل فرع ونطاقه الجغرافي ومديره، وابنِ أقسامك بشكل هرمي، ودع كل مدير يرى فريقه فقط.', 'In Shuoon the branch is the core operating unit, not just a field. Set each branch’s coordinates, geofence and manager, build departments hierarchically, and let each manager see only their team.'],
     points: [
       ['نطاق جغرافي (Geofence) قابل للضبط لكل فرع', 'Adjustable geofence per branch'],
       ['مدير فرع بصلاحيات محصورة في فريقه', 'Branch managers scoped to their own team'],
@@ -40,7 +40,7 @@ export const MODULES: Module[] = [
     id: 'employees', icon: Users,
     name: ['الموظفون والمستندات', 'Employees & documents'],
     short: ['ملف رقمي كامل مع تنبيهات انتهاء الإقامات والعقود.', 'Complete digital file with iqama and contract expiry alerts.'],
-    long: ['ملف موحّد لكل موظف: البيانات الشخصية، والعقد، والراتب وبدلاته، والفرع والقسم، والمستندات. يذكّرك طاقم قبل انتهاء الإقامة أو الجواز أو التأمين الطبي بوقت كافٍ.', 'One file per employee: personal data, contract, wage and allowances, branch and department, and documents. Taqam reminds you well before an iqama, passport or medical insurance expires.'],
+    long: ['ملف موحّد لكل موظف: البيانات الشخصية، والعقد، والراتب وبدلاته، والفرع والقسم، والمستندات. يذكّرك شؤون قبل انتهاء الإقامة أو الجواز أو التأمين الطبي بوقت كافٍ.', 'One file per employee: personal data, contract, wage and allowances, branch and department, and documents. Shuoon reminds you well before an iqama, passport or medical insurance expires.'],
     points: [
       ['تنبيهات انتهاء على 90 و30 يوماً', 'Expiry alerts at 90 and 30 days'],
       ['أرشفة الإقامة والجواز والعقد والشهادات', 'Store iqama, passport, contract and certificates'],
@@ -52,7 +52,7 @@ export const MODULES: Module[] = [
     id: 'attendance', icon: Clock,
     name: ['الحضور والورديات', 'Attendance & shifts'],
     short: ['بصمة بالموقع، وجدول ورديات أسبوعي لكل فرع.', 'Location-based check-in and weekly rosters per branch.'],
-    long: ['صمّم ورديات كل فرع (صباحية، مسائية، ليلية تمتد بعد منتصف الليل) ووزّعها في جدول أسبوعي. يبصم الموظف من جواله داخل نطاق الفرع، ويحسب طاقم التأخير والخروج المبكر والإضافي والغياب تلقائياً.', 'Design each branch’s shifts (morning, evening, overnight) and plan them on a weekly roster. Employees check in from their phone inside the branch geofence, and Taqam computes lateness, early leave, overtime and absence automatically.'],
+    long: ['صمّم ورديات كل فرع (صباحية، مسائية، ليلية تمتد بعد منتصف الليل) ووزّعها في جدول أسبوعي. يبصم الموظف من جواله داخل نطاق الفرع، ويحسب شؤون التأخير والخروج المبكر والإضافي والغياب تلقائياً.', 'Design each branch’s shifts (morning, evening, overnight) and plan them on a weekly roster. Employees check in from their phone inside the branch geofence, and Shuoon computes lateness, early leave, overtime and absence automatically.'],
     points: [
       ['بصمة بالموقع داخل نطاق الفرع فقط', 'Check-in allowed only inside the branch geofence'],
       ['ورديات ليلية وفترات سماح واستراحات', 'Overnight shifts, grace periods and breaks'],
@@ -88,7 +88,7 @@ export const MODULES: Module[] = [
     id: 'payroll', icon: Wallet,
     name: ['الرواتب وحماية الأجور', 'Payroll & WPS'],
     short: ['مسير شهري دقيق وملف حماية الأجور بضغطة.', 'Accurate monthly payroll and a WPS file in one click.'],
-    long: ['يجمع طاقم الاستحقاقات والبدلات والإضافي والغياب والسلف واشتراكات التأمينات في مسير واحد قابل للمراجعة. بعد الاعتماد، صدّر ملف حماية الأجور بصيغة جاهزة للرفع وأرسل القسائم للموظفين.', 'Taqam combines earnings, allowances, overtime, absence, loans and GOSI contributions into one reviewable run. Once approved, export a WPS file ready for upload and send payslips to employees.'],
+    long: ['يجمع شؤون الاستحقاقات والبدلات والإضافي والغياب والسلف واشتراكات التأمينات في مسير واحد قابل للمراجعة. بعد الاعتماد، صدّر ملف حماية الأجور بصيغة جاهزة للرفع وأرسل القسائم للموظفين.', 'Shuoon combines earnings, allowances, overtime, absence, loans and GOSI contributions into one reviewable run. Once approved, export a WPS file ready for upload and send payslips to employees.'],
     points: [
       ['احتساب الإضافي وفق المادة 107', 'Overtime per Article 107'],
       ['اشتراكات التأمينات للسعودي وغير السعودي', 'GOSI contributions for Saudis and non-Saudis'],
@@ -190,7 +190,7 @@ export const SECTORS: Sector[] = [
     name: ['المطاعم والمقاهي', 'Restaurants & cafés'],
     tagline: ['ورديات متغيرة، وفروع كثيرة، ودوران عالٍ للعمالة.', 'Changing shifts, many branches, high turnover.'],
     headline: ['من المطبخ إلى الكاشير… كل وردية في مكانها', 'From kitchen to counter… every shift in place'],
-    intro: ['المطاعم تعمل بإيقاع لا يرحم: وردية تمتد بعد منتصف الليل، وموظف ينتقل بين فرعين، ومدير يحتاج أن يعرف من حضر قبل الافتتاح. طاقم صُمّم لهذا الإيقاع.', 'Restaurants run at a relentless pace: shifts past midnight, staff moving between branches, and managers who need to know who showed up before opening. Taqam is built for that rhythm.'],
+    intro: ['المطاعم تعمل بإيقاع لا يرحم: وردية تمتد بعد منتصف الليل، وموظف ينتقل بين فرعين، ومدير يحتاج أن يعرف من حضر قبل الافتتاح. شؤون صُمّم لهذا الإيقاع.', 'Restaurants run at a relentless pace: shifts past midnight, staff moving between branches, and managers who need to know who showed up before opening. Shuoon is built for that rhythm.'],
     pains: [
       { title: ['ورديات ليلية تربك الحسابات', 'Overnight shifts break the math'], body: ['الوردية التي تبدأ 6 مساءً وتنتهي 2 فجراً تُحسب خطأً في أغلب الأنظمة.', 'A 6 pm – 2 am shift is miscounted in most systems.'] },
       { title: ['بصمة بالنيابة', 'Buddy punching'], body: ['زميل يبصم عن زميله، والمدير لا يعرف إلا عند نهاية الشهر.', 'One colleague clocks in for another and you find out at month end.'] },
@@ -248,7 +248,7 @@ export const SECTORS: Sector[] = [
     name: ['المقاولات', 'Contracting'],
     tagline: ['مواقع مشاريع متنقلة وعمالة ميدانية كبيرة.', 'Moving project sites and large field workforces.'],
     headline: ['كل موقع مشروع فرع… وكل عامل في مكانه', 'Every site is a branch… every worker accounted for'],
-    intro: ['مواقع المشاريع تُفتح وتُغلق، والعمالة تنتقل بينها، والإقامات تنتهي في أسوأ توقيت. طاقم يعامل كل موقع كفرع بنطاق جغرافي خاص به.', 'Sites open and close, crews move between them, and iqamas expire at the worst time. Taqam treats each site as a branch with its own geofence.'],
+    intro: ['مواقع المشاريع تُفتح وتُغلق، والعمالة تنتقل بينها، والإقامات تنتهي في أسوأ توقيت. شؤون تعامل كل موقع كفرع بنطاق جغرافي خاص به.', 'Sites open and close, crews move between them, and iqamas expire at the worst time. Shuoon treats each site as a branch with its own geofence.'],
     pains: [
       { title: ['حضور يصعب التحقق منه', 'Hard-to-verify attendance'], body: ['كشوف ورقية من المشرفين تصل متأخرة وبأخطاء.', 'Paper sheets from supervisors arrive late and with errors.'] },
       { title: ['إقامات منتهية', 'Expired iqamas'], body: ['غرامات وتوقف عمالة بسبب مستند لم يُجدد في وقته.', 'Fines and idle crews because a document wasn’t renewed in time.'] },
@@ -277,7 +277,7 @@ export const SECTORS: Sector[] = [
     name: ['العيادات والصحة', 'Clinics & healthcare'],
     tagline: ['كوادر طبية بورديات دقيقة وتراخيص يجب متابعتها.', 'Medical staff on precise shifts with licences to track.'],
     headline: ['كوادرك الطبية… في المناوبة الصحيحة دائماً', 'Your medical staff… always on the right rota'],
-    intro: ['العيادات تجمع أطباء وتمريضاً وإداريين بعقود وورديات مختلفة، وأي نقص في المناوبة يعني مواعيد ضائعة. طاقم يمنحك جدولاً واضحاً ومستندات محدثة.', 'Clinics mix doctors, nurses and admin staff on different contracts and shifts, and any rota gap means missed appointments. Taqam gives you a clear roster and up-to-date documents.'],
+    intro: ['العيادات تجمع أطباء وتمريضاً وإداريين بعقود وورديات مختلفة، وأي نقص في المناوبة يعني مواعيد ضائعة. شؤون تمنحك جدولاً واضحاً ومستندات محدثة.', 'Clinics mix doctors, nurses and admin staff on different contracts and shifts, and any rota gap means missed appointments. Shuoon gives you a clear roster and up-to-date documents.'],
     pains: [
       { title: ['مناوبات معقدة', 'Complex rotas'], body: ['ورديات صباحية ومسائية ومناوبات عطلة يصعب توزيعها بعدل.', 'Morning, evening and weekend on-call shifts are hard to distribute fairly.'] },
       { title: ['تراخيص وشهادات تنتهي', 'Expiring licences and certificates'], body: ['ترخيص مهني منتهٍ قد يوقف ممارساً عن العمل.', 'An expired professional licence can stop a practitioner from working.'] },
@@ -306,7 +306,7 @@ export const SECTORS: Sector[] = [
     name: ['النقل والخدمات اللوجستية', 'Logistics'],
     tagline: ['مستودعات ومراكز توزيع وسائقون على الطريق.', 'Warehouses, hubs and drivers on the road.'],
     headline: ['مستودعاتك وسائقوك… على الإيقاع نفسه', 'Warehouses and drivers… in the same rhythm'],
-    intro: ['بين مستودع يعمل على مدار الساعة وسائقين يتنقلون بين المدن، يصعب ضبط الحضور والإضافي. طاقم يجمع كل المراكز في منظومة واحدة.', 'Between 24/7 warehouses and drivers moving between cities, attendance and overtime are hard to control. Taqam brings every hub into one system.'],
+    intro: ['بين مستودع يعمل على مدار الساعة وسائقين يتنقلون بين المدن، يصعب ضبط الحضور والإضافي. شؤون تجمع كل المراكز في منظومة واحدة.', 'Between 24/7 warehouses and drivers moving between cities, attendance and overtime are hard to control. Shuoon brings every hub into one system.'],
     pains: [
       { title: ['تشغيل على مدار الساعة', '24/7 operations'], body: ['ثلاث ورديات يومياً وإضافي متكرر يرفع التكلفة.', 'Three shifts a day and recurring overtime push costs up.'] },
       { title: ['سائقون خارج المقر', 'Drivers off-site'], body: ['صعوبة إثبات حضور من يبدأ يومه من مركز توزيع آخر.', 'Hard to verify attendance for drivers starting at another hub.'] },
@@ -443,11 +443,11 @@ export const COMPARISON: { group: T2; rows: { label: T2; values: [boolean | T2, 
 ];
 
 export const HOME_FAQ: { q: T2; a: T2 }[] = [
-  { q: ['ما الذي يميز طاقم عن أنظمة الموارد البشرية العامة؟', 'How is Taqam different from generic HR systems?'],
-    a: ['طاقم يجعل الفرع هو الوحدة الأساسية: لكل فرع نطاق جغرافي للبصمة، وورديات، ومدير يرى فريقه فقط، ونسبة سعودة خاصة به. هذا ما تحتاجه المنشآت ذات العمالة الميدانية.', 'Taqam makes the branch the core unit: each branch has its own check-in geofence, shifts, a manager who sees only their team, and its own Saudization rate — exactly what field-workforce businesses need.'] },
+  { q: ['ما الذي يميز شؤون عن أنظمة الموارد البشرية العامة؟', 'How is Shuoon different from generic HR systems?'],
+    a: ['شؤون تجعل الفرع هو الوحدة الأساسية: لكل فرع نطاق جغرافي للبصمة، وورديات، ومدير يرى فريقه فقط، ونسبة سعودة خاصة به. هذا ما تحتاجه المنشآت ذات العمالة الميدانية.', 'Shuoon makes the branch the core unit: each branch has its own check-in geofence, shifts, a manager who sees only their team, and its own Saudization rate — exactly what field-workforce businesses need.'] },
   { q: ['هل يحتاج الموظف لتحميل تطبيق من المتجر؟', 'Do employees need to download an app?'],
     a: ['لا. تطبيق الخدمة الذاتية يعمل من متصفح الجوال ويمكن إضافته للشاشة الرئيسية كأي تطبيق.', 'No. The self-service app runs in the phone browser and can be added to the home screen like any app.'] },
-  { q: ['هل يدعم طاقم ملف حماية الأجور؟', 'Does Taqam support the WPS file?'],
+  { q: ['هل يدعم شؤون ملف حماية الأجور؟', 'Does Shuoon support the WPS file?'],
     a: ['نعم، بعد اعتماد المسير يمكنك تصدير ملف حماية الأجور بصيغة جاهزة للرفع عبر بنكك أو المنصات المعتمدة.', 'Yes. After approving payroll you can export a WPS file ready to upload via your bank or the approved platforms.'] },
   { q: ['كم يستغرق التشغيل؟', 'How long does onboarding take?'],
     a: ['أغلب المنشآت تبدأ خلال أسبوع: استيراد الموظفين، وإعداد الفروع ونطاقاتها، ثم أول مسير.', 'Most businesses go live within a week: import employees, set up branches and geofences, then run the first payroll.'] },

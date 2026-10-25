@@ -1,5 +1,5 @@
 /**
- * In-browser replacement for the Taqam REST API (loaded lazily by src/lib/api.ts when NEXT_PUBLIC_DEMO=1).
+ * In-browser replacement for the Shuoon REST API (loaded lazily by src/lib/api.ts when NEXT_PUBLIC_DEMO=1).
  * Requests are routed to the ported controllers below; state lives in memory and is persisted to localStorage.
  */
 import { todayStr, day } from './dates';

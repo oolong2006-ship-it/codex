@@ -78,7 +78,7 @@ export default function BroadcastPage() {
                 <span className="min-w-0 flex-1">
                   <span className="block text-sm font-medium text-ink">{f.title || t('عنوان الإشعار', 'Notification title')}</span>
                   <span className="mt-0.5 block whitespace-pre-line break-words text-xs text-ink-muted">{f.body || t('نص الرسالة يظهر هنا…', 'Message body appears here…')}</span>
-                  <span className="mt-1 block text-[11px] text-ink-soft">{t('الآن', 'now')} · {t('فريق طاقم', 'Taqam team')}</span>
+                  <span className="mt-1 block text-[11px] text-ink-soft">{t('الآن', 'now')} · {t('فريق شؤون', 'Shuoon team')}</span>
                 </span>
               </div>
             </div>

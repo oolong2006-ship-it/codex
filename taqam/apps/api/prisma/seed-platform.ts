@@ -7,7 +7,7 @@ import { BillingCycle, CompanyEventType, CompanyStatus, Plan, Prisma, PrismaClie
 import { SAUDI_LEAVE_POLICIES } from '@taqam/core';
 import { addDays, day, riyadhDateTime, todayStr } from '../src/common/dates';
 
-export const ADMIN_EMAIL = 'admin@taqam.demo';
+export const ADMIN_EMAIL = 'admin@shuoon.demo';
 export const ADMIN_NAME = 'مدير المنصة';
 
 interface ExtraCompany {
@@ -40,21 +40,21 @@ export const EXTRA_COMPANIES: ExtraCompany[] = [
   {
     nameAr: 'مخابز الحطب الذهبي', nameEn: 'Golden Hatab Bakeries', sector: 'RESTAURANTS', city: 'الرياض', crNumber: '1010781234',
     status: 'PENDING', plan: 'GROWTH', billingCycle: 'MONTHLY', maxEmployees: null, pricePerEmployee: null, createdDaysAgo: 1,
-    owner: { name: 'عبدالله السالم', email: 'owner.hatab@taqam.demo', phone: '+966501112233' },
+    owner: { name: 'عبدالله السالم', email: 'owner.hatab@shuoon.demo', phone: '+966501112233' },
     branch: { nameAr: 'فرع النرجس', lat: 24.8402, lng: 46.6591 }, employees: 6,
     history: [['REGISTERED', 1, null, 'PENDING', { sector: 'RESTAURANTS', employeesCount: 8 }]],
   },
   {
     nameAr: 'مجمع رواء الطبي', nameEn: 'Rawa Medical Complex', sector: 'HEALTHCARE', city: 'جدة', crNumber: '4030556677',
     status: 'PENDING', plan: 'GROWTH', billingCycle: 'MONTHLY', maxEmployees: null, pricePerEmployee: null, createdDaysAgo: 3,
-    owner: { name: 'هند الزهراني', email: 'owner.rawa@taqam.demo', phone: '+966552223344' },
+    owner: { name: 'هند الزهراني', email: 'owner.rawa@shuoon.demo', phone: '+966552223344' },
     branch: { nameAr: 'الفرع الرئيسي – الروضة', lat: 21.5649, lng: 39.1561 }, employees: 9,
     history: [['REGISTERED', 3, null, 'PENDING', { sector: 'HEALTHCARE', employeesCount: 25 }]],
   },
   {
     nameAr: 'مقهى بن الديرة', nameEn: 'Bin Al-Deera Coffee', sector: 'RESTAURANTS', city: 'الرياض', crNumber: '1010902211',
     status: 'TRIAL', plan: 'GROWTH', billingCycle: 'MONTHLY', maxEmployees: 15, pricePerEmployee: null, createdDaysAgo: 12,
-    owner: { name: 'فيصل المطيري', email: 'owner.deera@taqam.demo', phone: '+966533334455' },
+    owner: { name: 'فيصل المطيري', email: 'owner.deera@shuoon.demo', phone: '+966533334455' },
     branch: { nameAr: 'فرع حي الملك فهد', lat: 24.7311, lng: 46.6702 }, employees: 5,
     trialEndsInDays: 3, activatedDaysAgo: 11, lastActivityHoursAgo: 5,
     history: [
@@ -65,7 +65,7 @@ export const EXTRA_COMPANIES: ExtraCompany[] = [
   {
     nameAr: 'مؤسسة البناء المتين للمقاولات', nameEn: 'Al-Binaa Al-Mateen Contracting', sector: 'CONTRACTING', city: 'الدمام', crNumber: '2050334455',
     status: 'TRIAL', plan: 'GROWTH', billingCycle: 'MONTHLY', maxEmployees: null, pricePerEmployee: null, createdDaysAgo: 5,
-    owner: { name: 'سعد الدوسري', email: 'owner.mateen@taqam.demo', phone: '+966544445566' },
+    owner: { name: 'سعد الدوسري', email: 'owner.mateen@shuoon.demo', phone: '+966544445566' },
     branch: { nameAr: 'المكتب الرئيسي – الفيصلية', lat: 26.4207, lng: 50.0888 }, employees: 12,
     trialEndsInDays: 10, activatedDaysAgo: 4, lastActivityHoursAgo: 20,
     history: [
@@ -76,7 +76,7 @@ export const EXTRA_COMPANIES: ExtraCompany[] = [
   {
     nameAr: 'أسواق النخبة', nameEn: 'Al-Nukhba Markets', sector: 'RETAIL', city: 'الرياض', crNumber: '1010447788',
     status: 'SUSPENDED', plan: 'ESSENTIALS', billingCycle: 'MONTHLY', maxEmployees: 20, pricePerEmployee: null, createdDaysAgo: 200,
-    owner: { name: 'خالد العنزي', email: 'owner.nukhba@taqam.demo', phone: '+966505556677' },
+    owner: { name: 'خالد العنزي', email: 'owner.nukhba@shuoon.demo', phone: '+966505556677' },
     branch: { nameAr: 'فرع السويدي', lat: 24.5953, lng: 46.6729 }, employees: 8,
     activatedDaysAgo: 186, subscriptionEndsInDays: 60, suspended: { daysAgo: 6, reason: 'تأخر السداد' }, lastActivityHoursAgo: 24 * 7,
     adminNotes: 'فاتورتان متأخرتان — تم التواصل مع المالك مرتين.',
@@ -91,7 +91,7 @@ export const EXTRA_COMPANIES: ExtraCompany[] = [
   {
     nameAr: 'صالون لمسة جمال', nameEn: 'Lamsat Jamal Salon', sector: 'OTHER', city: 'الخبر', crNumber: '2051223344',
     status: 'EXPIRED', plan: 'ESSENTIALS', billingCycle: 'MONTHLY', maxEmployees: null, pricePerEmployee: null, createdDaysAgo: 25,
-    owner: { name: 'أريج القحطاني', email: 'owner.lamsa@taqam.demo', phone: '+966566667788' },
+    owner: { name: 'أريج القحطاني', email: 'owner.lamsa@shuoon.demo', phone: '+966566667788' },
     branch: { nameAr: 'فرع العقربية', lat: 26.2794, lng: 50.2083 }, employees: 4,
     trialEndsInDays: -10, activatedDaysAgo: 24, lastActivityHoursAgo: 24 * 11,
     history: [
@@ -103,7 +103,7 @@ export const EXTRA_COMPANIES: ExtraCompany[] = [
   {
     nameAr: 'شركة مسار للخدمات اللوجستية', nameEn: 'Masar Logistics', sector: 'LOGISTICS', city: 'جدة', crNumber: '4030998877',
     status: 'ACTIVE', plan: 'ENTERPRISE', billingCycle: 'ANNUAL', maxEmployees: 200, pricePerEmployee: 22, createdDaysAgo: 300,
-    owner: { name: 'ماجد الغامدي', email: 'owner.masar@taqam.demo', phone: '+966577778899' },
+    owner: { name: 'ماجد الغامدي', email: 'owner.masar@shuoon.demo', phone: '+966577778899' },
     branch: { nameAr: 'مستودع الخمرة', lat: 21.3891, lng: 39.2105 }, employees: 15,
     activatedDaysAgo: 290, subscriptionEndsInDays: 65, lastActivityHoursAgo: 2,
     adminNotes: 'عميل مؤسسي — سعر خاص 22 ر.س للموظف بعقد سنوي.',
@@ -112,7 +112,7 @@ export const EXTRA_COMPANIES: ExtraCompany[] = [
       ['ACTIVATED', 290, 'PENDING', 'ACTIVE', { mode: 'PAID', plan: 'ENTERPRISE', billingCycle: 'ANNUAL', pricePerEmployee: 22, maxEmployees: 150 }],
       ['PLAN_CHANGED', 120, 'ACTIVE', 'ACTIVE', { changes: { maxEmployees: { from: 150, to: 200 } } }],
       ['NOTE', 119, 'ACTIVE', 'ACTIVE', { note: 'عميل مؤسسي — سعر خاص 22 ر.س للموظف بعقد سنوي.' }],
-      ['IMPERSONATED', 30, 'ACTIVE', 'ACTIVE', { email: 'owner.masar@taqam.demo' }],
+      ['IMPERSONATED', 30, 'ACTIVE', 'ACTIVE', { email: 'owner.masar@shuoon.demo' }],
     ],
   },
 ];

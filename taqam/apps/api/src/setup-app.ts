@@ -27,7 +27,7 @@ export function setupApp(app: INestApplication, opts: { swagger?: boolean } = {}
 
   if (opts.swagger !== false) {
     const config = new DocumentBuilder()
-      .setTitle('Taqam API — طاقم')
+      .setTitle('Shuoon API — شؤون')
       .setDescription('HR & payroll for multi-branch Saudi businesses. All labor-law math comes from @taqam/core.')
       .setVersion('1.0.0')
       .addBearerAuth()

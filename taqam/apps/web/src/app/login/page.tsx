@@ -12,14 +12,14 @@ import { useLang } from '@/lib/i18n';
 import { label, ROLE } from '@/lib/labels';
 
 const DEMO = [
-  { email: 'owner@taqam.demo', role: 'OWNER' },
-  { email: 'hr@taqam.demo', role: 'HR_ADMIN' },
-  { email: 'payroll@taqam.demo', role: 'PAYROLL' },
-  { email: 'manager@taqam.demo', role: 'BRANCH_MANAGER' },
-  { email: 'employee@taqam.demo', role: 'EMPLOYEE' },
-  { email: 'admin@taqam.demo', role: 'SUPER_ADMIN' },
+  { email: 'owner@shuoon.demo', role: 'OWNER' },
+  { email: 'hr@shuoon.demo', role: 'HR_ADMIN' },
+  { email: 'payroll@shuoon.demo', role: 'PAYROLL' },
+  { email: 'manager@shuoon.demo', role: 'BRANCH_MANAGER' },
+  { email: 'employee@shuoon.demo', role: 'EMPLOYEE' },
+  { email: 'admin@shuoon.demo', role: 'SUPER_ADMIN' },
 ];
-const DEMO_PASSWORD = 'Taqam@2026';
+const DEMO_PASSWORD = 'Shuoon@2026';
 
 type CompanyBlock = 'COMPANY_PENDING' | 'COMPANY_SUSPENDED' | 'COMPANY_EXPIRED';
 /** Company-status refusal from the API (403 + code), so it can be shown as a clear state instead of a generic error. */
@@ -66,7 +66,7 @@ export default function LoginPage() {
   return (
     <AuthLayout>
       <h1 className="text-3xl font-bold text-ink">{t('مرحباً بعودتك', 'Welcome back')}</h1>
-      <p className="mt-2 text-sm text-ink-muted">{t('سجّل الدخول إلى حساب منشأتك في طاقم.', 'Sign in to your Taqam company account.')}</p>
+      <p className="mt-2 text-sm text-ink-muted">{t('سجّل الدخول إلى حساب منشأتك في شؤون.', 'Sign in to your Shuoon company account.')}</p>
       <form onSubmit={submit} className="mt-8 space-y-4">
         <Field label={t('البريد الإلكتروني', 'Email')} required>
           <Input type="email" dir="ltr" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} required placeholder="name@company.sa" />
@@ -84,7 +84,7 @@ export default function LoginPage() {
         <Button type="submit" size="lg" className="w-full" loading={busy}><LogIn className="h-4 w-4 rtl:rotate-180" />{t('تسجيل الدخول', 'Sign in')}</Button>
       </form>
       <p className="mt-6 text-center text-sm text-ink-muted">
-        {t('منشأتك غير مسجلة؟', 'New to Taqam?')}{' '}
+        {t('منشأتك غير مسجلة؟', 'New to Shuoon?')}{' '}
         <Link href="/signup" className="font-semibold text-primary-500 hover:underline">{t('سجّل منشأتك مجاناً', 'Register your company')}</Link>
       </p>
 
@@ -120,7 +120,7 @@ function CompanyBlockNotice({ code, message }: { code: CompanyBlock; message: st
       <div className="text-sm">
         <p className="font-semibold">{cfg.title}</p>
         <p className="mt-0.5 opacity-90">{message || cfg.fallback}</p>
-        {code !== 'COMPANY_PENDING' && <a href="mailto:hello@taqam.sa" className="mt-1 inline-block text-xs font-medium underline" dir="ltr">hello@taqam.sa</a>}
+        {code !== 'COMPANY_PENDING' && <a href="mailto:hello@shuoon.sa" className="mt-1 inline-block text-xs font-medium underline" dir="ltr">hello@shuoon.sa</a>}
       </div>
     </div>
   );

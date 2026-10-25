@@ -138,7 +138,7 @@ export const adminRoutes: Route[] = [
       from, to: c.status, actor: actor(user),
       data: { mode, plan, billingCycle, maxEmployees: c.maxEmployees, pricePerEmployee: c.pricePerEmployee, trialEndsAt: mode === 'TRIAL' ? c.trialEndsAt : null, subscriptionEndsAt: c.subscriptionEndsAt },
     });
-    svc.notifyUsers(c.id, companyUsers(svc, c.id, ['OWNER']), 'تم تفعيل حساب منشأتك في طاقم', mode === 'TRIAL' ? 'بدأت الفترة التجريبية — مرحباً بك' : 'اشتراكك فعّال الآن — مرحباً بك', '/app');
+    svc.notifyUsers(c.id, companyUsers(svc, c.id, ['OWNER']), 'تم تفعيل حساب منشأتك في شؤون', mode === 'TRIAL' ? 'بدأت الفترة التجريبية — مرحباً بك' : 'اشتراكك فعّال الآن — مرحباً بك', '/app');
     applyExpiry(svc, c);
     return adminCompanyView(svc, c);
   }),

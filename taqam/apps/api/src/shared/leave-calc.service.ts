@@ -43,7 +43,7 @@ export class LeaveCalcService {
   /**
    * Annual balance = carried over + accrued in the current service year − taken in it.
    * Carried over = the HR opening balance (`annualLeaveCarryOver`, unused leave from before the
-   * employee was added to Taqam) + Σ entitlement of each completed service year tracked in Taqam
+   * employee was added to Shuoon) + Σ entitlement of each completed service year tracked in Shuoon
    * − Σ annual leave taken before the current service year, floored at 0. Unused leave is not
    * forfeited (Arts. 109/111), so there is no upper cap.
    */

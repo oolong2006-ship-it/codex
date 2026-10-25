@@ -1,4 +1,4 @@
-// Taqam visual identity — single source of truth (see taqam/brand/brand-book.html).
+// Shuoon visual identity — single source of truth (see taqam/brand/brand-book.html).
 // Raw Oasis (#0E8C7A) is for the logo, large type and fills; UI text and buttons use oasis600.
 export const BRAND = {
   oasis: '#0E8C7A',

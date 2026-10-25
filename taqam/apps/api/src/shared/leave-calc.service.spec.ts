@@ -18,7 +18,7 @@ function make(opts: { overlap?: boolean; approvedAnnual?: number; pending?: numb
   return new LeaveCalcService(prisma as never);
 }
 
-// record created today: no service year has been tracked in Taqam yet, so no computed carry-over
+// record created today: no service year has been tracked in Shuoon yet, so no computed carry-over
 const emp = { id: 'e1', companyId: 'c1', hireDate: D('2020-01-01'), createdAt: new Date(), annualLeaveCarryOver: new Prisma.Decimal(0) } as never;
 const annual = { id: 't1', code: 'ANNUAL', nameAr: 'إجازة سنوية', maxDaysPerYear: 21 } as never;
 
@@ -154,7 +154,7 @@ describe('LeaveCalcService yearly caps and carry-over (review #8, #9, #13, #18)'
   });
 
   it('years completed before the employee was added are covered by the HR opening balance, not recomputed', async () => {
-    // hired 2022, added to Taqam on 2026-05-01 with a 6-day opening balance → only 6 + accrued
+    // hired 2022, added to Shuoon on 2026-05-01 with a 6-day opening balance → only 6 + accrued
     const b = await store([]).annualBalance(person('2022-01-01', '2026-05-01', 6), '2026-10-24');
     expect(b.balance).toBe(23.03);
   });

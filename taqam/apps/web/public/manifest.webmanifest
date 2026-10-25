@@ -1,6 +1,6 @@
 {
-  "name": "طاقم — الخدمة الذاتية",
-  "short_name": "طاقم",
+  "name": "شؤون — الخدمة الذاتية",
+  "short_name": "شؤون",
   "start_url": "./me",
   "display": "standalone",
   "dir": "rtl",

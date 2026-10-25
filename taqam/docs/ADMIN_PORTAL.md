@@ -1,6 +1,6 @@
 # بوابة مالك المنصة | Platform Admin Portal — Contract (v1)
 
-The platform owner (Taqam itself) manages every subscriber company from `/admin` in the web app.
+The platform owner (Shuoon itself) manages every subscriber company from `/admin` in the web app.
 This extends `docs/API_CONTRACT.md`; all its conventions apply (JSON, `{statusCode, message, messageAr}` errors, pagination `{data,total,page,pageSize}`).
 
 ## Role
@@ -9,7 +9,7 @@ New role **`SUPER_ADMIN`**: a platform user with `companyId = null` and `employe
 - SUPER_ADMIN can call ONLY `/auth/*` and `/admin/*` (403 elsewhere). Company roles get 403 on `/admin/*`.
 - `GET /auth/me` for SUPER_ADMIN returns `{ id, email, name, role, companyId: null, employeeId: null, branchId: null, company: null }`.
 - Web: `homeFor(user)` → `/admin` for SUPER_ADMIN.
-- Seed: `admin@taqam.demo` / `Taqam@2026` (name "مدير المنصة"). Also `PLATFORM_ADMIN_EMAIL` / `PLATFORM_ADMIN_PASSWORD` env vars create/refresh one on API boot (production bootstrap).
+- Seed: `admin@shuoon.demo` / `Shuoon@2026` (name "مدير المنصة"). Also `PLATFORM_ADMIN_EMAIL` / `PLATFORM_ADMIN_PASSWORD` env vars create/refresh one on API boot (production bootstrap).
 
 ## Company lifecycle
 New fields on Company:
@@ -64,9 +64,9 @@ Rules:
 `AdminCompany = { id, nameAr, nameEn, sector, city, crNumber, status, plan, billingCycle, maxEmployees, pricePerEmployee, effectivePrice, employeesCount, activeEmployees, usersCount, branchesCount, mrr, trialEndsAt, subscriptionEndsAt, daysLeft (null|int), activatedAt, suspendedAt, suspensionReason, adminNotes, ownerName, ownerEmail, ownerPhone, lastActivityAt, createdAt }`
 
 ## Seed additions
-- `admin@taqam.demo` (SUPER_ADMIN).
+- `admin@shuoon.demo` (SUPER_ADMIN).
 - Demo company "مطاعم ورد الشام" → ACTIVE, GROWTH, MONTHLY, maxEmployees 60, subscriptionEndsAt +10 months.
-- 7 extra small companies (few employees each, realistic Saudi names across sectors) in mixed states: 2 PENDING (registered 1–3 days ago), 2 TRIAL (one ending in 3 days), 1 SUSPENDED (reason "تأخر السداد"), 1 EXPIRED, 1 ACTIVE ENTERPRISE with pricePerEmployee 22. Each has an OWNER user (password `Taqam@2026`) and 3–15 employees, plus events history.
+- 7 extra small companies (few employees each, realistic Saudi names across sectors) in mixed states: 2 PENDING (registered 1–3 days ago), 2 TRIAL (one ending in 3 days), 1 SUSPENDED (reason "تأخر السداد"), 1 EXPIRED, 1 ACTIVE ENTERPRISE with pricePerEmployee 22. Each has an OWNER user (password `Shuoon@2026`) and 3–15 employees, plus events history.
 - 6 leads across statuses.
 
 ## Web: `/admin` (SUPER_ADMIN only; others → their home)

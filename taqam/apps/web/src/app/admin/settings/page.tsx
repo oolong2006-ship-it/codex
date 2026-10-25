@@ -139,7 +139,7 @@ function AdminsCard() {
 
   return (
     <Card>
-      <CardHeader title={t('مديرو المنصة', 'Platform admins')} subtitle={t('حسابات فريق طاقم بصلاحية بوابة المنصة', 'Taqam team accounts with portal access')}
+      <CardHeader title={t('مديرو المنصة', 'Platform admins')} subtitle={t('حسابات فريق شؤون بصلاحية بوابة المنصة', 'Shuoon team accounts with portal access')}
         action={<Button size="sm" onClick={() => setAdding(true)}><Plus className="h-4 w-4" />{t('إضافة مدير', 'Add admin')}</Button>} />
       <Async loading={loading} error={error} onRetry={reload} hasData={!!data}>
         {data && <Table columns={cols} rows={data} rowKey={(a) => a.id} />}

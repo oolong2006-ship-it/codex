@@ -10,7 +10,7 @@ async function bootstrap() {
   app.enableShutdownHooks();
   const port = Number(process.env.PORT ?? 4100);
   await app.listen(port, '0.0.0.0');
-  new Logger('Bootstrap').log(`Taqam API listening on :${port} (docs at /api/docs)`);
+  new Logger('Bootstrap').log(`Shuoon API listening on :${port} (docs at /api/docs)`);
 }
 
 bootstrap();

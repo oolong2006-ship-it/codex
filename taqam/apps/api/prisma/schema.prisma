@@ -1,4 +1,4 @@
-// Taqam (طاقم) — HR & payroll for multi-branch Saudi businesses.
+// Shuoon (شؤون) — HR & payroll for multi-branch Saudi businesses.
 // Every tenant-owned table carries companyId (indexed) and cascades on company delete.
 
 generator client {
