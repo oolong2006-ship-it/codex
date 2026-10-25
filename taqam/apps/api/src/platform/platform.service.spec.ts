@@ -71,6 +71,26 @@ describe('PlatformService.mrr rounding', () => {
     const svc = new PlatformService({} as never);
     const settings = { requireApproval: false, trialDays: 14, prices: { ESSENTIALS: 19, GROWTH: 29, ENTERPRISE: null }, annualDiscount: 0.15 };
     const c = { status: 'ACTIVE', plan: 'GROWTH', billingCycle: 'MONTHLY', pricePerEmployee: new Prisma.Decimal('1.005') } as never;
-    expect(svc.mrr(c, 1, settings)).toBe(1.01);
+    expect(svc.mrr(c, 1, settings as never)).toBe(1.01);
+  });
+});
+
+describe('PlatformService expiry listeners', () => {
+  const past = new Date(Date.now() - 60_000);
+
+  it('runs listeners once after a successful expire; a failing listener never breaks expiry', async () => {
+    const row: Row = { id: 'c1', nameAr: 'منشأة', status: 'TRIAL', trialEndsAt: past, subscriptionEndsAt: null };
+    const svc = new PlatformService(fakePrisma(row) as never);
+    const seen: string[] = [];
+    svc.onExpired(() => {
+      throw new Error('boom');
+    });
+    svc.onExpired((c) => {
+      seen.push(`${c.id}:${c.status}`);
+    });
+    expect(await svc.expire({ ...row } as never)).toBe(true);
+    expect(seen).toEqual(['c1:TRIAL']); // receives the pre-expiry snapshot (status it expired from)
+    expect(await svc.expire({ ...row, status: 'TRIAL' } as never)).toBe(false); // already EXPIRED in the store
+    expect(seen).toHaveLength(1);
   });
 });

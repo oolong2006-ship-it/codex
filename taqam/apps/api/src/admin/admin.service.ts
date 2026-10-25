@@ -7,6 +7,8 @@ import { PrismaService } from '../prisma/prisma.service';
 import { NotifyService } from '../shared/notifications.service';
 import { AuthService } from '../auth/auth.service';
 import { AuditService } from '../shared/audit.service';
+import { BillingService } from '../billing/billing.service';
+import { normalizeDays } from '../billing/billing.math';
 import { DAY_MS, extendFrom, parseEndDate, PLANS, PlatformService, PlatformSettingsView } from '../platform/platform.service';
 import { PlatformUser } from '../common/types';
 import { badRequest, conflict, notFound } from '../common/errors';
@@ -66,6 +68,13 @@ const leadSelect = {
   id: true, name: true, company: true, email: true, phone: true, employeesCount: true, sector: true, message: true, status: true, notes: true, createdAt: true,
 } as const;
 const actor = (a: PlatformUser) => ({ id: a.id, name: a.name });
+/** Drops undefined keys (partial settings PATCH). */
+const defined = <T extends object>(o: T) => Object.fromEntries(Object.entries(o).filter(([, v]) => v !== undefined)) as Partial<T>;
+function mergeReminderPatch(current: PlatformSettingsView['reminders'], patch: Partial<PlatformSettingsView['reminders']>) {
+  const out = { ...current, ...defined(patch) };
+  for (const k of ['trialDays', 'subscriptionDays', 'overdueInvoiceDays'] as const) out[k] = normalizeDays(out[k]);
+  return out;
+}
 
 /** Temporary password: readable, meets the 8+ chars rule. */
 function tempPassword() {
@@ -85,6 +94,7 @@ export class AdminService {
     private readonly auth: AuthService,
     private readonly audit: AuditService,
     private readonly notify: NotifyService,
+    private readonly billing: BillingService,
   ) {}
 
   /** CompanyEvent & { companyName, company } for the activity log. */
@@ -276,7 +286,7 @@ export class AdminService {
     const c = await this.company(id);
     const since = new Date(Date.now() - 30 * DAY_MS);
     const [base] = await this.views([c]);
-    const [users, payrollRuns, lastRun, leaveRequests30d, checkIns30d, events] = await Promise.all([
+    const [users, payrollRuns, lastRun, leaveRequests30d, checkIns30d, events, invoices, emails] = await Promise.all([
       this.prisma.user.findMany({
         where: { companyId: id },
         orderBy: [{ createdAt: 'asc' }],
@@ -287,6 +297,8 @@ export class AdminService {
       this.prisma.leaveRequest.count({ where: { companyId: id, createdAt: { gte: since } } }),
       this.prisma.attendanceRecord.count({ where: { companyId: id, checkIn: { gte: since } } }),
       this.prisma.companyEvent.findMany({ where: { companyId: id }, orderBy: { createdAt: 'desc' }, take: 50 }),
+      this.billing.companyInvoices(id, 20),
+      this.billing.companyEmails(id, 20),
     ]);
     const owners = users.filter((u) => u.role === 'OWNER');
     const owner = owners.find((u) => u.isActive) ?? owners[0] ?? null;
@@ -305,6 +317,8 @@ export class AdminService {
         checkIns30d,
       },
       events: await this.eventViews(events),
+      invoices,
+      emails,
     };
   }
 
@@ -523,6 +537,7 @@ export class AdminService {
       async (tx) => {
         await tx.notification.deleteMany(w);
         await tx.auditLog.deleteMany(w);
+        await tx.invoice.deleteMany(w); // EmailLog rows are kept (not FK-bound), like CompanyEvent
         await tx.performanceReview.deleteMany(w);
         await tx.reviewCycle.deleteMany(w);
         await tx.candidate.deleteMany(w);
@@ -637,6 +652,8 @@ export class AdminService {
         ...(dto.trialDays !== undefined ? { trialDays: dto.trialDays } : {}),
         ...(dto.annualDiscount !== undefined ? { annualDiscount: dto.annualDiscount } : {}),
         prices,
+        ...(dto.billing ? { billing: { ...current.billing, ...defined(dto.billing) } as Prisma.InputJsonValue } : {}),
+        ...(dto.reminders ? { reminders: mergeReminderPatch(current.reminders, dto.reminders) as unknown as Prisma.InputJsonValue } : {}),
       },
     });
     return this.platform.settingsView(row);

@@ -24,6 +24,8 @@ import { DashboardModule } from './dashboard/dashboard.controller';
 import { MeModule } from './me/me.controller';
 import { PlatformModule } from './platform/platform.module';
 import { AdminModule } from './admin/admin.module';
+import { MailModule } from './mail/mail.service';
+import { BillingModule } from './billing/billing.module';
 
 @Module({
   imports: [
@@ -37,6 +39,7 @@ import { AdminModule } from './admin/admin.module';
     PrismaModule,
     PlatformModule,
     SharedModule,
+    MailModule,
     AuthModule,
     PublicModule,
     SettingsModule,
@@ -53,6 +56,7 @@ import { AdminModule } from './admin/admin.module';
     ReportsModule,
     DashboardModule,
     MeModule,
+    BillingModule,
     AdminModule,
   ],
   providers: [

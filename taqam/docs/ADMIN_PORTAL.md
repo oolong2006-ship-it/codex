@@ -157,3 +157,18 @@ On expiry (`PlatformService.expire`) when `notifyOnExpiry` → `EXPIRED` email.
 - `/admin/settings`: sections «بيانات الفوترة» and «التذكيرات التلقائية».
 - Company app: `/app/billing` «الاشتراك والفواتير» (OWNER only, nav item under الإعدادات): subscription card + invoices list + the same printable invoice (`/app/billing/view?id=…`).
 - Demo mock mirrors all of the above; demo emails are always `LOGGED`; the reminder job runs lazily when `/admin/overview` loads (once per demo day).
+
+## Implementation notes (API)
+- **Storage**: `PlatformSettings.billing` / `.reminders` are JSON columns holding partial overrides; `GET /admin/settings` always returns the full shape with defaults merged in. PATCH day lists are de-duplicated and sorted descending (`[1,7]` → `[7,1]`).
+- **Master switch**: `reminders.enabled = false` also suppresses the `EXPIRED` email (sent only when `enabled && notifyOnExpiry`).
+- **Money**: `round2` is applied after trimming binary noise from the product (12 significant digits), so `683.3 × 0.15` → `102.5` (half-up), not `102.49`.
+- **periodEnd** clamps month-ends: `2026-01-31` monthly → `2026-02-27` (Jan 31 + 1 month = Feb 28, − 1 day); `2028-02-29` annual → `2029-02-27`.
+- **Numbers**: next = highest sequence used in that year + 1 (retried on a unique clash). A hard-deleted company takes its invoices with it, so its numbers can be reused.
+- **Invoice.companyName** is the buyer name snapshotted at issue; the detail's `company` block is live company data. Invoice dates (`periodStart`, `periodEnd`, `issueDate`, `dueDate`) are `YYYY-MM-DD`; `paidAt` is an ISO instant (now when `paidAt` is today or omitted, else 12:00 Riyadh of that day).
+- **Pay**: when the company has no `subscriptionEndsAt` (open-ended), paying sets it to the end of `periodEnd` (literal `max`). TRIAL → ACTIVE also clears `trialEndsAt`. `extendSubscription=false` changes nothing on the company. PENDING (never invoiced in practice) is left as is.
+- **REMINDER_SENT data**: `{ type, daysLeft }` for TRIAL_ENDING / SUBSCRIPTION_ENDING; `{ type: 'EXPIRED', daysLeft: 0 }`; `{ type: 'INVOICE_OVERDUE', daysOverdue, invoiceId, number }`. The manual reminder also logs `REMINDER_SENT` (with the admin) as `{ type: 'MANUAL_REMINDER', daysLeft, emailId, status }`.
+- **`POST /admin/reminders/run`** first persists due expiries (which send `EXPIRED` emails); `sent` counts only the TRIAL_ENDING / SUBSCRIPTION_ENDING / INVOICE_OVERDUE reminders of that run that ended `SENT` or `LOGGED`.
+- **`POST /admin/companies/:id/remind`** → `201`; `404 'لا يوجد مالك لهذه المنشأة'` when the company has no OWNER.
+- **Notifications**: an in-app notification (link `/app/billing`) is created for the owner for every email type, not only reminders.
+- **Email log**: responses omit `dedupeKey`; in `/admin/emails`, `companyName` is the live name (`null` once the company is deleted — the rows are kept). With SMTP the row is claimed first (status `FAILED`, error `sending…`) and flipped to `SENT` when accepted, so concurrent runs never double-send; a real failure releases the dedupe key so a later run retries.
+- `GET /admin/invoices?overdue=false` is accepted too (excludes overdue).

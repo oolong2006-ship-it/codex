@@ -6,6 +6,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { forbidden } from '../common/errors';
 import { serialize } from '../common/serialize';
 import { addDays, dayStr, riyadhDateTime, todayStr } from '../common/dates';
+import { BillingSettings, mergeBilling, mergeReminders, ReminderSettings } from '../billing/billing.math';
 
 export const PLANS: Plan[] = ['ESSENTIALS', 'GROWTH', 'ENTERPRISE'];
 export const DEFAULT_PRICES: Record<Plan, number | null> = { ESSENTIALS: 19, GROWTH: 29, ENTERPRISE: null };
@@ -15,7 +16,13 @@ export interface PlatformSettingsView {
   trialDays: number;
   prices: Record<Plan, number | null>;
   annualDiscount: number;
+  billing: BillingSettings;
+  reminders: ReminderSettings;
 }
+
+/** A company that has just been moved to EXPIRED (passed to expiry listeners). */
+export type ExpiredCompany = LifecycleFields;
+export type ExpiryListener = (c: ExpiredCompany) => Promise<unknown> | unknown;
 
 /** 403 bodies for blocked company states (docs/ADMIN_PORTAL.md). */
 export const COMPANY_BLOCKED: Partial<Record<CompanyStatus, { code: string; message: string; messageAr: string }>> = {
@@ -60,7 +67,16 @@ export function parseEndDate(v: string | null | undefined): Date | null {
 @Injectable()
 export class PlatformService {
   private readonly logger = new Logger('Platform');
+  private readonly expiryListeners: ExpiryListener[] = [];
   constructor(private readonly prisma: PrismaService) {}
+
+  /**
+   * Register a callback run after a company is moved to EXPIRED (used by billing for the EXPIRED email —
+   * keeps PlatformService free of a dependency on billing/mail). Listener errors are logged, never thrown.
+   */
+  onExpired(fn: ExpiryListener) {
+    this.expiryListeners.push(fn);
+  }
 
   // ---------- settings ----------
   async getSettings(): Promise<PlatformSettingsView> {
@@ -68,14 +84,28 @@ export class PlatformService {
     return this.settingsView(row);
   }
 
-  settingsView(row: { requireApproval: boolean; trialDays: number; prices: Prisma.JsonValue; annualDiscount: number }): PlatformSettingsView {
+  settingsView(row: {
+    requireApproval: boolean;
+    trialDays: number;
+    prices: Prisma.JsonValue;
+    annualDiscount: number;
+    billing?: Prisma.JsonValue;
+    reminders?: Prisma.JsonValue;
+  }): PlatformSettingsView {
     const raw = (row.prices && typeof row.prices === 'object' && !Array.isArray(row.prices) ? row.prices : {}) as Record<string, unknown>;
     const prices = {} as Record<Plan, number | null>;
     for (const p of PLANS) {
       const v = raw[p];
       prices[p] = v === undefined ? DEFAULT_PRICES[p] : typeof v === 'number' ? v : v === null ? null : Number(v);
     }
-    return { requireApproval: row.requireApproval, trialDays: row.trialDays, prices, annualDiscount: row.annualDiscount };
+    return {
+      requireApproval: row.requireApproval,
+      trialDays: row.trialDays,
+      prices,
+      annualDiscount: row.annualDiscount,
+      billing: mergeBilling(row.billing),
+      reminders: mergeReminders(row.reminders),
+    };
   }
 
   // ---------- pricing ----------
@@ -125,6 +155,13 @@ export class PlatformService {
         toStatus: 'EXPIRED',
         data: { endedAt: c.status === 'TRIAL' ? c.trialEndsAt : c.subscriptionEndsAt },
       });
+      for (const fn of this.expiryListeners) {
+        try {
+          await fn(c);
+        } catch (e) {
+          this.logger.error(`expiry listener failed for ${c.id}: ${(e as Error).message}`);
+        }
+      }
     }
     return res.count > 0;
   }

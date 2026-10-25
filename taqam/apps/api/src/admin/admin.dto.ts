@@ -1,7 +1,10 @@
+import { applyDecorators } from '@nestjs/common';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { BillingCycle, CompanyEventType, CompanyStatus, LeadStatus, Plan } from '@prisma/client';
 import { Transform, Type } from 'class-transformer';
 import {
+  ArrayMaxSize,
+  IsArray,
   IsBoolean,
   IsDateString,
   IsEmail,
@@ -24,6 +27,7 @@ export const CYCLES: BillingCycle[] = ['MONTHLY', 'ANNUAL'];
 export const LEAD_STATUSES: LeadStatus[] = ['NEW', 'CONTACTED', 'CONVERTED', 'LOST'];
 export const EVENT_TYPES: CompanyEventType[] = [
   'REGISTERED', 'ACTIVATED', 'SUSPENDED', 'REACTIVATED', 'PLAN_CHANGED', 'EXTENDED', 'NOTE', 'IMPERSONATED', 'EXPIRED', 'DELETED',
+  'INVOICE_ISSUED', 'INVOICE_PAID', 'INVOICE_VOIDED', 'REMINDER_SENT',
 ];
 export const COMPANY_SORTS = ['createdAt', 'name', 'employees', 'lastActivityAt'] as const;
 
@@ -112,11 +116,40 @@ export class PricesDto {
   @ApiPropertyOptional({ nullable: true }) @IsOptional() @IsNumber() @Min(0) ENTERPRISE?: number | null;
 }
 
+export class BillingSettingsDto {
+  @ApiPropertyOptional() @IsOptional() @IsString() sellerName?: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() sellerNameEn?: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() sellerVatNumber?: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() sellerCrNumber?: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() sellerAddress?: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() sellerEmail?: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() sellerPhone?: string;
+  @ApiPropertyOptional({ example: 0.15 }) @IsOptional() @IsNumber() @Min(0) @Max(1) vatRate?: number;
+  @ApiPropertyOptional({ example: 7 }) @IsOptional() @IsInt() @Min(0) @Max(90) invoiceDueDays?: number;
+  @ApiPropertyOptional() @IsOptional() @IsString() bankName?: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() iban?: string;
+}
+
+/** Reminder day list: up to 6 integers 0..60. */
+const dayList = () => applyDecorators(IsOptional(), IsArray(), ArrayMaxSize(6), IsInt({ each: true }), Min(0, { each: true }), Max(60, { each: true }));
+
+export class RemindersSettingsDto {
+  @ApiPropertyOptional() @IsOptional() @IsBoolean() enabled?: boolean;
+  @ApiPropertyOptional({ type: [Number], example: [7, 3, 1] }) @dayList() trialDays?: number[];
+  @ApiPropertyOptional({ type: [Number], example: [14, 7, 1] }) @dayList() subscriptionDays?: number[];
+  @ApiPropertyOptional() @IsOptional() @IsBoolean() notifyOnExpiry?: boolean;
+  @ApiPropertyOptional({ type: [Number], example: [1, 7] }) @dayList() overdueInvoiceDays?: number[];
+}
+
 export class UpdateSettingsDto {
   @ApiPropertyOptional() @IsOptional() @IsBoolean() requireApproval?: boolean;
   @ApiPropertyOptional() @IsOptional() @IsInt() @Min(1) @Max(365) trialDays?: number;
   @ApiPropertyOptional({ type: PricesDto }) @IsOptional() @ValidateNested() @Type(() => PricesDto) prices?: PricesDto;
   @ApiPropertyOptional() @IsOptional() @IsNumber() @Min(0) @Max(0.9) annualDiscount?: number;
+  @ApiPropertyOptional({ type: BillingSettingsDto, description: 'partial — merged into the stored billing settings' })
+  @IsOptional() @ValidateNested() @Type(() => BillingSettingsDto) billing?: BillingSettingsDto;
+  @ApiPropertyOptional({ type: RemindersSettingsDto, description: 'partial — merged into the stored reminder settings' })
+  @IsOptional() @ValidateNested() @Type(() => RemindersSettingsDto) reminders?: RemindersSettingsDto;
 }
 
 export class BroadcastDto {

@@ -18,13 +18,18 @@ import {
   UpdateSettingsDto,
 } from './admin.dto';
 import { AdminService } from './admin.service';
+import { BillingService } from '../billing/billing.service';
+import { CreateInvoiceDto, EmailsQuery, InvoicesQuery, PayInvoiceDto, RemindDto, VoidInvoiceDto } from '../billing/billing.dto';
 
 /** Platform admin portal (SUPER_ADMIN only) — docs/ADMIN_PORTAL.md. */
 @ApiBearerAuth()
 @Roles('SUPER_ADMIN')
 @Controller('admin')
 export class AdminController {
-  constructor(private readonly admin: AdminService) {}
+  constructor(
+    private readonly admin: AdminService,
+    private readonly billing: BillingService,
+  ) {}
 
   @ApiTags('admin · overview')
   @ApiOperation({ summary: 'Platform KPIs: companies by status, MRR/ARR, signups, expiring soon, new leads' })
@@ -160,5 +165,65 @@ export class AdminController {
   @Post('broadcast')
   broadcast(@Body() dto: BroadcastDto) {
     return this.admin.broadcast(dto);
+  }
+
+  // ---------- billing (v2) ----------
+  @ApiTags('admin · billing')
+  @ApiOperation({ summary: 'Invoices (paginated) + platform-wide summary tiles' })
+  @Get('invoices')
+  invoices(@Query() q: InvoicesQuery) {
+    return this.billing.list(q);
+  }
+
+  @ApiTags('admin · billing')
+  @ApiOperation({ summary: 'Printable tax invoice: Invoice & { company, seller }' })
+  @Get('invoices/:id')
+  invoice(@Param('id') id: string) {
+    return this.billing.detail(id);
+  }
+
+  @ApiTags('admin · billing')
+  @ApiOperation({ summary: 'Issue an invoice (defaults: next period, active employees, effective price, company cycle)' })
+  @Post('companies/:id/invoices')
+  createInvoice(@CurrentAdmin() a: PlatformUser, @Param('id') id: string, @Body() dto: CreateInvoiceDto) {
+    return this.billing.create(a, id, dto);
+  }
+
+  @ApiTags('admin · billing')
+  @ApiOperation({ summary: 'Record payment (ISSUED → PAID, extends the subscription)' })
+  @HttpCode(200)
+  @Post('invoices/:id/pay')
+  payInvoice(@CurrentAdmin() a: PlatformUser, @Param('id') id: string, @Body() dto: PayInvoiceDto) {
+    return this.billing.pay(a, id, dto);
+  }
+
+  @ApiTags('admin · billing')
+  @ApiOperation({ summary: 'Void an issued invoice (reason required)' })
+  @HttpCode(200)
+  @Post('invoices/:id/void')
+  voidInvoice(@CurrentAdmin() a: PlatformUser, @Param('id') id: string, @Body() dto: VoidInvoiceDto) {
+    return this.billing.void(a, id, dto);
+  }
+
+  @ApiTags('admin · billing')
+  @ApiOperation({ summary: 'Email log / outbox, newest first' })
+  @Get('emails')
+  emails(@Query() q: EmailsQuery) {
+    return this.billing.emails(q);
+  }
+
+  @ApiTags('admin · billing')
+  @ApiOperation({ summary: 'Send a manual reminder to the company owner' })
+  @Post('companies/:id/remind')
+  remind(@CurrentAdmin() a: PlatformUser, @Param('id') id: string, @Body() dto: RemindDto) {
+    return this.billing.remind(a, id, dto);
+  }
+
+  @ApiTags('admin · billing')
+  @ApiOperation({ summary: 'Run the subscription reminder job now' })
+  @HttpCode(200)
+  @Post('reminders/run')
+  runReminders() {
+    return this.billing.runReminders();
   }
 }

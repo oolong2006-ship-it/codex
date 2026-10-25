@@ -63,7 +63,8 @@ describe('Platform admin portal (e2e)', () => {
 
   it('settings default to approval required, 14 trial days, list prices', async () => {
     const s = await http.get('/api/admin/settings').set(auth(adminToken)).expect(200);
-    expect(s.body).toEqual({ requireApproval: true, trialDays: 14, prices: { ESSENTIALS: 19, GROWTH: 29, ENTERPRISE: null }, annualDiscount: 0.15 });
+    expect(s.body).toMatchObject({ requireApproval: true, trialDays: 14, prices: { ESSENTIALS: 19, GROWTH: 29, ENTERPRISE: null }, annualDiscount: 0.15 });
+    expect(Object.keys(s.body).sort()).toEqual(['annualDiscount', 'billing', 'prices', 'reminders', 'requireApproval', 'trialDays']); // v2 adds billing / reminders
     await http.patch('/api/admin/settings').set(auth(adminToken)).send({ annualDiscount: 2 }).expect(400);
   });
 

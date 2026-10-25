@@ -45,7 +45,7 @@ function make(rows: ReturnType<typeof company>[], employees: { companyId: string
     mrr: jest.fn(() => 0),
     daysLeft: jest.fn(() => null),
   };
-  const svc = new AdminService(prisma as never, platform as never, {} as never, {} as never, {} as never);
+  const svc = new AdminService(prisma as never, platform as never, {} as never, {} as never, {} as never, {} as never);
   return { svc, prisma, platform };
 }
 

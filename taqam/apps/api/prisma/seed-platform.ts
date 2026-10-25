@@ -3,9 +3,11 @@
  * Platform admin portal demo data (docs/ADMIN_PORTAL.md → "Seed additions"):
  * the SUPER_ADMIN account, 7 extra subscriber companies in mixed lifecycle states, their event history, and 6 leads.
  */
-import { BillingCycle, CompanyEventType, CompanyStatus, Plan, Prisma, PrismaClient } from '@prisma/client';
+import { BillingCycle, CompanyEventType, CompanyStatus, EmailType, PaymentMethod, Plan, Prisma, PrismaClient } from '@prisma/client';
 import { SAUDI_LEAVE_POLICIES } from '@taqam/core';
 import { addDays, day, riyadhDateTime, todayStr } from '../src/common/dates';
+import { addDaysStr, addMonthsClamped, computeInvoice, DEFAULT_BILLING, nextInvoiceNumber, periodEndOf } from '../src/billing/billing.math';
+import { EmailContent, expiredEmail, invoiceIssuedEmail, invoiceOverdueEmail, paymentReceivedEmail, trialEndingEmail } from '../src/billing/billing.emails';
 
 export const ADMIN_EMAIL = 'admin@shuoon.demo';
 export const ADMIN_NAME = 'مدير المنصة';
@@ -148,6 +150,8 @@ const TITLES: Record<string, string[]> = {
 
 export async function wipePlatformDemo(prisma: PrismaClient, companyIds: string[]) {
   if (companyIds.length) await prisma.companyEvent.deleteMany({ where: { companyId: { in: companyIds } } });
+  // invoices cascade with the companies; the email log is not FK-bound
+  if (companyIds.length) await prisma.emailLog.deleteMany({ where: { companyId: { in: companyIds } } });
   await prisma.lead.deleteMany({ where: { email: { in: LEAD_EMAILS } } });
 }
 
@@ -287,6 +291,140 @@ export async function seedPlatform(prisma: PrismaClient, opts: { passwordHash: s
     data: LEADS.map(({ daysAgo: ago, ...l }) => ({ ...l, createdAt: daysAgo(ago, '13:00'), updatedAt: daysAgo(Math.max(0, ago - 1), '13:00') })),
   });
 
+  const billing = await seedBilling(prisma, { demoCompanyId: demo.id, admin: { id: admin.id, name: admin.name } });
+
   console.log(`✅ Platform: ${ADMIN_EMAIL} (SUPER_ADMIN) + ${EXTRA_COMPANIES.length} extra companies + ${LEADS.length} leads`);
+  console.log(`   Billing: ${billing.invoices} invoices, ${billing.emails} logged emails`);
   for (const c of EXTRA_COMPANIES) console.log(`   ${c.status.padEnd(9)} ${c.nameAr} — owner ${c.owner.email}`);
+}
+
+/**
+ * Billing demo (docs/ADMIN_PORTAL.md v2): Ward Al-Sham gets 3 PAID past monthly invoices + 1 ISSUED current one,
+ * Masar Logistics an overdue ISSUED annual renewal, and a few LOGGED emails (with the dedupe keys the reminder job
+ * would have used, so running it today does not resend them).
+ */
+async function seedBilling(prisma: PrismaClient, opts: { demoCompanyId: string; admin: { id: string; name: string } }) {
+  const today = todayStr();
+  const at = (d: string, hour = '10:00') => riyadhDateTime(d, hour);
+  const settings = await prisma.platformSettings.findUniqueOrThrow({ where: { id: 1 } });
+  const vatRate = DEFAULT_BILLING.vatRate;
+  const by = { adminId: opts.admin.id, adminName: opts.admin.name };
+  let invoices = 0;
+  let emails = 0;
+
+  const owner = async (companyId: string) =>
+    prisma.user.findFirstOrThrow({ where: { companyId, role: 'OWNER' }, orderBy: { createdAt: 'asc' }, select: { name: true, email: true } });
+  const email = async (companyId: string, type: EmailType, content: EmailContent, createdAt: Date, dedupeKey: string | null = null) => {
+    const o = await owner(companyId);
+    const when = createdAt.getTime() > Date.now() ? new Date() : createdAt; // "today 09:00" may still be ahead
+    await prisma.emailLog.create({ data: { companyId, to: o.email, subject: content.subject, body: content.body, type, status: 'LOGGED', dedupeKey, createdAt: when } });
+    emails++;
+  };
+
+  type InvoiceDef = {
+    companyId: string;
+    companyName: string;
+    plan: Plan;
+    cycle: BillingCycle;
+    employees: number;
+    unitPrice: number;
+    periodStart: string;
+    issueDate: string;
+    paid?: { date: string; method: PaymentMethod; ref: string };
+  };
+  const issue = async (d: InvoiceDef) => {
+    const year = Number(d.issueDate.slice(0, 4));
+    const existing = await prisma.invoice.findMany({ where: { number: { startsWith: `SH-${year}-` } }, select: { number: true } });
+    const number = nextInvoiceNumber(year, existing.map((e) => e.number));
+    const a = computeInvoice({ employees: d.employees, unitPrice: d.unitPrice, billingCycle: d.cycle, annualDiscount: settings.annualDiscount, vatRate });
+    const periodEnd = periodEndOf(d.periodStart, a.months);
+    const dueDate = addDaysStr(d.issueDate, DEFAULT_BILLING.invoiceDueDays);
+    const inv = await prisma.invoice.create({
+      data: {
+        number,
+        companyId: d.companyId,
+        companyName: d.companyName,
+        status: d.paid ? 'PAID' : 'ISSUED',
+        plan: d.plan,
+        billingCycle: d.cycle,
+        periodStart: day(d.periodStart),
+        periodEnd: day(periodEnd),
+        months: a.months,
+        employees: d.employees,
+        unitPrice: d.unitPrice,
+        subtotal: a.subtotal,
+        discountRate: a.discountRate,
+        discount: a.discount,
+        taxable: a.taxable,
+        vatRate,
+        vat: a.vat,
+        total: a.total,
+        issueDate: day(d.issueDate),
+        dueDate: day(dueDate),
+        paidAt: d.paid ? at(d.paid.date, '13:20') : null,
+        paymentMethod: d.paid?.method ?? null,
+        paymentRef: d.paid?.ref ?? null,
+        createdById: opts.admin.id,
+        createdByName: opts.admin.name,
+        createdAt: at(d.issueDate, '09:30'),
+      },
+    });
+    invoices++;
+    const status = (await prisma.company.findUniqueOrThrow({ where: { id: d.companyId }, select: { status: true } })).status;
+    await prisma.companyEvent.create({
+      data: { companyId: d.companyId, companyName: d.companyName, type: 'INVOICE_ISSUED', fromStatus: status, toStatus: status, data: { invoiceId: inv.id, number, total: a.total }, ...by, createdAt: at(d.issueDate, '09:30') },
+    });
+    if (d.paid) {
+      await prisma.companyEvent.create({
+        data: { companyId: d.companyId, companyName: d.companyName, type: 'INVOICE_PAID', fromStatus: status, toStatus: status, data: { invoiceId: inv.id, number, total: a.total, paymentMethod: d.paid.method }, ...by, createdAt: at(d.paid.date, '13:20') },
+      });
+    }
+    const ctx = { number, periodStart: d.periodStart, periodEnd, total: a.total, dueDate, employees: d.employees, plan: d.plan };
+    return { inv, ctx };
+  };
+
+  // ---- Ward Al-Sham: monthly GROWTH, 40 staff × 29 SAR; 3 paid months + the current month issued ----
+  const demo = await prisma.company.findUniqueOrThrow({ where: { id: opts.demoCompanyId } });
+  const demoOwner = await owner(demo.id);
+  const monthStart = `${today.slice(0, 7)}-01`;
+  const base = { companyId: demo.id, companyName: demo.nameAr, plan: demo.plan, cycle: 'MONTHLY' as BillingCycle, employees: 40, unitPrice: 29 };
+  let lastPaid: Awaited<ReturnType<typeof issue>> | null = null;
+  for (let m = 3; m >= 1; m--) {
+    const periodStart = addMonthsClamped(monthStart, -m);
+    const issueDate = addDaysStr(periodStart, -3);
+    lastPaid = await issue({ ...base, periodStart, issueDate, paid: { date: addDaysStr(issueDate, 2), method: 'BANK_TRANSFER', ref: `TRX-${periodStart.replace(/-/g, '').slice(0, 6)}-0${m}` } });
+  }
+  const current = await issue({ ...base, periodStart: monthStart, issueDate: addDaysStr(today, -2) });
+  await email(demo.id, 'PAYMENT_RECEIVED', paymentReceivedEmail({ companyName: demo.nameAr, ownerName: demoOwner.name, invoice: lastPaid!.ctx, paymentMethod: 'BANK_TRANSFER', subscriptionEndsAt: demo.subscriptionEndsAt ? todayStr(demo.subscriptionEndsAt) : null }), at(lastPaid!.inv.paidAt ? todayStr(lastPaid!.inv.paidAt) : today, '13:25'));
+  await email(demo.id, 'INVOICE_ISSUED', invoiceIssuedEmail({ companyName: demo.nameAr, ownerName: demoOwner.name, invoice: current.ctx, billing: DEFAULT_BILLING }), at(addDaysStr(today, -2), '09:31'));
+
+  // ---- Masar Logistics (ACTIVE, ENTERPRISE annual @ 22): renewal invoice issued 20 days ago, now overdue ----
+  const masar = await prisma.company.findFirstOrThrow({ where: { nameEn: 'Masar Logistics' } });
+  const masarOwner = await owner(masar.id);
+  const renewalStart = addDaysStr(todayStr(masar.subscriptionEndsAt!), 1);
+  const overdue = await issue({ companyId: masar.id, companyName: masar.nameAr, plan: masar.plan, cycle: 'ANNUAL', employees: 15, unitPrice: 22, periodStart: renewalStart, issueDate: addDaysStr(today, -20) });
+  await email(masar.id, 'INVOICE_ISSUED', invoiceIssuedEmail({ companyName: masar.nameAr, ownerName: masarOwner.name, invoice: overdue.ctx, billing: DEFAULT_BILLING }), at(addDaysStr(today, -20), '09:31'));
+  for (const days of [1, 7]) {
+    const sentDay = addDaysStr(overdue.ctx.dueDate, days);
+    await email(masar.id, 'INVOICE_OVERDUE', invoiceOverdueEmail({ companyName: masar.nameAr, ownerName: masarOwner.name, invoice: overdue.ctx, daysOverdue: days, billing: DEFAULT_BILLING }), at(sentDay, '09:00'), `INVOICE_OVERDUE:${overdue.inv.id}:${days}`);
+    await prisma.companyEvent.create({ data: { companyId: masar.id, companyName: masar.nameAr, type: 'REMINDER_SENT', fromStatus: 'ACTIVE', toStatus: 'ACTIVE', data: { type: 'INVOICE_OVERDUE', daysOverdue: days, invoiceId: overdue.inv.id, number: overdue.inv.number }, createdAt: at(sentDay, '09:00') } });
+  }
+
+  // ---- trial ending soon (Bin Al-Deera, 3 days left): the 7-day reminder went out 4 days ago, the 3-day one today ----
+  const deera = await prisma.company.findFirstOrThrow({ where: { nameEn: 'Bin Al-Deera Coffee' } });
+  const deeraOwner = await owner(deera.id);
+  const trialEnd = todayStr(deera.trialEndsAt!);
+  for (const daysLeft of [7, 3]) {
+    const sentDay = addDaysStr(trialEnd, -daysLeft);
+    if (sentDay > today) continue;
+    await email(deera.id, 'TRIAL_ENDING', trialEndingEmail({ companyName: deera.nameAr, ownerName: deeraOwner.name, daysLeft, endDay: trialEnd }), at(sentDay, '09:00'), `TRIAL_ENDING:${deera.id}:${trialEnd}:${daysLeft}`);
+  }
+
+  // ---- expired trial (Lamsat Jamal) ----
+  const lamsa = await prisma.company.findFirstOrThrow({ where: { nameEn: 'Lamsat Jamal Salon' } });
+  const lamsaOwner = await owner(lamsa.id);
+  const lamsaEnd = todayStr(lamsa.trialEndsAt!);
+  await email(lamsa.id, 'EXPIRED', expiredEmail({ companyName: lamsa.nameAr, ownerName: lamsaOwner.name, endDay: lamsaEnd, wasTrial: true }), at(addDaysStr(lamsaEnd, 1), '00:06'), `EXPIRED:${lamsa.id}:${lamsaEnd}`);
+
+  return { invoices, emails };
 }

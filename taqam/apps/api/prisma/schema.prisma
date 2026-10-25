@@ -50,6 +50,39 @@ enum CompanyEventType {
   IMPERSONATED
   EXPIRED
   DELETED
+  INVOICE_ISSUED
+  INVOICE_PAID
+  INVOICE_VOIDED
+  REMINDER_SENT
+}
+
+enum InvoiceStatus {
+  ISSUED
+  PAID
+  VOID
+}
+
+enum PaymentMethod {
+  BANK_TRANSFER
+  CARD
+  CASH
+  OTHER
+}
+
+enum EmailType {
+  TRIAL_ENDING
+  SUBSCRIPTION_ENDING
+  EXPIRED
+  INVOICE_ISSUED
+  PAYMENT_RECEIVED
+  INVOICE_OVERDUE
+  MANUAL_REMINDER
+}
+
+enum EmailStatus {
+  SENT
+  FAILED
+  LOGGED
 }
 
 enum LeadStatus {
@@ -202,6 +235,7 @@ model Company {
   performanceReviews PerformanceReview[]
   jobOpenings        JobOpening[]
   candidates         Candidate[]
+  invoices           Invoice[]
 }
 
 model Branch {
@@ -759,5 +793,70 @@ model PlatformSettings {
   trialDays       Int      @default(14)
   prices          Json     @default("{\"ESSENTIALS\":19,\"GROWTH\":29,\"ENTERPRISE\":null}")
   annualDiscount  Float    @default(0.15)
+  /// partial overrides of the billing defaults (seller details, VAT, due days) — merged with defaults on read
+  billing         Json     @default("{}")
+  /// partial overrides of the reminder defaults — merged with defaults on read
+  reminders       Json     @default("{}")
   updatedAt       DateTime @default(now()) @updatedAt
+}
+
+/// Subscription invoice issued by the platform to a subscriber company (docs/ADMIN_PORTAL.md v2).
+model Invoice {
+  id            String         @id @default(uuid())
+  /// SH-<issue year>-<4-digit sequence per year>
+  number        String         @unique
+  companyId     String
+  /// buyer name at issue time
+  companyName   String
+  status        InvoiceStatus  @default(ISSUED)
+  plan          Plan
+  billingCycle  BillingCycle
+  periodStart   DateTime       @db.Date
+  periodEnd     DateTime       @db.Date
+  months        Int
+  employees     Int
+  unitPrice     Decimal        @db.Decimal(10, 2)
+  subtotal      Decimal        @db.Decimal(12, 2)
+  discountRate  Float          @default(0)
+  discount      Decimal        @db.Decimal(12, 2)
+  taxable       Decimal        @db.Decimal(12, 2)
+  vatRate       Float
+  vat           Decimal        @db.Decimal(12, 2)
+  total         Decimal        @db.Decimal(12, 2)
+  issueDate     DateTime       @db.Date
+  dueDate       DateTime       @db.Date
+  paidAt        DateTime?
+  paymentMethod PaymentMethod?
+  paymentRef    String?
+  notes         String?
+  voidReason    String?
+  voidedAt      DateTime?
+  createdById   String?
+  createdByName String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId])
+  @@index([status])
+  @@index([dueDate])
+}
+
+/// Outbox / log of every email the platform sends to subscribers. Not FK-bound: kept after a company is deleted.
+model EmailLog {
+  id        String      @id @default(uuid())
+  companyId String?
+  to        String
+  subject   String
+  body      String
+  type      EmailType
+  status    EmailStatus
+  error     String?
+  /// automatic reminders only: makes re-running the job idempotent
+  dedupeKey String?     @unique
+  createdAt DateTime    @default(now())
+
+  @@index([createdAt])
+  @@index([companyId, createdAt])
 }

@@ -7,3 +7,5 @@ process.env.RATE_LIMIT_MAX = '100000';
 // Platform admin bootstrap (PLATFORM_ADMIN_EMAIL / PLATFORM_ADMIN_PASSWORD) is exercised by admin.e2e-spec.ts.
 process.env.PLATFORM_ADMIN_EMAIL = 'Platform@Test.sa';
 process.env.PLATFORM_ADMIN_PASSWORD = 'Admin@2026!';
+// Emails are never sent from tests: no SMTP → EmailLog status LOGGED.
+delete process.env.SMTP_HOST;
