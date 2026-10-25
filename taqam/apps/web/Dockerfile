@@ -15,6 +15,9 @@ RUN npm ci
 COPY apps/web/ ./
 ARG NEXT_PUBLIC_API_URL=http://localhost:4100/api
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+# canonical site URL for SEO metadata, robots.txt and sitemap.xml
+ARG NEXT_PUBLIC_SITE_URL=https://www.shuoon.net
+ENV NEXT_PUBLIC_SITE_URL=$NEXT_PUBLIC_SITE_URL
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN npm run build
 

@@ -1,0 +1,28 @@
+# شؤون — الوكيل العكسي وشهادات HTTPS (Let's Encrypt، تتجدد تلقائياً)
+{
+	email {$ACME_EMAIL}
+}
+
+# الدومين المجرد يُحوَّل إلى www
+{$DOMAIN} {
+	redir https://www.{$DOMAIN}{uri} permanent
+}
+
+# الموقع ولوحة التحكم وتطبيق الموظف وبوابة المنصة
+www.{$DOMAIN} {
+	encode zstd gzip
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+	reverse_proxy web:3100
+}
+
+# الخادم (API)
+api.{$DOMAIN} {
+	encode zstd gzip
+	header -Server
+	reverse_proxy api:4100
+}
