@@ -79,3 +79,81 @@ Shell distinct from the company dashboard (night `#0C1F24` sidebar, label «بو
 - `/admin/broadcast`: send announcement to companies.
 - `/admin/settings`: approval required toggle, trial days, plan prices, annual discount; platform admins management.
 - Login page: show the API's Arabic message for PENDING/SUSPENDED/EXPIRED in a clear state; after signup, if `company.status === 'PENDING'`, show a success screen «تم استلام طلبك، وسنفعّل حسابك خلال يوم عمل» instead of entering /app.
+
+---
+
+# v2 — Billing (invoices) & subscription reminders
+
+Extends v1 above. All money values are numbers rounded with core `round2`. Dates: `YYYY-MM-DD` for calendar days (Riyadh), ISO for instants.
+
+## Settings additions (`GET/PATCH /admin/settings`)
+```
+billing:   { sellerName: 'شؤون لتقنية المعلومات', sellerNameEn: 'Shuoon IT', sellerVatNumber: '', sellerCrNumber: '',
+             sellerAddress: 'الرياض، المملكة العربية السعودية', sellerEmail: 'hello@shuoon.net', sellerPhone: '+966 55 042 1235',
+             vatRate: 0.15, invoiceDueDays: 7, bankName: '', iban: '' }
+reminders: { enabled: true, trialDays: [7, 3, 1], subscriptionDays: [14, 7, 1], notifyOnExpiry: true, overdueInvoiceDays: [1, 7] }
+```
+PATCH accepts partial `billing` / `reminders` objects (merged). Validation: vatRate 0..1, invoiceDueDays 0..90, day lists = ints 0..60 (max 6 items).
+
+## Invoice
+```
+Invoice = { id, number, companyId, companyName, status: 'ISSUED'|'PAID'|'VOID', overdue: boolean,
+  plan, billingCycle, periodStart, periodEnd, months, employees, unitPrice,
+  subtotal, discountRate, discount, taxable, vatRate, vat, total,
+  issueDate, dueDate, paidAt, paymentMethod: 'BANK_TRANSFER'|'CARD'|'CASH'|'OTHER'|null, paymentRef, notes, voidReason,
+  createdByName, createdAt }
+```
+- `number` = `SH-<issue year>-<4-digit sequence per year>` (e.g. `SH-2026-0007`), unique.
+- `months` = 1 (MONTHLY) or 12 (ANNUAL). `periodEnd` = periodStart + months − 1 day.
+- `subtotal = employees × unitPrice × months`; `discountRate` = annualDiscount for ANNUAL else 0; `discount = round2(subtotal × discountRate)`;
+  `taxable = subtotal − discount`; `vat = round2(taxable × vatRate)`; `total = round2(taxable + vat)`.
+- `overdue` = status ISSUED and dueDate < today (Riyadh).
+
+## Endpoints (SUPER_ADMIN)
+| Method | Path | Body / query | Response |
+|---|---|---|---|
+| GET | /admin/invoices | `status, companyId, search (number or company name), overdue=true, page, pageSize` | `Paginated<Invoice> & { summary: { outstanding: {count, amount}, overdue: {count, amount}, paidThisMonth: {count, amount} } }` (summary ignores filters) |
+| GET | /admin/invoices/:id | | `Invoice & { company: { id, nameAr, nameEn, crNumber, vatNumber, city, ownerName, ownerEmail, ownerPhone }, seller: billing settings }` |
+| POST | /admin/companies/:id/invoices | `{ periodStart?, employees?, unitPrice?, billingCycle?, notes?, sendEmail? = true }` | `Invoice` (201). Defaults: periodStart = day after the latest non-void invoice's periodEnd, else today; employees = max(1, activeEmployees); unitPrice = effectivePrice; billingCycle = company's. 400 `'حدد سعر الموظف لهذه المنشأة أولاً'` when no price; 400 `'لا يمكن إصدار فاتورة لمنشأة بانتظار الموافقة'` for PENDING. Logs `INVOICE_ISSUED`; emails owner (`INVOICE_ISSUED`) unless sendEmail=false. |
+| POST | /admin/invoices/:id/pay | `{ paymentMethod, paymentRef?, paidAt? (YYYY-MM-DD, default today), extendSubscription? = true }` | `Invoice`. Atomic ISSUED→PAID (else 409 `'تمت معالجة هذه الفاتورة مسبقاً'`). When extendSubscription: subscriptionEndsAt = max(current, end of periodEnd day); TRIAL/EXPIRED → ACTIVE (activatedAt if null); SUSPENDED stays suspended. Logs `INVOICE_PAID`; emails `PAYMENT_RECEIVED`. |
+| POST | /admin/invoices/:id/void | `{ reason }` (required) | `Invoice`. Atomic ISSUED→VOID (else 409 same message). Logs `INVOICE_VOIDED`. |
+| GET | /admin/emails | `type, status, companyId, page, pageSize` | `Paginated<EmailLog & { companyName }>` newest first |
+| POST | /admin/companies/:id/remind | `{ message? }` | `EmailLog` — manual reminder to the owner (`MANUAL_REMINDER`), body includes plan, status, days left, contact |
+| POST | /admin/reminders/run | | `{ sent: number }` — runs the reminder job now |
+
+`GET /admin/companies/:id` adds `invoices: Invoice[]` (latest 20) and `emails: EmailLog[]` (latest 20).
+`CompanyEventType` adds `INVOICE_ISSUED | INVOICE_PAID | INVOICE_VOIDED | REMINDER_SENT`.
+
+## Company owner (OWNER only)
+| GET | /billing/subscription | | `{ status, plan, billingCycle, effectivePrice, maxEmployees, activeEmployees, trialEndsAt, subscriptionEndsAt, daysLeft }` |
+| GET | /billing/invoices | `page, pageSize` | `Paginated<Invoice>` (own company; VOID included) |
+| GET | /billing/invoices/:id | | same shape as admin invoice detail (own company only, else 404) |
+
+## Email
+```
+EmailLog = { id, companyId, to, subject, body, type, status: 'SENT'|'FAILED'|'LOGGED', error, createdAt }
+type ∈ TRIAL_ENDING | SUBSCRIPTION_ENDING | EXPIRED | INVOICE_ISSUED | PAYMENT_RECEIVED | INVOICE_OVERDUE | MANUAL_REMINDER
+```
+- Sent with SMTP when `SMTP_HOST` is set (`SMTP_PORT` default 587, `SMTP_USER`, `SMTP_PASS`, `SMTP_SECURE`, `SMTP_FROM` default `شؤون <hello@shuoon.net>`); otherwise stored with status `LOGGED` (outbox, nothing leaves the server). A send error → `FAILED` with `error`; never throws to the caller.
+- Recipient: the company's first active OWNER user (fallback: first OWNER). No owner → skipped.
+- Bodies are Arabic first with an English paragraph; plain text (`body`) plus simple RTL HTML generated from it.
+- Every reminder also creates an in-app `Notification` for the owner.
+- Dedupe: automatic reminders store a unique `dedupeKey` (`TRIAL_ENDING:<companyId>:<endDay>:<daysLeft>`, `SUBSCRIPTION_ENDING:…`, `EXPIRED:<companyId>:<endDay>`, `INVOICE_OVERDUE:<invoiceId>:<daysOverdue>`) so re-running the job never double-sends.
+
+## Reminder job
+Daily 09:00 Asia/Riyadh (`subscription-reminders`) and `POST /admin/reminders/run`, when `reminders.enabled`:
+1. TRIAL with daysLeft ∈ trialDays → `TRIAL_ENDING`.
+2. ACTIVE with subscriptionEndsAt and daysLeft ∈ subscriptionDays → `SUBSCRIPTION_ENDING`.
+3. ISSUED invoices with (today − dueDate) ∈ overdueInvoiceDays → `INVOICE_OVERDUE`.
+4. Each successful automatic reminder logs a `REMINDER_SENT` CompanyEvent with `{ type, daysLeft }`.
+On expiry (`PlatformService.expire`) when `notifyOnExpiry` → `EXPIRED` email.
+
+## Web
+- Admin sidebar: «الفواتير» `/admin/invoices`, «الرسائل» `/admin/emails`.
+- `/admin/invoices`: summary tiles (مستحقة، متأخرة، محصّلة هذا الشهر), status tabs, search, table (number, company, period, total, due, status chip, overdue in red); actions: view, «تسجيل الدفع», «إلغاء».
+- `/admin/invoices/view?id=…`: printable A4 tax invoice (فاتورة ضريبية): seller & buyer blocks with VAT numbers, line table, subtotal/discount/VAT/total, bank details, status stamp (مدفوعة / ملغاة), Print button. (Query param, not a dynamic segment, so it works in the static demo.)
+- Company detail: tabs «الفواتير» (list + «إصدار فاتورة» modal with live calculation preview) and «الرسائل» (email log); header action «إرسال تذكير».
+- `/admin/emails`: log with type/status filters, preview drawer of the body, button «تشغيل التذكيرات الآن». Banner when status LOGGED: «لم يُضبط خادم البريد بعد؛ الرسائل محفوظة ولم تُرسل».
+- `/admin/settings`: sections «بيانات الفوترة» and «التذكيرات التلقائية».
+- Company app: `/app/billing` «الاشتراك والفواتير» (OWNER only, nav item under الإعدادات): subscription card + invoices list + the same printable invoice (`/app/billing/view?id=…`).
+- Demo mock mirrors all of the above; demo emails are always `LOGGED`; the reminder job runs lazily when `/admin/overview` loads (once per demo day).
