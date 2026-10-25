@@ -47,7 +47,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
   const login = async (email: string, password: string) => accept(await api.post<AuthResponse>('/auth/login', { email, password }));
   const register = async (body: Record<string, unknown>) => accept(await api.post<AuthResponse>('/auth/register', body));
-  const logout = () => { setToken(null); setUser(null); if (typeof window !== 'undefined') window.location.href = withBase('/login'); };
+  // Full page load to /login. Keep `user` set until the page unloads: clearing it first makes the shells'
+  // auth guards start a client-side router.replace('/login') that the unload aborts, and Next's static
+  // export then falls back to loading the route's RSC payload (login/index.txt) as the page.
+  const logout = () => {
+    setToken(null);
+    if (typeof window === 'undefined') { setUser(null); return; }
+    window.location.replace(withBase(process.env.NEXT_PUBLIC_DEMO === '1' ? '/login/' : '/login'));
+  };
 
   return <Ctx.Provider value={{ user, loading, login, register, logout, refresh }}>{children}</Ctx.Provider>;
 }
