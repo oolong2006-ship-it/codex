@@ -61,6 +61,18 @@ $ cd smart-attendance && pnpm lint && pnpm typecheck && pnpm test
 3. **TimeMobi:** قُبلت صفحات المتجر التي ينشرها البائع وموقع getattendance.com كمصادر رسمية؛ ملكية النطاق غير متحقق منها مستقلًا.
 4. **التصنيف DIFF:** أُعطي لصف Odoo (تسجيل الموقع دون فرض) فقط؛ فرضية التميز بربط الجهاز الموثق موثقة كفرضية غير مثبتة.
 
+## تصميم المنتج الموسّع (طلب المالك: «منتج قوي يُربط بأي برنامج، قوي في الدقة»)
+
+| البند | الحالة | الدليل |
+|---|---|---|
+| رؤية المنتج والتموضع والباقات | `Partial` (مقترح) | `docs/product/product-vision.md` — بانتظار PD-01…PD-05 |
+| Integration Hub | `Partial` (مقترح) | `docs/product/integration-hub.md` — ADR-0007…0012 مقترحة |
+| الثقة والدقة | `Partial` (مقترح) | `docs/product/trust-accuracy.md` — ADR-0002…0006 مقترحة؛ F19+ |
+| الأمن والامتثال | `Partial` (مقترح) | `docs/product/security-compliance.md` — S1–S31؛ ADR-0013 |
+| الصورة المجمّعة + سجل القرارات الموحّد | `Complete` (الوثيقة) | `docs/product/README.md` |
+
+لا شيء من هذا يغيّر الميثاق أو specs قبل الاعتماد. المرحلة 1 لم تبدأ.
+
 ## افتراضات جديدة
 
 A-01 … A-15 كلها جديدة في هذه الجلسة — انظر `docs/assumptions.md`.
