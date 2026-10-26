@@ -1,0 +1,20 @@
+{
+  "name": "@sa/domain",
+  "version": "0.0.0",
+  "private": true,
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "lint": "eslint src",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test:unit": "vitest run",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@sa/config": "workspace:*",
+    "eslint": "^9.17.0",
+    "typescript": "~5.7.2",
+    "vitest": "^2.1.8"
+  }
+}

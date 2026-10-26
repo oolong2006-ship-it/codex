@@ -1,0 +1,10 @@
+packages:
+  - "apps/*"
+  - "packages/*"
+onlyBuiltDependencies:
+  - "@swc/core"
+  - "@node-rs/argon2"
+  - "esbuild"
+overrides:
+  multer: ">=2.5.0"
+  js-yaml@>=5.0.0 <5.4.1: ">=5.4.1"

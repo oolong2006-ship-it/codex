@@ -1,0 +1,23 @@
+{
+  "name": "smart-attendance",
+  "private": true,
+  "packageManager": "pnpm@10.28.0",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev --parallel",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test --concurrency=1",
+    "test:unit": "turbo run test:unit",
+    "db:migrate": "pnpm --filter @sa/api db:migrate",
+    "db:seed": "pnpm --filter @sa/api db:seed",
+    "openapi": "pnpm --filter @sa/api openapi",
+    "format": "prettier --write ."
+  },
+  "devDependencies": {
+    "prettier": "^3.3.3",
+    "turbo": "^2.3.3",
+    "typescript": "~5.7.2"
+  }
+}

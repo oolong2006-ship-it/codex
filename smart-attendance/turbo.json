@@ -1,0 +1,11 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "tasks": {
+    "build": { "dependsOn": ["^build"], "outputs": ["dist/**"] },
+    "lint": { "dependsOn": ["^build"] },
+    "typecheck": { "dependsOn": ["^build"] },
+    "test:unit": { "dependsOn": ["^build"] },
+    "test": { "dependsOn": ["^build"], "cache": false, "env": ["DATABASE_URL", "DATABASE_APP_URL", "DATABASE_PLATFORM_URL", "REDIS_URL", "JWT_SECRET", "APP_ENV", "ATTESTATION_ADAPTER"] },
+    "dev": { "cache": false, "persistent": true }
+  }
+}

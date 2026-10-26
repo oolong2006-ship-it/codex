@@ -1,0 +1,17 @@
+# بيئة التطوير المحلية: Postgres 16 + PostGIS، وRedis.
+services:
+  db:
+    image: postgis/postgis:16-3.4
+    environment:
+      POSTGRES_USER: sa_owner
+      POSTGRES_PASSWORD: sa_owner_dev
+      POSTGRES_DB: smart_attendance
+    ports: ["54329:5432"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sa_owner -d smart_attendance"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+  redis:
+    image: redis:7-alpine
+    ports: ["63799:6379"]

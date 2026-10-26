@@ -1,0 +1,12 @@
+# فحص الأسرار. القيم في .env.example ومتغيرات اختبار CI قيم تطوير معلنة، لا أسرار.
+[extend]
+useDefault = true
+
+[allowlist]
+description = "dev/test placeholders"
+paths = [
+  '''\.env\.example$''',
+  '''apps/api/test/env\.ts$''',
+  '''node_modules''',
+  '''(^|/)\.env$''',
+]

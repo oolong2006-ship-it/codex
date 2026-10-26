@@ -1,7 +1,55 @@
 # لوحة الحالة
 
 **آخر تحديث:** 2026-10-26 — نهاية المرحلة 0 (Discovery & Product Definition)
-**المرحلة الحالية:** 1 — Secure Foundation (قيد التنفيذ). المرحلة 0 اعتُمدت.
+**المرحلة الحالية:** 1 — Secure Foundation **منتهية** (عدا البنود Blocked/Partial أدناه). التالي: المرحلة 2.
+
+## المرحلة 1 — Secure Foundation (2026-10-26)
+
+### بوابة الجلسة (نتيجة فعلية من نسخة نظيفة: `docker compose down -v` ثم):
+```
+$ docker compose up -d --wait && pnpm db:migrate && pnpm db:seed
+Applied: 0001_foundation.sql
+Seed complete
+$ pnpm lint        → Tasks: 3 successful, 3 total
+$ pnpm typecheck   → Tasks: 3 successful, 3 total
+$ pnpm test
+@sa/domain:test:  Test Files  1 passed (1)   — 11 tests
+@sa/api:test: Test Suites: 7 passed, 7 total
+@sa/api:test: Tests:       50 passed, 50 total
+$ pnpm audit --prod → No known vulnerabilities found
+```
+
+| البند | الحالة | الدليل |
+|---|---|---|
+| Monorepo pnpm + Turborepo + config مشتركة | `Complete` | `package.json`، `turbo.json`، `packages/config` |
+| بيئة محلية بأمر واحد + `.env.example` دون أسرار | `Complete` | `docker-compose.yml`، README |
+| Migrations (كل جداول §3 + RLS + append-only) | `Complete` | `db/migrations/0001_foundation.sql`؛ `isolation.e2e.ts`، `db-constraints.e2e.ts` |
+| الدخول بالبريد/الجوال، JWT 15 دقيقة، refresh دوّار مع كشف إعادة الاستخدام | `Complete` | `auth.e2e.ts` |
+| MFA (TOTP) إلزامي لـ HR والإدارة + منع إعادة استخدام الرمز | `Complete` | `auth.e2e.ts` |
+| RBAC + ABAC بنطاق الفرع | `Complete` | `isolation.e2e.ts` (ABAC)، `domain.test.ts` |
+| DeviceLock على الخادم (رمز، ربط، طلب تغيير، اعتماد/رفض، إيقاف/إعادة تفعيل) | `Complete` | `devicelock.e2e.ts` (13 اختبارًا) |
+| F6، F7 | `Complete` | `devicelock.e2e.ts` |
+| F8 (API + RLS) + «RLS وحده» | `Complete` | `isolation.e2e.ts` |
+| F16 على `audit_logs` | `Complete` | `db-constraints.e2e.ts` |
+| قيد ارتباط ACTIVE واحد (DB) | `Complete` | `db-constraints.e2e.ts` |
+| Audit: داخل معاملة العملية + interceptor للمحاولات المرفوضة | `Complete` | `devicelock.e2e.ts` (`*.denied`)، `auth.e2e.ts` |
+| OpenAPI 3.1 مولّد ويغطي كل endpoints | `Complete` | `openapi.e2e.ts`؛ `apps/api/openapi.json` (20 مسارًا) |
+| `FakeAttestationAdapter` في التطوير، ورفض التشغيل في الإنتاج | `Complete` | `config.spec.ts` |
+| التحقق الحقيقي من App Attest / Key Attestation / Play Integrity | `Blocked` | يحتاج أجهزة حقيقية + Apple Team ID + مشروع Google Cloud/Play Console — Spike ADR-0001. الإنتاج يرفض التشغيل حتى يُنفذ |
+| CI (lint، typecheck، unit، e2e على PostGIS حقيقي، OpenAPI، audit، secrets) | `Partial` | `.github/workflows/smart-attendance-ci.yml` — **لم يُشغّل بعد على GitHub**؛ فحص gitleaks لم يُجرّب محليًا (حظر سحب الصورة في البيئة) |
+| Seed (عميلان، فرعان لكل منهما، أدوار مختلفة) | `Complete` | `apps/api/src/db/seed.ts` |
+| Threat model (STRIDE) | `Complete` | `docs/threat-model.md` |
+
+### قرارات اتُّخذت دون ADR (المرحلة 1)
+1. **SQL صريح** للـ migrations (لا Drizzle) مع مشغّل بسيط — مسموح في CLAUDE.md §3.
+2. **ثلاثة أدوار DB:** `sa_owner` (migrations)، `sa_app` (NOBYPASSRLS)، `sa_platform` (BYPASSRLS لمسار Super Admin فقط). الدخول قبل معرفة العميل عبر دالتي `SECURITY DEFINER` بأقل الحقول.
+3. **البريد والجوال فريدان على مستوى المنصة** (لا لكل عميل) لتبسيط الدخول دون اختيار عميل.
+4. **لا تحقق حقيقي من الأجهزة بعد:** الإنتاج يرفض التشغيل بدل قبول أجهزة دون تحقق.
+5. **حذف DELETE** من صلاحيات التطبيق على جداول الهوية والأجهزة؛ التغيير بالحالة فقط.
+6. **اسم المُصدِر في TOTP:** «Thabt» (PD-01) — يتغير إن تغير الاسم.
+
+### مفتوح من المرحلة 1 إلى المرحلة 2
+Rate limiting على مستوى IP، وقناة دعوة آمنة لمسؤول العميل، وربط refresh token بالجهاز، وBullMQ (لا مهام خلفية بعد) — `docs/threat-model.md` «مفتوح».
 
 ## سجل الاعتماد — 2026-10-26
 
