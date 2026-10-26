@@ -27,6 +27,23 @@
 | BL-21 | التحقق بالوجه (High Assurance) | OUT (حتى DPIA) | بعد 4 | Bayzat، Jibble، Deputy، TECFY، PassMH | ksa P1 |
 | BL-22 | تنفيذ سبل الحقيقي لـ NationalAddressAdapter | PARITY | عند توفر الاشتراك | — | `Blocked` (ksa S4) |
 
+## معتمد من تصميم الفريق (2026-10-26)
+
+| ID | البند | المرحلة | المرجع |
+|---|---|---|---|
+| BL-23 | ملف الأدلة عند النزاع (Evidence Pack) | 3 | vision K1 — حجيته تحتاج رأيًا نظاميًا |
+| BL-24 | محاكي السياسات + معايرة الفروع | 3 | ADR-0004، vision K2/K8 |
+| BL-25 | لوحة تغطية الوردية اللحظية الكاملة | 3 | vision K3 |
+| BL-26 | الإعارة بين الفروع | 3 | vision K4 |
+| BL-27 | Decision API + Webhooks بحمولة الثقة | 3 | ADR-0007/0008/0009، vision K5 |
+| BL-28 | تقرير الثقة الشهري الكامل | 3 | vision K7 |
+| BL-29 | رفع LOC_UNCERTAIN بـ Wi-Fi الفرع | بعد Pilot 1 | ADR-0002/0003 |
+| BL-30 | وضعية STRICT | بعد Pilot 1 | ADR-0005 |
+| BL-31 | رمز مدير الفرع الدوّار | بعد Pilot 1 | ADR-0006 |
+| BL-32 | SCIM + موصلات Jisr/ZenHR/Odoo/Entra (P1) | 3 | ADR-0010، integration-hub §4 |
+| BL-33 | Sandbox وسجل مزامنة وواجهة تعيين حقول | 3 | integration-hub §5 |
+| BL-34 | ISO 27001 | السنة الأولى | PD-12 |
+
 ## خارج المنتج (OUT) — لا يُبنى ما لم يُعتمد خلاف ذلك
 
 | البند | المنافسون | السبب |

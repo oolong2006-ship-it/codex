@@ -190,3 +190,29 @@ Headers: `Authorization`, `Idempotency-Key: uuid`
 | F18 | مزامنة نفس الحدث غير المتصل مرتين | حدث واحد | API e2e |
 
 اختبارات الأجهزة الحقيقية (iOS + Android، داخل المبنى وخارجه) تُسجل يدويًا في `docs/field-tests.md` مع التاريخ والجهاز والنتيجة.
+
+---
+
+## H. تعديلات معتمدة (2026-10-26)
+
+> مصدرها ADRs 0002–0013. عند التعارض مع الأقسام السابقة يسري هذا القسم.
+
+### H1. الطبقة 3 — أكواد إضافية (ADR-0003)
+`LOC_APPROXIMATE_PERMISSION` (طبقة 2 → PENDING_REVIEW + `RETRY_LOCATION`)، `RISK_LOCATION_ACCESSORY`، `RISK_SAMPLE_INCONSISTENT`، `RISK_ACCURACY_IMPLAUSIBLE`، `RISK_WIFI_UNKNOWN_AT_SITE`، `RISK_REMOTE_CONTROL_APP`، `RISK_HIGH_DEVICE_ACTIVITY`، `RISK_BOOT_UNVERIFIED`، `RISK_APP_ATTEST_KEY_CHURN` (تحقيق فقط، لا يغير القرار)، وإشارات دعم `SUP_WIFI_KNOWN`، `SUP_PROVIDER_GNSS`.
+- `RISK_IMPOSSIBLE_TRAVEL` يُحسب على `max(0, d − a_prev − a_now)`.
+- `risk_points ≥ pending_threshold` (سياسة) → `PENDING_REVIEW`.
+- `LOC_UNCERTAIN` يُرفع إلى `VERIFIED` فقط بـ `SUP_WIFI_KNOWN` و`risk_points = 0` وخيار مفعّل للموقع ووضعية ليست STRICT. `LOC_OUTSIDE` لا يُرفع أبدًا.
+- `attendance_decisions` يضيف: `risk_points`، `support_points`، `calibration_snapshot_id`، `assurance_level`.
+
+### H2. اختيار العينة (ADR-0003)
+قبل §B.1: تُستبعد العينة إذا `captured_at < challenge.issued_at`، أو إذا `captured_at` بعد وقت استلام الخادم بأكثر من هامش السياسة (+ `RISK_CLOCK_SKEW`).
+
+### H3. عقد البصمة (ADR-0002)
+حقول اختيارية إضافية: لكل عينة `source_info{simulated, accessory}`، `vertical_accuracy_m`، `floor`؛ وللطلب `accuracy_authorization`، `wifi_connected_bssid_hash`، `wifi_scan_hashes[]`. BSSID لا يُخزن خامًا أبدًا.
+
+### H4. وضعيات الضمان (ADR-0005)
+`work_locations.assurance_level ∈ {STANDARD, HIGH, STRICT}` في إصدار السياسة؛ القيم الافتراضية في `docs/product/trust-accuracy.md` §6.
+
+### H5. اختبارات إضافية إلزامية
+- **F19–F43:** كما في `docs/product/trust-accuracy.md` §8 (F41 بعد تنفيذ ADR-0006).
+- **S1–S31:** كما في `docs/product/security-compliance.md` §6 (لكل اختبار مرحلة السطح الذي يغطيه).
