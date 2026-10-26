@@ -36,7 +36,7 @@ $ pnpm audit --prod → No known vulnerabilities found
 | OpenAPI 3.1 مولّد ويغطي كل endpoints | `Complete` | `openapi.e2e.ts`؛ `apps/api/openapi.json` (20 مسارًا) |
 | `FakeAttestationAdapter` في التطوير، ورفض التشغيل في الإنتاج | `Complete` | `config.spec.ts` |
 | التحقق الحقيقي من App Attest / Key Attestation / Play Integrity | `Blocked` | يحتاج أجهزة حقيقية + Apple Team ID + مشروع Google Cloud/Play Console — Spike ADR-0001. الإنتاج يرفض التشغيل حتى يُنفذ |
-| CI (lint، typecheck، unit، e2e على PostGIS حقيقي، OpenAPI، audit، secrets) | `Partial` | `.github/workflows/smart-attendance-ci.yml` — **لم يُشغّل بعد على GitHub**؛ فحص gitleaks لم يُجرّب محليًا (حظر سحب الصورة في البيئة) |
+| CI (lint، typecheck، unit، e2e على PostGIS حقيقي، OpenAPI، audit، secrets) | `Complete` | `.github/workflows/smart-attendance-ci.yml` — التشغيل #1 على GitHub ناجح بالوظائف الثلاث (run 40400074790) |
 | Seed (عميلان، فرعان لكل منهما، أدوار مختلفة) | `Complete` | `apps/api/src/db/seed.ts` |
 | Threat model (STRIDE) | `Complete` | `docs/threat-model.md` |
 
@@ -50,6 +50,17 @@ $ pnpm audit --prod → No known vulnerabilities found
 
 ### مفتوح من المرحلة 1 إلى المرحلة 2
 Rate limiting على مستوى IP، وقناة دعوة آمنة لمسؤول العميل، وربط refresh token بالجهاز، وBullMQ (لا مهام خلفية بعد) — `docs/threat-model.md` «مفتوح».
+
+## المرحلة 2 — قيد التنفيذ
+
+| البند | الحالة | الدليل |
+|---|---|---|
+| Trust Engine (specs §A، §B، §H) كدوال نقية | `Complete` | `packages/domain/src/trust/engine.ts`؛ `engine.test.ts` (49 اختبارًا: كل فروع المعادلة، F9–F14، F19، F21، F22، F27–F34) |
+| Attendance API (challenges، punches، idempotency، الأدلة) | `Not Started` | — |
+| الجلسات والورديات والوردية الليلية | `Not Started` | — |
+| الاستثناءات والتصحيح والإقفال | `Not Started` | — |
+| التقارير والتصدير | `Not Started` | — |
+| تطبيق الجوال (Expo) ولوحة الإدارة (Next.js) | `Not Started` | — |
 
 ## سجل الاعتماد — 2026-10-26
 
