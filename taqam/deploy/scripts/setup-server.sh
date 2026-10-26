@@ -3,6 +3,8 @@
 #   sudo bash taqam/deploy/scripts/setup-server.sh
 set -euo pipefail
 [ "$(id -u)" -eq 0 ] || { echo "شغّل السكربت بـ sudo"; exit 1; }
+# no interactive prompts (needrestart / config questions) during upgrades
+export DEBIAN_FRONTEND=noninteractive NEEDRESTART_MODE=a
 
 echo "==> تحديث النظام"
 apt-get update -y && apt-get upgrade -y
