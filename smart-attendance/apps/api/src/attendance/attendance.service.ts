@@ -25,6 +25,7 @@ import { PoliciesService } from '../common/policies.service';
 import { Principal } from '../common/principal';
 import { randomToken, sha256Hex } from '../auth/crypto';
 import { AttestationAdapter, DeviceSignals } from '../devices/attestation';
+import { SessionsService } from './sessions.service';
 
 export interface PunchSample {
   lat: number;
@@ -101,6 +102,7 @@ export class AttendanceService {
     private readonly audit: AuditService,
     private readonly adapter: AttestationAdapter,
     private readonly policies: PoliciesService,
+    private readonly sessions: SessionsService,
   ) {}
 
   private tenantOf(p: Principal): string {
@@ -348,6 +350,8 @@ export class AttendanceService {
         entityId: eventId,
         after: { type: input.type, decision: result.decision, reasons: result.reasons },
       });
+      // الجلسات تتغير بالبصمات المقبولة فقط؛ المرفوضة لا تدخل الجلسات.
+      if (result.decision !== 'REJECTED') await this.sessions.rebuild(tx, tenantId, employeeId, now);
       await tx.query(
         `INSERT INTO idempotency_keys (tenant_id, user_id, key, request_hash, status_code, response, created_at, expires_at)
          VALUES ($1, $2, $3, $4, 201, $5, $6, $7)`,

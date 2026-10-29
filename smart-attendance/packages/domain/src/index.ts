@@ -6,3 +6,4 @@ export * from './trust/types';
 export * from './trust/geo';
 export * from './trust/engine';
 export * from './attendance';
+export * from './sessions';

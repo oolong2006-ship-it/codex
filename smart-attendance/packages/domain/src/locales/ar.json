@@ -47,5 +47,10 @@
   "DEVICE_CHANGE_ALREADY_OPEN": "لديك طلب تغيير جهاز مفتوح.",
   "BINDING_INVALID_TRANSITION": "لا يمكن تغيير حالة ارتباط الجهاز بهذا الإجراء.",
   "IDEMPOTENCY_KEY_REUSED": "استُخدم مفتاح الطلب نفسه لطلب مختلف.",
-  "FEATURE_NOT_ENABLED": "هذه الميزة غير مفعلة لشركتك."
+  "FEATURE_NOT_ENABLED": "هذه الميزة غير مفعلة لشركتك.",
+  "EXCEPTION_NOT_APPLICABLE": "لا يمكن طلب استثناء على هذا القرار.",
+  "EXCEPTION_OUT_OF_WINDOW": "الحدث خارج نافذة الاستثناءات المسموحة.",
+  "EXCEPTION_ALREADY_OPEN": "يوجد طلب استثناء لهذا الحدث بالفعل.",
+  "EXCEPTION_NOT_OPEN": "طلب الاستثناء تمت معالجته بالفعل.",
+  "EXCEPTION_SELF_DECISION": "لا يمكنك اعتماد أو رفض استثنائك بنفسك."
 }

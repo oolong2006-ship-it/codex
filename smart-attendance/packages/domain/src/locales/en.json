@@ -47,5 +47,10 @@
   "DEVICE_CHANGE_ALREADY_OPEN": "You already have an open device change request.",
   "BINDING_INVALID_TRANSITION": "This action can't change the device link status.",
   "IDEMPOTENCY_KEY_REUSED": "The same request key was used for a different request.",
-  "FEATURE_NOT_ENABLED": "This feature is not enabled for your company."
+  "FEATURE_NOT_ENABLED": "This feature is not enabled for your company.",
+  "EXCEPTION_NOT_APPLICABLE": "An exception cannot be requested for this decision.",
+  "EXCEPTION_OUT_OF_WINDOW": "The event is outside the allowed exception window.",
+  "EXCEPTION_ALREADY_OPEN": "An exception request already exists for this event.",
+  "EXCEPTION_NOT_OPEN": "This exception request was already decided.",
+  "EXCEPTION_SELF_DECISION": "You cannot approve or reject your own exception."
 }

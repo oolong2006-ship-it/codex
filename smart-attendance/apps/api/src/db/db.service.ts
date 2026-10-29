@@ -1,6 +1,10 @@
 import { Inject, Injectable, OnModuleDestroy } from '@nestjs/common';
-import { Pool, PoolClient } from 'pg';
+import { Pool, PoolClient, types } from 'pg';
+
 import { APP_CONFIG, AppConfig } from '../config';
+
+// تاريخ تشغيلي (date) يبقى نصًا YYYY-MM-DD، لا منتصف ليل بمنطقة الخادم.
+types.setTypeParser(1082, (value) => value);
 
 export type Tx = PoolClient;
 

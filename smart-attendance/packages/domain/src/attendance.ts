@@ -41,6 +41,8 @@ export const DEFAULT_ATTENDANCE_POLICY = {
   idempotency_ttl_hours: 24,
   /** مدة صلاحية تحدي البصمة بالثواني (specs §D: +60s). */
   challenge_ttl_seconds: 60,
+  /** نافذة طلب الاستثناءات والبصمات المنسية بالأيام. */
+  exception_window_days: 14,
 };
 export type AttendancePolicy = typeof DEFAULT_ATTENDANCE_POLICY;
 
