@@ -90,6 +90,7 @@ CREATE TABLE attendance_decisions (
   risk_points              numeric NOT NULL DEFAULT 0,
   support_points           numeric NOT NULL DEFAULT 0,
   policy_version_id        uuid NOT NULL REFERENCES policy_versions(id),
+  attendance_policy_version_id uuid NOT NULL REFERENCES policy_versions(id),
   calibration_snapshot_id  uuid,
   engine_version           text NOT NULL,
   created_at               timestamptz NOT NULL DEFAULT now()

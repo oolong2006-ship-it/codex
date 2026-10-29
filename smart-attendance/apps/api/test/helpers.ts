@@ -33,7 +33,8 @@ export async function nextTotp(email: string): Promise<string> {
   if (!row?.mfa_secret_enc) throw new Error(`no TOTP secret for ${email}`);
   const secret = decryptSecret(Buffer.from(testEnv().MFA_ENC_KEY as string, 'base64'), row.mfa_secret_enc);
   const now = Math.floor(Date.now() / 30000);
-  const step = Math.max(now - 1, row.mfa_last_step === null ? now - 1 : Number(row.mfa_last_step) + 1);
+  // الخطوة الحالية: تبقى داخل نافذة الخادم ±1 حتى لو عبر الاختبار حدّ 30 ثانية أثناء التحقق.
+  const step = Math.max(now, row.mfa_last_step === null ? now : Number(row.mfa_last_step) + 1);
   if (step > now + 1) throw new Error('TOTP steps exhausted for this window');
   return authenticator.clone({ epoch: step * 30000 }).generate(secret);
 }

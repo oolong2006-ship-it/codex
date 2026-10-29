@@ -21,7 +21,8 @@ export interface AttestationResult {
 export interface AssertionInput {
   platform: 'ios' | 'android';
   keyId: string;
-  publicKey: string;
+  /** المفتاح الموثّق للجهاز؛ null = لا مفتاح، فيُفشل التوقيع. */
+  publicKey: string | null;
   /** SHA256(nonce ‖ canonical_json(body دون attestation)) بصيغة hex. */
   clientDataHash: string;
   payload: Record<string, unknown>;
@@ -44,7 +45,13 @@ export interface AssertionResult {
 export abstract class AttestationAdapter {
   abstract readonly name: string;
   abstract verifyKeyAttestation(input: AttestationInput): Promise<AttestationResult>;
-  abstract verifyAssertion(input: AssertionInput): Promise<AssertionResult>;
+  /** يُفشل التوقيع دون مفتاح موثّق، لكل المحولات، ثم يفوّض إلى التحقق الفعلي. */
+  async verifyAssertion(input: AssertionInput): Promise<AssertionResult> {
+    if (!input.publicKey) return { verified: false, signals: {} };
+    return this.checkAssertion({ ...input, publicKey: input.publicKey });
+  }
+
+  protected abstract checkAssertion(input: AssertionInput & { publicKey: string }): Promise<AssertionResult>;
 }
 
 /** توقيع Fake: HMAC-SHA256 بمفتاح الجهاز «العام» المزيف على clientDataHash. للاختبار فقط. */
@@ -74,7 +81,7 @@ export class FakeAttestationAdapter extends AttestationAdapter {
    * ينجح فقط إذا payload.signature = fakeSign(publicKey, clientDataHash)، فأي تعديل في
    * الجسم بعد التوقيع يفشل (F5). payload.fake_signals تحاكي حكم Play Integrity/Key Attestation.
    */
-  async verifyAssertion(input: AssertionInput): Promise<AssertionResult> {
+  protected async checkAssertion(input: AssertionInput & { publicKey: string }): Promise<AssertionResult> {
     const sig = typeof input.payload.signature === 'string' ? input.payload.signature : '';
     const expected = fakeSign(input.publicKey, input.clientDataHash);
     const verified =

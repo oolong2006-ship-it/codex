@@ -23,9 +23,8 @@ import { AuditMeta, AuditService } from '../common/audit.service';
 import { ApiError, badRequest, conflict, forbidden } from '../common/errors';
 import { PoliciesService } from '../common/policies.service';
 import { Principal } from '../common/principal';
-import { TenantChecks } from '../common/tenant-checks';
 import { randomToken, sha256Hex } from '../auth/crypto';
-import { AttestationAdapter } from '../devices/attestation';
+import { AttestationAdapter, DeviceSignals } from '../devices/attestation';
 
 export interface PunchSample {
   lat: number;
@@ -90,8 +89,8 @@ export function signedFields(input: PunchInput) {
 }
 
 /** clientDataHash = SHA256(nonce ‖ canonical_json(body دون attestation)) — specs §D. */
-export function clientDataHash(nonce: string, input: PunchInput): string {
-  return sha256Hex(nonce + canonicalJson(signedFields(input)));
+export function clientDataHash(nonce: string, signedJson: string): string {
+  return sha256Hex(nonce + signedJson);
 }
 
 @Injectable()
@@ -100,7 +99,6 @@ export class AttendanceService {
     @Inject(APP_CONFIG) private readonly config: AppConfig,
     private readonly db: DbService,
     private readonly audit: AuditService,
-    private readonly checks: TenantChecks,
     private readonly adapter: AttestationAdapter,
     private readonly policies: PoliciesService,
   ) {}
@@ -136,9 +134,12 @@ export class AttendanceService {
     const employeeId: string = p.employeeId;
     if (input.offline) throw badRequest('VALIDATION_FAILED', { field: 'offline', reason: 'offline punches are out of scope' });
     const tenantId = this.tenantOf(p);
-    const requestHash = sha256Hex(canonicalJson(signedFields(input)));
+    const signedJson = canonicalJson(signedFields(input));
+    const requestHash = sha256Hex(signedJson);
 
     return this.db.tenantTx(tenantId, async (tx) => {
+      // تسلسل البصمات لكل موظف: يغطي التحقق من التسلسل، ويجعل المفتاح المكرر ينتظر الطلب الأول.
+      await tx.query('SELECT id FROM employees WHERE id = $1 FOR UPDATE', [employeeId]);
       const prior = (
         await tx.query<{ request_hash: string; response: unknown; expires_at: Date }>(
           'SELECT request_hash, response, expires_at FROM idempotency_keys WHERE tenant_id = $1 AND user_id = $2 AND key = $3',
@@ -189,34 +190,24 @@ export class AttendanceService {
       ).rows[0];
       const deviceBound = Boolean(device) && device!.key_id === String(input.attestation.key_id ?? '') && device!.platform === input.os;
 
-      // التوقيع لا يُفحص إلا بتحدٍّ صالح وجهاز مربوط؛ وإلا تتولى طبقة الفحص القاطع الرفض.
+      const accountActive = state?.emp_status === 'ACTIVE' && state?.user_status === 'ACTIVE';
+      const tenantActive = state?.tenant_status === 'ACTIVE';
+
+      // التوقيع لا يُفحص إلا بتحدٍّ صالح وجهاز مربوط لحساب وعميل نشطين؛ جهاز بلا مفتاح موثّق يُرفض توقيعه (فشل مغلق).
       let attestationOk = true;
-      let deviceSignals: Awaited<ReturnType<AttestationAdapter['verifyAssertion']>>['signals'] = {};
-      if (challenge && deviceBound && device!.public_key) {
+      let deviceSignals: DeviceSignals = {};
+      if (challenge && deviceBound && accountActive && tenantActive) {
         const result = await this.adapter.verifyAssertion({
           platform: device!.platform,
           keyId: device!.key_id,
           publicKey: device!.public_key,
-          clientDataHash: clientDataHash(challenge.nonce, input),
+          clientDataHash: clientDataHash(challenge.nonce, signedJson),
           payload: input.attestation,
         });
         attestationOk = result.verified;
         deviceSignals = result.signals;
       }
 
-      // ── تسلسل الحضور: الانصراف يحتاج حضورًا مفتوحًا ──
-      const lastDecided = (
-        await tx.query<{ type: PunchType }>(
-          `SELECT e.type FROM attendance_events e JOIN attendance_decisions d ON d.event_id = e.id
-           WHERE e.employee_id = $1 AND d.decision <> 'REJECTED' ORDER BY e.server_time DESC LIMIT 1`,
-          [employeeId],
-        )
-      ).rows[0];
-      const open = lastDecided?.type === 'CLOCK_IN';
-      const sequenceValid =
-        input.type !== 'CLOCK_OUT' || open || !attendance.values.clock_out_requires_open_session;
-
-      // ── المواقع المفوّضة الآن ──
       const samples: LocationSample[] = input.location_samples.map((s) => ({
         lat: s.lat,
         lng: s.lng,
@@ -226,42 +217,64 @@ export class AttendanceService {
         is_mock: s.is_mock,
         source_info: s.source_info,
       }));
-      const siteRows = (
-        await tx.query<SiteRow>(
-          `SELECT w.id AS site_id, w.name, w.assurance_level, w.wifi_uplift_enabled, w.known_bssid_hashes,
-                  v.id AS gv_id, v.tolerance_m
-           FROM employee_site_assignments a
-           JOIN work_locations w ON w.id = a.work_location_id
-           JOIN geofences g ON g.work_location_id = w.id
-           JOIN geofence_versions v ON v.id = g.current_version_id
-           WHERE a.employee_id = $1 AND a.valid_from <= $2 AND (a.valid_to IS NULL OR a.valid_to > $2)
-             AND w.status = 'ACTIVE'`,
-          [employeeId, now],
-        )
-      ).rows;
-      const siteNames = new Map(siteRows.map((r) => [r.site_id, r.name]));
-      const sites: CandidateSite[] = [];
-      for (const row of siteRows) {
-        const distances = await this.signedDistances(tx, row.gv_id, samples);
-        sites.push({
-          site_id: row.site_id,
-          geofence_version_id: row.gv_id,
-          tolerance_m: Number(row.tolerance_m),
-          assurance_level: row.assurance_level,
-          in_current_shift: true,
-          wifi_uplift_enabled: row.wifi_uplift_enabled,
-          known_bssid_hashes: row.known_bssid_hashes ?? [],
-          signedDistance: (sample) => distances.get(sample) ?? Number.POSITIVE_INFINITY,
-        });
-      }
 
-      // ── سياق الخطر: آخر بصمة مقبولة، والأجهزة المشتركة، والربط الأخير ──
-      const risk = await this.riskContext(tx, input, device, employeeId, now, deviceSignals);
+      // الطبقات التالية تُقرأ فقط إذا اجتازت الفحوص القاطعة: القرار يرفض قبلها دون حاجة إليها.
+      const cleared = accountActive && tenantActive && deviceBound && attestationOk && Boolean(challenge);
+      let sequenceValid = true;
+      let siteRows: SiteRow[] = [];
+      let sites: CandidateSite[] = [];
+      let risk: RiskContext = {};
+      if (cleared) {
+        // ── تسلسل الحضور: الانصراف يحتاج حضورًا مفتوحًا ──
+        const lastDecided = (
+          await tx.query<{ type: PunchType }>(
+            `SELECT e.type FROM attendance_events e JOIN attendance_decisions d ON d.event_id = e.id
+             WHERE e.employee_id = $1 AND d.decision <> 'REJECTED' ORDER BY e.server_time DESC LIMIT 1`,
+            [employeeId],
+          )
+        ).rows[0];
+        const open = lastDecided?.type === 'CLOCK_IN';
+        sequenceValid = input.type !== 'CLOCK_OUT' || open || !attendance.values.clock_out_requires_open_session;
+
+        // ── المواقع المفوّضة الآن ──
+        siteRows = (
+          await tx.query<SiteRow>(
+            `SELECT w.id AS site_id, w.name, w.assurance_level, w.wifi_uplift_enabled, w.known_bssid_hashes,
+                    v.id AS gv_id, v.tolerance_m
+             FROM employee_site_assignments a
+             JOIN work_locations w ON w.id = a.work_location_id
+             JOIN geofences g ON g.work_location_id = w.id
+             JOIN geofence_versions v ON v.id = g.current_version_id
+             WHERE a.employee_id = $1 AND a.valid_from <= $2 AND (a.valid_to IS NULL OR a.valid_to > $2)
+               AND w.status = 'ACTIVE'`,
+            [employeeId, now],
+          )
+        ).rows;
+        const distancesByVersion = await this.signedDistances(tx, siteRows.map((r) => r.gv_id), samples);
+        sites = siteRows.map((row) => {
+          const distances = distancesByVersion.get(row.gv_id);
+          return {
+            site_id: row.site_id,
+            geofence_version_id: row.gv_id,
+            tolerance_m: Number(row.tolerance_m),
+            assurance_level: row.assurance_level,
+            // لا ورديات بعد: كل موقع مفوّض يُعد في الوردية الحالية.
+            in_current_shift: true,
+            wifi_uplift_enabled: row.wifi_uplift_enabled,
+            known_bssid_hashes: row.known_bssid_hashes ?? [],
+            // الموقع الذي لا مسافة له لا يُختار: يُعد بعيدًا بلا حد.
+            signedDistance: (sample) => distances?.get(sample) ?? Number.POSITIVE_INFINITY,
+          };
+        });
+
+        // ── سياق الخطر: آخر بصمة مقبولة، والأجهزة المشتركة، والربط الأخير ──
+        risk = await this.riskContext(tx, input, device, employeeId, now, deviceSignals);
+      }
 
       const result = evaluatePunch({
         checks: {
-          account_active: state?.emp_status === 'ACTIVE' && state?.user_status === 'ACTIVE',
-          tenant_active: state?.tenant_status === 'ACTIVE',
+          account_active: accountActive,
+          tenant_active: tenantActive,
           device_bound: deviceBound,
           attestation_ok: attestationOk,
           challenge_valid: Boolean(challenge),
@@ -297,12 +310,12 @@ export class AttendanceService {
       await tx.query(
         `INSERT INTO attendance_decisions (event_id, tenant_id, decision, reasons, signals, next_action,
            work_location_id, geofence_version_id, assurance_level, risk_points, support_points,
-           policy_version_id, engine_version)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`,
+           policy_version_id, attendance_policy_version_id, engine_version)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)`,
         [
           eventId, tenantId, result.decision, result.reasons, result.signals, result.next_action,
           result.site_id, result.geofence_version_id, result.assurance_level, result.risk_points,
-          result.support_points, trust.id, ENGINE_VERSION,
+          result.support_points, trust.id, attendance.id, ENGINE_VERSION,
         ],
       );
 
@@ -325,7 +338,7 @@ export class AttendanceService {
         server_time: now.toISOString(),
         decision: result.decision,
         reasons: result.reasons.map((code: ReasonCode) => ({ code, ...bilingual(code) })),
-        site: result.site_id ? { id: result.site_id, name: siteNames.get(result.site_id) ?? null } : null,
+        site: result.site_id ? { id: result.site_id, name: siteRows.find((r) => r.site_id === result.site_id)?.name ?? null } : null,
         next_action: result.next_action,
       };
 
@@ -340,7 +353,7 @@ export class AttendanceService {
          VALUES ($1, $2, $3, $4, 201, $5, $6, $7)`,
         [
           tenantId, p.userId, idempotencyKey, requestHash, JSON.stringify(response), now,
-          new Date(now.getTime() + 24 * 3600 * 1000),
+          new Date(now.getTime() + attendance.values.idempotency_ttl_hours * 3600 * 1000),
         ],
       );
       return response;
@@ -364,16 +377,21 @@ export class AttendanceService {
   }
 
   /**
-   * المسافة الموقّعة لكل عينة إلى سياج النسخة (specs §B): داخل السياج سالبة.
+   * المسافة الموقّعة لكل عينة إلى سياج كل نسخة (specs §B): داخل السياج سالبة.
    * الدائرة: distance − radius. المضلع: −(المسافة إلى الحد) داخله، و+المسافة إليه خارجه.
+   * استعلام واحد لكل البصمة مهما عدد المواقع المفوّضة.
    */
-  private async signedDistances(tx: Tx, versionId: string, samples: LocationSample[]): Promise<Map<LocationSample, number>> {
-    const out = new Map<LocationSample, number>();
+  private async signedDistances(
+    tx: Tx,
+    versionIds: string[],
+    samples: LocationSample[],
+  ): Promise<Map<string, Map<LocationSample, number>>> {
+    const out = new Map<string, Map<LocationSample, number>>();
     const valid = samples.map((s, index) => ({ s, index })).filter(({ s }) => isValidCoordinate(s.lat, s.lng));
-    if (!valid.length) return out;
+    if (!valid.length || !versionIds.length) return out;
     const rows = (
-      await tx.query<{ idx: number; s: number }>(
-        `SELECT p.idx::int AS idx,
+      await tx.query<{ gv_id: string; idx: number; s: number }>(
+        `SELECT v.id AS gv_id, p.idx::int AS idx,
            CASE WHEN v.kind = 'CIRCLE' THEN ST_Distance(v.center, p.pt) - v.radius_m
                 WHEN ST_Covers(v.polygon, p.pt) THEN -ST_Distance(ST_Boundary(v.polygon::geometry)::geography, p.pt)
                 ELSE ST_Distance(v.polygon, p.pt)
@@ -383,11 +401,15 @@ export class AttendanceService {
            SELECT u.idx, ST_SetSRID(ST_MakePoint(u.lng, u.lat), 4326)::geography AS pt
            FROM unnest($2::float8[], $3::float8[], $4::int[]) AS u(lng, lat, idx)
          ) p
-         WHERE v.id = $1`,
-        [versionId, valid.map((x) => x.s.lng), valid.map((x) => x.s.lat), valid.map((x) => x.index)],
+         WHERE v.id = ANY($1::uuid[])`,
+        [versionIds, valid.map((x) => x.s.lng), valid.map((x) => x.s.lat), valid.map((x) => x.index)],
       )
     ).rows;
-    for (const row of rows) out.set(samples[row.idx]!, Number(row.s));
+    for (const row of rows) {
+      const perSample = out.get(row.gv_id) ?? new Map<LocationSample, number>();
+      perSample.set(samples[row.idx]!, Number(row.s));
+      out.set(row.gv_id, perSample);
+    }
     return out;
   }
 
@@ -397,7 +419,7 @@ export class AttendanceService {
     device: DeviceRow | undefined,
     employeeId: string,
     now: Date,
-    signals: { meets_device_integrity?: boolean; app_access_risk?: string[]; recent_device_activity_level?: 1 | 2 | 3 | 4; verified_boot?: boolean; app_attest_key_churn?: boolean },
+    signals: DeviceSignals,
   ): Promise<RiskContext> {
     const previous = (
       await tx.query<{ server_time: Date; lat: number; lng: number; accuracy: string }>(

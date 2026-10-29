@@ -116,16 +116,16 @@ export class DevicesService {
       ? await this.attestation.verifyKeyAttestation({ platform: reg.platform, keyId: reg.key_id, payload: reg.attestation, nonce })
       : { verified: false, publicKey: null, verdict: { nonce_match: false } };
 
-    const existing = (await tx.query('SELECT id, public_key FROM devices WHERE platform = $1 AND key_id = $2', [reg.platform, reg.key_id])).rows[0];
-    const deviceId: string = existing
-      ? existing.id
-      : (
-          await tx.query(
-            `INSERT INTO devices (tenant_id, platform, key_id, public_key, android_id_hash, devicecheck_bit0, model, os_version)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`,
-            [p.tenantId, reg.platform, reg.key_id, result.publicKey, reg.android_id_hash ?? null, reg.devicecheck_bit0 ?? null, reg.model ?? null, reg.os_version ?? null],
-          )
-        ).rows[0].id;
+    // الجهاز المعروف يحتفظ بمفتاحه الموثّق الأول؛ المفتاح الفارغ يُملأ عند أول تحقق ناجح.
+    const deviceId: string = (
+      await tx.query(
+        `INSERT INTO devices (tenant_id, platform, key_id, public_key, android_id_hash, devicecheck_bit0, model, os_version)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+         ON CONFLICT (tenant_id, platform, key_id) DO UPDATE SET public_key = COALESCE(devices.public_key, EXCLUDED.public_key)
+         RETURNING id`,
+        [p.tenantId, reg.platform, reg.key_id, result.publicKey, reg.android_id_hash ?? null, reg.devicecheck_bit0 ?? null, reg.model ?? null, reg.os_version ?? null],
+      )
+    ).rows[0].id;
     await tx.query(
       'INSERT INTO device_attestations (tenant_id, device_id, platform, adapter, verified, verdict) VALUES ($1, $2, $3, $4, $5, $6)',
       [p.tenantId, deviceId, reg.platform, this.attestation.name, result.verified, JSON.stringify(result.verdict)],

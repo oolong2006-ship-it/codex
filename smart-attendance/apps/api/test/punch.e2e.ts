@@ -30,7 +30,8 @@ describe('attendance punch (specs §B, §D)', () => {
 
   beforeAll(async () => {
     app = await bootApp();
-    hr = await login(app, 'hr@b.dev');
+    // مسؤول العميل بدل HR: لدى HR حساب يتحقق منه اختبار تسجيل MFA، ولا يتعلق الترتيب بين الملفات.
+    hr = await login(app, 'admin@b.dev');
     emp = await login(app, 'emp3@b.dev');
     empId = await employeeIdByEmail('emp3@b.dev');
 

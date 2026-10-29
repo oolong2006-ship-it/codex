@@ -202,13 +202,20 @@ export class SitesService {
       this.checks.assertOwned(p, emp);
       const loc = (await tx.query('SELECT id, tenant_id FROM work_locations WHERE id = $1', [dto.work_location_id])).rows[0];
       this.checks.assertOwned(p, loc);
-      const row = (
-        await tx.query(
-          `INSERT INTO employee_site_assignments (tenant_id, employee_id, work_location_id, valid_from, valid_to, created_by)
-           VALUES ($1, $2, $3, coalesce($4::timestamptz, now()), $5, $6) RETURNING *`,
-          [p.tenantId, employeeId, dto.work_location_id, dto.valid_from ?? null, dto.valid_to ?? null, p.userId],
-        )
-      ).rows[0];
+      let row: { id: string };
+      try {
+        row = (
+          await tx.query(
+            `INSERT INTO employee_site_assignments (tenant_id, employee_id, work_location_id, valid_from, valid_to, created_by)
+             VALUES ($1, $2, $3, coalesce($4::timestamptz, now()), $5, $6) RETURNING *`,
+            [p.tenantId, employeeId, dto.work_location_id, dto.valid_from ?? null, dto.valid_to ?? null, p.userId],
+          )
+        ).rows[0];
+      } catch (err) {
+        // valid_to يجب أن يكون بعد valid_from (قيد الجدول).
+        if (err instanceof DatabaseError && err.code === '23514') throw badRequest('VALIDATION_FAILED', { field: 'valid_to' });
+        throw err;
+      }
       await this.audit.record(tx, meta, { action: 'site.assignment.created', entityType: 'employee_site_assignment', entityId: row.id, after: row });
       return row;
     });
