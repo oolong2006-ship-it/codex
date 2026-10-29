@@ -17,6 +17,10 @@ import { AttestationAdapter, createAttestationAdapter } from './devices/attestat
 import { DevicesController } from './devices/devices.controller';
 import { DevicesService } from './devices/devices.service';
 import { OrgController, OrgService } from './org/org.controller';
+import { AttendanceController } from './attendance/attendance.controller';
+import { AttendanceService } from './attendance/attendance.service';
+import { SitesController, SitesService } from './sites/sites.module';
+import { PoliciesService } from './common/policies.service';
 import { PlatformController, PlatformService } from './platform/platform.controller';
 
 @ApiTags('health')
@@ -31,7 +35,7 @@ class HealthController {
 
 export function buildAppModule(config: AppConfig) {
   @Module({
-    controllers: [HealthController, AuthController, DevicesController, OrgController, PlatformController],
+    controllers: [HealthController, AuthController, DevicesController, OrgController, PlatformController, SitesController, AttendanceController],
     providers: [
       { provide: APP_CONFIG, useValue: config },
       { provide: AttestationAdapter, useFactory: () => createAttestationAdapter(config) },
@@ -42,6 +46,9 @@ export function buildAppModule(config: AppConfig) {
       DevicesService,
       OrgService,
       PlatformService,
+      PoliciesService,
+      SitesService,
+      AttendanceService,
       { provide: APP_GUARD, useClass: AuthGuard },
       { provide: APP_GUARD, useClass: PermissionGuard },
       { provide: APP_INTERCEPTOR, useClass: AuditInterceptor },

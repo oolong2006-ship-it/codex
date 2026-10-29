@@ -98,13 +98,22 @@ describe('auth (phase-1 §4)', () => {
   });
 
   it('locks the account after repeated failures, even for the right password', async () => {
+    // حساب مخصص: القفل يمنع الدخول لمدة، فلا يجوز أن يشترك مع حسابات الاختبارات الأخرى.
+    const tenant = await q<{ id: string }>("SELECT id FROM tenants WHERE slug = 'tenant-b'");
+    const { hash } = await import('@node-rs/argon2');
+    const user = await q<{ id: string }>(
+      "INSERT INTO user_accounts (tenant_id, email, password_hash) VALUES ($1, 'lockout@b.dev', $2) RETURNING id",
+      [tenant[0]!.id, await hash(PASSWORD)],
+    );
+    await q("INSERT INTO user_role_assignments (tenant_id, user_id, role_code) VALUES ($1, $2, 'employee')", [tenant[0]!.id, user[0]!.id]);
     for (let i = 0; i < 5; i++) {
-      await http(app).post('/v1/auth/login').send({ identifier: 'emp3@b.dev', password: 'wrong-pass' });
+      await http(app).post('/v1/auth/login').send({ identifier: 'lockout@b.dev', password: 'wrong-pass' });
     }
-    const locked = await http(app).post('/v1/auth/login').send({ identifier: 'emp3@b.dev', password: PASSWORD });
+    const locked = await http(app).post('/v1/auth/login').send({ identifier: 'lockout@b.dev', password: PASSWORD });
     expect(locked.status).toBe(401);
     const audit = await q<{ action: string }>(
-      "SELECT action FROM audit_logs WHERE action LIKE 'auth.login.%' AND actor_id = (SELECT id FROM user_accounts WHERE email = 'emp3@b.dev')",
+      "SELECT action FROM audit_logs WHERE action LIKE 'auth.login.%' AND actor_id = $1",
+      [user[0]!.id],
     );
     expect(audit.map((a) => a.action)).toEqual(expect.arrayContaining(['auth.login.failed', 'auth.login.lockout', 'auth.login.locked']));
   });

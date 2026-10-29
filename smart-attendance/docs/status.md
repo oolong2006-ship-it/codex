@@ -56,11 +56,16 @@ Rate limiting على مستوى IP، وقناة دعوة آمنة لمسؤول �
 | البند | الحالة | الدليل |
 |---|---|---|
 | Trust Engine (specs §A، §B، §H) كدوال نقية | `Complete` | `packages/domain/src/trust/engine.ts`؛ `engine.test.ts` (49 اختبارًا: كل فروع المعادلة، F9–F14، F19، F21، F22، F27–F34) |
-| Attendance API (challenges، punches، idempotency، الأدلة) | `Not Started` | — |
-| الجلسات والورديات والوردية الليلية | `Not Started` | — |
+| تحدي البصمة (challenge لمرة واحدة، صلاحيته من السياسة) | `Complete` | `attendance.e2e` ضمن `punch.e2e.ts`؛ `POST /v1/attendance/challenges` |
+| البصمة: التوقيع، الطبقات، الحفظ، الأدلة، Idempotency-Key | `Complete` | `punch.e2e.ts` (14 اختبارًا): F1، F2، F3، F4، F5، ومسافة سياج PostGIS للدائرة، وLOC_OUTSIDE، وLOC_LOW_ACCURACY، وSEQUENCE_INVALID |
+| سجل البصمات الشخصي `GET /v1/attendance/me/events` | `Complete` | `punch.e2e.ts` |
+| تفويض الموظف بالمواقع وإدارة المواقع (`POST /v1/work-locations`) | `Partial` | الدائرة مختبرة؛ **المضلع (ST_Covers/ST_Distance) غير مختبر بعد**؛ لا ورديات بعد فلا `in_current_shift` ثابت = true |
+| Wi-Fi uplift (ADR-0003) | `Partial` | المحرك مختبر بوحدات؛ **لا مسار API لتسجيل شبكات الفرع المعروفة بعد**، فالمنطقة معطلة عمليًا |
+| الدقة: عينة قبل التحدي/بعد الاستلام، الاعتماد على النسخة الحالية للسياج | `Complete` | `engine.test.ts`؛ الاختبارات الميدانية (F43) ما زالت يدوية |
+| الجلسات والورديات والوردية الليلية | `Partial` | تسلسل CLOCK_IN/CLOCK_OUT من آخر بصمة مقبولة مختبر؛ الجلسات كجدول وإغلاق INCOMPLETE والورديات لم تُبنَ بعد |
 | الاستثناءات والتصحيح والإقفال | `Not Started` | — |
 | التقارير والتصدير | `Not Started` | — |
-| تطبيق الجوال (Expo) ولوحة الإدارة (Next.js) | `Not Started` | — |
+| تطبيق الجوال (Expo) ولوحة الإدارة (Next.js) | `Not Started` | — (العقود جاهزة في `openapi.json`) |
 
 ## سجل الاعتماد — 2026-10-26
 
