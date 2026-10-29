@@ -172,3 +172,47 @@ On expiry (`PlatformService.expire`) when `notifyOnExpiry` → `EXPIRED` email.
 - **Notifications**: an in-app notification (link `/app/billing`) is created for the owner for every email type, not only reminders.
 - **Email log**: responses omit `dedupeKey`; in `/admin/emails`, `companyName` is the live name (`null` once the company is deleted — the rows are kept). With SMTP the row is claimed first (status `FAILED`, error `sending…`) and flipped to `SENT` when accepted, so concurrent runs never double-send; a real failure releases the dedupe key so a later run retries.
 - `GET /admin/invoices?overdue=false` is accepted too (excludes overdue).
+
+---
+
+# v2.1 — Review fixes (2026-10-29): tax-invoice compliance, integrity, concurrency
+
+Decisions taken after the five-specialist review. Supersedes conflicting v2 rules above.
+
+## Tax-invoice compliance (ZATCA)
+- **VAT registration gate.** `billing.sellerVatNumber` must be empty or a valid Saudi TRN: 15 digits, starts and ends with `3` (400 `'الرقم الضريبي يجب أن يكون 15 رقماً يبدأ وينتهي بالرقم 3'`).
+  - Registered (valid TRN): invoices carry `vatRate` from settings, `documentType: 'TAX_INVOICE'`, title «فاتورة ضريبية / Tax Invoice».
+  - Not registered (empty TRN): invoices are issued with `vatRate = 0`, `vat = 0`, `documentType: 'INVOICE'`, title «فاتورة / Invoice» and the note «المنشأة غير مسجلة في ضريبة القيمة المضافة».
+- **Snapshots.** At issue, the invoice row stores `seller` (name, nameEn, vatNumber, crNumber, address, email, phone, bankName, iban) and `buyer` (nameAr, nameEn, vatNumber, crNumber, address, city) as JSON. Views render only from the snapshot; later settings/company edits never change an issued document. Detail responses keep `company` (live, for links) but the document uses `seller`/`buyer` from the invoice.
+- **Issue instant.** `issuedAt` (ISO instant) stored and printed with time (Riyadh). `issueDate` stays the Riyadh calendar day.
+- **Supply period** printed as a labelled field «فترة التوريد / Supply period» (periodStart–periodEnd).
+- **Line VAT.** The line table shows unit price «غير شامل الضريبة», VAT rate and VAT amount per line.
+- **QR (Phase 1).** Tax invoices show a ZATCA Phase-1 TLV QR (base64 of tags 1 seller name, 2 VAT number, 3 timestamp ISO 8601, 4 total incl. VAT, 5 VAT total). Not shown on non-tax invoices. Footer wording: «صادرة من نظام شؤون» — never claim FATOORA integration.
+- **No voiding issued documents — credit notes instead.** `POST /admin/invoices/:id/void` is removed. New `POST /admin/invoices/:id/credit` `{ reason }` (required, ≤ 1000):
+  - Allowed when the invoice is ISSUED or PAID and not already credited (atomic; else 409 `'تمت معالجة هذه الفاتورة مسبقاً'`).
+  - Creates a credit note: `documentType: 'CREDIT_NOTE'`, own sequence `SHC-<year>-<4 digits>`, `creditsInvoiceId` + `creditsNumber`, same seller/buyer snapshot, same lines/period, amounts equal to the original (positive numbers, presented as a credit), `status: 'ISSUED'`, `reason`.
+  - The original becomes `status: 'CREDITED'` with `creditedByNumber` (it stays printable, stamped «صدر بحقها إشعار دائن SHC-…»).
+  - Does not change the subscription. Logs `INVOICE_CREDITED`. No email to the customer by default.
+  - Credit notes are not payable and are excluded from outstanding/overdue summaries; list filter `status=CREDITED` shows credited originals; `type=CREDIT_NOTE` lists credit notes. Default list shows both kinds.
+  - Period overlap checks ignore CREDITED invoices (the period can be re-invoiced).
+- **Retention.** Invoices are never deleted: `DELETE /admin/companies/:id` returns 409 `'لا يمكن حذف منشأة لها فواتير صادرة؛ أوقف الحساب بدلاً من ذلك'` when the company has any invoice or credit note. FK is `onDelete: Restrict`.
+- **Numbering** uses a per-year, per-series counter table updated atomically inside the issue transaction (`UPDATE … RETURNING`). Numbers are never reused, even if rows disappear.
+- **Minimum billing.** Default `employees` = max(`billing.minBilledEmployees` (default 10), activeEmployees) for ESSENTIALS/GROWTH; ENTERPRISE = max(1, activeEmployees). Explicit `employees` still allowed (≥ 1).
+
+## Integrity & concurrency
+- Issue: per-company advisory lock inside the transaction; default period computed inside it; reject a period overlapping a non-CREDITED invoice of the same company with 409 `'توجد فاتورة تغطي هذه الفترة'`. Default `periodStart` = max(day after last periodEnd, today) when the company is EXPIRED or the computed start is in the past by more than 0 days for EXPIRED companies.
+- `periodStart` must be within [today − 60 days, today + 90 days]; `unitPrice` ≤ 2 decimals and ≤ 99,999,999; `employees` ≤ 100,000; totals over 9,999,999,999.99 → 400.
+- Pay: `SELECT … FOR UPDATE` on the company inside the transaction; only revive TRIAL/EXPIRED → ACTIVE when the new end is in the future (else 400 `'فترة هذه الفاتورة انتهت؛ أصدر فاتورة لفترة حالية'` unless `extendSubscription=false`). `paidAt` cannot be in the future or before issueDate.
+- Summary `paidThisMonth` bounded to the current Riyadh month.
+- Monthly periods anchored to the original day of month; a clamped month ends on its last day (Jan 31 → Feb 28, next starts Mar 1… then Mar 31).
+- Reminders catch up: for each target, send the smallest configured threshold ≥ daysLeft that has not been sent for that end day (same dedupe keys).
+- Expiry listeners never block the request path (fire-and-forget, errors logged). Notifications are created only for non-FAILED emails. Stale "sending" email claims (> 15 min) are released by the job.
+- Company names: ≤ 200 chars, control characters/newlines stripped.
+
+## Security
+- Logout and every login/register clear the stored impersonation admin token.
+- Admin bootstrap: creates the admin if missing; when it exists, only updates the password if it differs from `PLATFORM_ADMIN_PASSWORD` and then bumps `tokenVersion`; never forces `isActive`.
+
+### v2.1 field names (API ↔ web)
+`Invoice` adds: `documentType: 'TAX_INVOICE'|'INVOICE'|'CREDIT_NOTE'`, `issuedAt` (ISO), `seller` (snapshot object), `buyer` (snapshot object), `creditsInvoiceId`, `creditsNumber`, `creditedByNumber`, `reason`, `qr` (base64 ZATCA Phase-1 TLV for TAX_INVOICE and credit notes of tax invoices, else null — computed by the API, rendered as a QR image by the web).
+`status` ∈ `ISSUED | PAID | CREDITED` (VOID removed; existing VOID rows migrate to CREDITED only if a credit note is created — the migration converts VOID → CREDITED and creates matching credit notes). List query adds `type=INVOICE|CREDIT_NOTE`. Settings `billing` adds `minBilledEmployees` (default 10). `GET /api/health` checks the database (`SELECT 1`) and returns 503 when it is down.
