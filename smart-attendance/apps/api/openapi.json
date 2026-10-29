@@ -574,6 +574,520 @@
           "platform"
         ]
       }
+    },
+    "/v1/work-locations": {
+      "post": {
+        "operationId": "SitesController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateWorkLocationDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "موقع عمل بسياج دائري أو مضلع (النسخة 1).",
+        "tags": [
+          "sites"
+        ]
+      },
+      "get": {
+        "operationId": "SitesController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "مواقع العمل مع نسخة السياج الحالية (مدير الفرع: فروعه).",
+        "tags": [
+          "sites"
+        ]
+      }
+    },
+    "/v1/work-locations/{id}/geofence-versions": {
+      "post": {
+        "operationId": "SitesController_version",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GeofenceDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "تعديل السياج = نسخة جديدة؛ الأحداث القديمة تبقى على نسختها.",
+        "tags": [
+          "sites"
+        ]
+      }
+    },
+    "/v1/employees/{id}/site-assignments": {
+      "post": {
+        "operationId": "SitesController_assign",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssignSiteDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "تفويض موظف بموقع عمل.",
+        "tags": [
+          "sites"
+        ]
+      }
+    },
+    "/v1/attendance/challenges": {
+      "post": {
+        "operationId": "AttendanceController_challenge",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "تحدٍّ لمرة واحدة قبل البصمة (صلاحيته من السياسة، افتراضيًا 60 ثانية).",
+        "tags": [
+          "attendance"
+        ]
+      }
+    },
+    "/v1/attendance/punches": {
+      "post": {
+        "operationId": "AttendanceController_punch",
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "description": "UUID لكل محاولة؛ الإعادة بالطلب نفسه تعيد الرد نفسه",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PunchDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "تسجيل حضور أو انصراف. يُنشئ حدثًا وقرارًا حتى للطلب المرفوض.",
+        "tags": [
+          "attendance"
+        ]
+      }
+    },
+    "/v1/attendance/me/events": {
+      "get": {
+        "operationId": "AttendanceController_myEvents",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "سجل بصماتي مع القرار والأسباب.",
+        "tags": [
+          "attendance"
+        ]
+      }
+    },
+    "/v1/attendance/sessions": {
+      "get": {
+        "operationId": "RecordsController_listSessions",
+        "parameters": [
+          {
+            "name": "employee_id",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "from",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "جلسات الحضور المشتقة. الموظف: سجلاته، مدير الفرع: فروعه، HR والإدارة: العميل.",
+        "tags": [
+          "attendance"
+        ]
+      }
+    },
+    "/v1/attendance/roster": {
+      "get": {
+        "operationId": "RecordsController_roster",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "لوحة الحضور اللحظي: الحاضرون الآن، وعدد البصمات المعلقة خلال 24 ساعة.",
+        "tags": [
+          "attendance"
+        ]
+      }
+    },
+    "/v1/attendance/exceptions": {
+      "post": {
+        "operationId": "RecordsController_requestException",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExceptionRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "طلب استثناء على قرار (PENDING/REJECTED) أو تسجيل بصمة منسية ضمن النافذة.",
+        "tags": [
+          "attendance"
+        ]
+      },
+      "get": {
+        "operationId": "RecordsController_listExceptions",
+        "parameters": [
+          {
+            "name": "status",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "طلبات الاستثناءات ضمن النطاق.",
+        "tags": [
+          "attendance"
+        ]
+      }
+    },
+    "/v1/attendance/exceptions/{id}/approve": {
+      "post": {
+        "operationId": "RecordsController_approve",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DecisionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "اعتماد استثناء: يكتب تسوية ويعيد بناء جلسات الموظف.",
+        "tags": [
+          "attendance"
+        ]
+      }
+    },
+    "/v1/attendance/exceptions/{id}/reject": {
+      "post": {
+        "operationId": "RecordsController_reject",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DecisionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "رفض استثناء.",
+        "tags": [
+          "attendance"
+        ]
+      }
+    },
+    "/v1/attendance/export.csv": {
+      "get": {
+        "operationId": "RecordsController_exportCsv",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "كشف الحضور الشهري CSV (UTF-8 مع BOM) ضمن النطاق.",
+        "tags": [
+          "attendance"
+        ]
+      }
+    },
+    "/v1/attendance/periods": {
+      "get": {
+        "operationId": "PeriodsController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "فترات الحضور وحالتها.",
+        "tags": [
+          "attendance"
+        ]
+      }
+    },
+    "/v1/attendance/periods/{month}/lock": {
+      "post": {
+        "operationId": "PeriodsController_lock",
+        "parameters": [
+          {
+            "name": "month",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "قفل شهر: يمنع اعتماد الاستثناءات التي تقع فيه.",
+        "tags": [
+          "attendance"
+        ]
+      }
+    },
+    "/v1/attendance/periods/{month}/reopen": {
+      "post": {
+        "operationId": "PeriodsController_reopen",
+        "parameters": [
+          {
+            "name": "month",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReopenDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "إعادة فتح شهر مقفل (صلاحية خاصة، بسبب مكتوب، وسجل تدقيق).",
+        "tags": [
+          "attendance"
+        ]
+      }
     }
   },
   "info": {
@@ -775,6 +1289,269 @@
           "name",
           "slug",
           "admin_email"
+        ]
+      },
+      "LatLngDto": {
+        "type": "object",
+        "properties": {
+          "lat": {
+            "type": "number"
+          },
+          "lng": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "lat",
+          "lng"
+        ]
+      },
+      "GeofenceDto": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "CIRCLE",
+              "POLYGON"
+            ]
+          },
+          "center": {
+            "$ref": "#/components/schemas/LatLngDto"
+          },
+          "radius_m": {
+            "type": "number",
+            "description": "نصف القطر بالأمتار"
+          },
+          "polygon": {
+            "description": "رؤوس المضلع (يُغلق تلقائيًا)",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LatLngDto"
+            }
+          },
+          "tolerance_m": {
+            "type": "number",
+            "description": "هامش السماح t بالأمتار (specs §B)",
+            "default": 0
+          }
+        },
+        "required": [
+          "kind"
+        ]
+      },
+      "CreateWorkLocationDto": {
+        "type": "object",
+        "properties": {
+          "branch_id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "assurance_level": {
+            "type": "string",
+            "enum": [
+              "STANDARD",
+              "HIGH",
+              "STRICT"
+            ]
+          },
+          "wifi_uplift_enabled": {
+            "type": "boolean"
+          },
+          "geofence": {
+            "$ref": "#/components/schemas/GeofenceDto"
+          }
+        },
+        "required": [
+          "branch_id",
+          "name",
+          "geofence"
+        ]
+      },
+      "AssignSiteDto": {
+        "type": "object",
+        "properties": {
+          "work_location_id": {
+            "type": "string"
+          },
+          "valid_from": {
+            "type": "string"
+          },
+          "valid_to": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "work_location_id"
+        ]
+      },
+      "PunchSampleDto": {
+        "type": "object",
+        "properties": {
+          "lat": {
+            "type": "number"
+          },
+          "lng": {
+            "type": "number"
+          },
+          "accuracy_m": {
+            "type": "number",
+            "description": "دقة أفقية بالأمتار"
+          },
+          "captured_at": {
+            "type": "string",
+            "description": "وقت التقاط العينة على الهاتف (ISO8601)"
+          },
+          "provider": {
+            "type": "string",
+            "enum": [
+              "gps",
+              "fused",
+              "network"
+            ]
+          },
+          "is_mock": {
+            "type": "boolean"
+          },
+          "source_info": {
+            "type": "object",
+            "description": "iOS: isSimulatedBySoftware / isProducedByAccessory"
+          }
+        },
+        "required": [
+          "lat",
+          "lng",
+          "accuracy_m",
+          "captured_at"
+        ]
+      },
+      "PunchDto": {
+        "type": "object",
+        "properties": {
+          "challenge_id": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "CLOCK_IN",
+              "CLOCK_OUT",
+              "BREAK_START",
+              "BREAK_END"
+            ]
+          },
+          "location_samples": {
+            "description": "من 1 إلى 3 عينات طازجة بعد التحدي",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PunchSampleDto"
+            }
+          },
+          "client_time": {
+            "type": "string"
+          },
+          "client_tz": {
+            "type": "string"
+          },
+          "app_version": {
+            "type": "string"
+          },
+          "os": {
+            "type": "string",
+            "enum": [
+              "ios",
+              "android"
+            ]
+          },
+          "os_version": {
+            "type": "string"
+          },
+          "offline": {
+            "type": "boolean",
+            "default": false
+          },
+          "accuracy_authorization": {
+            "type": "string",
+            "enum": [
+              "full",
+              "reduced",
+              "approximate"
+            ]
+          },
+          "attestation": {
+            "type": "object",
+            "description": "App Attest assertion أو توقيع Keystore + Play Integrity"
+          }
+        },
+        "required": [
+          "challenge_id",
+          "type",
+          "location_samples",
+          "app_version",
+          "os",
+          "attestation"
+        ]
+      },
+      "ExceptionRequestDto": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "DECISION_OVERRIDE",
+              "MISSING_PUNCH"
+            ]
+          },
+          "event_id": {
+            "type": "string",
+            "description": "الحدث المطلوب تصحيح قراره (DECISION_OVERRIDE)"
+          },
+          "punch_type": {
+            "type": "string",
+            "enum": [
+              "CLOCK_IN",
+              "CLOCK_OUT",
+              "BREAK_START",
+              "BREAK_END"
+            ]
+          },
+          "punch_at": {
+            "type": "string",
+            "description": "وقت البصمة المنسية (ISO8601)"
+          },
+          "reason": {
+            "type": "string",
+            "description": "السبب"
+          }
+        },
+        "required": [
+          "kind",
+          "reason"
+        ]
+      },
+      "DecisionDto": {
+        "type": "object",
+        "properties": {
+          "note": {
+            "type": "string"
+          }
+        }
+      },
+      "ReopenDto": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "description": "سبب إعادة الفتح"
+          }
+        },
+        "required": [
+          "reason"
         ]
       }
     }
