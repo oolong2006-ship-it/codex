@@ -70,6 +70,9 @@ export const ERROR_CODES = [
   'EXCEPTION_ALREADY_OPEN',
   'EXCEPTION_NOT_OPEN',
   'EXCEPTION_SELF_DECISION',
+  'PERIOD_LOCKED',
+  'PERIOD_ALREADY_LOCKED',
+  'PERIOD_NOT_LOCKED',
 ] as const;
 
 export type ErrorCode = (typeof ERROR_CODES)[number];

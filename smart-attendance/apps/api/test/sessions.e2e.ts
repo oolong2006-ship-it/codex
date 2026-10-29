@@ -153,4 +153,33 @@ describe('sessions, exceptions and monthly export', () => {
     expect((await http(app).get(`/v1/attendance/export.csv?month=${month}`).set(bearer(ses))).status).toBe(403);
     expect((await http(app).get('/v1/attendance/export.csv?month=2026-13').set(bearer(admin))).status).toBe(400);
   });
+  it('F15: a locked month refuses an approval until a tenant admin reopens it', async () => {
+    const sessions = await http(app).get('/v1/attendance/sessions').set(bearer(admin));
+    const month = String(sessions.body[0].business_date).slice(0, 7);
+
+    const outside = await client.send(await client.signed({ type: 'CLOCK_OUT', at: metersNorth(500) }));
+    expect(outside.body.decision).toBe('REJECTED');
+    const request = await http(app).post('/v1/attendance/exceptions').set(bearer(ses)).send({ kind: 'DECISION_OVERRIDE', event_id: outside.body.event_id, reason: 'خطأ في الموقع' });
+    expect(request.status).toBe(201);
+
+    const locked = await http(app).post(`/v1/attendance/periods/${month}/lock`).set(bearer(admin)).send({});
+    expect(locked.status).toBe(200);
+    expect(locked.body.status).toBe('LOCKED');
+    const twice = await http(app).post(`/v1/attendance/periods/${month}/lock`).set(bearer(admin)).send({});
+    expect(twice.body.error.code).toBe('PERIOD_ALREADY_LOCKED');
+
+    const refused = await http(app).post(`/v1/attendance/exceptions/${request.body.id}/approve`).set(bearer(managerOwn)).send({});
+    expect(refused.status).toBe(409);
+    expect(refused.body.error.code).toBe('PERIOD_LOCKED');
+
+    expect((await http(app).post(`/v1/attendance/periods/${month}/reopen`).set(bearer(managerOwn)).send({ reason: 'محاولة' })).status).toBe(403);
+    const reopened = await http(app).post(`/v1/attendance/periods/${month}/reopen`).set(bearer(admin)).send({ reason: 'تصحيح بعد مراجعة الشركة' });
+    expect(reopened.status).toBe(200);
+    expect(reopened.body.status).toBe('OPEN');
+
+    const approved = await http(app).post(`/v1/attendance/exceptions/${request.body.id}/approve`).set(bearer(managerOwn)).send({});
+    expect(approved.status).toBe(200);
+    const periods = await http(app).get('/v1/attendance/periods').set(bearer(admin));
+    expect(periods.body[0]).toEqual(expect.objectContaining({ status: 'OPEN', reopen_reason: 'تصحيح بعد مراجعة الشركة' }));
+  });
 });

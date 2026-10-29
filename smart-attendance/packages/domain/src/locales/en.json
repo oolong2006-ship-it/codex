@@ -52,5 +52,8 @@
   "EXCEPTION_OUT_OF_WINDOW": "The event is outside the allowed exception window.",
   "EXCEPTION_ALREADY_OPEN": "An exception request already exists for this event.",
   "EXCEPTION_NOT_OPEN": "This exception request was already decided.",
-  "EXCEPTION_SELF_DECISION": "You cannot approve or reject your own exception."
+  "EXCEPTION_SELF_DECISION": "You cannot approve or reject your own exception.",
+  "PERIOD_LOCKED": "The period is locked. It must be reopened first by someone with reopen permission.",
+  "PERIOD_ALREADY_LOCKED": "The period is already locked.",
+  "PERIOD_NOT_LOCKED": "The period is not locked."
 }

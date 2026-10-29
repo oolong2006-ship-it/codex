@@ -7,6 +7,7 @@ import { badRequest, conflict, forbidden, notFound } from '../common/errors';
 import { PoliciesService } from '../common/policies.service';
 import { Principal, branchScope } from '../common/principal';
 import { SessionsService } from './sessions.service';
+import { PeriodsService } from './periods.service';
 import { recordScope } from './scope';
 
 export type ExceptionRequest =
@@ -23,6 +24,7 @@ export class ExceptionsService {
     private readonly audit: AuditService,
     private readonly policies: PoliciesService,
     private readonly sessions: SessionsService,
+    private readonly periods: PeriodsService,
   ) {}
 
   private tenantOf(p: Principal): string {
@@ -125,6 +127,8 @@ export class ExceptionsService {
       if (ex.status !== 'OPEN') throw conflict('EXCEPTION_NOT_OPEN');
 
       if (action === 'approve') {
+        // F15: فترة مقفلة لا تُعدَّل إلا بعد إعادة فتحها.
+        await this.periods.assertDayOpen(tx, await this.periods.dayOfException(tx, ex.id));
         if (ex.kind === 'DECISION_OVERRIDE') {
           await tx.query(
             `INSERT INTO attendance_adjustments (tenant_id, employee_id, exception_id, effect, event_id, approved_by)
