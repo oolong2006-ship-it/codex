@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { Pencil, Plus, Save } from 'lucide-react';
+import { BellRing, Landmark, Pencil, Plus, Save } from 'lucide-react';
 import { Badge, Button, Card, CardBody, CardHeader, Field, Input, Modal, PageHeader, Table, type Column } from '@/components/ui';
 import { useToast } from '@/components/ui/Toast';
 import { Async, Avatar, Toggle } from '@/components/app/primitives';
@@ -11,15 +11,18 @@ import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { useLang } from '@/lib/i18n';
 import { useFetch } from '@/lib/useFetch';
-import { PLAN, PLANS, lbl, type Plan, type PlatformAdmin, type PlatformSettings } from '@/lib/adminTypes';
+import { PLAN, PLANS, lbl, type BillingSettings, type Plan, type PlatformAdmin, type PlatformSettings, type ReminderSettings } from '@/lib/adminTypes';
+import { DEFAULT_BILLING, DEFAULT_REMINDERS } from '@/lib/billing';
 
 export default function AdminSettingsPage() {
   const { t } = useLang();
   return (
     <div>
-      <PageHeader title={t('إعدادات المنصة', 'Platform settings')} subtitle={t('سياسة التسجيل والأسعار وفريق إدارة المنصة', 'Signup policy, pricing and the platform team')} />
+      <PageHeader title={t('إعدادات المنصة', 'Platform settings')} subtitle={t('سياسة التسجيل والأسعار والفوترة والتذكيرات وفريق إدارة المنصة', 'Signup policy, pricing, billing, reminders and the platform team')} />
       <div className="space-y-6">
         <SettingsForm />
+        <BillingForm />
+        <RemindersForm />
         <AdminsCard />
       </div>
     </div>
@@ -198,5 +201,145 @@ function EditAdminModal({ admin, onClose, onDone }: { admin: PlatformAdmin | nul
       <Field label={t('الاسم', 'Name')} required><Input value={name} onChange={(e) => setName(e.target.value)} /></Field>
       <p className="mt-3 text-xs text-ink-soft" dir="ltr">{admin.email}</p>
     </Modal>
+  );
+}
+
+function useSettingsSection() {
+  return useFetch(() => api.get<PlatformSettings>('/admin/settings'), []);
+}
+
+const BILLING_FIELDS: { key: keyof BillingSettings; label: [string, string]; dir?: 'ltr'; hint?: [string, string] }[] = [
+  { key: 'sellerName', label: ['اسم البائع (عربي)', 'Seller name (Arabic)'] },
+  { key: 'sellerNameEn', label: ['اسم البائع (إنجليزي)', 'Seller name (English)'], dir: 'ltr' },
+  { key: 'sellerVatNumber', label: ['الرقم الضريبي', 'VAT number'], dir: 'ltr', hint: ['15 رقماً — يظهر على الفاتورة الضريبية', '15 digits — printed on tax invoices'] },
+  { key: 'sellerCrNumber', label: ['السجل التجاري', 'CR number'], dir: 'ltr' },
+  { key: 'sellerAddress', label: ['العنوان', 'Address'] },
+  { key: 'sellerEmail', label: ['بريد الفوترة', 'Billing email'], dir: 'ltr' },
+  { key: 'sellerPhone', label: ['هاتف الفوترة', 'Billing phone'], dir: 'ltr' },
+  { key: 'bankName', label: ['البنك', 'Bank'] },
+  { key: 'iban', label: ['الآيبان', 'IBAN'], dir: 'ltr' },
+];
+
+function BillingForm() {
+  const { t, lang } = useLang();
+  const toast = useToast();
+  const { data, loading, error, reload, setData } = useSettingsSection();
+  const [f, setF] = useState<Record<keyof BillingSettings, string>>(() => toBillingForm(DEFAULT_BILLING));
+  const [busy, setBusy] = useState(false);
+  useEffect(() => { if (data) setF(toBillingForm({ ...DEFAULT_BILLING, ...data.billing })); }, [data]);
+  const save = async () => {
+    const vat = Number(f.vatRate); const due = Number(f.invoiceDueDays);
+    if (isNaN(vat) || vat < 0 || vat > 100) { toast(t('نسبة الضريبة بين 0% و100%', 'VAT must be 0–100%'), 'error'); return; }
+    if (!Number.isInteger(due) || due < 0 || due > 90) { toast(t('مهلة السداد بين 0 و90 يوماً', 'Due days must be 0–90'), 'error'); return; }
+    const billing: Partial<BillingSettings> = { vatRate: Math.round(vat * 100) / 10000, invoiceDueDays: due };
+    for (const x of BILLING_FIELDS) (billing as Record<string, unknown>)[x.key] = f[x.key].trim();
+    setBusy(true);
+    try {
+      const r = await api.patch<PlatformSettings>('/admin/settings', { billing });
+      setData(r); invalidateSettingsCache(); toast(t('تم حفظ بيانات الفوترة', 'Billing details saved'));
+    } catch (e) { toast(errMsg(e), 'error'); } finally { setBusy(false); }
+  };
+  return (
+    <Card>
+      <CardHeader title={<span className="flex items-center gap-2"><Landmark className="h-4 w-4 text-primary" />{t('بيانات الفوترة', 'Billing details')}</span>}
+        subtitle={t('تظهر على كل فاتورة ضريبية تصدرها المنصة', 'Printed on every tax invoice the platform issues')}
+        action={<Button size="sm" onClick={save} loading={busy} disabled={!data}><Save className="h-4 w-4" />{t('حفظ', 'Save')}</Button>} />
+      <CardBody>
+        <Async loading={loading} error={error} onRetry={reload} hasData={!!data}>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {BILLING_FIELDS.map((x) => (
+              <Field key={x.key} label={lang === 'ar' ? x.label[0] : x.label[1]} hint={x.hint ? (lang === 'ar' ? x.hint[0] : x.hint[1]) : undefined}>
+                <Input dir={x.dir} value={f[x.key]} onChange={(e) => setF((s) => ({ ...s, [x.key]: e.target.value }))} />
+              </Field>
+            ))}
+            <Field label={t('ضريبة القيمة المضافة (%)', 'VAT (%)')}>
+              <Input type="number" min={0} max={100} step="0.5" dir="ltr" value={f.vatRate} onChange={(e) => setF((s) => ({ ...s, vatRate: e.target.value }))} />
+            </Field>
+            <Field label={t('مهلة السداد (أيام)', 'Payment terms (days)')} hint={t('تاريخ الاستحقاق = تاريخ الإصدار + المهلة', 'Due date = issue date + terms')}>
+              <Input type="number" min={0} max={90} dir="ltr" value={f.invoiceDueDays} onChange={(e) => setF((s) => ({ ...s, invoiceDueDays: e.target.value }))} />
+            </Field>
+          </div>
+        </Async>
+      </CardBody>
+    </Card>
+  );
+}
+function toBillingForm(b: BillingSettings): Record<keyof BillingSettings, string> {
+  return {
+    sellerName: b.sellerName ?? '', sellerNameEn: b.sellerNameEn ?? '', sellerVatNumber: b.sellerVatNumber ?? '', sellerCrNumber: b.sellerCrNumber ?? '',
+    sellerAddress: b.sellerAddress ?? '', sellerEmail: b.sellerEmail ?? '', sellerPhone: b.sellerPhone ?? '', bankName: b.bankName ?? '', iban: b.iban ?? '',
+    vatRate: String(Math.round((b.vatRate ?? 0.15) * 1000) / 10), invoiceDueDays: String(b.invoiceDueDays ?? 7),
+  };
+}
+
+const DAY_PRESETS = [60, 30, 14, 7, 3, 1, 0];
+function DayPicker({ value, onChange, presets = DAY_PRESETS, suffix }: { value: number[]; onChange: (v: number[]) => void; presets?: number[]; suffix: (n: number) => string }) {
+  const toggle = (n: number) => onChange(value.includes(n) ? value.filter((x) => x !== n) : [...value, n].sort((a, b) => b - a).slice(0, 6));
+  return (
+    <div className="flex flex-wrap gap-1.5">
+      {presets.map((n) => (
+        <button key={n} type="button" onClick={() => toggle(n)} aria-pressed={value.includes(n)}
+          className={value.includes(n)
+            ? 'num rounded-full border border-primary bg-primary px-3 py-1 text-xs font-medium text-white'
+            : 'num rounded-full border border-line bg-white px-3 py-1 text-xs font-medium text-ink-muted hover:border-primary-500'}>
+          {suffix(n)}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function RemindersForm() {
+  const { t } = useLang();
+  const toast = useToast();
+  const { data, loading, error, reload, setData } = useSettingsSection();
+  const [f, setF] = useState<ReminderSettings>(DEFAULT_REMINDERS);
+  const [busy, setBusy] = useState(false);
+  useEffect(() => { if (data) setF({ ...DEFAULT_REMINDERS, ...data.reminders }); }, [data]);
+  const save = async () => {
+    setBusy(true);
+    try {
+      const r = await api.patch<PlatformSettings>('/admin/settings', { reminders: f });
+      setData(r); toast(t('تم حفظ إعدادات التذكيرات', 'Reminder settings saved'));
+    } catch (e) { toast(errMsg(e), 'error'); } finally { setBusy(false); }
+  };
+  const before = (n: number) => (n === 0 ? t('يوم الانتهاء', 'On the day') : t(`قبل ${n} يوم`, `${n}d before`));
+  const after = (n: number) => t(`بعد ${n} يوم`, `${n}d after`);
+  return (
+    <Card>
+      <CardHeader title={<span className="flex items-center gap-2"><BellRing className="h-4 w-4 text-primary" />{t('التذكيرات التلقائية', 'Automatic reminders')}</span>}
+        subtitle={t('رسائل بريدية وتنبيهات داخل التطبيق لمالك المنشأة — تعمل يومياً الساعة 9:00 صباحاً بتوقيت الرياض', 'Emails and in-app alerts to the company owner — run daily at 09:00 Riyadh time')}
+        action={<Button size="sm" onClick={save} loading={busy} disabled={!data}><Save className="h-4 w-4" />{t('حفظ', 'Save')}</Button>} />
+      <CardBody>
+        <Async loading={loading} error={error} onRetry={reload} hasData={!!data}>
+          <div className="space-y-4">
+            <div className="flex flex-col gap-3 rounded-xl border border-line bg-sand/50 p-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-sm font-semibold text-ink">{t('تفعيل التذكيرات التلقائية', 'Enable automatic reminders')}</p>
+                <p className="mt-0.5 text-xs text-ink-muted">{t('عند الإيقاف لا تُرسل تذكيرات انتهاء التجربة أو الاشتراك أو الفواتير المتأخرة.', 'When off, no trial, subscription or overdue-invoice reminders are sent.')}</p>
+              </div>
+              <Toggle checked={f.enabled} onChange={(v) => setF((s) => ({ ...s, enabled: v }))} />
+            </div>
+            <div className={f.enabled ? 'grid gap-4 lg:grid-cols-3' : 'pointer-events-none grid gap-4 opacity-50 lg:grid-cols-3'}>
+              <ReminderGroup title={t('قرب انتهاء الفترة التجريبية', 'Trial ending')}><DayPicker value={f.trialDays} onChange={(v) => setF((s) => ({ ...s, trialDays: v }))} suffix={before} /></ReminderGroup>
+              <ReminderGroup title={t('قرب انتهاء الاشتراك', 'Subscription ending')}><DayPicker value={f.subscriptionDays} onChange={(v) => setF((s) => ({ ...s, subscriptionDays: v }))} suffix={before} /></ReminderGroup>
+              <ReminderGroup title={t('فاتورة متأخرة السداد', 'Overdue invoice')}><DayPicker value={f.overdueInvoiceDays} onChange={(v) => setF((s) => ({ ...s, overdueInvoiceDays: v }))} presets={[1, 3, 7, 14, 30]} suffix={after} /></ReminderGroup>
+            </div>
+            <div className="rounded-xl border border-line p-4">
+              <Toggle checked={f.notifyOnExpiry} onChange={(v) => setF((s) => ({ ...s, notifyOnExpiry: v }))} label={t('إشعار المالك عند انتهاء الاشتراك', 'Notify the owner when the subscription expires')} />
+            </div>
+            <p className="text-xs text-ink-soft">{t('حتى 6 مواعيد لكل نوع. لا تُكرَّر الرسالة نفسها عند إعادة تشغيل التذكيرات في اليوم ذاته.', 'Up to 6 points per type. The same reminder is never sent twice, even if the job re-runs.')}</p>
+          </div>
+        </Async>
+      </CardBody>
+    </Card>
+  );
+}
+function ReminderGroup({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="rounded-xl border border-line p-4">
+      <p className="mb-2.5 text-sm font-semibold text-ink">{title}</p>
+      {children}
+    </div>
   );
 }

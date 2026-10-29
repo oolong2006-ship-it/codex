@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import {
-  ArrowRight, Ban, Building2, CalendarPlus, CheckCircle2, LogIn, Mail, MoreHorizontal, Pencil, Phone, RotateCcw, Trash2, KeyRound, AlertOctagon, Save,
+  ArrowRight, Ban, Building2, CalendarPlus, CheckCircle2, LogIn, Mail, MoreHorizontal, Pencil, Phone, RotateCcw, Trash2, KeyRound, AlertOctagon, Save, Send, FilePlus2,
 } from 'lucide-react';
 import { Badge, Button, Card, CardBody, CardHeader, EmptyState, Table, Tabs, Textarea, type Column } from '@/components/ui';
 import { useToast } from '@/components/ui/Toast';
@@ -15,15 +15,16 @@ import { CompanyStatusChip, DaysLeft, PlanBadge, SeatBar, timeAgo } from '@/comp
 import { impersonateCompany } from '@/components/admin/ImpersonationBanner';
 import { refreshAdminCounts } from '@/components/admin/AdminShell';
 import { Timeline } from '@/components/admin/Timeline';
+import { EmailDrawer, EmailList, InvoiceCards, InvoiceTable, IssueInvoiceModal, PayInvoiceModal, RemindModal, VoidInvoiceModal } from '@/components/admin/BillingModals';
 import { api } from '@/lib/api';
 import { useLang } from '@/lib/i18n';
 import { useFetch } from '@/lib/useFetch';
 import { date, money, num, period } from '@/lib/format';
 import { label, ROLE, SECTOR } from '@/lib/labels';
-import { BILLING_CYCLE, COMPANY_STATUS, PLAN, companyName, lbl, type AdminCompanyDetail, type AdminCompanyUser } from '@/lib/adminTypes';
+import { BILLING_CYCLE, COMPANY_STATUS, PLAN, companyName, lbl, type AdminCompanyDetail, type AdminCompanyUser, type EmailLog, type Invoice } from '@/lib/adminTypes';
 
-type Tab = 'overview' | 'subscription' | 'users' | 'log' | 'notes';
-type ModalKey = 'activate' | 'suspend' | 'edit' | 'extend' | 'delete' | 'impersonate' | 'reactivate' | null;
+type Tab = 'overview' | 'subscription' | 'invoices' | 'emails' | 'users' | 'log' | 'notes';
+type ModalKey = 'activate' | 'suspend' | 'edit' | 'extend' | 'delete' | 'impersonate' | 'reactivate' | 'remind' | null;
 
 export default function CompanyDetailClient() {
   const { id } = useParams<{ id: string }>();
@@ -38,7 +39,7 @@ export default function CompanyDetailClient() {
 
   useEffect(() => {
     const q = new URLSearchParams(window.location.search).get('tab') as Tab | null;
-    if (q && ['overview', 'subscription', 'users', 'log', 'notes'].includes(q)) setTab(q);
+    if (q && ['overview', 'subscription', 'invoices', 'emails', 'users', 'log', 'notes'].includes(q)) setTab(q);
   }, []);
   const close = () => setModal(null);
   const done = () => { void reload(); };
@@ -89,6 +90,7 @@ export default function CompanyDetailClient() {
                   {(c.status === 'TRIAL' || c.status === 'ACTIVE') && (
                     <Button variant="secondary" className="!text-danger hover:!border-danger hover:!bg-danger-50" onClick={() => setModal('suspend')}><Ban className="h-4 w-4" />{t('إيقاف', 'Suspend')}</Button>
                   )}
+                  {c.status !== 'PENDING' && <Button variant="secondary" onClick={() => setModal('remind')}><Send className="h-4 w-4 rtl:-scale-x-100" />{t('إرسال تذكير', 'Send reminder')}</Button>}
                   <Button variant="secondary" onClick={() => setModal('impersonate')}><LogIn className="h-4 w-4 rtl:rotate-180" />{t('الدخول كمالك المنشأة', 'Log in as owner')}</Button>
                   <MoreMenu items={[
                     { label: t('تعديل الاشتراك', 'Edit subscription'), icon: Pencil, onClick: () => setModal('edit') },
@@ -115,6 +117,8 @@ export default function CompanyDetailClient() {
             <Tabs<Tab> value={tab} onChange={setTab} className="mb-4" tabs={[
               { value: 'overview', label: t('نظرة عامة', 'Overview') },
               { value: 'subscription', label: t('الاشتراك', 'Subscription') },
+              { value: 'invoices', label: t('الفواتير', 'Invoices'), count: c.invoices?.length ?? 0 },
+              { value: 'emails', label: t('الرسائل', 'Emails'), count: c.emails?.length ?? 0 },
               { value: 'users', label: t('المستخدمون', 'Users'), count: c.users.length },
               { value: 'log', label: t('السجل', 'Log'), count: c.events.length },
               { value: 'notes', label: t('ملاحظات داخلية', 'Internal notes') },
@@ -122,6 +126,8 @@ export default function CompanyDetailClient() {
 
             {tab === 'overview' && <OverviewTab c={c} />}
             {tab === 'subscription' && <SubscriptionTab c={c} onEdit={() => setModal('edit')} onExtend={() => setModal('extend')} />}
+            {tab === 'invoices' && <InvoicesTab c={c} onChanged={done} />}
+            {tab === 'emails' && <EmailsTab emails={c.emails ?? []} onRemind={() => setModal('remind')} canRemind={c.status !== 'PENDING'} />}
             {tab === 'users' && <UsersTab users={c.users} onReset={setResetUser} />}
             {tab === 'log' && <Card><CardBody><Timeline events={c.events} /></CardBody></Card>}
             {tab === 'notes' && <NotesTab c={c} onSaved={done} />}
@@ -136,6 +142,7 @@ export default function CompanyDetailClient() {
           <EditSubscriptionModal company={c} open={modal === 'edit'} onClose={close} onDone={done} />
           <ExtendModal company={c} open={modal === 'extend'} onClose={close} onDone={done} />
           <DeleteCompanyModal company={c} open={modal === 'delete'} onClose={close} onDone={() => router.replace('/admin/companies')} />
+          <RemindModal company={c} open={modal === 'remind'} onClose={close} onDone={() => { done(); setTab('emails'); }} />
           <ResetPasswordModal companyId={c.id} user={resetUser} onClose={() => setResetUser(null)} />
           <ConfirmModal open={modal === 'reactivate'} onClose={close} onConfirm={reactivate} loading={busy}
             title={t('إعادة تفعيل المنشأة', 'Reactivate company')} confirmLabel={t('إعادة تفعيل', 'Reactivate')}
@@ -323,6 +330,43 @@ function NotesTab({ c, onSaved }: { c: AdminCompanyDetail; onSaved: () => void }
           <Button onClick={save} loading={busy} disabled={!dirty}><Save className="h-4 w-4" />{t('حفظ', 'Save')}</Button>
         </div>
       </CardBody>
+    </Card>
+  );
+}
+
+function InvoicesTab({ c, onChanged }: { c: AdminCompanyDetail; onChanged: () => void }) {
+  const { t } = useLang();
+  const [issuing, setIssuing] = useState(false);
+  const [paying, setPaying] = useState<Invoice | null>(null);
+  const [voiding, setVoiding] = useState<Invoice | null>(null);
+  const invoices = c.invoices ?? [];
+  const pending = c.status === 'PENDING';
+  return (
+    <Card>
+      <CardHeader title={t('الفواتير', 'Invoices')}
+        subtitle={pending ? t('فعّل المنشأة أولاً لإصدار الفواتير', 'Activate the company before invoicing') : t('آخر 20 فاتورة لهذه المنشأة', 'Latest 20 invoices of this company')}
+        action={<Button size="sm" onClick={() => setIssuing(true)} disabled={pending}><FilePlus2 className="h-4 w-4" />{t('إصدار فاتورة', 'Issue invoice')}</Button>} />
+      <div className="md:hidden"><InvoiceCards rows={invoices} onPay={setPaying} /></div>
+      <div className="hidden md:block">
+        <InvoiceTable rows={invoices} onPay={setPaying} onVoid={setVoiding}
+          empty={<EmptyState title={t('لا توجد فواتير بعد', 'No invoices yet')} description={pending ? undefined : t('أصدر أول فاتورة لهذه المنشأة', 'Issue the first invoice for this company')} />} />
+      </div>
+      {issuing && <IssueInvoiceModal company={c} invoices={invoices} open={issuing} onClose={() => setIssuing(false)} onDone={onChanged} />}
+      <PayInvoiceModal invoice={paying} onClose={() => setPaying(null)} onDone={onChanged} />
+      <VoidInvoiceModal invoice={voiding} onClose={() => setVoiding(null)} onDone={onChanged} />
+    </Card>
+  );
+}
+
+function EmailsTab({ emails, onRemind, canRemind }: { emails: EmailLog[]; onRemind: () => void; canRemind: boolean }) {
+  const { t } = useLang();
+  const [open, setOpen] = useState<EmailLog | null>(null);
+  return (
+    <Card>
+      <CardHeader title={t('الرسائل', 'Emails')} subtitle={t('الرسائل المرسلة لمالك المنشأة (آخر 20)', 'Emails sent to the company owner (latest 20)')}
+        action={canRemind ? <Button size="sm" variant="secondary" onClick={onRemind}><Send className="h-4 w-4 rtl:-scale-x-100" />{t('إرسال تذكير', 'Send reminder')}</Button> : undefined} />
+      <EmailList rows={emails} onOpen={setOpen} />
+      <EmailDrawer email={open} onClose={() => setOpen(null)} />
     </Card>
   );
 }

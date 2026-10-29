@@ -1,11 +1,15 @@
 // Types + labels for the platform admin portal (docs/ADMIN_PORTAL.md).
 import type { Tone } from '@/components/ui/Badge';
+import type { BillingSettings, ReminderSettings } from '@/lib/billing';
+
+export type { BillingSettings, ReminderSettings };
 
 export type CompanyStatus = 'PENDING' | 'TRIAL' | 'ACTIVE' | 'SUSPENDED' | 'EXPIRED';
 export type Plan = 'ESSENTIALS' | 'GROWTH' | 'ENTERPRISE';
 export type BillingCycle = 'MONTHLY' | 'ANNUAL';
 export type CompanyEventType =
-  | 'REGISTERED' | 'ACTIVATED' | 'SUSPENDED' | 'REACTIVATED' | 'PLAN_CHANGED' | 'EXTENDED' | 'NOTE' | 'IMPERSONATED' | 'EXPIRED' | 'DELETED';
+  | 'REGISTERED' | 'ACTIVATED' | 'SUSPENDED' | 'REACTIVATED' | 'PLAN_CHANGED' | 'EXTENDED' | 'NOTE' | 'IMPERSONATED' | 'EXPIRED' | 'DELETED'
+  | 'INVOICE_ISSUED' | 'INVOICE_PAID' | 'INVOICE_VOIDED' | 'REMINDER_SENT';
 export type LeadStatus = 'NEW' | 'CONTACTED' | 'CONVERTED' | 'LOST';
 export type BroadcastTarget = 'ALL' | 'ACTIVE' | 'TRIAL';
 
@@ -37,6 +41,35 @@ export interface AdminCompanyDetail extends AdminCompany {
     lastPayrollPeriod: string | null; leaveRequests30d: number; checkIns30d: number;
   };
   events: CompanyEvent[];
+  /** v2 billing: latest 20 of each. */
+  invoices?: Invoice[];
+  emails?: EmailLog[];
+}
+
+// ---------- billing (v2) ----------
+export type InvoiceStatus = 'ISSUED' | 'PAID' | 'VOID';
+export type PaymentMethod = 'BANK_TRANSFER' | 'CARD' | 'CASH' | 'OTHER';
+export interface Invoice {
+  id: string; number: string; companyId: string; companyName: string; status: InvoiceStatus; overdue: boolean;
+  plan: Plan; billingCycle: BillingCycle; periodStart: string; periodEnd: string; months: number; employees: number; unitPrice: number;
+  subtotal: number; discountRate: number; discount: number; taxable: number; vatRate: number; vat: number; total: number;
+  issueDate: string; dueDate: string; paidAt: string | null; paymentMethod: PaymentMethod | null; paymentRef: string | null;
+  notes: string | null; voidReason: string | null; createdByName: string | null; createdAt: string;
+}
+export interface InvoiceDetail extends Invoice {
+  company: { id: string; nameAr: string; nameEn: string | null; crNumber: string | null; vatNumber: string | null; city: string | null; ownerName: string | null; ownerEmail: string | null; ownerPhone: string | null };
+  seller: BillingSettings;
+}
+export interface InvoiceSummary { outstanding: { count: number; amount: number }; overdue: { count: number; amount: number }; paidThisMonth: { count: number; amount: number } }
+export type EmailType = 'TRIAL_ENDING' | 'SUBSCRIPTION_ENDING' | 'EXPIRED' | 'INVOICE_ISSUED' | 'PAYMENT_RECEIVED' | 'INVOICE_OVERDUE' | 'MANUAL_REMINDER';
+export type EmailStatus = 'SENT' | 'FAILED' | 'LOGGED';
+export interface EmailLog {
+  id: string; companyId: string | null; to: string; subject: string; body: string; type: EmailType; status: EmailStatus; error: string | null; createdAt: string;
+  companyName?: string | null;
+}
+export interface BillingSubscription {
+  status: CompanyStatus; plan: Plan; billingCycle: BillingCycle; effectivePrice: number | null; maxEmployees: number | null;
+  activeEmployees: number; trialEndsAt: string | null; subscriptionEndsAt: string | null; daysLeft: number | null;
 }
 
 export interface AdminOverview {
@@ -60,6 +93,9 @@ export interface PlatformSettings {
   requireApproval: boolean; trialDays: number;
   prices: { ESSENTIALS: number | null; GROWTH: number | null; ENTERPRISE: number | null };
   annualDiscount: number;
+  /** v2 — may be missing on an older API. */
+  billing?: BillingSettings;
+  reminders?: ReminderSettings;
 }
 
 export interface ActivateBody {
@@ -79,7 +115,26 @@ export const EVENT_TYPE: L = {
   REGISTERED: ['تسجيل منشأة', 'Registered'], ACTIVATED: ['تفعيل', 'Activated'], SUSPENDED: ['إيقاف', 'Suspended'],
   REACTIVATED: ['إعادة تفعيل', 'Reactivated'], PLAN_CHANGED: ['تغيير الباقة', 'Plan changed'], EXTENDED: ['تمديد', 'Extended'],
   NOTE: ['ملاحظة', 'Note'], IMPERSONATED: ['دخول كمالك المنشأة', 'Impersonated'], EXPIRED: ['انتهاء الاشتراك', 'Expired'], DELETED: ['حذف', 'Deleted'],
+  INVOICE_ISSUED: ['إصدار فاتورة', 'Invoice issued'], INVOICE_PAID: ['سداد فاتورة', 'Invoice paid'], INVOICE_VOIDED: ['إلغاء فاتورة', 'Invoice voided'],
+  REMINDER_SENT: ['إرسال تذكير', 'Reminder sent'],
 };
+export const INVOICE_STATUS: L = { ISSUED: ['مستحقة', 'Issued'], PAID: ['مدفوعة', 'Paid'], VOID: ['ملغاة', 'Void'] };
+export const PAYMENT_METHOD: L = { BANK_TRANSFER: ['تحويل بنكي', 'Bank transfer'], CARD: ['بطاقة', 'Card'], CASH: ['نقداً', 'Cash'], OTHER: ['أخرى', 'Other'] };
+export const EMAIL_TYPE: L = {
+  TRIAL_ENDING: ['قرب انتهاء التجربة', 'Trial ending'], SUBSCRIPTION_ENDING: ['قرب انتهاء الاشتراك', 'Subscription ending'],
+  EXPIRED: ['انتهاء الاشتراك', 'Expired'], INVOICE_ISSUED: ['فاتورة جديدة', 'Invoice issued'], PAYMENT_RECEIVED: ['استلام دفعة', 'Payment received'],
+  INVOICE_OVERDUE: ['فاتورة متأخرة', 'Invoice overdue'], MANUAL_REMINDER: ['تذكير يدوي', 'Manual reminder'],
+};
+export const EMAIL_STATUS: L = { SENT: ['أُرسلت', 'Sent'], FAILED: ['فشل الإرسال', 'Failed'], LOGGED: ['محفوظة (لم تُرسل)', 'Logged (not sent)'] };
+export const INVOICE_TONE: Record<InvoiceStatus, Tone> = { ISSUED: 'warning', PAID: 'success', VOID: 'neutral' };
+export const EMAIL_STATUS_TONE: Record<EmailStatus, Tone> = { SENT: 'success', FAILED: 'danger', LOGGED: 'info' };
+export const EMAIL_TYPE_TONE: Record<EmailType, Tone> = {
+  TRIAL_ENDING: 'info', SUBSCRIPTION_ENDING: 'warning', EXPIRED: 'neutral', INVOICE_ISSUED: 'primary', PAYMENT_RECEIVED: 'success', INVOICE_OVERDUE: 'danger', MANUAL_REMINDER: 'accent',
+};
+export const INVOICE_STATUSES: InvoiceStatus[] = ['ISSUED', 'PAID', 'VOID'];
+export const PAYMENT_METHODS: PaymentMethod[] = ['BANK_TRANSFER', 'CARD', 'CASH', 'OTHER'];
+export const EMAIL_TYPES = Object.keys(EMAIL_TYPE) as EmailType[];
+export const EMAIL_STATUSES: EmailStatus[] = ['SENT', 'FAILED', 'LOGGED'];
 export const LEAD_STATUS: L = { NEW: ['جديد', 'New'], CONTACTED: ['تم التواصل', 'Contacted'], CONVERTED: ['تحوّل لعميل', 'Converted'], LOST: ['خسارة', 'Lost'] };
 export const BROADCAST_TARGET: L = { ALL: ['جميع المنشآت', 'All companies'], ACTIVE: ['المنشآت النشطة', 'Active companies'], TRIAL: ['المنشآت التجريبية', 'Trial companies'] };
 
@@ -93,6 +148,7 @@ export const LEAD_TONE: Record<LeadStatus, Tone> = { NEW: 'accent', CONTACTED: '
 export const EVENT_TONE: Record<CompanyEventType, Tone> = {
   REGISTERED: 'primary', ACTIVATED: 'success', SUSPENDED: 'danger', REACTIVATED: 'success', PLAN_CHANGED: 'accent', EXTENDED: 'info',
   NOTE: 'neutral', IMPERSONATED: 'warning', EXPIRED: 'neutral', DELETED: 'danger',
+  INVOICE_ISSUED: 'primary', INVOICE_PAID: 'success', INVOICE_VOIDED: 'neutral', REMINDER_SENT: 'info',
 };
 /** Chart colours per plan. */
 export const PLAN_COLOR: Record<Plan, string> = { ESSENTIALS: '#7DD3FC', GROWTH: '#0E7490', ENTERPRISE: '#14D1C3' };

@@ -1,7 +1,7 @@
 import {
   LayoutDashboard, Users, Network, Building2, FolderTree, Clock, CalendarRange, Timer, BarChart3,
   CalendarCheck, Inbox, Wallet, SlidersHorizontal, HandCoins, Flag, FileWarning, Target, Briefcase,
-  PieChart, Megaphone, Settings, type LucideIcon,
+  PieChart, Megaphone, Settings, ReceiptText, type LucideIcon,
 } from 'lucide-react';
 import type { Role } from '@/lib/auth';
 
@@ -48,6 +48,7 @@ export const NAV: NavGroup[] = [
     { href: '/app/reports', label: ['التقارير', 'Reports'], icon: PieChart, roles: AP },
     { href: '/app/announcements', label: ['الإعلانات', 'Announcements'], icon: Megaphone, roles: ALL },
     { href: '/app/settings', label: ['الإعدادات', 'Settings'], icon: Settings, roles: A },
+    { href: '/app/billing', label: ['الاشتراك والفواتير', 'Subscription & billing'], icon: ReceiptText, roles: ['OWNER'] },
   ] },
 ];
 

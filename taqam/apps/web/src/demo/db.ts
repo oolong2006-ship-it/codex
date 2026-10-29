@@ -1,9 +1,12 @@
 /** In-memory demo database (mirrors apps/api/prisma/schema.prisma), persisted to localStorage. */
+import { DEFAULT_BILLING, DEFAULT_REMINDERS, type BillingSettings, type ReminderSettings } from '@/lib/billing';
+
 export type Role = 'OWNER' | 'HR_ADMIN' | 'PAYROLL' | 'BRANCH_MANAGER' | 'EMPLOYEE' | 'SUPER_ADMIN';
 export type CompanyStatus = 'PENDING' | 'TRIAL' | 'ACTIVE' | 'SUSPENDED' | 'EXPIRED';
 export type Plan = 'ESSENTIALS' | 'GROWTH' | 'ENTERPRISE';
 export type BillingCycle = 'MONTHLY' | 'ANNUAL';
-export type CompanyEventType = 'REGISTERED' | 'ACTIVATED' | 'SUSPENDED' | 'REACTIVATED' | 'PLAN_CHANGED' | 'EXTENDED' | 'NOTE' | 'IMPERSONATED' | 'EXPIRED' | 'DELETED';
+export type CompanyEventType = 'REGISTERED' | 'ACTIVATED' | 'SUSPENDED' | 'REACTIVATED' | 'PLAN_CHANGED' | 'EXTENDED' | 'NOTE' | 'IMPERSONATED' | 'EXPIRED' | 'DELETED'
+  | 'INVOICE_ISSUED' | 'INVOICE_PAID' | 'INVOICE_VOIDED' | 'REMINDER_SENT';
 export type LeadStatus = 'NEW' | 'CONTACTED' | 'CONVERTED' | 'LOST';
 export type Approval = 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED';
 
@@ -33,8 +36,28 @@ export interface CompanyEvent {
 }
 export interface PlatformSettings {
   requireApproval: boolean; trialDays: number; prices: Record<Plan, number | null>; annualDiscount: number;
+  billing: BillingSettings; reminders: ReminderSettings;
 }
-export const DEFAULT_SETTINGS: PlatformSettings = { requireApproval: true, trialDays: 14, prices: { ESSENTIALS: 19, GROWTH: 29, ENTERPRISE: null }, annualDiscount: 0.15 };
+export const DEFAULT_SETTINGS: PlatformSettings = {
+  requireApproval: true, trialDays: 14, prices: { ESSENTIALS: 19, GROWTH: 29, ENTERPRISE: null }, annualDiscount: 0.15,
+  billing: DEFAULT_BILLING, reminders: DEFAULT_REMINDERS,
+};
+export type InvoiceStatus = 'ISSUED' | 'PAID' | 'VOID';
+export type PaymentMethod = 'BANK_TRANSFER' | 'CARD' | 'CASH' | 'OTHER';
+/** Platform → subscriber invoice (docs/ADMIN_PORTAL.md v2). `overdue` is derived in the views, never stored. */
+export interface Invoice {
+  id: string; number: string; companyId: string; companyName: string; status: InvoiceStatus; plan: Plan; billingCycle: BillingCycle;
+  periodStart: string; periodEnd: string; months: number; employees: number; unitPrice: number;
+  subtotal: number; discountRate: number; discount: number; taxable: number; vatRate: number; vat: number; total: number;
+  issueDate: string; dueDate: string; paidAt: string | null; paymentMethod: PaymentMethod | null; paymentRef: string | null;
+  notes: string | null; voidReason: string | null; createdByName: string | null; createdAt: string; updatedAt: string;
+}
+export type EmailType = 'TRIAL_ENDING' | 'SUBSCRIPTION_ENDING' | 'EXPIRED' | 'INVOICE_ISSUED' | 'PAYMENT_RECEIVED' | 'INVOICE_OVERDUE' | 'MANUAL_REMINDER';
+/** Outbox entry. The demo never sends mail: status is always LOGGED. Kept when a company is deleted. */
+export interface EmailLog {
+  id: string; companyId: string | null; to: string; subject: string; body: string; type: EmailType; status: 'SENT' | 'FAILED' | 'LOGGED';
+  error: string | null; dedupeKey: string | null; createdAt: string;
+}
 export interface Employee {
   id: string; companyId: string; employeeNumber: string; firstNameAr: string; lastNameAr: string; fullNameEn: string | null;
   nationality: string; isSaudi: boolean; gender: 'MALE' | 'FEMALE'; birthDate: string | null; maritalStatus: string | null;
@@ -157,10 +180,14 @@ export interface DB {
   admins: PlatformAdmin[];
   companyEvents: CompanyEvent[];
   settings: PlatformSettings;
+  invoices: Invoice[];
+  emails: EmailLog[];
+  /** Riyadh day the reminder job last ran (it runs lazily when /admin/overview loads, once per demo day). */
+  remindersRunOn: string | null;
 }
 
 export const STORAGE_KEY = 'taqam.demo.v2';
-export const DB_VERSION = 5;
+export const DB_VERSION = 6;
 /** Seeded data is relative to "today"; a snapshot older than this is re-seeded so attendance and payroll stay current. */
 export const MAX_AGE_DAYS = 7;
 
@@ -170,7 +197,7 @@ export function emptyDb(seededOn: string): DB {
     companies: [], branches: [], departments: [], users: [], employees: [], documents: [], shifts: [], assignments: [], attendance: [],
     leaveTypes: [], leaves: [], requests: [], loans: [], runs: [], payslips: [], adjustments: [], holidays: [], announcements: [],
     notifications: [], audit: [], cycles: [], reviews: [], jobs: [], candidates: [], leads: [],
-    admins: [], companyEvents: [], settings: JSON.parse(JSON.stringify(DEFAULT_SETTINGS)),
+    admins: [], companyEvents: [], settings: JSON.parse(JSON.stringify(DEFAULT_SETTINGS)), invoices: [], emails: [], remindersRunOn: null,
   };
 }
 

@@ -6,6 +6,7 @@ import { calculateAttendance, countLeaveDays, SAUDI_LEAVE_POLICIES } from '@taqa
 import { companyPoolId, jobId, runId, seedEmployeeId } from './ids';
 import { endOfDay, lifecycleDefaults } from './lifecycle';
 import { seedPlatform } from './seed-platform';
+import { seedBilling } from './seed-billing';
 import { addDays, addMonths, day, eachDay, periodOf, periodRange, riyadhDateTime, todayStr, weekday } from './dates';
 import { emptyDb, nextId, type Approval, type DB, type Employee, type Goal, type Role } from './db';
 import { Services, fullName } from './services';
@@ -482,6 +483,8 @@ export function buildSeed(now: Date = new Date()): DB {
 
   // ---------- platform: admins, other subscriber companies, leads ----------
   seedPlatform(db, svc, now);
+  // ---------- billing: invoices, outbox history ----------
+  seedBilling(db, svc, now);
   svc.dirty = false;
   return db;
 }

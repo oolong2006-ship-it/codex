@@ -36,9 +36,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const toggleCollapsed = () => setCollapsed((c) => { try { window.localStorage.setItem(COLLAPSE_KEY, c ? '0' : '1'); } catch { /* ignore */ } return !c; });
 
   return (
-    <div className="min-h-screen bg-sand">
+    <div className="min-h-screen bg-sand print:bg-white">
       {/* Desktop sidebar */}
-      <aside className={clsx('fixed inset-y-0 start-0 z-30 hidden flex-col border-e border-line bg-white transition-[width] duration-200 lg:flex', collapsed ? 'w-20' : 'w-64')}>
+      <aside className={clsx('fixed inset-y-0 start-0 z-30 hidden flex-col border-e border-line bg-white transition-[width] duration-200 lg:flex print:!hidden', collapsed ? 'w-20' : 'w-64')}>
         <Sidebar collapsed={collapsed} onToggle={toggleCollapsed} />
       </aside>
       {/* Mobile drawer */}
@@ -50,9 +50,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </aside>
         </div>
       )}
-      <div className={clsx('transition-[padding] duration-200', collapsed ? 'lg:ps-20' : 'lg:ps-64')}>
+      <div className={clsx('transition-[padding] duration-200 print:!ps-0', collapsed ? 'lg:ps-20' : 'lg:ps-64')}>
         <Topbar onMenu={() => setDrawer(true)} />
-        <main className="mx-auto w-full max-w-[1400px] px-4 py-6 sm:px-6 lg:px-8">{children}</main>
+        <main className="mx-auto w-full max-w-[1400px] px-4 py-6 sm:px-6 lg:px-8 print:max-w-none print:p-0">{children}</main>
       </div>
     </div>
   );
@@ -119,7 +119,7 @@ function Topbar({ onMenu }: { onMenu: () => void }) {
   const { lang, setLang, t } = useLang();
   const company = user?.company ? (lang === 'en' ? user.company.nameEn || user.company.nameAr : user.company.nameAr) : '';
   return (
-    <div className="sticky top-0 z-20">
+    <div className="sticky top-0 z-20 print:hidden">
     <ImpersonationBanner />
     <header className="flex h-16 items-center gap-3 border-b border-line bg-white/90 px-4 backdrop-blur sm:px-6 lg:px-8">
       <button onClick={onMenu} className="rounded-lg p-2 text-ink-muted hover:bg-sand lg:hidden" aria-label="menu"><Menu className="h-5 w-5" /></button>

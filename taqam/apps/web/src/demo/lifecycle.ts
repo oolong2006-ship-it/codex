@@ -7,11 +7,16 @@ import { addDays, r2, riyadhDateTime, todayStr } from './dates';
 import { nextId, type Company, type CompanyEvent, type CompanyEventType, type CompanyStatus, type DB, type Plan, type BillingCycle, type LeadStatus } from './db';
 import { badRequest, forbiddenCode, unauthorized } from './errors';
 import { nowIso, type Services } from './services';
+import { expiredDedupeKey } from '@/lib/billing';
+import { sendEmail } from './mail';
 
 export const COMPANY_STATUSES: CompanyStatus[] = ['PENDING', 'TRIAL', 'ACTIVE', 'SUSPENDED', 'EXPIRED'];
 export const PLANS: Plan[] = ['ESSENTIALS', 'GROWTH', 'ENTERPRISE'];
 export const BILLING_CYCLES: BillingCycle[] = ['MONTHLY', 'ANNUAL'];
-export const EVENT_TYPES: CompanyEventType[] = ['REGISTERED', 'ACTIVATED', 'SUSPENDED', 'REACTIVATED', 'PLAN_CHANGED', 'EXTENDED', 'NOTE', 'IMPERSONATED', 'EXPIRED', 'DELETED'];
+export const EVENT_TYPES: CompanyEventType[] = [
+  'REGISTERED', 'ACTIVATED', 'SUSPENDED', 'REACTIVATED', 'PLAN_CHANGED', 'EXTENDED', 'NOTE', 'IMPERSONATED', 'EXPIRED', 'DELETED',
+  'INVOICE_ISSUED', 'INVOICE_PAID', 'INVOICE_VOIDED', 'REMINDER_SENT',
+];
 export const LEAD_STATUSES: LeadStatus[] = ['NEW', 'CONTACTED', 'CONVERTED', 'LOST'];
 
 const BLOCKED: Partial<Record<CompanyStatus, [code: string, message: string, messageAr: string]>> = {
@@ -78,6 +83,12 @@ export function applyExpiry(svc: Services, c: Company, now = new Date()): boolea
   c.status = 'EXPIRED';
   c.updatedAt = now.toISOString();
   logEvent(svc, c, 'EXPIRED', { from, to: 'EXPIRED', data: { endedAt: end }, createdAt: now.toISOString() });
+  const r = svc.db.settings.reminders;
+  if (r?.enabled && r.notifyOnExpiry && end) {
+    const endDay = dayOf(end);
+    const log = sendEmail(svc, c, 'EXPIRED', { endDay }, { dedupeKey: expiredDedupeKey(c.id, endDay), createdAt: now.toISOString() });
+    if (log) logEvent(svc, c, 'REMINDER_SENT', { from: 'EXPIRED', to: 'EXPIRED', data: { type: 'EXPIRED', daysLeft: 0 }, createdAt: now.toISOString() });
+  }
   return true;
 }
 export function sweepExpiry(svc: Services, now = new Date()) {

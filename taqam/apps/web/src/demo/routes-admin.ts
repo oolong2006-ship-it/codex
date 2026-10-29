@@ -8,6 +8,9 @@ import {
 } from './lifecycle';
 import { route, v, paginate, byCreatedAsc, byCreatedDesc, ok, type Query, type Route } from './router';
 import { authResponse } from './routes-core';
+import { byIssueDesc, invoiceView, runRemindersDaily } from './billing';
+import { emailView } from './mail';
+import { billingSettingsError, normalizeDays, remindersSettingsError, type ReminderSettings } from '@/lib/billing';
 import { nowIso, type AuthUser, type Services } from './services';
 
 const SA: Role[] = ['SUPER_ADMIN'];
@@ -35,6 +38,13 @@ function adminView(a: PlatformAdmin) {
 const sum = (rows: AdminCompanyView[]) => r2(rows.reduce((s, c) => s + c.mrr, 0));
 function companyUsers(svc: Services, companyId: string, roles: Role[]) {
   return svc.db.users.filter((u) => u.companyId === companyId && u.isActive && roles.includes(u.role)).map((u) => u.id);
+}
+
+/** ValidationPipe whitelist for nested settings objects. */
+function pickKnown(o: Record<string, unknown>, keys: string[]) {
+  const out: Record<string, unknown> = {};
+  for (const k of keys) if (o[k] !== undefined) out[k] = o[k];
+  return out;
 }
 
 const SORTS: Record<string, { cmp: (a: AdminCompanyView, b: AdminCompanyView) => number; dir: 1 | -1 }> = {
@@ -76,6 +86,8 @@ function companyDetail(svc: Services, c: Company) {
       checkIns30d: db.attendance.filter((r) => r.companyId === c.id && !!r.checkIn && r.date >= from && r.date <= today).length,
     },
     events: db.companyEvents.filter((e) => e.companyId === c.id).sort(byCreatedDesc).slice(0, 50).map((e) => eventView(db, e)),
+    invoices: db.invoices.filter((i) => i.companyId === c.id).sort(byIssueDesc).slice(0, 20).map((i) => invoiceView(i, today)),
+    emails: db.emails.filter((e) => e.companyId === c.id).sort(byCreatedDesc).slice(0, 20).map((e) => emailView(db, e)),
   };
 }
 
@@ -87,6 +99,7 @@ function setStatus(c: Company, status: CompanyStatus) {
 export const adminRoutes: Route[] = [
   // ---------- overview ----------
   route('GET', '/admin/overview', SA, ({ db, svc }) => {
+    runRemindersDaily(svc); // the demo's stand-in for the daily 09:00 job
     const views = db.companies.map((c) => adminCompanyView(svc, c));
     const count = (s: CompanyStatus) => views.filter((c) => c.status === s).length;
     const ids = new Set(db.companies.map((c) => c.id));
@@ -242,7 +255,7 @@ export const adminRoutes: Route[] = [
     const rec = db as unknown as Record<string, unknown>;
     for (const key of Object.keys(rec)) {
       const rows = rec[key];
-      if (key === 'companyEvents' || key === 'companies' || !Array.isArray(rows)) continue;
+      if (key === 'companyEvents' || key === 'companies' || key === 'emails' || !Array.isArray(rows)) continue;
       rec[key] = rows.filter((r) => !(r && typeof r === 'object' && (r as { companyId?: string }).companyId === c.id));
     }
     db.companies = db.companies.filter((x) => x.id !== c.id);
@@ -308,6 +321,19 @@ export const adminRoutes: Route[] = [
       if (!body.prices || typeof body.prices !== 'object') throw badRequest('prices must be an object');
       const p = body.prices as Record<string, unknown>;
       for (const plan of PLANS) { const n = nullableNum(p, plan, 0); if (n !== undefined) s.prices[plan] = n; }
+    }
+    if (body.billing !== undefined) {
+      if (!body.billing || typeof body.billing !== 'object' || Array.isArray(body.billing)) throw badRequest('billing must be an object');
+      const b = pickKnown(body.billing as Record<string, unknown>, Object.keys(s.billing));
+      const err = billingSettingsError(b); if (err) throw badRequest(err, 'قيمة غير صالحة في بيانات الفوترة');
+      s.billing = { ...s.billing, ...b };
+    }
+    if (body.reminders !== undefined) {
+      if (!body.reminders || typeof body.reminders !== 'object' || Array.isArray(body.reminders)) throw badRequest('reminders must be an object');
+      const r = pickKnown(body.reminders as Record<string, unknown>, Object.keys(s.reminders));
+      const err = remindersSettingsError(r); if (err) throw badRequest(err, 'قيمة غير صالحة في إعدادات التذكيرات');
+      for (const k of ['trialDays', 'subscriptionDays', 'overdueInvoiceDays'] as const) if (r[k]) r[k] = normalizeDays(r[k] as number[]);
+      s.reminders = { ...s.reminders, ...(r as Partial<ReminderSettings>) };
     }
     return s;
   }),

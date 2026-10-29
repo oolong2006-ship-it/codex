@@ -8,12 +8,13 @@ import { HttpError, forbidden, notFound } from './errors';
 import { match, type Query } from './router';
 import { assertCompanyAccess, sweepExpiry, touchActivity } from './lifecycle';
 import { adminRoutes } from './routes-admin';
+import { billingRoutes } from './routes-billing';
 import { coreRoutes, resolveUser } from './routes-core';
 import { moreRoutes } from './routes-more';
 import { buildSeed } from './seed';
 import { STAFF, Services, type AuthUser } from './services';
 
-const routes = [...coreRoutes, ...moreRoutes, ...adminRoutes];
+const routes = [...coreRoutes, ...moreRoutes, ...adminRoutes, ...billingRoutes];
 let db: DB | null = null;
 
 function fresh(): DB {
@@ -68,7 +69,7 @@ export async function demoFetch(method: string, path: string, opts: { body?: unk
     }
     const result = m.route.handler({ db: state, svc, user, params: m.params, query, body });
     if (method !== 'GET' || svc.dirty || /\/(wps|export)$/.test(path)) saveDb(state);
-    const status = method === 'POST' && !/\/(login|calculate|approve|reject|mark-paid|read|read-all|cancel|check-in|check-out|terminate|eosb)$/.test(path) ? 201 : 200;
+    const status = method === 'POST' && !/\/(login|calculate|approve|reject|mark-paid|read|read-all|cancel|check-in|check-out|terminate|eosb|pay|void|run)$/.test(path) ? 201 : 200;
     return { status, data: result === undefined ? undefined : typeof result === 'string' ? result : JSON.parse(JSON.stringify(result)) };
   } catch (e) {
     if (svc.dirty) saveDb(state); // e.g. a lazy expiry recorded right before the 403

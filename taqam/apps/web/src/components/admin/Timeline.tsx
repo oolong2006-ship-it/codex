@@ -2,8 +2,8 @@
 import Link from 'next/link';
 import { EmptyState } from '@/components/ui';
 import { useLang } from '@/lib/i18n';
-import { date } from '@/lib/format';
-import { BILLING_CYCLE, COMPANY_STATUS, PLAN, companyName, lbl, type CompanyEvent } from '@/lib/adminTypes';
+import { date, money } from '@/lib/format';
+import { BILLING_CYCLE, COMPANY_STATUS, EMAIL_TYPE, PAYMENT_METHOD, PLAN, companyName, lbl, type CompanyEvent } from '@/lib/adminTypes';
 import { EventChip, timeAgo } from './primitives';
 
 /** Vertical timeline of company lifecycle events. */
@@ -46,6 +46,9 @@ function EventDetails({ e }: { e: CompanyEvent }) {
   if (!d || typeof d !== 'object') return null;
   const parts: string[] = [];
   const s = (k: string) => (d[k] === undefined || d[k] === null ? null : String(d[k]));
+  if (s('number')) parts.push(`${t('فاتورة', 'Invoice')} ${s('number')}${typeof d.total === 'number' ? ` · ${money(d.total)}` : ''}`);
+  if (s('paymentMethod')) parts.push(lbl(PAYMENT_METHOD, s('paymentMethod'), lang));
+  if (e.type === 'REMINDER_SENT' && s('type')) parts.push(lbl(EMAIL_TYPE, s('type'), lang) + (typeof d.daysOverdue === 'number' ? ` · ${t(`متأخرة ${d.daysOverdue} يوم`, `${d.daysOverdue} days overdue`)}` : typeof d.daysLeft === 'number' && d.type !== 'EXPIRED' ? ` · ${t(`متبقٍ ${d.daysLeft} يوم`, `${d.daysLeft} days left`)}` : ''));
   if (s('reason')) parts.push(`${t('السبب', 'Reason')}: ${s('reason')}`);
   if (s('plan')) parts.push(`${t('الباقة', 'Plan')}: ${lbl(PLAN, s('plan'), lang)}`);
   if (s('billingCycle')) parts.push(lbl(BILLING_CYCLE, s('billingCycle'), lang));

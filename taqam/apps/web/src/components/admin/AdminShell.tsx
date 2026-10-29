@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  Activity, Building2, ChevronDown, Languages, LayoutDashboard, LogOut, Megaphone, Menu, Settings, ShieldCheck, UserPlus, X, type LucideIcon,
+  Activity, Building2, ChevronDown, Languages, LayoutDashboard, LogOut, Mail, Megaphone, Menu, ReceiptText, Settings, ShieldCheck, UserPlus, X, type LucideIcon,
 } from 'lucide-react';
 import { Logo, PageLoader } from '@/components/ui';
 import { Avatar } from '@/components/app/primitives';
@@ -13,16 +13,20 @@ import { goToLogin, homeFor, useAuth } from '@/lib/auth';
 import { useLang } from '@/lib/i18n';
 import { clearAdminToken } from './ImpersonationBanner';
 
-interface Item { href: string; label: [string, string]; icon: LucideIcon; exact?: boolean; badge?: 'pending' | 'leads' }
+interface Item { href: string; label: [string, string]; icon: LucideIcon; exact?: boolean; badge?: 'pending' | 'leads' | 'overdue' }
 const NAV: Item[] = [
   { href: '/admin', label: ['نظرة عامة', 'Overview'], icon: LayoutDashboard, exact: true },
   { href: '/admin/companies', label: ['المنشآت', 'Companies'], icon: Building2, badge: 'pending' },
+  { href: '/admin/invoices', label: ['الفواتير', 'Invoices'], icon: ReceiptText, badge: 'overdue' },
   { href: '/admin/leads', label: ['العملاء المحتملون', 'Leads'], icon: UserPlus, badge: 'leads' },
+  { href: '/admin/emails', label: ['الرسائل', 'Emails'], icon: Mail },
   { href: '/admin/activity', label: ['سجل النشاط', 'Activity log'], icon: Activity },
   { href: '/admin/broadcast', label: ['تعميم للمنشآت', 'Broadcast'], icon: Megaphone },
   { href: '/admin/settings', label: ['الإعدادات', 'Settings'], icon: Settings },
 ];
 const isActive = (i: Item, p: string) => (i.exact ? p === i.href : p === i.href || p.startsWith(`${i.href}/`));
+
+type Counts = { pending: number; leads: number; overdue: number };
 
 /** Fired by pages after an action that changes the sidebar counters. */
 export const ADMIN_COUNTS_EVENT = 'taqam:admin-counts';
@@ -30,14 +34,16 @@ export function refreshAdminCounts() { if (typeof window !== 'undefined') window
 
 function useCounts(enabled: boolean) {
   const pathname = usePathname();
-  const [counts, setCounts] = useState<{ pending: number; leads: number }>({ pending: 0, leads: 0 });
+  const [counts, setCounts] = useState<Counts>({ pending: 0, leads: 0, overdue: 0 });
   const load = useCallback(async () => {
     if (!enabled) return;
-    const [p, l] = await Promise.allSettled([
+    const [p, l, o] = await Promise.allSettled([
       api.get<Paginated<unknown>>('/admin/companies', { status: 'PENDING', pageSize: 1 }),
       api.get<Paginated<unknown>>('/admin/leads', { status: 'NEW', pageSize: 1 }),
+      api.get<Paginated<unknown>>('/admin/invoices', { status: 'ISSUED', overdue: 'true', pageSize: 1 }),
     ]);
-    setCounts({ pending: p.status === 'fulfilled' ? p.value.total : 0, leads: l.status === 'fulfilled' ? l.value.total : 0 });
+    const total = (r: PromiseSettledResult<Paginated<unknown>>) => (r.status === 'fulfilled' ? r.value.total : 0);
+    setCounts({ pending: total(p), leads: total(l), overdue: total(o) });
   }, [enabled]);
   useEffect(() => { void load(); }, [load, pathname]);
   useEffect(() => {
@@ -67,8 +73,8 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
   if (!ok) return <div className="min-h-screen bg-sand"><PageLoader /></div>;
 
   return (
-    <div className="min-h-screen bg-sand">
-      <aside className="fixed inset-y-0 start-0 z-30 hidden w-64 flex-col bg-[#0F2747] lg:flex">
+    <div className="min-h-screen bg-sand print:bg-white">
+      <aside className="fixed inset-y-0 start-0 z-30 hidden w-64 flex-col bg-[#0F2747] lg:flex print:!hidden">
         <Sidebar counts={counts} />
       </aside>
       {drawer && (
@@ -79,15 +85,15 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
           </aside>
         </div>
       )}
-      <div className="lg:ps-64">
+      <div className="lg:ps-64 print:!ps-0">
         <Topbar onMenu={() => setDrawer(true)} />
-        <main className="mx-auto w-full max-w-[1400px] px-4 py-6 sm:px-6 lg:px-8">{children}</main>
+        <main className="mx-auto w-full max-w-[1400px] px-4 py-6 sm:px-6 lg:px-8 print:max-w-none print:p-0">{children}</main>
       </div>
     </div>
   );
 }
 
-function Sidebar({ counts, onClose }: { counts: { pending: number; leads: number }; onClose?: () => void }) {
+function Sidebar({ counts, onClose }: { counts: Counts; onClose?: () => void }) {
   const { t, lang } = useLang();
   const pathname = usePathname();
   return (
@@ -108,7 +114,7 @@ function Sidebar({ counts, onClose }: { counts: { pending: number; leads: number
           {NAV.map((i) => {
             const active = isActive(i, pathname);
             const Icon = i.icon;
-            const n = i.badge === 'pending' ? counts.pending : i.badge === 'leads' ? counts.leads : 0;
+            const n = i.badge ? counts[i.badge] : 0;
             return (
               <li key={i.href}>
                 <Link href={i.href}
@@ -118,8 +124,8 @@ function Sidebar({ counts, onClose }: { counts: { pending: number; leads: number
                   <span className="flex-1 truncate">{lang === 'ar' ? i.label[0] : i.label[1]}</span>
                   {n > 0 && (
                     <span className={clsx('num min-w-5 rounded-full px-1.5 text-center text-[11px] font-bold',
-                      i.badge === 'pending' ? 'bg-warning text-[#0F2747]' : 'bg-accent text-[#0F2747]')}
-                      title={i.badge === 'pending' ? t('بانتظار الموافقة', 'Pending approval') : t('عملاء جدد', 'New leads')}>{n}</span>
+                      i.badge === 'pending' ? 'bg-warning text-[#0F2747]' : i.badge === 'overdue' ? 'bg-danger text-white' : 'bg-accent text-[#0F2747]')}
+                      title={i.badge === 'pending' ? t('بانتظار الموافقة', 'Pending approval') : i.badge === 'overdue' ? t('فواتير متأخرة', 'Overdue invoices') : t('عملاء جدد', 'New leads')}>{n}</span>
                   )}
                 </Link>
               </li>
@@ -135,7 +141,7 @@ function Sidebar({ counts, onClose }: { counts: { pending: number; leads: number
 function Topbar({ onMenu }: { onMenu: () => void }) {
   const { lang, setLang, t } = useLang();
   return (
-    <header className="sticky top-0 z-20 flex h-16 items-center gap-3 border-b border-line bg-white/90 px-4 backdrop-blur sm:px-6 lg:px-8">
+    <header className="sticky top-0 z-20 flex h-16 items-center gap-3 border-b border-line bg-white/90 px-4 backdrop-blur sm:px-6 lg:px-8 print:hidden">
       <button onClick={onMenu} className="rounded-lg p-2 text-ink-muted hover:bg-sand lg:hidden" aria-label="menu"><Menu className="h-5 w-5" /></button>
       <div className="flex min-w-0 flex-1 items-center gap-2">
         <span className="inline-flex items-center gap-1.5 rounded-full bg-[#0F2747] px-2.5 py-1 text-[11px] font-semibold text-white">

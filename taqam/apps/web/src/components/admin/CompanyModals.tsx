@@ -19,6 +19,8 @@ import { refreshAdminCounts } from './AdminShell';
 type Co = Pick<AdminCompany, 'id' | 'nameAr' | 'nameEn' | 'plan' | 'billingCycle' | 'maxEmployees' | 'pricePerEmployee' | 'trialEndsAt' | 'subscriptionEndsAt' | 'status' | 'activeEmployees'>;
 
 let settingsCache: PlatformSettings | null = null;
+/** Platform settings, cached across modals (refetched after the settings page saves). */
+export function usePlatformSettings(open: boolean) { return useSettings(open); }
 function useSettings(open: boolean) {
   const [s, setS] = useState<PlatformSettings | null>(settingsCache);
   useEffect(() => {
@@ -29,7 +31,7 @@ function useSettings(open: boolean) {
 }
 export function invalidateSettingsCache() { settingsCache = null; }
 
-function Segmented<T extends string>({ value, onChange, options }: { value: T; onChange: (v: T) => void; options: { value: T; label: string; hint?: string }[] }) {
+export function Segmented<T extends string>({ value, onChange, options }: { value: T; onChange: (v: T) => void; options: { value: T; label: string; hint?: string }[] }) {
   return (
     <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${options.length}, minmax(0, 1fr))` }}>
       {options.map((o) => (
