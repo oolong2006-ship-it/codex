@@ -48,8 +48,16 @@ All non-public endpoints require `Authorization: Bearer <accessToken>`.
 `/health`, `/health/live`, `/health/ready` (public).
 
 ## Realtime (socket.io, namespace `/realtime`)
-Emit `join` with `{ organizationId }`; receive `alert:new`, `alert:updated`, `incident:new`,
-`incident:updated`, `task:new`, `task:updated`, `sim:tick`.
+Connect with the access token: `io(url + '/realtime', { auth: { token } })` (or an
+`Authorization: Bearer <token>` handshake header). Sockets without a valid access token receive
+`auth:error` and are disconnected. A socket is also disconnected when its token expires, so
+reconnect with a fresh one.
+On connect the socket is placed in its own organization's room automatically. `join` with
+`{ organizationId }` is only needed by super admins to watch another organization; for anyone else
+a different `organizationId` returns `{ joined: null, error: 'forbidden' }`.
+
+Events: `alert:new`, `alert:updated`, `incident:new`, `incident:updated`, `task:new`,
+`task:updated`, `sim:tick`.
 
 ## Errors
 Centralized filter returns `{ statusCode, path, timestamp, message }`. Rate limiting via
