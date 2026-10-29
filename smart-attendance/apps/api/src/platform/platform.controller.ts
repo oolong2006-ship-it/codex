@@ -1,7 +1,6 @@
 import { Body, Controller, Get, Injectable, Post, Req } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiProperty, ApiTags } from '@nestjs/swagger';
 import { hash } from '@node-rs/argon2';
-import { DEFAULT_DEVICE_POLICY, DEVICE_POLICY_KIND } from '@sa/domain';
 import { IsEmail, IsNotEmpty, IsString, Matches, MaxLength } from 'class-validator';
 import { AuditMeta, AuditService, auditMeta } from '../common/audit.service';
 import { Audited } from '../common/audit.interceptor';
@@ -9,6 +8,7 @@ import { conflict, forbidden } from '../common/errors';
 import { AuthedRequest, CurrentPrincipal, Principal, RequirePermission } from '../common/principal';
 import { DbService } from '../db/db.service';
 import { randomToken } from '../auth/crypto';
+import { insertDefaultPolicies } from '../common/tenant-bootstrap';
 
 class CreateTenantDto {
   @ApiProperty() @IsString() @IsNotEmpty() @MaxLength(200)
@@ -36,13 +36,7 @@ export class PlatformService {
         await tx.query('INSERT INTO tenants (name, slug) VALUES ($1, $2) RETURNING id, name, slug, status, created_at', [dto.name, dto.slug])
       ).rows[0];
       await tx.query('INSERT INTO tenant_settings (tenant_id) VALUES ($1)', [tenant.id]);
-      const policyId = (
-        await tx.query("INSERT INTO policies (tenant_id, kind, name) VALUES ($1, $2, 'سياسة الأجهزة') RETURNING id", [tenant.id, DEVICE_POLICY_KIND])
-      ).rows[0].id;
-      await tx.query(
-        'INSERT INTO policy_versions (tenant_id, policy_id, version, effective_from, values) VALUES ($1, $2, 1, now(), $3)',
-        [tenant.id, policyId, JSON.stringify(DEFAULT_DEVICE_POLICY)],
-      );
+      await insertDefaultPolicies(tx, tenant.id);
       // كلمة مرور مؤقتة عشوائية؛ قناة الدعوة (بريد) خارج نطاق المرحلة 1.
       const temporaryPassword = randomToken(18);
       const admin = (

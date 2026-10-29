@@ -4,7 +4,8 @@
  */
 import { hash } from '@node-rs/argon2';
 import { Client } from 'pg';
-import { DEFAULT_DEVICE_POLICY, DEVICE_POLICY_KIND, Role } from '@sa/domain';
+import { Role } from '@sa/domain';
+import { insertDefaultPolicies } from '../common/tenant-bootstrap';
 
 interface SeedUser {
   email: string;
@@ -58,16 +59,7 @@ export async function seed(env: NodeJS.ProcessEnv = process.env): Promise<void> 
         await client.query('INSERT INTO tenants (name, slug) VALUES ($1, $2) RETURNING id', [t.name, t.slug])
       ).rows[0].id;
       await client.query('INSERT INTO tenant_settings (tenant_id) VALUES ($1)', [tenantId]);
-      const policyId: string = (
-        await client.query(
-          "INSERT INTO policies (tenant_id, kind, name) VALUES ($1, $2, 'سياسة الأجهزة') RETURNING id",
-          [tenantId, DEVICE_POLICY_KIND],
-        )
-      ).rows[0].id;
-      await client.query(
-        "INSERT INTO policy_versions (tenant_id, policy_id, version, effective_from, values) VALUES ($1, $2, 1, '2020-01-01', $3)",
-        [tenantId, policyId, JSON.stringify(DEFAULT_DEVICE_POLICY)],
-      );
+      await insertDefaultPolicies(client, tenantId, '2020-01-01');
       const branchIds: string[] = [];
       for (const b of [1, 2]) {
         branchIds.push(

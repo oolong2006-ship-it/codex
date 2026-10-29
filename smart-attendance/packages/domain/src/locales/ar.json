@@ -45,5 +45,7 @@
   "DEVICE_CHANGE_NOT_OPEN": "طلب تغيير الجهاز ليس مفتوحًا.",
   "DEVICE_CHANGE_SELF_APPROVAL": "لا يمكنك اعتماد طلب تغيير جهازك بنفسك.",
   "DEVICE_CHANGE_ALREADY_OPEN": "لديك طلب تغيير جهاز مفتوح.",
-  "BINDING_INVALID_TRANSITION": "لا يمكن تغيير حالة ارتباط الجهاز بهذا الإجراء."
+  "BINDING_INVALID_TRANSITION": "لا يمكن تغيير حالة ارتباط الجهاز بهذا الإجراء.",
+  "IDEMPOTENCY_KEY_REUSED": "استُخدم مفتاح الطلب نفسه لطلب مختلف.",
+  "FEATURE_NOT_ENABLED": "هذه الميزة غير مفعلة لشركتك."
 }

@@ -1,4 +1,4 @@
-import { HttpStatus, Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import {
   BindingStatus,
   ChangeReason,
@@ -14,7 +14,8 @@ import { randomBytes } from 'node:crypto';
 import { APP_CONFIG, AppConfig } from '../config';
 import { DbService, Tx } from '../db/db.service';
 import { AuditMeta, AuditService } from '../common/audit.service';
-import { ApiError, badRequest, conflict, forbidden } from '../common/errors';
+import { badRequest, conflict, forbidden } from '../common/errors';
+import { PoliciesService } from '../common/policies.service';
 import { Principal, branchScope, roleCodes } from '../common/principal';
 import { TenantChecks } from '../common/tenant-checks';
 import { hmacHex, randomToken } from '../auth/crypto';
@@ -41,6 +42,7 @@ export class DevicesService {
     private readonly audit: AuditService,
     private readonly checks: TenantChecks,
     private readonly attestation: AttestationAdapter,
+    private readonly policies: PoliciesService,
   ) {}
 
   private tenantOf(p: Principal): string {
@@ -48,15 +50,8 @@ export class DevicesService {
     return p.tenantId;
   }
 
-  /** السياسة السارية الآن (CLAUDE.md §5.4). */
   private async policy(tx: Tx): Promise<DevicePolicy> {
-    const r = await tx.query(
-      `SELECT pv.values FROM policy_versions pv JOIN policies p ON p.id = pv.policy_id
-       WHERE p.kind = $1 AND pv.effective_from <= now() ORDER BY pv.effective_from DESC, pv.version DESC LIMIT 1`,
-      [DEVICE_POLICY_KIND],
-    );
-    if (!r.rows[0]) throw new ApiError('VALIDATION_FAILED', HttpStatus.UNPROCESSABLE_ENTITY, { reason: 'device policy missing' });
-    return { ...DEFAULT_DEVICE_POLICY, ...r.rows[0].values };
+    return (await this.policies.current(tx, DEVICE_POLICY_KIND, DEFAULT_DEVICE_POLICY)).values;
   }
 
   // ── رمز التفعيل (HR) ───────────────────────────────────────────────────────

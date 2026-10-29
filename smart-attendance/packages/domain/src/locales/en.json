@@ -45,5 +45,7 @@
   "DEVICE_CHANGE_NOT_OPEN": "The device change request is not open.",
   "DEVICE_CHANGE_SELF_APPROVAL": "You can't approve your own device change request.",
   "DEVICE_CHANGE_ALREADY_OPEN": "You already have an open device change request.",
-  "BINDING_INVALID_TRANSITION": "This action can't change the device link status."
+  "BINDING_INVALID_TRANSITION": "This action can't change the device link status.",
+  "IDEMPOTENCY_KEY_REUSED": "The same request key was used for a different request.",
+  "FEATURE_NOT_ENABLED": "This feature is not enabled for your company."
 }

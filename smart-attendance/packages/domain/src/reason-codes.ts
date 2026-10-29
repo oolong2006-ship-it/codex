@@ -63,6 +63,8 @@ export const ERROR_CODES = [
   'ATTESTATION_FAILED',
   'TENANT_INACTIVE',
   'ACCOUNT_INACTIVE',
+  'IDEMPOTENCY_KEY_REUSED',
+  'FEATURE_NOT_ENABLED',
 ] as const;
 
 export type ErrorCode = (typeof ERROR_CODES)[number];

@@ -1,3 +1,4 @@
+import { createHmac, timingSafeEqual } from 'node:crypto';
 import { ConfigError, type AppConfig } from '../config';
 
 export interface AttestationInput {
@@ -16,9 +17,39 @@ export interface AttestationResult {
   verdict: Record<string, unknown>;
 }
 
+/** توقيع البصمة: App Attest assertion أو توقيع Keystore + Play Integrity token (specs §D). */
+export interface AssertionInput {
+  platform: 'ios' | 'android';
+  keyId: string;
+  publicKey: string;
+  /** SHA256(nonce ‖ canonical_json(body دون attestation)) بصيغة hex. */
+  clientDataHash: string;
+  payload: Record<string, unknown>;
+}
+
+/** إشارات سلامة الجهاز المستخرجة من التحقق (تغذي الطبقة 3). */
+export interface DeviceSignals {
+  meets_device_integrity?: boolean;
+  app_access_risk?: string[];
+  recent_device_activity_level?: 1 | 2 | 3 | 4;
+  verified_boot?: boolean;
+  app_attest_key_churn?: boolean;
+}
+
+export interface AssertionResult {
+  verified: boolean;
+  signals: DeviceSignals;
+}
+
 export abstract class AttestationAdapter {
   abstract readonly name: string;
   abstract verifyKeyAttestation(input: AttestationInput): Promise<AttestationResult>;
+  abstract verifyAssertion(input: AssertionInput): Promise<AssertionResult>;
+}
+
+/** توقيع Fake: HMAC-SHA256 بمفتاح الجهاز «العام» المزيف على clientDataHash. للاختبار فقط. */
+export function fakeSign(publicKey: string, clientDataHash: string): string {
+  return createHmac('sha256', publicKey).update(clientDataHash).digest('hex');
 }
 
 /**
@@ -37,6 +68,19 @@ export class FakeAttestationAdapter extends AttestationAdapter {
       publicKey: nonceOk && verdictOk ? `fake-public-key:${input.keyId}` : null,
       verdict: { adapter: 'fake', nonce_match: nonceOk, fake_verdict: String(input.payload.fake_verdict ?? '') },
     };
+  }
+
+  /**
+   * ينجح فقط إذا payload.signature = fakeSign(publicKey, clientDataHash)، فأي تعديل في
+   * الجسم بعد التوقيع يفشل (F5). payload.fake_signals تحاكي حكم Play Integrity/Key Attestation.
+   */
+  async verifyAssertion(input: AssertionInput): Promise<AssertionResult> {
+    const sig = typeof input.payload.signature === 'string' ? input.payload.signature : '';
+    const expected = fakeSign(input.publicKey, input.clientDataHash);
+    const verified =
+      sig.length === expected.length && timingSafeEqual(Buffer.from(sig), Buffer.from(expected));
+    const raw = (input.payload.fake_signals ?? {}) as DeviceSignals;
+    return { verified, signals: verified ? raw : {} };
   }
 }
 
