@@ -2,28 +2,161 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+  MASAR 34 design system.
+  Three themes selected via data-theme on <html>: light (admin/reports),
+  dark (control room), with prefers-color-scheme as the fallback.
+  Every component styles through these tokens — never hard-coded colors.
+*/
 :root {
-  --font-sans: 'Segoe UI', 'Tahoma', system-ui, sans-serif;
+  /* Brand green-biased neutrals (light) */
+  --bg: #e9f0ec;
+  --bg-elevated: #eef4f1;
+  --surface: #ffffff;
+  --surface-2: #f3f7f5;
+  --surface-3: #eaf1ed;
+  --border: #d7e2db;
+  --border-strong: #c2d2c9;
+  --text: #0b1a14;
+  --text-dim: #566a61;
+  --text-faint: #839a8f;
+
+  --accent: #0f7a52;
+  --accent-2: #0b6444;
+  --accent-contrast: #ffffff;
+  --accent-soft: #e2f1ea;
+  --ring: #0f7a52;
+
+  /* Semantic (distinct from brand accent) */
+  --safe: #16a34a;
+  --watch: #ca8a04;
+  --busy: #ea580c;
+  --danger: #dc2626;
+  --critical: #7c3aed;
+  --info: #0ea5e9;
+  --safe-soft: #dcfce7;
+  --watch-soft: #fef3c7;
+  --busy-soft: #ffedd5;
+  --danger-soft: #fee2e2;
+  --critical-soft: #ede9fe;
+
+  --shadow-sm: 0 1px 2px rgba(6,30,22,.06);
+  --shadow: 0 1px 2px rgba(6,30,22,.05), 0 8px 24px rgba(6,30,22,.07);
+  --shadow-lg: 0 24px 60px rgba(6,30,22,.14);
+  --header-grad: linear-gradient(135deg, #0b6444 0%, #0f7a52 55%, #16a37a 100%);
+
+  --radius: 14px;
+  --radius-sm: 10px;
+  --radius-lg: 20px;
+
+  /* Type scale */
+  --fs-xs: 11px; --fs-sm: 12.5px; --fs-base: 14px; --fs-md: 16px;
+  --fs-lg: 19px; --fs-xl: 24px; --fs-2xl: 30px; --fs-3xl: 40px;
+  --font-sans: "SF Arabic", "Segoe UI", system-ui, -apple-system, "Noto Sans Arabic", Tahoma, sans-serif;
 }
 
-html {
-  color-scheme: light dark;
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #05100c;
+    --bg-elevated: #081713;
+    --surface: #0c1e18;
+    --surface-2: #10261f;
+    --surface-3: #143026;
+    --border: #1c362b;
+    --border-strong: #27463a;
+    --text: #e8f1ec;
+    --text-dim: #8aa89b;
+    --text-faint: #658275;
+
+    --accent: #2bd08f;
+    --accent-2: #19b67c;
+    --accent-contrast: #04140d;
+    --accent-soft: #102c21;
+    --ring: #2bd08f;
+
+    --safe: #22c55e; --watch: #eab308; --busy: #fb923c; --danger: #f05252; --critical: #a78bfa; --info: #38bdf8;
+    --safe-soft: #0c2a1a; --watch-soft: #2c2408; --busy-soft: #2c1a0a; --danger-soft: #2c1414; --critical-soft: #1e1838;
+
+    --shadow-sm: 0 1px 2px rgba(0,0,0,.4);
+    --shadow: 0 1px 2px rgba(0,0,0,.4), 0 10px 30px rgba(0,0,0,.5);
+    --shadow-lg: 0 28px 70px rgba(0,0,0,.6);
+    --header-grad: linear-gradient(135deg, #052a1d 0%, #0a4a33 60%, #0f7a52 100%);
+  }
 }
 
+:root[data-theme="dark"] {
+  --bg: #05100c; --bg-elevated: #081713; --surface: #0c1e18; --surface-2: #10261f; --surface-3: #143026;
+  --border: #1c362b; --border-strong: #27463a; --text: #e8f1ec; --text-dim: #8aa89b; --text-faint: #658275;
+  --accent: #2bd08f; --accent-2: #19b67c; --accent-contrast: #04140d; --accent-soft: #102c21; --ring: #2bd08f;
+  --safe: #22c55e; --watch: #eab308; --busy: #fb923c; --danger: #f05252; --critical: #a78bfa; --info: #38bdf8;
+  --safe-soft: #0c2a1a; --watch-soft: #2c2408; --busy-soft: #2c1a0a; --danger-soft: #2c1414; --critical-soft: #1e1838;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,.4);
+  --shadow: 0 1px 2px rgba(0,0,0,.4), 0 10px 30px rgba(0,0,0,.5);
+  --shadow-lg: 0 28px 70px rgba(0,0,0,.6);
+  --header-grad: linear-gradient(135deg, #052a1d 0%, #0a4a33 60%, #0f7a52 100%);
+}
+
+:root[data-theme="light"] {
+  --bg: #e9f0ec; --bg-elevated: #eef4f1; --surface: #ffffff; --surface-2: #f3f7f5; --surface-3: #eaf1ed;
+  --border: #d7e2db; --border-strong: #c2d2c9; --text: #0b1a14; --text-dim: #566a61; --text-faint: #839a8f;
+  --accent: #0f7a52; --accent-2: #0b6444; --accent-contrast: #ffffff; --accent-soft: #e2f1ea; --ring: #0f7a52;
+  --safe: #16a34a; --watch: #ca8a04; --busy: #ea580c; --danger: #dc2626; --critical: #7c3aed; --info: #0ea5e9;
+  --safe-soft: #dcfce7; --watch-soft: #fef3c7; --busy-soft: #ffedd5; --danger-soft: #fee2e2; --critical-soft: #ede9fe;
+  --shadow-sm: 0 1px 2px rgba(6,30,22,.06);
+  --shadow: 0 1px 2px rgba(6,30,22,.05), 0 8px 24px rgba(6,30,22,.07);
+  --shadow-lg: 0 24px 60px rgba(6,30,22,.14);
+  --header-grad: linear-gradient(135deg, #0b6444 0%, #0f7a52 55%, #16a37a 100%);
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+html { color-scheme: light dark; }
 body {
-  @apply bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100;
+  background: var(--bg);
+  color: var(--text);
   font-family: var(--font-sans);
+  font-size: var(--fs-base);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
+.tabular { font-variant-numeric: tabular-nums; }
 
-/* RTL-aware logical spacing helpers */
-[dir='rtl'] .flip-x {
-  transform: scaleX(-1);
-}
+h1,h2,h3 { text-wrap: balance; }
 
-.kpi-card {
-  @apply rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900;
-}
+::selection { background: color-mix(in oklab, var(--accent) 25%, transparent); }
+
+a { color: inherit; text-decoration: none; }
+
+:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; border-radius: 4px; }
 
 .skeleton {
-  @apply animate-pulse rounded bg-slate-200 dark:bg-slate-800;
+  background: linear-gradient(90deg, var(--surface-2) 25%, var(--surface-3) 37%, var(--surface-2) 63%);
+  background-size: 400% 100%;
+  animation: shimmer 1.4s ease infinite;
+  border-radius: var(--radius-sm);
+}
+@keyframes shimmer { 0% { background-position: 100% 0; } 100% { background-position: -100% 0; } }
+
+/* Compatibility: pages not yet migrated to the component library still render on the new tokens. */
+.kpi-card {
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  padding: 1rem;
+  box-shadow: var(--shadow-sm);
+}
+
+@keyframes pulse-ring {
+  0% { box-shadow: 0 0 0 0 color-mix(in oklab, var(--safe) 55%, transparent); }
+  70% { box-shadow: 0 0 0 7px transparent; }
+  100% { box-shadow: 0 0 0 0 transparent; }
+}
+.live-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--safe); animation: pulse-ring 1.7s infinite; }
+
+/* Thin, themed scrollbars for data-dense panels */
+* { scrollbar-width: thin; scrollbar-color: var(--border-strong) transparent; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; }
 }

@@ -8,6 +8,7 @@ import {
   AddIncidentUpdateDto,
 } from './incidents.dto';
 import { EventsGateway } from '../realtime/events.gateway';
+import { isSlaBreached, slaMinutesRemaining, SlaSubject } from '../common/sla';
 
 @Injectable()
 export class IncidentsService {
@@ -16,19 +17,30 @@ export class IncidentsService {
     private readonly gateway: EventsGateway,
   ) {}
 
+  /** Attaches computed SLA state to an incident record. */
+  private withSla<T extends SlaSubject>(incident: T, now = new Date()) {
+    return {
+      ...incident,
+      slaBreached: isSlaBreached(incident, now),
+      slaMinutesRemaining: slaMinutesRemaining(incident.slaDueAt, now),
+    };
+  }
+
   private async nextNumber(organizationId: string): Promise<string> {
     const count = await this.prisma.incident.count({ where: { organizationId } });
     const year = new Date().getFullYear();
     return `INC-${year}-${String(count + 1).padStart(5, '0')}`;
   }
 
-  findAll(user: AuthenticatedUser, eventId?: string) {
-    return this.prisma.incident.findMany({
+  async findAll(user: AuthenticatedUser, eventId?: string) {
+    const incidents = await this.prisma.incident.findMany({
       where: tenantWhere(user, { ...(eventId ? { eventId } : {}) }),
       orderBy: { createdAt: 'desc' },
       take: 200,
       include: { assignedTeam: { select: { id: true, name: true } } },
     });
+    const now = new Date();
+    return incidents.map((i) => this.withSla(i, now));
   }
 
   async findOne(user: AuthenticatedUser, id: string) {
@@ -41,7 +53,7 @@ export class IncidentsService {
       },
     });
     if (!incident) throw new NotFoundException('Incident not found');
-    return incident;
+    return this.withSla(incident);
   }
 
   async create(user: AuthenticatedUser, dto: CreateIncidentDto) {

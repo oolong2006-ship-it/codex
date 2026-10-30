@@ -9,6 +9,7 @@ import { tenantWhere } from '../common/tenant';
 import { AuthenticatedUser } from '../common/types';
 import { CrowdService } from '../crowd/crowd.service';
 import { QueuesService } from '../queues/queues.service';
+import { isSlaBreached } from '../common/sla';
 
 @Injectable()
 export class DashboardService {
@@ -20,11 +21,11 @@ export class DashboardService {
 
   /** Executive KPI overview across the tenant. */
   async overview(user: AuthenticatedUser) {
-    const [activeEvents, openIncidents, activeAlerts, crowd, queues] = await Promise.all([
+    const [activeEvents, openIncidentRecords, activeAlerts, crowd, queues] = await Promise.all([
       this.prisma.event.count({
         where: tenantWhere(user, { status: EventStatus.ACTIVE, deletedAt: null }),
       }),
-      this.prisma.incident.count({
+      this.prisma.incident.findMany({
         where: tenantWhere(user, {
           status: {
             in: [
@@ -35,6 +36,7 @@ export class DashboardService {
             ],
           },
         }),
+        select: { slaDueAt: true, status: true, resolvedAt: true },
       }),
       this.prisma.alert.count({
         where: tenantWhere(user, {
@@ -52,6 +54,9 @@ export class DashboardService {
       this.queues.current(user),
     ]);
 
+    const now = new Date();
+    const openIncidents = openIncidentRecords.length;
+    const breachedIncidents = openIncidentRecords.filter((i) => isSlaBreached(i, now)).length;
     const totalOccupancy = crowd.reduce((sum, z) => sum + z.occupancy, 0);
     const totalCapacity = crowd.reduce((sum, z) => sum + z.capacity, 0);
     const highRiskZones = crowd.filter((z) => z.riskLevel === 'HIGH' || z.riskLevel === 'CRITICAL');
@@ -73,6 +78,7 @@ export class DashboardService {
         maxQueueTime,
         activeAlerts,
         openIncidents,
+        breachedIncidents,
         highRiskZones: highRiskZones.length,
         gateThroughput: Math.round(gateThroughput),
         predictedCongestion: highRiskZones.length > 0 ? 'ELEVATED' : 'NORMAL',
