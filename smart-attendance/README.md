@@ -23,3 +23,17 @@ pnpm lint && pnpm typecheck && pnpm test
 - الاختبارات تنشئ قاعدة `smart_attendance_test` نظيفة في كل تشغيل.
 - حسابات seed: `admin@a.dev`، `hr@a.dev`، `manager1@a.dev`، `emp1@a.dev`… (وكذلك `@b.dev`)، وكلمة المرور من `SEED_PASSWORD`. أدوار HR والإدارة تطلب تفعيل TOTP عند أول دخول.
 - `apps/api/openapi.json` يُولَّد بـ `pnpm openapi` ويفحصه CI.
+
+## لوحة الإدارة (apps/admin)
+
+الواجهة للإدارة والمدراء: الحضور اللحظي، والاستثناءات، والجلسات والكشوف، وتقرير الورديات، وإدارة الورديات، وفترات الحضور، والأجهزة، والموظفون.
+
+```bash
+pnpm --filter @sa/admin build
+API_BASE_URL=http://localhost:3000 pnpm --filter @sa/admin start   # http://localhost:3100
+```
+
+- الجلسة: رمز الوصول ورمز التحديث في ملفات كوكيز `httpOnly`، ولا يصل أي منهما إلى JavaScript في المتصفح. التجديد يتم في الوسيط (middleware).
+- الخادم هو صاحب القرار: الواجهة تخفي الأزرار حسب الصلاحيات، والـ API يفرضها.
+- الروابط بلا `prefetch` لتقليل طلبات التجديد المتزامنة (رمز التحديث يُدار بتدوير وكشف إعادة الاستخدام).
+

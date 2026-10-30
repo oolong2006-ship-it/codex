@@ -47,6 +47,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm lint
       - run: pnpm typecheck
+      - run: pnpm --filter @sa/admin build
       # e2e تنشئ قاعدة <db>_test نظيفة وتطبق migrations وseed بنفسها.
       - run: pnpm test
       - name: OpenAPI is up to date
