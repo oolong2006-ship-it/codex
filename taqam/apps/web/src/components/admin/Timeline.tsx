@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import { EmptyState } from '@/components/ui';
 import { useLang } from '@/lib/i18n';
-import { date, money } from '@/lib/format';
+import { arDays, date, money } from '@/lib/format';
 import { BILLING_CYCLE, COMPANY_STATUS, EMAIL_TYPE, PAYMENT_METHOD, PLAN, companyName, lbl, type CompanyEvent } from '@/lib/adminTypes';
 import { EventChip, timeAgo } from './primitives';
 
@@ -47,12 +47,13 @@ function EventDetails({ e }: { e: CompanyEvent }) {
   const parts: string[] = [];
   const s = (k: string) => (d[k] === undefined || d[k] === null ? null : String(d[k]));
   if (s('number')) parts.push(`${t('فاتورة', 'Invoice')} ${s('number')}${typeof d.total === 'number' ? ` · ${money(d.total)}` : ''}`);
+  if (s('creditNoteNumber')) parts.push(`${t('إشعار دائن', 'Credit note')} ${s('creditNoteNumber')}`);
   if (s('paymentMethod')) parts.push(lbl(PAYMENT_METHOD, s('paymentMethod'), lang));
-  if (e.type === 'REMINDER_SENT' && s('type')) parts.push(lbl(EMAIL_TYPE, s('type'), lang) + (typeof d.daysOverdue === 'number' ? ` · ${t(`متأخرة ${d.daysOverdue} يوم`, `${d.daysOverdue} days overdue`)}` : typeof d.daysLeft === 'number' && d.type !== 'EXPIRED' ? ` · ${t(`متبقٍ ${d.daysLeft} يوم`, `${d.daysLeft} days left`)}` : ''));
+  if (e.type === 'REMINDER_SENT' && s('type')) parts.push(lbl(EMAIL_TYPE, s('type'), lang) + (typeof d.daysOverdue === 'number' ? ` · ${t(`متأخرة ${arDays(d.daysOverdue)}`, `${d.daysOverdue} days overdue`)}` : typeof d.daysLeft === 'number' && d.type !== 'EXPIRED' ? ` · ${t(`متبقٍ ${arDays(d.daysLeft)}`, `${d.daysLeft} days left`)}` : ''));
   if (s('reason')) parts.push(`${t('السبب', 'Reason')}: ${s('reason')}`);
   if (s('plan')) parts.push(`${t('الباقة', 'Plan')}: ${lbl(PLAN, s('plan'), lang)}`);
   if (s('billingCycle')) parts.push(lbl(BILLING_CYCLE, s('billingCycle'), lang));
-  if (s('days')) parts.push(t(`${s('days')} يوم`, `${s('days')} days`));
+  if (s('days')) parts.push(t(arDays(Number(d.days)), `${s('days')} days`));
   if (s('maxEmployees')) parts.push(`${t('الحد', 'Seats')}: ${s('maxEmployees')}`);
   if (s('mode')) parts.push(s('mode') === 'TRIAL' ? t('تجريبي', 'Trial') : t('مدفوع', 'Paid'));
   if (s('note')) parts.push(s('note')!);

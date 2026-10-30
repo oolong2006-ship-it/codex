@@ -10,7 +10,8 @@ import { route, v, paginate, byCreatedAsc, byCreatedDesc, ok, type Query, type R
 import { authResponse } from './routes-core';
 import { byIssueDesc, invoiceView, runRemindersDaily } from './billing';
 import { emailView } from './mail';
-import { billingSettingsError, normalizeDays, remindersSettingsError, type ReminderSettings } from '@/lib/billing';
+import { billingSettingsError, billingSettingsErrorAr, normalizeDays, remindersSettingsError, type ReminderSettings } from '@/lib/billing';
+import { cleanCompanyName } from './lifecycle';
 import { nowIso, type AuthUser, type Services } from './services';
 
 const SA: Role[] = ['SUPER_ADMIN'];
@@ -189,8 +190,8 @@ export const adminRoutes: Route[] = [
     if (body.trialEndsAt !== undefined) next.trialEndsAt = parseEndDate(body.trialEndsAt, 'trialEndsAt');
     if (body.subscriptionEndsAt !== undefined) next.subscriptionEndsAt = parseEndDate(body.subscriptionEndsAt, 'subscriptionEndsAt');
     if (body.adminNotes !== undefined) next.adminNotes = body.adminNotes === null || body.adminNotes === '' ? null : v.str(body, 'adminNotes')!;
-    if (body.nameAr !== undefined) next.nameAr = v.str(body, 'nameAr', { min: 2 })!.trim();
-    if (body.nameEn !== undefined) next.nameEn = body.nameEn === null || body.nameEn === '' ? null : v.str(body, 'nameEn')!.trim();
+    if (body.nameAr !== undefined) next.nameAr = cleanCompanyName(v.str(body, 'nameAr', { min: 2 })!, 'nameAr');
+    if (body.nameEn !== undefined) next.nameEn = body.nameEn === null || body.nameEn === '' ? null : cleanCompanyName(v.str(body, 'nameEn')!, 'nameEn') || null;
     const diff = (keys: (keyof Company)[]) => {
       const out: Record<string, { from: unknown; to: unknown }> = {};
       for (const k of keys) if (next[k] !== undefined && next[k] !== c[k]) out[k] = { from: c[k], to: next[k] };
@@ -251,6 +252,8 @@ export const adminRoutes: Route[] = [
     const c = findCompany(db, params.id);
     const confirmName = String(body.confirmName ?? query.confirmName ?? '').trim();
     if (confirmName !== c.nameAr.trim()) throw badRequest('confirmName does not match the company name', 'اسم المنشأة غير مطابق');
+    // v2.1 retention: issued invoices and credit notes are never deleted.
+    if (db.invoices.some((i) => i.companyId === c.id)) throw conflict('Company has issued invoices; suspend it instead', 'لا يمكن حذف منشأة لها فواتير صادرة؛ أوقف الحساب بدلاً من ذلك');
     logEvent(svc, c, 'DELETED', { from: c.status, to: null, actor: actor(user), data: { nameAr: c.nameAr, nameEn: c.nameEn, ownerEmail: companyOwner(db, c.id)?.email ?? null } });
     const rec = db as unknown as Record<string, unknown>;
     for (const key of Object.keys(rec)) {
@@ -325,7 +328,8 @@ export const adminRoutes: Route[] = [
     if (body.billing !== undefined) {
       if (!body.billing || typeof body.billing !== 'object' || Array.isArray(body.billing)) throw badRequest('billing must be an object');
       const b = pickKnown(body.billing as Record<string, unknown>, Object.keys(s.billing));
-      const err = billingSettingsError(b); if (err) throw badRequest(err, 'قيمة غير صالحة في بيانات الفوترة');
+      if (typeof b.sellerVatNumber === 'string') b.sellerVatNumber = b.sellerVatNumber.trim();
+      const err = billingSettingsError(b); if (err) throw badRequest(err, billingSettingsErrorAr(err));
       s.billing = { ...s.billing, ...b };
     }
     if (body.reminders !== undefined) {

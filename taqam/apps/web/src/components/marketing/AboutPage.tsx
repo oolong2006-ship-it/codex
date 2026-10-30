@@ -15,8 +15,8 @@ export function AboutPage() {
     <>
       <PageHero eyebrow={t('عن شؤون', 'About Shuoon')}
         title={t('بنينا شؤون لأن الفريق الميداني يستحق أدوات أفضل', 'We built Shuoon because field teams deserve better tools')}
-        subtitle={t('شؤون شركة سعودية ناشئة تعمل من الرياض، هدفها أن تجعل إدارة الموارد البشرية للمنشآت متعددة الفروع بسيطة ودقيقة ومتوافقة.',
-          'Shuoon is a Saudi startup based in Riyadh, on a mission to make HR for multi-branch businesses simple, accurate and compliant.')} />
+        subtitle={t('شؤون شركة سعودية ناشئة تعمل من الرياض، هدفها أن تجعل إدارة الموارد البشرية للمنشآت متعددة الفروع بسيطة ودقيقة ومبنية على أحكام الأنظمة.',
+          'Shuoon is a Saudi startup based in Riyadh, on a mission to make HR for multi-branch businesses simple, accurate and built around the regulations.')} />
 
       <section className="py-16 sm:py-20">
         <Container className="grid gap-12 lg:grid-cols-2 lg:items-center">
@@ -64,14 +64,14 @@ export function AboutPage() {
             <div className="rounded-2xl border border-line bg-white p-6 sm:p-8">
               <ShieldCheck className="h-8 w-8 text-primary-500" aria-hidden />
               <h2 className="mt-4 text-xl font-bold text-ink">{t('خصوصية بياناتك التزام', 'Your data privacy is a commitment')}</h2>
-              <p className="mt-2 text-sm leading-7 text-ink-muted">{t('نتعامل مع بيانات موظفيك وفق نظام حماية البيانات الشخصية ولوائحه التنفيذية، ونطبق مبدأ أقل صلاحية: مدير الفرع يرى فريقه فقط.',
-                'We handle your employees’ data in line with the Personal Data Protection Law (PDPL) and its regulations, applying least privilege: branch managers see only their team.')}</p>
+              <p className="mt-2 text-sm leading-7 text-ink-muted">{t('نتعامل مع بيانات موظفيك بممارسات تراعي نظام حماية البيانات الشخصية ولوائحه التنفيذية، ونطبق مبدأ أقل صلاحية: مدير الفرع يرى فريقه فقط.',
+                'We handle your employees’ data with practices mindful of the Personal Data Protection Law (PDPL) and its regulations, applying least privilege: branch managers see only their team.')}</p>
             </div>
             <div className="rounded-2xl border border-line bg-white p-6 sm:p-8">
               <ServerCog className="h-8 w-8 text-primary-500" aria-hidden />
-              <h2 className="mt-4 text-xl font-bold text-ink">{t('استضافة داخل المملكة', 'Hosted in Saudi Arabia')}</h2>
-              <p className="mt-2 text-sm leading-7 text-ink-muted">{t('نلتزم باستضافة بيانات عملائنا في مراكز بيانات داخل المملكة العربية السعودية، مع تشفير أثناء النقل والتخزين ونسخ احتياطية منتظمة.',
-                'We are committed to hosting customer data in data centres inside Saudi Arabia, with encryption in transit and at rest and regular backups.')}</p>
+              <h2 className="mt-4 text-xl font-bold text-ink">{t('استضافة موثوقة وواضحة', 'Clear, reliable hosting')}</h2>
+              <p className="mt-2 text-sm leading-7 text-ink-muted">{t('نستضيف البيانات لدى مزوّد سحابي موثوق مع تشفير الاتصال، ونوضح موقع الاستضافة في العقد، ونوفّر الاستضافة داخل المملكة عند الطلب. ونأخذ نسخاً احتياطية منتظمة.',
+                'We host data with a trusted cloud provider with encrypted connections, state the hosting location in the contract, and offer in-Kingdom hosting on request. We take regular backups.')}</p>
             </div>
           </div>
         </Container>

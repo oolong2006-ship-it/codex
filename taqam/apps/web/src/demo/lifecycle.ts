@@ -15,7 +15,7 @@ export const PLANS: Plan[] = ['ESSENTIALS', 'GROWTH', 'ENTERPRISE'];
 export const BILLING_CYCLES: BillingCycle[] = ['MONTHLY', 'ANNUAL'];
 export const EVENT_TYPES: CompanyEventType[] = [
   'REGISTERED', 'ACTIVATED', 'SUSPENDED', 'REACTIVATED', 'PLAN_CHANGED', 'EXTENDED', 'NOTE', 'IMPERSONATED', 'EXPIRED', 'DELETED',
-  'INVOICE_ISSUED', 'INVOICE_PAID', 'INVOICE_VOIDED', 'REMINDER_SENT',
+  'INVOICE_ISSUED', 'INVOICE_PAID', 'INVOICE_VOIDED', 'INVOICE_CREDITED', 'REMINDER_SENT',
 ];
 export const LEAD_STATUSES: LeadStatus[] = ['NEW', 'CONTACTED', 'CONVERTED', 'LOST'];
 
@@ -52,6 +52,14 @@ export function extendFrom(iso: string | null, days: number, now = new Date()) {
   const today = todayStr(now);
   const base = iso && dayOf(iso) > today ? dayOf(iso) : today;
   return endOfDay(addDays(base, days));
+}
+
+// ---------- names ----------
+/** Company names: control characters / newlines become spaces, whitespace collapsed, ≤ 200 chars (else 400). */
+export function cleanCompanyName(value: string, field = 'nameAr'): string {
+  const s = value.replace(/[\u0000-\u001F\u007F-\u009F]+/g, ' ').replace(/\s+/g, ' ').trim();
+  if (s.length > 200) throw badRequest(`${field} must be shorter than or equal to 200 characters`, 'اسم المنشأة 200 حرف كحد أقصى');
+  return s;
 }
 
 // ---------- events ----------

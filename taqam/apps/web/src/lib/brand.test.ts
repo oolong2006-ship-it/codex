@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { BRAND, CHART, contrastRatio, relativeLuminance } from './brand';
+import { BUTTON_VARIANTS } from '@/components/ui/Button';
 
 describe('contrastRatio', () => {
   it('is 21 for black on white and 1 for identical colours', () => {
@@ -47,5 +48,18 @@ describe('chart series', () => {
 describe('token pairs used together in the UI', () => {
   it('warning text on its own tint meets AA (status badges)', () => {
     expect(contrastRatio(BRAND.warning, BRAND.warning50)).toBeGreaterThanOrEqual(4.5);
+  });
+});
+
+describe('accent button (teal) stays readable on hover', () => {
+  it('rest: navy on accent and hover: white on accent-600 meet AA', () => {
+    expect(contrastRatio(BRAND.night, BRAND.saffron)).toBeGreaterThanOrEqual(4.5);
+    expect(contrastRatio(BRAND.white, BRAND.saffron600)).toBeGreaterThanOrEqual(4.5);
+  });
+  it('navy on accent-600 fails (the old hover) — so the variant must switch the text to white', () => {
+    expect(contrastRatio(BRAND.night, BRAND.saffron600)).toBeLessThan(3);
+    const cls = BUTTON_VARIANTS.accent.split(' ');
+    expect(cls).toContain('hover:bg-accent-600');
+    expect(cls).toContain('hover:text-white');
   });
 });

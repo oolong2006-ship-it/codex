@@ -40,3 +40,23 @@ export function currentPeriod() { return todayISO().slice(0, 7); }
 export function initials(name: string) {
   return name.trim().split(/\s+/).slice(0, 2).map((w) => w[0]).join('');
 }
+
+/**
+ * Arabic day count with correct number agreement: «يوم واحد / يومين / 3 أيام / 14 يوماً» (0 → «اليوم»).
+ * `short` drops «واحد» for 1 («قبل يوم»).
+ */
+export function arDays(n: number, opts: { short?: boolean } = {}): string {
+  if (n <= 0) return 'اليوم';
+  if (n === 1) return opts.short ? 'يوم' : 'يوم واحد';
+  if (n === 2) return 'يومين';
+  if (n <= 10) return `${n} أيام`;
+  return `${n} يوماً`;
+}
+/** Date + time in Riyadh, e.g. «29 أكتوبر 2026، 09:30». */
+export function dateTime(d: string | null | undefined, lang: 'ar' | 'en' = 'ar') {
+  if (!d) return '—';
+  const x = new Date(d);
+  if (isNaN(x.getTime())) return '—';
+  const day = x.toLocaleDateString(lang === 'ar' ? 'ar-SA-u-ca-gregory-nu-latn' : 'en-GB', { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'Asia/Riyadh' });
+  return `${day}${lang === 'ar' ? '،' : ','} ${time(x)}`;
+}

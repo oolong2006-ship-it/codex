@@ -75,7 +75,7 @@ export function SiteFooter() {
           <p>© {year} {t('شؤون. جميع الحقوق محفوظة.', 'Shuoon. All rights reserved.')}</p>
           <p className="inline-flex items-center gap-2">
             <ShieldCheck className="h-4 w-4 text-accent" aria-hidden />
-            {t('بياناتك مستضافة داخل المملكة ومحمية وفق نظام حماية البيانات الشخصية', 'Your data is hosted in KSA and protected under the PDPL')}
+            {t('اتصال مشفّر ونسخ احتياطية منتظمة — والاستضافة داخل المملكة متاحة عند الطلب', 'Encrypted connections and regular backups — in-Kingdom hosting available on request')}
           </p>
         </div>
       </Container>

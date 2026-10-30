@@ -1,18 +1,15 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { ArrowRight, Eye } from 'lucide-react';
-import { api, getToken, setToken } from '@/lib/api';
+import { ADMIN_TOKEN_KEY, api, clearAdminToken, getToken, setToken } from '@/lib/api';
 import { useAuth, type AuthResponse } from '@/lib/auth';
 import { useLang } from '@/lib/i18n';
 import { withBase } from '@/lib/paths';
-import { ADMIN_TOKEN_KEY } from '@/lib/adminTypes';
 
 export function getAdminToken(): string | null {
   try { return window.localStorage.getItem(ADMIN_TOKEN_KEY); } catch { return null; }
 }
-export function clearAdminToken() {
-  try { window.localStorage.removeItem(ADMIN_TOKEN_KEY); } catch { /* storage unavailable */ }
-}
+export { clearAdminToken };
 
 /** Switch the browser session to the company OWNER (keeps the admin token aside) and open /app. */
 export async function impersonateCompany(companyId: string) {

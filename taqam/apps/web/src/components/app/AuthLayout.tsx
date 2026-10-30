@@ -9,8 +9,8 @@ export function AuthLayout({ children }: { children: React.ReactNode }) {
   const { t, lang, setLang } = useLang();
   const points = [
     { icon: MapPin, text: t('حضور بالموقع لكل فرع مع نطاق جغرافي', 'Geofenced attendance for every branch') },
-    { icon: Wallet, text: t('مسير رواتب وملف حماية الأجور (مُدد) بضغطة', 'Payroll & WPS (Mudad) file in one click') },
-    { icon: ShieldCheck, text: t('نهاية خدمة دقيقة وفق المادتين 84 و85', 'Accurate EOSB per Articles 84 & 85') },
+    { icon: Wallet, text: t('مسير رواتب وملف رواتب (CSV) لرفعه عبر البنك أو مُدد', 'Payroll and a payroll file (CSV) to upload via your bank or Mudad') },
+    { icon: ShieldCheck, text: t('نهاية خدمة محسوبة وفق المادتين 84 و85 من نظام العمل', 'End-of-service computed per Articles 84 & 85 of the Labor Law') },
     { icon: Users, text: t('نسبة السعودة لكل فرع مع محاكاة نطاقات', 'Per-branch Saudization & Nitaqat simulator') },
   ];
   return (

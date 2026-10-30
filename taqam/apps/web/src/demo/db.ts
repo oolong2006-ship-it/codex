@@ -1,12 +1,12 @@
 /** In-memory demo database (mirrors apps/api/prisma/schema.prisma), persisted to localStorage. */
-import { DEFAULT_BILLING, DEFAULT_REMINDERS, type BillingSettings, type ReminderSettings } from '@/lib/billing';
+import { DEFAULT_BILLING, DEFAULT_REMINDERS, type BillingSettings, type DocumentType, type ReminderSettings } from '@/lib/billing';
 
 export type Role = 'OWNER' | 'HR_ADMIN' | 'PAYROLL' | 'BRANCH_MANAGER' | 'EMPLOYEE' | 'SUPER_ADMIN';
 export type CompanyStatus = 'PENDING' | 'TRIAL' | 'ACTIVE' | 'SUSPENDED' | 'EXPIRED';
 export type Plan = 'ESSENTIALS' | 'GROWTH' | 'ENTERPRISE';
 export type BillingCycle = 'MONTHLY' | 'ANNUAL';
 export type CompanyEventType = 'REGISTERED' | 'ACTIVATED' | 'SUSPENDED' | 'REACTIVATED' | 'PLAN_CHANGED' | 'EXTENDED' | 'NOTE' | 'IMPERSONATED' | 'EXPIRED' | 'DELETED'
-  | 'INVOICE_ISSUED' | 'INVOICE_PAID' | 'INVOICE_VOIDED' | 'REMINDER_SENT';
+  | 'INVOICE_ISSUED' | 'INVOICE_PAID' | 'INVOICE_VOIDED' | 'INVOICE_CREDITED' | 'REMINDER_SENT';
 export type LeadStatus = 'NEW' | 'CONTACTED' | 'CONVERTED' | 'LOST';
 export type Approval = 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED';
 
@@ -42,15 +42,33 @@ export const DEFAULT_SETTINGS: PlatformSettings = {
   requireApproval: true, trialDays: 14, prices: { ESSENTIALS: 19, GROWTH: 29, ENTERPRISE: null }, annualDiscount: 0.15,
   billing: DEFAULT_BILLING, reminders: DEFAULT_REMINDERS,
 };
-export type InvoiceStatus = 'ISSUED' | 'PAID' | 'VOID';
+export type InvoiceStatus = 'ISSUED' | 'PAID' | 'CREDITED';
 export type PaymentMethod = 'BANK_TRANSFER' | 'CARD' | 'CASH' | 'OTHER';
-/** Platform → subscriber invoice (docs/ADMIN_PORTAL.md v2). `overdue` is derived in the views, never stored. */
+/** Seller snapshot stored on the invoice at issue (docs/ADMIN_PORTAL.md v2.1). */
+export interface SellerSnapshot {
+  name: string; nameEn: string; vatNumber: string; crNumber: string; address: string; email: string; phone: string; bankName: string; iban: string;
+}
+/** Buyer snapshot stored on the invoice at issue. */
+export interface BuyerSnapshot { nameAr: string; nameEn: string | null; vatNumber: string | null; crNumber: string | null; address: string | null; city: string | null }
+/**
+ * Platform → subscriber invoice or credit note (docs/ADMIN_PORTAL.md v2 + v2.1). `overdue` is derived in the views,
+ * never stored. Documents render only from the `seller`/`buyer` snapshots taken at issue.
+ */
 export interface Invoice {
-  id: string; number: string; companyId: string; companyName: string; status: InvoiceStatus; plan: Plan; billingCycle: BillingCycle;
+  id: string; number: string; documentType: DocumentType; companyId: string; companyName: string; status: InvoiceStatus; plan: Plan; billingCycle: BillingCycle;
   periodStart: string; periodEnd: string; months: number; employees: number; unitPrice: number;
   subtotal: number; discountRate: number; discount: number; taxable: number; vatRate: number; vat: number; total: number;
-  issueDate: string; dueDate: string; paidAt: string | null; paymentMethod: PaymentMethod | null; paymentRef: string | null;
-  notes: string | null; voidReason: string | null; createdByName: string | null; createdAt: string; updatedAt: string;
+  issueDate: string; issuedAt: string; dueDate: string; paidAt: string | null; paymentMethod: PaymentMethod | null; paymentRef: string | null;
+  notes: string | null; seller: SellerSnapshot; buyer: BuyerSnapshot;
+  /** Credit note → the invoice it credits. */
+  creditsInvoiceId: string | null; creditsNumber: string | null;
+  /** Credited invoice → its credit note's number. */
+  creditedByNumber: string | null;
+  /** Credit note reason. */
+  reason: string | null;
+  /** ZATCA Phase-1 TLV (base64) for tax invoices and credit notes of tax invoices, else null. */
+  qr: string | null;
+  createdByName: string | null; createdAt: string; updatedAt: string;
 }
 export type EmailType = 'TRIAL_ENDING' | 'SUBSCRIPTION_ENDING' | 'EXPIRED' | 'INVOICE_ISSUED' | 'PAYMENT_RECEIVED' | 'INVOICE_OVERDUE' | 'MANUAL_REMINDER';
 /** Outbox entry. The demo never sends mail: status is always LOGGED. Kept when a company is deleted. */
@@ -181,13 +199,15 @@ export interface DB {
   companyEvents: CompanyEvent[];
   settings: PlatformSettings;
   invoices: Invoice[];
+  /** Per-year, per-series document counters ('SH-2026' → 12). Numbers are never reused. */
+  counters: Record<string, number>;
   emails: EmailLog[];
   /** Riyadh day the reminder job last ran (it runs lazily when /admin/overview loads, once per demo day). */
   remindersRunOn: string | null;
 }
 
 export const STORAGE_KEY = 'taqam.demo.v2';
-export const DB_VERSION = 6;
+export const DB_VERSION = 7;
 /** Seeded data is relative to "today"; a snapshot older than this is re-seeded so attendance and payroll stay current. */
 export const MAX_AGE_DAYS = 7;
 
@@ -197,7 +217,7 @@ export function emptyDb(seededOn: string): DB {
     companies: [], branches: [], departments: [], users: [], employees: [], documents: [], shifts: [], assignments: [], attendance: [],
     leaveTypes: [], leaves: [], requests: [], loans: [], runs: [], payslips: [], adjustments: [], holidays: [], announcements: [],
     notifications: [], audit: [], cycles: [], reviews: [], jobs: [], candidates: [], leads: [],
-    admins: [], companyEvents: [], settings: JSON.parse(JSON.stringify(DEFAULT_SETTINGS)), invoices: [], emails: [], remindersRunOn: null,
+    admins: [], companyEvents: [], settings: JSON.parse(JSON.stringify(DEFAULT_SETTINGS)), invoices: [], counters: {}, emails: [], remindersRunOn: null,
   };
 }
 

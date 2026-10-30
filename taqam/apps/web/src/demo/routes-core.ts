@@ -6,7 +6,7 @@ import {
 import { newEmployeeId, NEW_EMPLOYEE_POOL } from './ids';
 import { addDays, dayStr, eachDay, parseTime, r2, todayStr, weekday } from './dates';
 import { nextId, type Company, type DB, type Employee, type PlatformAdmin, type Role, type User } from './db';
-import { assertCompanyAccess, assertSeat, endOfDay, lifecycleDefaults, logEvent, nextCompanyId, tenantCompanyView } from './lifecycle';
+import { assertCompanyAccess, assertSeat, cleanCompanyName, endOfDay, lifecycleDefaults, logEvent, nextCompanyId, tenantCompanyView } from './lifecycle';
 import { badRequest, conflict, forbidden, notFound, unauthorized } from './errors';
 import { route, v, pick, paginate, byCreatedAsc, byCreatedDesc, employeeView, ok, DATE_RE, EMAIL_RE, type Ctx, type Route } from './router';
 import { ADMIN, ALL_ROLES, STAFF, Services, byNumber, fullName, nowIso, type AuthUser } from './services';
@@ -211,6 +211,8 @@ function branchesView(svc: Services, u: AuthUser) {
 }
 function companyDto(b: Record<string, unknown>) {
   const dto = pick(b, ['nameAr', 'nameEn', 'crNumber', 'establishmentId', 'gosiNumber', 'vatNumber', 'sector', 'city', 'iban', 'bankCode', 'weekendDays', 'payrollDay']);
+  if (typeof dto.nameAr === 'string') dto.nameAr = cleanCompanyName(dto.nameAr, 'nameAr');
+  if (typeof dto.nameEn === 'string') dto.nameEn = cleanCompanyName(dto.nameEn, 'nameEn') || null;
   if (dto.payrollDay !== undefined) dto.payrollDay = v.num(dto, 'payrollDay', { min: 1, max: 28 });
   if (dto.weekendDays !== undefined && !(Array.isArray(dto.weekendDays) && dto.weekendDays.length <= 7 && dto.weekendDays.every((d) => Number.isInteger(d) && d >= 0 && d <= 6))) throw badRequest('weekendDays must be an array');
   return dto;
@@ -271,7 +273,7 @@ export const coreRoutes: Route[] = [
     const companyId = nextCompanyId(db);
     const settings = db.settings;
     const company: Company = {
-      id: companyId, nameAr: String(body.companyNameAr), nameEn: (body.companyNameEn as string) || null, crNumber: null, establishmentId: null, gosiNumber: null, vatNumber: null,
+      id: companyId, nameAr: cleanCompanyName(String(body.companyNameAr), 'companyNameAr'), nameEn: typeof body.companyNameEn === 'string' ? cleanCompanyName(body.companyNameEn, 'companyNameEn') || null : null, crNumber: null, establishmentId: null, gosiNumber: null, vatNumber: null,
       sector: String(body.sector), city: null, iban: null, bankCode: null, weekendDays: [5, 6], payrollDay: 27, employeesCount: body.employeesCount ? Number(body.employeesCount) : null, createdAt: now, updatedAt: now,
       ...lifecycleDefaults(),
       ...(settings.requireApproval ? {} : { status: 'TRIAL' as const, trialEndsAt: endOfDay(addDays(todayStr(), settings.trialDays)) }),

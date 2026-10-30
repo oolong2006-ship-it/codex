@@ -1,12 +1,14 @@
 /**
- * Demo billing service (docs/ADMIN_PORTAL.md v2): issue / pay / void invoices, invoice views and the reminder job.
- * All math comes from @/lib/billing so the demo matches the API's numbers exactly.
+ * Demo billing service (docs/ADMIN_PORTAL.md v2 + v2.1): issue / pay / credit invoices, invoice views and the reminder
+ * job. All math comes from @/lib/billing so the demo matches the API's numbers exactly. Issued documents are never
+ * edited or deleted: a credit note (SHC- series) reverses an invoice, and views render from the seller/buyer snapshots.
  */
 import {
-  addDays, computeInvoice, isOverdue, nextInvoiceNumber, nextPeriodStart, periodEnd, selectReminders, type Cycle,
+  LIMITS, addDays, computeInvoice, periodAnchor, coversPeriod, defaultBilledEmployees, isOutstanding, isOverdue, nextPeriodStart, periodEnd, periodStartInWindow,
+  periodsOverlap, selectReminders, takeDocNumber, vatGate, zatcaTlv, type BillingSettings, type Cycle,
 } from '@/lib/billing';
 import { riyadhDateTime, todayStr } from './dates';
-import { nextId, type Company, type DB, type Invoice, type PaymentMethod } from './db';
+import { nextId, type BuyerSnapshot, type Company, type DB, type Invoice, type PaymentMethod, type SellerSnapshot } from './db';
 import { badRequest, conflict, notFound } from './errors';
 import { activeEmployeeCount, dayOf, daysLeft, effectivePrice, endOfDay, logEvent, type Actor } from './lifecycle';
 import { ownerOf, sendEmail } from './mail';
@@ -14,6 +16,23 @@ import { nowIso, type Services } from './services';
 
 export const PAYMENT_METHODS: PaymentMethod[] = ['BANK_TRANSFER', 'CARD', 'CASH', 'OTHER'];
 export const ALREADY_PROCESSED = ['Invoice has already been processed', 'تمت معالجة هذه الفاتورة مسبقاً'] as const;
+export const PERIOD_TAKEN = ['An invoice already covers this period', 'توجد فاتورة تغطي هذه الفترة'] as const;
+export const PERIOD_ENDED = ['The invoice period has already ended; issue an invoice for a current period', 'فترة هذه الفاتورة انتهت؛ أصدر فاتورة لفترة حالية'] as const;
+
+// ---------- snapshots ----------
+export function sellerSnapshot(b: BillingSettings): SellerSnapshot {
+  return {
+    name: b.sellerName, nameEn: b.sellerNameEn, vatNumber: (b.sellerVatNumber ?? '').trim(), crNumber: b.sellerCrNumber, address: b.sellerAddress,
+    email: b.sellerEmail, phone: b.sellerPhone, bankName: b.bankName, iban: b.iban,
+  };
+}
+export function buyerSnapshot(c: Company): BuyerSnapshot {
+  return { nameAr: c.nameAr, nameEn: c.nameEn, vatNumber: c.vatNumber, crNumber: c.crNumber, address: null, city: c.city };
+}
+/** Phase-1 QR for a tax document (null when the seller was not VAT registered at issue). */
+function qrFor(inv: Pick<Invoice, 'seller' | 'issuedAt' | 'total' | 'vat'>, isTax: boolean): string | null {
+  return isTax ? zatcaTlv({ sellerName: inv.seller.name, vatNumber: inv.seller.vatNumber, timestamp: inv.issuedAt, total: inv.total, vat: inv.vat }) : null;
+}
 
 // ---------- views ----------
 export function invoiceView(inv: Invoice, today = todayStr()) {
@@ -22,6 +41,7 @@ export function invoiceView(inv: Invoice, today = todayStr()) {
 }
 export type InvoiceView = ReturnType<typeof invoiceView>;
 
+/** Detail: the document (seller/buyer snapshots on the row) + the live company for links and contact. */
 export function invoiceDetail(db: DB, inv: Invoice) {
   const c = db.companies.find((x) => x.id === inv.companyId);
   const owner = ownerOf(db, inv.companyId);
@@ -30,12 +50,12 @@ export function invoiceDetail(db: DB, inv: Invoice) {
     company: c
       ? { id: c.id, nameAr: c.nameAr, nameEn: c.nameEn, crNumber: c.crNumber, vatNumber: c.vatNumber, city: c.city, ownerName: owner?.name ?? null, ownerEmail: owner?.email ?? null, ownerPhone: owner?.phone ?? null }
       : { id: inv.companyId, nameAr: inv.companyName, nameEn: null, crNumber: null, vatNumber: null, city: null, ownerName: null, ownerEmail: null, ownerPhone: null },
-    seller: { ...db.settings.billing },
   };
 }
 
-/** Newest first: issue date, then number. */
-export const byIssueDesc = (a: { issueDate: string; number: string }, b: { issueDate: string; number: string }) => b.issueDate.localeCompare(a.issueDate) || b.number.localeCompare(a.number);
+/** Newest first: issue instant, then number. */
+export const byIssueDesc = (a: { issueDate: string; issuedAt?: string; number: string }, b: { issueDate: string; issuedAt?: string; number: string }) =>
+  (b.issuedAt ?? b.issueDate).localeCompare(a.issuedAt ?? a.issueDate) || b.number.localeCompare(a.number);
 
 // ---------- issue ----------
 export interface IssueInput { periodStart?: string; employees?: number; unitPrice?: number; billingCycle?: Cycle; notes?: string | null; sendEmail?: boolean }
@@ -45,19 +65,32 @@ export function issueInvoice(svc: Services, c: Company, input: IssueInput, actor
   if (c.status === 'PENDING') throw badRequest('Cannot invoice a pending company', 'لا يمكن إصدار فاتورة لمنشأة بانتظار الموافقة');
   const unitPrice = input.unitPrice ?? effectivePrice(db, c);
   if (unitPrice === null || unitPrice === undefined) throw badRequest('Set a price per employee for this company first', 'حدد سعر الموظف لهذه المنشأة أولاً');
-  const today = at.today ?? todayStr();
-  const own = db.invoices.filter((i) => i.companyId === c.id);
-  const periodStart = input.periodStart ?? nextPeriodStart(own, today);
-  const billingCycle = input.billingCycle ?? c.billingCycle;
-  const employees = input.employees ?? Math.max(1, activeEmployeeCount(db, c.id));
-  const amounts = computeInvoice({ employees, unitPrice, billingCycle, annualDiscount: db.settings.annualDiscount, vatRate: db.settings.billing.vatRate });
   const createdAt = at.createdAt ?? nowIso();
+  const today = at.today ?? todayStr(new Date(createdAt));
+  const own = db.invoices.filter((i) => i.companyId === c.id);
+  if (input.periodStart !== undefined && !periodStartInWindow(input.periodStart, today)) {
+    throw badRequest('periodStart must be between 60 days ago and 90 days ahead', 'بداية الفترة يجب أن تكون بين 60 يوماً مضت و90 يوماً قادمة');
+  }
+  const periodStart = input.periodStart ?? nextPeriodStart(own, today, { expired: c.status === 'EXPIRED' });
+  const billingCycle = input.billingCycle ?? c.billingCycle;
+  const billing = db.settings.billing;
+  const employees = input.employees ?? defaultBilledEmployees(c.plan, activeEmployeeCount(db, c.id), billing.minBilledEmployees ?? 10);
+  const gate = vatGate(billing);
+  const amounts = computeInvoice({ employees, unitPrice, billingCycle, annualDiscount: db.settings.annualDiscount, vatRate: gate.vatRate });
+  if (amounts.total > LIMITS.total) throw badRequest('Invoice total is too large', 'إجمالي الفاتورة يتجاوز الحد المسموح');
+  const period = { periodStart, periodEnd: periodEnd(periodStart, amounts.months, periodAnchor(own, periodStart)) };
+  if (own.some((i) => coversPeriod(i) && periodsOverlap(i, period))) throw conflict(...PERIOD_TAKEN);
+  db.counters ??= {};
+  const seller = sellerSnapshot(billing);
   const inv: Invoice = {
-    id: nextId(db, 'inv'), number: nextInvoiceNumber(db.invoices.map((i) => i.number), Number(today.slice(0, 4))), companyId: c.id, companyName: c.nameAr,
-    status: 'ISSUED', plan: c.plan, billingCycle, periodStart, periodEnd: periodEnd(periodStart, amounts.months), employees, unitPrice, ...amounts,
-    issueDate: today, dueDate: addDays(today, db.settings.billing.invoiceDueDays), paidAt: null, paymentMethod: null, paymentRef: null,
-    notes: input.notes?.trim() || null, voidReason: null, createdByName: actor.name, createdAt, updatedAt: createdAt,
+    id: nextId(db, 'inv'), number: takeDocNumber(db.counters, 'SH', Number(today.slice(0, 4))), documentType: gate.documentType, companyId: c.id, companyName: c.nameAr,
+    status: 'ISSUED', plan: c.plan, billingCycle, ...period, employees, unitPrice, ...amounts,
+    issueDate: today, issuedAt: createdAt, dueDate: addDays(today, billing.invoiceDueDays), paidAt: null, paymentMethod: null, paymentRef: null,
+    notes: input.notes?.trim() || null, seller, buyer: buyerSnapshot(c),
+    creditsInvoiceId: null, creditsNumber: null, creditedByNumber: null, reason: null, qr: null,
+    createdByName: actor.name, createdAt, updatedAt: createdAt,
   };
+  inv.qr = qrFor(inv, gate.documentType === 'TAX_INVOICE');
   db.invoices.push(inv);
   logEvent(svc, c, 'INVOICE_ISSUED', { from: c.status, to: c.status, actor, data: { invoiceId: inv.id, number: inv.number, total: inv.total }, createdAt });
   if (input.sendEmail !== false) sendEmail(svc, c, 'INVOICE_ISSUED', { invoice: inv }, { createdAt });
@@ -68,18 +101,28 @@ export function issueInvoice(svc: Services, c: Company, input: IssueInput, actor
 // ---------- pay ----------
 export function payInvoice(svc: Services, inv: Invoice, input: { paymentMethod: PaymentMethod; paymentRef?: string | null; paidAt?: string; extendSubscription?: boolean }, actor: Actor, createdAt = nowIso()): Invoice {
   const db = svc.db;
+  if (inv.documentType === 'CREDIT_NOTE') throw badRequest('A credit note cannot be paid', 'لا يمكن تسجيل دفعة على إشعار دائن');
   if (inv.status !== 'ISSUED') throw conflict(...ALREADY_PROCESSED);
-  const paidDay = input.paidAt ?? todayStr(new Date(createdAt));
+  const nowDay = todayStr(new Date(createdAt));
+  const paidDay = input.paidAt ?? nowDay;
+  if (paidDay > nowDay) throw badRequest('paidAt cannot be in the future', 'تاريخ الدفع لا يمكن أن يكون في المستقبل');
+  if (paidDay < inv.issueDate) throw badRequest('paidAt cannot be before the issue date', 'تاريخ الدفع لا يمكن أن يسبق تاريخ إصدار الفاتورة');
+  const c = db.companies.find((x) => x.id === inv.companyId);
+  const extend = input.extendSubscription !== false && !!c;
+  let newEnd: string | null = null;
+  if (extend && c) {
+    const end = endOfDay(inv.periodEnd);
+    newEnd = !c.subscriptionEndsAt || c.subscriptionEndsAt < end ? end : c.subscriptionEndsAt;
+    if ((c.status === 'TRIAL' || c.status === 'EXPIRED') && new Date(newEnd).getTime() <= new Date(createdAt).getTime()) throw badRequest(...PERIOD_ENDED);
+  }
   Object.assign(inv, {
     status: 'PAID', paymentMethod: input.paymentMethod, paymentRef: input.paymentRef?.trim() || null,
     paidAt: input.paidAt ? riyadhDateTime(paidDay, '12:00').toISOString() : createdAt, updatedAt: createdAt,
   });
-  const c = db.companies.find((x) => x.id === inv.companyId);
   if (!c) return inv;
   const from = c.status;
-  if (input.extendSubscription !== false) {
-    const end = endOfDay(inv.periodEnd);
-    if (!c.subscriptionEndsAt || c.subscriptionEndsAt < end) c.subscriptionEndsAt = end;
+  if (extend && newEnd) {
+    c.subscriptionEndsAt = newEnd;
     if (c.status === 'TRIAL' || c.status === 'EXPIRED') {
       c.status = 'ACTIVE';
       c.trialEndsAt = null;
@@ -93,27 +136,49 @@ export function payInvoice(svc: Services, inv: Invoice, input: { paymentMethod: 
   return inv;
 }
 
-// ---------- void ----------
-export function voidInvoice(svc: Services, inv: Invoice, reason: string, actor: Actor): Invoice {
-  if (inv.status !== 'ISSUED') throw conflict(...ALREADY_PROCESSED);
-  const now = nowIso();
-  Object.assign(inv, { status: 'VOID', voidReason: reason, updatedAt: now });
-  const c = svc.db.companies.find((x) => x.id === inv.companyId);
-  if (c) logEvent(svc, c, 'INVOICE_VOIDED', { from: c.status, to: c.status, actor, data: { invoiceId: inv.id, number: inv.number, total: inv.total, reason } });
+// ---------- credit note ----------
+/**
+ * Credits an ISSUED or PAID invoice: creates a credit note (SHC-<year>-<seq>) with the same snapshots, lines, period
+ * and amounts, and marks the original CREDITED (with creditedByNumber and the same reason). The subscription is not changed and no email is sent.
+ * Returns the credit note.
+ */
+export function creditInvoice(svc: Services, inv: Invoice, reason: string, actor: Actor, createdAt = nowIso()): Invoice {
+  const db = svc.db;
+  if (inv.documentType === 'CREDIT_NOTE') throw badRequest('A credit note cannot be credited', 'لا يمكن إصدار إشعار دائن لإشعار دائن');
+  if ((inv.status !== 'ISSUED' && inv.status !== 'PAID') || inv.creditedByNumber) throw conflict(...ALREADY_PROCESSED);
+  const today = todayStr(new Date(createdAt));
+  db.counters ??= {};
+  const cn: Invoice = {
+    ...inv, id: nextId(db, 'inv'), number: takeDocNumber(db.counters, 'SHC', Number(today.slice(0, 4))), documentType: 'CREDIT_NOTE', status: 'ISSUED',
+    issueDate: today, issuedAt: createdAt, dueDate: today, paidAt: null, paymentMethod: null, paymentRef: null, notes: null,
+    creditsInvoiceId: inv.id, creditsNumber: inv.number, creditedByNumber: null, reason, qr: null,
+    createdByName: actor.name, createdAt, updatedAt: createdAt,
+  };
+  cn.qr = qrFor(cn, inv.documentType === 'TAX_INVOICE');
+  db.invoices.push(cn);
+  Object.assign(inv, { status: 'CREDITED', creditedByNumber: cn.number, reason, updatedAt: createdAt });
+  const c = db.companies.find((x) => x.id === inv.companyId);
+  if (c) logEvent(svc, c, 'INVOICE_CREDITED', { from: c.status, to: c.status, actor, data: { invoiceId: inv.id, number: inv.number, creditNoteId: cn.id, creditNoteNumber: cn.number, total: inv.total, reason }, createdAt });
   svc.dirty = true;
-  return inv;
+  return cn;
 }
 
 // ---------- summary ----------
 export function invoiceSummary(db: DB, today = todayStr()) {
   const agg = (rows: Invoice[]) => ({ count: rows.length, amount: Math.round(rows.reduce((s, i) => s + i.total, 0) * 100) / 100 });
-  const issued = db.invoices.filter((i) => i.status === 'ISSUED');
+  const open = db.invoices.filter(isOutstanding);
   const month = today.slice(0, 7);
   return {
-    outstanding: agg(issued),
-    overdue: agg(issued.filter((i) => isOverdue(i, today))),
-    paidThisMonth: agg(db.invoices.filter((i) => i.status === 'PAID' && !!i.paidAt && todayStr(new Date(i.paidAt)).slice(0, 7) === month)),
+    outstanding: agg(open),
+    overdue: agg(open.filter((i) => isOverdue(i, today))),
+    paidThisMonth: agg(db.invoices.filter((i) => i.status === 'PAID' && !!i.paidAt && todayStr(new Date(i.paidAt)).slice(0, 7) === month && todayStr(new Date(i.paidAt)) <= today)),
   };
+}
+/** Outstanding / overdue of one company (owner billing card). */
+export function companyDue(db: DB, companyId: string, today = todayStr()) {
+  const agg = (rows: Invoice[]) => ({ count: rows.length, amount: Math.round(rows.reduce((s, i) => s + i.total, 0) * 100) / 100 });
+  const open = db.invoices.filter((i) => i.companyId === companyId && isOutstanding(i));
+  return { outstanding: agg(open), overdue: agg(open.filter((i) => isOverdue(i, today))) };
 }
 
 // ---------- reminder job ----------

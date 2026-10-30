@@ -3,6 +3,7 @@ import clsx from 'clsx';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { FlaskConical, RotateCcw, X } from 'lucide-react';
+import { DIALOG_EVENT, openDialogs } from '@/components/ui/useDialog';
 
 const MIN_KEY = 'taqam.demo.bannerMin';
 
@@ -11,8 +12,16 @@ export function DemoBanner() {
   const pathname = usePathname() || '/';
   const [min, setMin] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [dialog, setDialog] = useState(false);
   useEffect(() => {
     try { setMin(window.sessionStorage.getItem(MIN_KEY) === '1'); } catch { /* storage unavailable */ }
+  }, []);
+  // Hidden while a modal / drawer is open so it never covers a dialog's footer buttons on phones.
+  useEffect(() => {
+    setDialog(openDialogs() > 0);
+    const h = (e: Event) => setDialog(((e as CustomEvent<number>).detail ?? 0) > 0);
+    window.addEventListener(DIALOG_EVENT, h);
+    return () => window.removeEventListener(DIALOG_EVENT, h);
   }, []);
   const toggle = (v: boolean) => {
     setMin(v);
@@ -28,17 +37,18 @@ export function DemoBanner() {
   // Clear the self-service bottom tab bar.
   const ess = pathname === '/me' || pathname.startsWith('/me/');
   const pos = ess ? 'bottom-[calc(76px+env(safe-area-inset-bottom))]' : 'bottom-3';
+  if (dialog) return null;
 
   if (min) {
     return (
-      <button type="button" onClick={() => toggle(false)} className={clsx('fixed end-3 z-[60] flex items-center gap-1.5 rounded-full bg-ink/90 px-3 py-1.5 text-xs font-semibold text-white shadow-lift backdrop-blur print:hidden', pos)}
+      <button type="button" onClick={() => toggle(false)} className={clsx('fixed end-3 z-40 flex items-center gap-1.5 rounded-full bg-ink/90 px-3 py-1.5 text-xs font-semibold text-white shadow-lift backdrop-blur print:hidden', pos)}
         aria-label="نسخة تجريبية">
         <FlaskConical className="h-3.5 w-3.5 text-accent" />تجريبي
       </button>
     );
   }
   return (
-    <div role="note" dir="rtl" className={clsx('fixed end-3 z-[60] flex max-w-[calc(100vw-1.5rem)] items-center gap-2 rounded-2xl bg-ink/90 py-1.5 pe-1.5 ps-3 text-[11px] leading-tight text-white shadow-lift backdrop-blur sm:gap-3 sm:py-2 sm:text-xs print:hidden', pos)}>
+    <div role="note" dir="rtl" className={clsx('fixed end-3 z-40 flex max-w-[calc(100vw-1.5rem)] items-center gap-2 rounded-2xl bg-ink/90 py-1.5 pe-1.5 ps-3 text-[11px] leading-tight text-white shadow-lift backdrop-blur sm:gap-3 sm:py-2 sm:text-xs print:hidden', pos)}>
       <FlaskConical className="h-4 w-4 shrink-0 text-accent" />
       <span className="min-w-0 font-medium sm:whitespace-nowrap">نسخة تجريبية — البيانات وهمية وتُحفظ في متصفحك فقط</span>
       <span className="flex shrink-0 items-center gap-1">

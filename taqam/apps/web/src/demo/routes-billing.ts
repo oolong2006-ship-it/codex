@@ -1,10 +1,11 @@
-/** Demo API — invoices, outbox and reminders (docs/ADMIN_PORTAL.md v2). Admin routes are SUPER_ADMIN only; /billing/* is OWNER only. */
-import { DATE_RE, byCreatedDesc, paginate, route, v, type Route } from './router';
+/** Demo API — invoices, credit notes, outbox and reminders (docs/ADMIN_PORTAL.md v2 + v2.1). Admin routes are SUPER_ADMIN only; /billing/* is OWNER only. */
+import { byCreatedDesc, paginate, route, v, type Route } from './router';
 import type { Company, DB, EmailType, Role } from './db';
 import { badRequest, notFound } from './errors';
 import {
-  PAYMENT_METHODS, byIssueDesc, invoiceDetail, invoiceSummary, invoiceView, issueInvoice, manualReminder, payInvoice, runReminders, voidInvoice,
+  PAYMENT_METHODS, byIssueDesc, companyDue, creditInvoice, invoiceDetail, invoiceSummary, invoiceView, issueInvoice, manualReminder, payInvoice, runReminders,
 } from './billing';
+import { LIMITS, hasAtMost2Decimals, isStrictDay } from '@/lib/billing';
 import { BILLING_CYCLES, activeEmployeeCount, adminCompanyView } from './lifecycle';
 import { emailView } from './mail';
 import type { AuthUser } from './services';
@@ -14,7 +15,6 @@ const SA: Role[] = ['SUPER_ADMIN'];
 const OWNER: Role[] = ['OWNER'];
 const actor = (u: AuthUser) => ({ id: u.id, name: u.name });
 export const EMAIL_TYPES: EmailType[] = ['TRIAL_ENDING', 'SUBSCRIPTION_ENDING', 'EXPIRED', 'INVOICE_ISSUED', 'PAYMENT_RECEIVED', 'INVOICE_OVERDUE', 'MANUAL_REMINDER'];
-const DAY_ONLY = /^\d{4}-\d{2}-\d{2}$/;
 
 function findCompany(db: DB, id: string): Company {
   const c = db.companies.find((x) => x.id === id);
@@ -36,11 +36,19 @@ function intIn(b: Record<string, unknown>, k: string, min: number, max: number):
   if (n !== undefined && !Number.isInteger(n)) throw badRequest(`${k} must be an integer number`);
   return n;
 }
+/** Strict 'YYYY-MM-DD' (a real calendar day); anything else → 400. */
 function day(b: Record<string, unknown>, k: string): string | undefined {
-  const s = v.match(b, k, DATE_RE, true);
-  if (s === undefined) return undefined;
-  if (!DAY_ONLY.test(s.slice(0, 10)) || isNaN(new Date(`${s.slice(0, 10)}T00:00:00Z`).getTime())) throw badRequest(`${k} must be a valid ISO 8601 date string`);
-  return s.slice(0, 10);
+  const x = b[k];
+  if (x === undefined || x === null || x === '') return undefined;
+  if (!isStrictDay(x)) throw badRequest(`${k} must be a date in the format YYYY-MM-DD`, 'صيغة التاريخ يجب أن تكون YYYY-MM-DD');
+  return x;
+}
+/** Optional string with class-validator's MaxLength message. */
+function text(b: Record<string, unknown>, k: string, max: number): string | undefined {
+  if (b[k] === undefined || b[k] === null) return undefined;
+  const s = v.str(b, k)!;
+  if (s.length > max) throw badRequest(`${k} must be shorter than or equal to ${max} characters`, `الحد الأقصى ${max} حرف`);
+  return s;
 }
 
 export const billingRoutes: Route[] = [
@@ -48,12 +56,17 @@ export const billingRoutes: Route[] = [
   route('GET', '/admin/invoices', SA, ({ db, query: q }) => {
     const today = todayStr();
     const s = (q.search ?? '').trim().toLowerCase();
-    if (q.status && !['ISSUED', 'PAID', 'VOID'].includes(q.status)) throw badRequest('status must be one of ISSUED, PAID, VOID');
-    const overdueOnly = q.overdue === 'true';
+    if (q.status && !['ISSUED', 'PAID', 'CREDITED'].includes(q.status)) throw badRequest('status must be one of ISSUED, PAID, CREDITED');
+    if (q.type && !['INVOICE', 'CREDIT_NOTE'].includes(q.type)) throw badRequest('type must be one of INVOICE, CREDIT_NOTE');
+    if (q.overdue && !['true', 'false'].includes(q.overdue)) throw badRequest('overdue must be a boolean value');
+    const isCn = (t: string) => t === 'CREDIT_NOTE';
     const rows = db.invoices.filter((i) => (!q.status || i.status === q.status) && (!q.companyId || i.companyId === q.companyId) &&
+      (!q.type || (q.type === 'CREDIT_NOTE') === isCn(i.documentType)) &&
+      // A status filter applies to invoices only, unless credit notes were asked for explicitly.
+      (!q.status || q.type === 'CREDIT_NOTE' || !isCn(i.documentType)) &&
       (!s || i.number.toLowerCase().includes(s) || i.companyName.toLowerCase().includes(s) || (db.companies.find((c) => c.id === i.companyId)?.nameEn ?? '').toLowerCase().includes(s)))
       .map((i) => invoiceView(i, today))
-      .filter((i) => !overdueOnly || i.overdue);
+      .filter((i) => q.overdue === undefined || q.overdue === '' || i.overdue === (q.overdue === 'true'));
     rows.sort(byIssueDesc);
     return { ...paginate(rows, q), summary: invoiceSummary(db, today) };
   }),
@@ -62,25 +75,27 @@ export const billingRoutes: Route[] = [
     const c = findCompany(db, params.id);
     const periodStart = day(body, 'periodStart');
     const employees = intIn(body, 'employees', 1, 100000);
-    const unitPrice = v.num(body, 'unitPrice', { min: 0, optional: true });
+    const unitPrice = v.num(body, 'unitPrice', { min: 0, max: LIMITS.unitPrice, optional: true });
+    if (unitPrice !== undefined && !hasAtMost2Decimals(unitPrice)) throw badRequest('unitPrice must have at most 2 decimal places', 'سعر الموظف بحد أقصى منزلتين عشريتين');
     const billingCycle = v.oneOf(body, 'billingCycle', BILLING_CYCLES, true);
-    const notes = body.notes === undefined || body.notes === null ? undefined : v.str(body, 'notes');
+    const notes = text(body, 'notes', LIMITS.notes);
     const sendEmail = bool(body, 'sendEmail');
     return invoiceView(issueInvoice(svc, c, { periodStart, employees, unitPrice, billingCycle, notes, sendEmail }, actor(user)));
   }),
   route('POST', '/admin/invoices/:id/pay', SA, ({ db, svc, user, params, body }) => {
     const inv = findInvoice(db, params.id);
     const paymentMethod = v.oneOf(body, 'paymentMethod', PAYMENT_METHODS)!;
-    const paymentRef = body.paymentRef === undefined || body.paymentRef === null ? undefined : v.str(body, 'paymentRef');
+    const paymentRef = text(body, 'paymentRef', LIMITS.paymentRef);
     const paidAt = day(body, 'paidAt');
     const extendSubscription = bool(body, 'extendSubscription');
     return invoiceView(payInvoice(svc, inv, { paymentMethod, paymentRef, paidAt, extendSubscription }, actor(user)));
   }),
-  route('POST', '/admin/invoices/:id/void', SA, ({ db, svc, user, params, body }) => {
+  // v2.1: issued documents are never voided — a credit note reverses them. Returns the credit note.
+  route('POST', '/admin/invoices/:id/credit', SA, ({ db, svc, user, params, body }) => {
     const inv = findInvoice(db, params.id);
-    const reason = typeof body.reason === 'string' ? body.reason.trim() : '';
-    if (!reason) throw badRequest('reason should not be empty', 'سبب الإلغاء مطلوب');
-    return invoiceView(voidInvoice(svc, inv, reason, actor(user)));
+    const reason = (text(body, 'reason', LIMITS.reason) ?? '').trim();
+    if (!reason) throw badRequest('reason should not be empty', 'سبب إصدار الإشعار الدائن مطلوب');
+    return invoiceView(creditInvoice(svc, inv, reason, actor(user)));
   }),
 
   // ---------- outbox & reminders ----------
@@ -93,7 +108,7 @@ export const billingRoutes: Route[] = [
   }),
   route('POST', '/admin/companies/:id/remind', SA, ({ db, svc, user, params, body }) => {
     const c = findCompany(db, params.id);
-    const message = body.message === undefined || body.message === null ? null : v.str(body, 'message')!;
+    const message = text(body, 'message', LIMITS.message) ?? null;
     return emailView(db, manualReminder(svc, c, message, actor(user)));
   }),
   route('POST', '/admin/reminders/run', SA, ({ svc }) => ({ sent: runReminders(svc) })),
@@ -105,6 +120,8 @@ export const billingRoutes: Route[] = [
     return {
       status: c.status, plan: c.plan, billingCycle: c.billingCycle, effectivePrice: view.effectivePrice, maxEmployees: c.maxEmployees,
       activeEmployees: activeEmployeeCount(db, c.id), trialEndsAt: c.trialEndsAt, subscriptionEndsAt: c.subscriptionEndsAt, daysLeft: view.daysLeft,
+      // Unpaid invoices of the whole account (not one page): { outstanding: {count, amount}, overdue: {count, amount} }.
+      ...companyDue(db, c.id),
     };
   }),
   route('GET', '/billing/invoices', OWNER, ({ db, user, query }) => {

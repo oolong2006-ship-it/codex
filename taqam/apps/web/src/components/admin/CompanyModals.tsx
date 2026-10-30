@@ -305,6 +305,7 @@ export function DeleteCompanyModal({ company, open, onClose, onDone }: { company
         <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
         <span>{t('سيتم حذف جميع بيانات المنشأة (الموظفون، الرواتب، الحضور، المستخدمون) ولا يمكن التراجع.', 'All tenant data (employees, payroll, attendance, users) will be erased. This cannot be undone.')}</span>
       </div>
+      <p className="mb-4 text-xs text-ink-soft">{t('لا يمكن حذف منشأة لها فواتير أو إشعارات دائنة صادرة — أوقف حسابها بدلاً من ذلك.', 'A company with issued invoices or credit notes cannot be deleted — suspend it instead.')}</p>
       <Field label={t('اكتب اسم المنشأة للتأكيد', 'Type the company name to confirm')} hint={company.nameAr}>
         <Input value={name} onChange={(e) => setName(e.target.value)} placeholder={company.nameAr} autoFocus />
       </Field>

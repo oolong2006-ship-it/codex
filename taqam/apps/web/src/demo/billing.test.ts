@@ -8,18 +8,18 @@ const call = async (method: string, path: string, token: string | null, body?: u
 const login = async (email: string) => (await call('POST', '/auth/login', null, { email, password: 'Shuoon@2026' })).data.accessToken as string;
 
 describe('demo mock — billing & reminders (ADMIN_PORTAL v2)', () => {
-  it('seeds invoices, issues / pays / voids with the contract rules and dedupes reminders', async () => {
+  it('seeds invoices, issues / pays / credits with the contract rules and dedupes reminders', async () => {
     resetDemoData();
     const admin = await login('admin@shuoon.demo');
     const today = todayStr();
 
     const list = await call('GET', '/admin/invoices', admin, undefined, { pageSize: 100 });
     expect(list.status).toBe(200);
-    const demoInv = list.data.data.filter((i: Body) => i.companyId === 'co-01');
+    const demoInv = list.data.data.filter((i: Body) => i.companyId === 'co-01' && i.documentType !== 'CREDIT_NOTE');
     expect(demoInv.filter((i: Body) => i.status === 'PAID')).toHaveLength(3);
     expect(demoInv.filter((i: Body) => i.status === 'ISSUED')).toHaveLength(1);
     expect(list.data.summary.overdue.count).toBeGreaterThanOrEqual(1);
-    expect(list.data.data.every((i: Body) => /^SH-\d{4}-\d{4}$/.test(i.number))).toBe(true);
+    expect(list.data.data.every((i: Body) => /^SHC?-\d{4}-\d{4}$/.test(i.number))).toBe(true);
     const overdueOnly = await call('GET', '/admin/invoices', admin, undefined, { overdue: 'true' });
     expect(overdueOnly.data.data.every((i: Body) => i.overdue && i.status === 'ISSUED')).toBe(true);
 
@@ -47,11 +47,13 @@ describe('demo mock — billing & reminders (ADMIN_PORTAL v2)', () => {
     expect(detail.data.invoices[0].id).toBeDefined();
     expect(detail.data.emails.some((e: Body) => e.type === 'PAYMENT_RECEIVED' && e.status === 'LOGGED')).toBe(true);
 
-    // Void needs a reason; a pending company cannot be invoiced.
+    // A credit note needs a reason (void is gone); a pending company cannot be invoiced.
     const second = await call('POST', '/admin/companies/co-01/invoices', admin, { sendEmail: false, billingCycle: 'ANNUAL' });
     expect(second.data).toMatchObject({ months: 12, discountRate: 0.15 });
-    expect((await call('POST', `/admin/invoices/${second.data.id}/void`, admin, {})).status).toBe(400);
-    expect((await call('POST', `/admin/invoices/${second.data.id}/void`, admin, { reason: 'خطأ في الدورة' })).data.status).toBe('VOID');
+    expect((await call('POST', `/admin/invoices/${second.data.id}/void`, admin, { reason: 'x' })).status).toBe(404);
+    expect((await call('POST', `/admin/invoices/${second.data.id}/credit`, admin, {})).status).toBe(400);
+    const cn = await call('POST', `/admin/invoices/${second.data.id}/credit`, admin, { reason: 'خطأ في الدورة' });
+    expect(cn.data).toMatchObject({ documentType: 'CREDIT_NOTE', creditsNumber: second.data.number, status: 'ISSUED' });
     const pending = await call('POST', '/admin/companies/co-02/invoices', admin, {});
     expect(pending.status).toBe(400);
     expect(pending.data.messageAr).toBe('لا يمكن إصدار فاتورة لمنشأة بانتظار الموافقة');
@@ -75,7 +77,7 @@ describe('demo mock — billing & reminders (ADMIN_PORTAL v2)', () => {
     expect(sub.data).toMatchObject({ status: 'ACTIVE', plan: 'GROWTH', effectivePrice: 29 });
     const mine = await call('GET', '/billing/invoices', owner);
     expect(mine.data.data.every((i: Body) => i.companyId === 'co-01')).toBe(true);
-    expect((await call('GET', `/billing/invoices/${mine.data.data[0].id}`, owner)).data.seller.sellerName).toBe('شؤون لتقنية المعلومات');
+    expect((await call('GET', `/billing/invoices/${mine.data.data[0].id}`, owner)).data.seller.name).toBe('شؤون لتقنية المعلومات');
     const foreign = list.data.data.find((i: Body) => i.companyId !== 'co-01');
     expect((await call('GET', `/billing/invoices/${foreign.id}`, owner)).status).toBe(404);
     expect((await call('GET', '/admin/invoices', owner)).status).toBe(403);

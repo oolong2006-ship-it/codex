@@ -15,7 +15,7 @@ import { CompanyStatusChip, DaysLeft, PlanBadge, SeatBar, timeAgo } from '@/comp
 import { impersonateCompany } from '@/components/admin/ImpersonationBanner';
 import { refreshAdminCounts } from '@/components/admin/AdminShell';
 import { Timeline } from '@/components/admin/Timeline';
-import { EmailDrawer, EmailList, InvoiceCards, InvoiceTable, IssueInvoiceModal, PayInvoiceModal, RemindModal, VoidInvoiceModal } from '@/components/admin/BillingModals';
+import { EmailDrawer, EmailList, InvoiceCards, InvoiceTable, IssueInvoiceModal, PayInvoiceModal, RemindModal, CreditNoteModal } from '@/components/admin/BillingModals';
 import { api } from '@/lib/api';
 import { useLang } from '@/lib/i18n';
 import { useFetch } from '@/lib/useFetch';
@@ -338,22 +338,22 @@ function InvoicesTab({ c, onChanged }: { c: AdminCompanyDetail; onChanged: () =>
   const { t } = useLang();
   const [issuing, setIssuing] = useState(false);
   const [paying, setPaying] = useState<Invoice | null>(null);
-  const [voiding, setVoiding] = useState<Invoice | null>(null);
+  const [crediting, setCrediting] = useState<Invoice | null>(null);
   const invoices = c.invoices ?? [];
   const pending = c.status === 'PENDING';
   return (
     <Card>
       <CardHeader title={t('الفواتير', 'Invoices')}
-        subtitle={pending ? t('فعّل المنشأة أولاً لإصدار الفواتير', 'Activate the company before invoicing') : t('آخر 20 فاتورة لهذه المنشأة', 'Latest 20 invoices of this company')}
+        subtitle={pending ? t('فعّل المنشأة أولاً لإصدار الفواتير', 'Activate the company before invoicing') : t('آخر 20 فاتورة وإشعاراً دائناً لهذه المنشأة', 'Latest 20 invoices and credit notes of this company')}
         action={<Button size="sm" onClick={() => setIssuing(true)} disabled={pending}><FilePlus2 className="h-4 w-4" />{t('إصدار فاتورة', 'Issue invoice')}</Button>} />
-      <div className="md:hidden"><InvoiceCards rows={invoices} onPay={setPaying} /></div>
+      <div className="md:hidden"><InvoiceCards rows={invoices} onPay={setPaying} onCredit={setCrediting} /></div>
       <div className="hidden md:block">
-        <InvoiceTable rows={invoices} onPay={setPaying} onVoid={setVoiding}
+        <InvoiceTable rows={invoices} onPay={setPaying} onCredit={setCrediting}
           empty={<EmptyState title={t('لا توجد فواتير بعد', 'No invoices yet')} description={pending ? undefined : t('أصدر أول فاتورة لهذه المنشأة', 'Issue the first invoice for this company')} />} />
       </div>
       {issuing && <IssueInvoiceModal company={c} invoices={invoices} open={issuing} onClose={() => setIssuing(false)} onDone={onChanged} />}
       <PayInvoiceModal invoice={paying} onClose={() => setPaying(null)} onDone={onChanged} />
-      <VoidInvoiceModal invoice={voiding} onClose={() => setVoiding(null)} onDone={onChanged} />
+      <CreditNoteModal invoice={crediting} onClose={() => setCrediting(null)} onDone={onChanged} />
     </Card>
   );
 }

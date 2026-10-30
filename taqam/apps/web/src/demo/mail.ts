@@ -2,6 +2,8 @@
  * Demo outbox (docs/ADMIN_PORTAL.md v2 "Email"). Nothing ever leaves the browser: every message is stored with
  * status LOGGED, exactly like the API without SMTP_HOST. Bodies are Arabic first with an English paragraph.
  */
+import { isolateLtrRuns, ltr } from '@/lib/bidi';
+import { arDays } from '@/lib/format';
 import { nextId, type Company, type DB, type EmailLog, type EmailType, type Invoice } from './db';
 import { nowIso, type Services } from './services';
 
@@ -9,14 +11,7 @@ const PLAN_AR: Record<string, string> = { ESSENTIALS: 'الأساسية', GROWTH
 const STATUS_AR: Record<string, string> = { PENDING: 'بانتظار الموافقة', TRIAL: 'تجريبي', ACTIVE: 'نشط', SUSPENDED: 'موقوف', EXPIRED: 'منتهي' };
 const money = (n: number) => `${n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ر.س`;
 
-/** «يوم واحد / يومين / 3 أيام / 14 يوماً». */
-export function arDays(n: number): string {
-  if (n <= 0) return 'اليوم';
-  if (n === 1) return 'يوم واحد';
-  if (n === 2) return 'يومين';
-  if (n <= 10) return `${n} أيام`;
-  return `${n} يوماً`;
-}
+export { arDays };
 const enDays = (n: number) => (n <= 0 ? 'today' : n === 1 ? '1 day' : `${n} days`);
 
 /** Recipient: the company's first active OWNER (fallback: first OWNER). */
@@ -27,13 +22,25 @@ export function ownerOf(db: DB, companyId: string) {
 
 function contact(db: DB) {
   const b = db.settings.billing;
-  return { ar: `للتواصل: ${b.sellerEmail} — ${b.sellerPhone}`, en: `Contact us: ${b.sellerEmail} — ${b.sellerPhone}` };
+  return { ar: `للتواصل: ${ltr(b.sellerEmail)} — ${ltr(b.sellerPhone)}`, en: `Contact us: ${b.sellerEmail} — ${b.sellerPhone}` };
 }
 
 export interface MailVars { daysLeft?: number; daysOverdue?: number; endDay?: string | null; invoice?: Invoice; message?: string | null }
 
-/** Subject + plain-text body for one email type. */
+/**
+ * Subject + plain-text body for one email type. ISO dates and document numbers inside the Arabic text are wrapped in
+ * Unicode left-to-right isolates so they are not reordered by the bidi algorithm.
+ */
 export function compose(db: DB, c: Company, type: EmailType, v: MailVars = {}): { subject: string; body: string } {
+  const m = composeRaw(db, c, type, v);
+  const [ar, ...rest] = m.body.split('\n\n');
+  // Greeting + Arabic paragraph(s) come before the English one; isolate Latin runs in the Arabic part only.
+  const enAt = rest.findIndex((p) => /^[A-Za-z]/.test(p.trim()));
+  const arParts = enAt === -1 ? rest : rest.slice(0, enAt);
+  const tail = enAt === -1 ? [] : rest.slice(enAt);
+  return { subject: isolateLtrRuns(m.subject), body: [ar, ...arParts.map(isolateLtrRuns), ...tail].join('\n\n') };
+}
+function composeRaw(db: DB, c: Company, type: EmailType, v: MailVars = {}): { subject: string; body: string } {
   const owner = ownerOf(db, c.id);
   const hi = `مرحباً ${owner?.name ?? ''}،`.replace(' ،', '،');
   const k = contact(db);
@@ -60,7 +67,7 @@ export function compose(db: DB, c: Company, type: EmailType, v: MailVars = {}): 
     case 'INVOICE_ISSUED':
       return {
         subject: `فاتورة جديدة ${inv?.number ?? ''} من شؤون`,
-        body: `${hi}\n\nصدرت فاتورة اشتراك منشأتك «${name}» رقم ${inv?.number} عن الفترة ${inv?.periodStart} إلى ${inv?.periodEnd} بمبلغ ${money(inv?.total ?? 0)} شاملة ضريبة القيمة المضافة، وتستحق في ${inv?.dueDate}.\n${bankLine(db)}${k.ar}\n\nInvoice ${inv?.number} for “${nameEn}” (${inv?.periodStart} – ${inv?.periodEnd}) is SAR ${(inv?.total ?? 0).toFixed(2)} incl. VAT, due on ${inv?.dueDate}.\n${k.en}${sign}`,
+        body: `${hi}\n\nصدرت فاتورة اشتراك منشأتك «${name}» رقم ${inv?.number} عن الفترة ${inv?.periodStart} إلى ${inv?.periodEnd} بمبلغ ${money(inv?.total ?? 0)}${inv?.vat ? ' شاملة ضريبة القيمة المضافة' : ''}، وتستحق في ${inv?.dueDate}.\n${bankLine(db)}${k.ar}\n\nInvoice ${inv?.number} for “${nameEn}” (${inv?.periodStart} – ${inv?.periodEnd}) is SAR ${(inv?.total ?? 0).toFixed(2)}${inv?.vat ? ' incl. VAT' : ''}, due on ${inv?.dueDate}.\n${k.en}${sign}`,
       };
     case 'PAYMENT_RECEIVED':
       return {
@@ -88,14 +95,13 @@ export function compose(db: DB, c: Company, type: EmailType, v: MailVars = {}): 
 }
 function bankLine(db: DB) {
   const b = db.settings.billing;
-  return b.iban ? `التحويل إلى: ${b.bankName ? `${b.bankName} — ` : ''}${b.iban}\n` : '';
+  return b.iban ? `التحويل إلى: ${b.bankName ? `${b.bankName} — ` : ''}${ltr(b.iban)}\n` : '';
 }
-
-const REMINDER_TYPES: EmailType[] = ['TRIAL_ENDING', 'SUBSCRIPTION_ENDING', 'EXPIRED', 'INVOICE_OVERDUE', 'MANUAL_REMINDER'];
 
 /**
  * Logs one email to the company owner. Returns null (nothing stored) when the company has no owner or the
- * dedupe key was already used. Reminders also create an in-app notification for the owner.
+ * dedupe key was already used. Every email that did not fail (the demo only logs, so all of them) also creates an
+ * in-app notification for the owner linking to /app/billing, unless `notify: false` (seeded history).
  */
 export function sendEmail(svc: Services, c: Company, type: EmailType, vars: MailVars = {}, opts: { dedupeKey?: string | null; createdAt?: string; notify?: boolean } = {}): EmailLog | null {
   const db = svc.db;
@@ -106,9 +112,8 @@ export function sendEmail(svc: Services, c: Company, type: EmailType, vars: Mail
   const at = opts.createdAt ?? nowIso();
   const log: EmailLog = { id: nextId(db, 'mail'), companyId: c.id, to: owner.email, subject, body, type, status: 'LOGGED', error: null, dedupeKey: opts.dedupeKey ?? null, createdAt: at };
   db.emails.push(log);
-  if (opts.notify ?? REMINDER_TYPES.includes(type)) {
-    const link = type === 'INVOICE_OVERDUE' && vars.invoice ? `/app/billing/view?id=${vars.invoice.id}` : '/app/billing';
-    svc.notifyUsers(c.id, [owner.id], subject, body.split('\n\n')[1] ?? null, link, { createdAt: at });
+  if ((opts.notify ?? true) && log.status !== 'FAILED') {
+    svc.notifyUsers(c.id, [owner.id], subject, body.split('\n\n')[1] ?? null, '/app/billing', { createdAt: at });
   }
   svc.dirty = true;
   return log;

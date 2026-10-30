@@ -345,12 +345,17 @@ export const SECTORS: Sector[] = [
 export const getSector = (slug: string) => SECTORS.find((s) => s.slug === slug);
 
 export const COMPLIANCE_CHIPS: T2[] = [
-  ['متوافق مع نظام العمل السعودي', 'Aligned with Saudi Labor Law'],
+  ['مبني وفق أحكام نظام العمل السعودي', 'Built around Saudi Labor Law rules'],
   ['جاهز لملفات حماية الأجور', 'WPS-file ready'],
   ['يحتسب اشتراكات التأمينات الاجتماعية', 'GOSI contributions built in'],
-  ['ملفات رواتب متوافقة مع مُدد', 'Mudad-compatible payroll files'],
-  ['بيانات جاهزة لمنصة قوى', 'Qiwa-ready employee data'],
-  ['نظام حماية البيانات الشخصية', 'PDPL-minded data handling'],
+  ['ملف رواتب (CSV) قابل للتخصيص لرفعه عبر البنك أو مُدد', 'Customisable payroll file (CSV) to upload via your bank or Mudad'],
+  ['تصدير بيانات الموظفين (CSV)', 'Employee data export (CSV)'],
+  ['ممارسات حماية بيانات تراعي نظام حماية البيانات الشخصية', 'Data protection practices mindful of the PDPL'],
+];
+/** Shown wherever COMPLIANCE_CHIPS appear. */
+export const COMPLIANCE_FOOTNOTE: T2 = [
+  'تساعدك شؤون على تطبيق الأنظمة، وتبقى المسؤولية النظامية على المنشأة بصفتها صاحب العمل.',
+  'Shuoon helps you apply the regulations; legal responsibility remains with the business as the employer.',
 ];
 
 export interface Tier {
@@ -462,7 +467,7 @@ export const HOME_FAQ: { q: T2; a: T2 }[] = [
   { q: ['كم يستغرق التشغيل؟', 'How long does onboarding take?'],
     a: ['أغلب المنشآت تبدأ خلال أسبوع: استيراد الموظفين، وإعداد الفروع ونطاقاتها، ثم أول مسير.', 'Most businesses go live within a week: import employees, set up branches and geofences, then run the first payroll.'] },
   { q: ['أين تُستضاف بياناتنا؟', 'Where is our data hosted?'],
-    a: ['نلتزم باستضافة البيانات داخل المملكة العربية السعودية وبالتعامل معها وفق نظام حماية البيانات الشخصية.', 'We are committed to hosting data inside Saudi Arabia and handling it in line with the Personal Data Protection Law (PDPL).'] },
+    a: ['نستضيف البيانات لدى مزوّد سحابي موثوق مع تشفير الاتصال، ونوضح موقع الاستضافة في العقد، ونوفّر الاستضافة داخل المملكة عند الطلب. ونتعامل معها بممارسات تراعي نظام حماية البيانات الشخصية.', 'We host data with a trusted cloud provider with encrypted connections, state the hosting location in the contract, and offer in-Kingdom hosting on request. We handle it with practices mindful of the Personal Data Protection Law (PDPL).'] },
   { q: ['هل يمكنني التجربة قبل الاشتراك؟', 'Can I try before subscribing?'],
     a: ['بالتأكيد. ابدأ تجربة مجانية لمدة 14 يوماً دون بطاقة ائتمانية، أو اطلب عرضاً تجريبياً مع فريقنا.', 'Absolutely. Start a 14-day free trial with no credit card, or book a demo with our team.'] },
 ];
@@ -471,11 +476,11 @@ export const PRICING_FAQ: { q: T2; a: T2 }[] = [
   { q: ['كيف يُحتسب السعر؟', 'How is pricing calculated?'],
     a: ['السعر لكل موظف نشط شهرياً. الموظفون المنتهية خدماتهم لا يُحتسبون.', 'Per active employee per month. Terminated employees are not counted.'] },
   { q: ['هل الأسعار تشمل ضريبة القيمة المضافة؟', 'Do prices include VAT?'],
-    a: ['الأسعار المعروضة لا تشمل ضريبة القيمة المضافة (15%)، وتُضاف في الفاتورة.', 'Displayed prices exclude 15% VAT, which is added on the invoice.'] },
+    a: ['الأسعار المعروضة لا تشمل الضريبة، وتُضاف ضريبة القيمة المضافة (15%) عند انطباقها.', 'Displayed prices exclude tax; 15% VAT is added where applicable.'] },
   { q: ['هل يوجد حد أدنى لعدد الموظفين؟', 'Is there a minimum headcount?'],
     a: ['الحد الأدنى للفوترة 10 موظفين في الباقتين الأساسية والنمو.', 'Minimum billing is 10 employees on Essential and Growth.'] },
   { q: ['هل يمكنني تغيير الباقة لاحقاً؟', 'Can I change plans later?'],
-    a: ['نعم، يمكنك الترقية في أي وقت ويُحتسب الفرق بالتناسب.', 'Yes, upgrade anytime and the difference is prorated.'] },
+    a: ['نعم، يمكنك الترقية في أي وقت، وتُطبَّق الترقية من الفاتورة التالية.', 'Yes, upgrade anytime; the upgrade applies from the next invoice.'] },
   { q: ['ماذا يحدث لبياناتي إذا ألغيت الاشتراك؟', 'What happens to my data if I cancel?'],
     a: ['يمكنك تصدير بياناتك كاملة، ونحذفها بعد 30 يوماً من الإلغاء ما لم يُطلب غير ذلك نظاماً.', 'You can export all your data; we delete it 30 days after cancellation unless the law requires otherwise.'] },
 ];

@@ -1,15 +1,15 @@
 // Types + labels for the platform admin portal (docs/ADMIN_PORTAL.md).
 import type { Tone } from '@/components/ui/Badge';
-import type { BillingSettings, ReminderSettings } from '@/lib/billing';
+import type { BillingSettings, DocumentType, ReminderSettings } from '@/lib/billing';
 
-export type { BillingSettings, ReminderSettings };
+export type { BillingSettings, DocumentType, ReminderSettings };
 
 export type CompanyStatus = 'PENDING' | 'TRIAL' | 'ACTIVE' | 'SUSPENDED' | 'EXPIRED';
 export type Plan = 'ESSENTIALS' | 'GROWTH' | 'ENTERPRISE';
 export type BillingCycle = 'MONTHLY' | 'ANNUAL';
 export type CompanyEventType =
   | 'REGISTERED' | 'ACTIVATED' | 'SUSPENDED' | 'REACTIVATED' | 'PLAN_CHANGED' | 'EXTENDED' | 'NOTE' | 'IMPERSONATED' | 'EXPIRED' | 'DELETED'
-  | 'INVOICE_ISSUED' | 'INVOICE_PAID' | 'INVOICE_VOIDED' | 'REMINDER_SENT';
+  | 'INVOICE_ISSUED' | 'INVOICE_PAID' | 'INVOICE_VOIDED' | 'INVOICE_CREDITED' | 'REMINDER_SENT';
 export type LeadStatus = 'NEW' | 'CONTACTED' | 'CONVERTED' | 'LOST';
 export type BroadcastTarget = 'ALL' | 'ACTIVE' | 'TRIAL';
 
@@ -47,18 +47,30 @@ export interface AdminCompanyDetail extends AdminCompany {
 }
 
 // ---------- billing (v2) ----------
-export type InvoiceStatus = 'ISSUED' | 'PAID' | 'VOID';
+export type InvoiceStatus = 'ISSUED' | 'PAID' | 'CREDITED';
 export type PaymentMethod = 'BANK_TRANSFER' | 'CARD' | 'CASH' | 'OTHER';
+/** v2.1 seller snapshot stored on the invoice at issue. */
+export interface SellerSnapshot {
+  name: string; nameEn: string | null; vatNumber: string | null; crNumber: string | null; address: string | null; email: string | null; phone: string | null;
+  bankName: string | null; iban: string | null;
+}
+/** v2.1 buyer snapshot stored on the invoice at issue. */
+export interface BuyerSnapshot { nameAr: string; nameEn: string | null; vatNumber: string | null; crNumber: string | null; address: string | null; city: string | null }
 export interface Invoice {
-  id: string; number: string; companyId: string; companyName: string; status: InvoiceStatus; overdue: boolean;
+  id: string; number: string; documentType: DocumentType; companyId: string; companyName: string; status: InvoiceStatus; overdue: boolean;
   plan: Plan; billingCycle: BillingCycle; periodStart: string; periodEnd: string; months: number; employees: number; unitPrice: number;
   subtotal: number; discountRate: number; discount: number; taxable: number; vatRate: number; vat: number; total: number;
-  issueDate: string; dueDate: string; paidAt: string | null; paymentMethod: PaymentMethod | null; paymentRef: string | null;
-  notes: string | null; voidReason: string | null; createdByName: string | null; createdAt: string;
+  issueDate: string; issuedAt: string; dueDate: string; paidAt: string | null; paymentMethod: PaymentMethod | null; paymentRef: string | null;
+  notes: string | null; createdByName: string | null; createdAt: string;
+  /** Documents render only from these snapshots (v2.1). */
+  seller: SellerSnapshot; buyer: BuyerSnapshot;
+  creditsInvoiceId: string | null; creditsNumber: string | null; creditedByNumber: string | null; reason: string | null;
+  /** ZATCA Phase-1 TLV (base64) — tax invoices and credit notes of tax invoices, else null. */
+  qr: string | null;
 }
 export interface InvoiceDetail extends Invoice {
+  /** Live company (links and contact only — the document uses `buyer`). */
   company: { id: string; nameAr: string; nameEn: string | null; crNumber: string | null; vatNumber: string | null; city: string | null; ownerName: string | null; ownerEmail: string | null; ownerPhone: string | null };
-  seller: BillingSettings;
 }
 export interface InvoiceSummary { outstanding: { count: number; amount: number }; overdue: { count: number; amount: number }; paidThisMonth: { count: number; amount: number } }
 export type EmailType = 'TRIAL_ENDING' | 'SUBSCRIPTION_ENDING' | 'EXPIRED' | 'INVOICE_ISSUED' | 'PAYMENT_RECEIVED' | 'INVOICE_OVERDUE' | 'MANUAL_REMINDER';
@@ -70,6 +82,9 @@ export interface EmailLog {
 export interface BillingSubscription {
   status: CompanyStatus; plan: Plan; billingCycle: BillingCycle; effectivePrice: number | null; maxEmployees: number | null;
   activeEmployees: number; trialEndsAt: string | null; subscriptionEndsAt: string | null; daysLeft: number | null;
+  /** Unpaid invoices of the whole account (may be missing on an API that doesn't send it — the page then computes it). */
+  outstanding?: { count: number; amount: number };
+  overdue?: { count: number; amount: number };
 }
 
 export interface AdminOverview {
@@ -116,9 +131,11 @@ export const EVENT_TYPE: L = {
   REACTIVATED: ['إعادة تفعيل', 'Reactivated'], PLAN_CHANGED: ['تغيير الباقة', 'Plan changed'], EXTENDED: ['تمديد', 'Extended'],
   NOTE: ['ملاحظة', 'Note'], IMPERSONATED: ['دخول كمالك المنشأة', 'Impersonated'], EXPIRED: ['انتهاء الاشتراك', 'Expired'], DELETED: ['حذف', 'Deleted'],
   INVOICE_ISSUED: ['إصدار فاتورة', 'Invoice issued'], INVOICE_PAID: ['سداد فاتورة', 'Invoice paid'], INVOICE_VOIDED: ['إلغاء فاتورة', 'Invoice voided'],
+  INVOICE_CREDITED: ['إشعار دائن', 'Credit note issued'],
   REMINDER_SENT: ['إرسال تذكير', 'Reminder sent'],
 };
-export const INVOICE_STATUS: L = { ISSUED: ['مستحقة', 'Issued'], PAID: ['مدفوعة', 'Paid'], VOID: ['ملغاة', 'Void'] };
+export const INVOICE_STATUS: L = { ISSUED: ['مستحقة', 'Issued'], PAID: ['مدفوعة', 'Paid'], CREDITED: ['صدر لها إشعار دائن', 'Credited'] };
+export const DOCUMENT_TYPE: L = { TAX_INVOICE: ['فاتورة ضريبية', 'Tax invoice'], INVOICE: ['فاتورة', 'Invoice'], CREDIT_NOTE: ['إشعار دائن', 'Credit note'] };
 export const PAYMENT_METHOD: L = { BANK_TRANSFER: ['تحويل بنكي', 'Bank transfer'], CARD: ['بطاقة', 'Card'], CASH: ['نقداً', 'Cash'], OTHER: ['أخرى', 'Other'] };
 export const EMAIL_TYPE: L = {
   TRIAL_ENDING: ['قرب انتهاء التجربة', 'Trial ending'], SUBSCRIPTION_ENDING: ['قرب انتهاء الاشتراك', 'Subscription ending'],
@@ -126,12 +143,12 @@ export const EMAIL_TYPE: L = {
   INVOICE_OVERDUE: ['فاتورة متأخرة', 'Invoice overdue'], MANUAL_REMINDER: ['تذكير يدوي', 'Manual reminder'],
 };
 export const EMAIL_STATUS: L = { SENT: ['أُرسلت', 'Sent'], FAILED: ['فشل الإرسال', 'Failed'], LOGGED: ['محفوظة (لم تُرسل)', 'Logged (not sent)'] };
-export const INVOICE_TONE: Record<InvoiceStatus, Tone> = { ISSUED: 'warning', PAID: 'success', VOID: 'neutral' };
+export const INVOICE_TONE: Record<InvoiceStatus, Tone> = { ISSUED: 'warning', PAID: 'success', CREDITED: 'neutral' };
 export const EMAIL_STATUS_TONE: Record<EmailStatus, Tone> = { SENT: 'success', FAILED: 'danger', LOGGED: 'info' };
 export const EMAIL_TYPE_TONE: Record<EmailType, Tone> = {
   TRIAL_ENDING: 'info', SUBSCRIPTION_ENDING: 'warning', EXPIRED: 'neutral', INVOICE_ISSUED: 'primary', PAYMENT_RECEIVED: 'success', INVOICE_OVERDUE: 'danger', MANUAL_REMINDER: 'accent',
 };
-export const INVOICE_STATUSES: InvoiceStatus[] = ['ISSUED', 'PAID', 'VOID'];
+export const INVOICE_STATUSES: InvoiceStatus[] = ['ISSUED', 'PAID', 'CREDITED'];
 export const PAYMENT_METHODS: PaymentMethod[] = ['BANK_TRANSFER', 'CARD', 'CASH', 'OTHER'];
 export const EMAIL_TYPES = Object.keys(EMAIL_TYPE) as EmailType[];
 export const EMAIL_STATUSES: EmailStatus[] = ['SENT', 'FAILED', 'LOGGED'];
@@ -148,7 +165,7 @@ export const LEAD_TONE: Record<LeadStatus, Tone> = { NEW: 'accent', CONTACTED: '
 export const EVENT_TONE: Record<CompanyEventType, Tone> = {
   REGISTERED: 'primary', ACTIVATED: 'success', SUSPENDED: 'danger', REACTIVATED: 'success', PLAN_CHANGED: 'accent', EXTENDED: 'info',
   NOTE: 'neutral', IMPERSONATED: 'warning', EXPIRED: 'neutral', DELETED: 'danger',
-  INVOICE_ISSUED: 'primary', INVOICE_PAID: 'success', INVOICE_VOIDED: 'neutral', REMINDER_SENT: 'info',
+  INVOICE_ISSUED: 'primary', INVOICE_PAID: 'success', INVOICE_VOIDED: 'neutral', INVOICE_CREDITED: 'neutral', REMINDER_SENT: 'info',
 };
 /** Chart colours per plan. */
 export const PLAN_COLOR: Record<Plan, string> = { ESSENTIALS: '#7DD3FC', GROWTH: '#0E7490', ENTERPRISE: '#14D1C3' };
@@ -166,4 +183,4 @@ export function companyName(c: { nameAr: string; nameEn?: string | null } | null
 }
 
 /** localStorage key holding the platform admin's token while impersonating a company owner. */
-export const ADMIN_TOKEN_KEY = 'taqam.adminToken';
+export { ADMIN_TOKEN_KEY } from './api';

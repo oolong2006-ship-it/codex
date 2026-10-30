@@ -4,6 +4,8 @@ import { IS_DEMO } from './paths';
 
 export const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4100/api';
 const TOKEN_KEY = 'taqam.token';
+/** localStorage key holding the platform admin's token while impersonating a company owner (ImpersonationBanner). */
+export const ADMIN_TOKEN_KEY = 'taqam.adminToken';
 
 export function getToken(): string | null {
   if (typeof window === 'undefined') return null;
@@ -14,6 +16,21 @@ export function setToken(token: string | null) {
     if (token) window.localStorage.setItem(TOKEN_KEY, token);
     else window.localStorage.removeItem(TOKEN_KEY);
   } catch { /* storage unavailable */ }
+}
+
+/** Drops a stored impersonation admin token. */
+export function clearAdminToken() {
+  try { window.localStorage.removeItem(ADMIN_TOKEN_KEY); } catch { /* storage unavailable */ }
+}
+/** A fresh login/register: store the new token and forget any impersonation (its admin token must not survive). */
+export function startSession(token: string) {
+  clearAdminToken();
+  setToken(token);
+}
+/** Logout: clear the session token and any impersonation admin token. */
+export function endSession() {
+  clearAdminToken();
+  setToken(null);
 }
 
 export class ApiError extends Error {

@@ -6,7 +6,7 @@ import {
   BadgeCheck, Building2, CheckCircle2, MapPinned, Quote, Rocket, ShieldCheck, Sparkles, Upload, XCircle,
 } from 'lucide-react';
 import { ButtonLink } from '@/components/ui';
-import { COMPLIANCE_CHIPS, HOME_FAQ, MODULES, SECTORS, TESTIMONIALS, TIERS } from './data';
+import { COMPLIANCE_CHIPS, COMPLIANCE_FOOTNOTE, HOME_FAQ, MODULES, SECTORS, TESTIMONIALS, TIERS } from './data';
 import { ArrowForward, Container, SectionHeading, StarMotif, Yes, useT2 } from './primitives';
 import { ProductMock } from './ProductMock';
 import { PhoneMock } from './PhoneMock';
@@ -83,13 +83,16 @@ function TrustStrip() {
       <Container className="flex flex-col items-center gap-4 py-7 lg:flex-row lg:gap-8">
         <p id="trust-title" className="shrink-0 text-sm font-semibold text-ink-muted">
           <ShieldCheck className="me-1.5 inline h-4 w-4 text-primary-500" aria-hidden />
-          {t('مهيأ لمنظومة الامتثال السعودية', 'Built for the Saudi compliance stack')}
+          {t('مبني للبيئة النظامية السعودية', 'Built for the Saudi regulatory context')}
         </p>
-        <ul className="flex flex-wrap justify-center gap-2 lg:justify-start">
-          {COMPLIANCE_CHIPS.map((c) => (
-            <li key={c[1]} className="rounded-full border border-line bg-white px-3.5 py-1.5 text-xs font-medium text-primary sm:text-sm">{tt(c)}</li>
-          ))}
-        </ul>
+        <div className="flex flex-col items-center gap-2 lg:items-start">
+          <ul className="flex flex-wrap justify-center gap-2 lg:justify-start">
+            {COMPLIANCE_CHIPS.map((c) => (
+              <li key={c[1]} className="rounded-full border border-line bg-white px-3.5 py-1.5 text-xs font-medium text-primary sm:text-sm">{tt(c)}</li>
+            ))}
+          </ul>
+          <p className="text-center text-[11px] text-ink-soft lg:text-start">* {tt(COMPLIANCE_FOOTNOTE)}</p>
+        </div>
       </Container>
     </section>
   );

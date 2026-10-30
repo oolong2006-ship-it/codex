@@ -1,6 +1,6 @@
 'use client';
 import { createContext, useCallback, useContext, useEffect, useState } from 'react';
-import { api, getToken, setToken } from './api';
+import { api, endSession, getToken, setToken, startSession } from './api';
 import { withBase } from './paths';
 
 /**
@@ -49,8 +49,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => { void refresh(); }, [refresh]);
 
+  // Every successful login/register starts a fresh session: a leftover impersonation admin token is dropped.
   const accept = (r: AuthResponse) => {
-    setToken(r.accessToken);
+    startSession(r.accessToken);
     const u = { ...r.user, company: r.company };
     setUser(u);
     return u;
@@ -61,7 +62,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // auth guards start a client-side router.replace('/login') that the unload aborts, and Next's static
   // export then falls back to loading the route's RSC payload (login/index.txt) as the page.
   const logout = () => {
-    setToken(null);
+    endSession();
     if (typeof window === 'undefined') { setUser(null); return; }
     goToLogin();
   };

@@ -1,6 +1,6 @@
 'use client';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import clsx from 'clsx';
 import { CalendarClock, Eye, Mail, Phone, ReceiptText, ShieldCheck, Users } from 'lucide-react';
 import { Card, CardHeader, EmptyState, PageHeader, Pagination, Table, type Column } from '@/components/ui';
@@ -16,17 +16,43 @@ import { BILLING_CYCLE, lbl, type BillingSubscription, type Invoice } from '@/li
 
 const viewHref = (id: string) => `/app/billing/view?id=${encodeURIComponent(id)}`;
 
+type Due = { outstanding: { count: number; amount: number }; overdue: { count: number; amount: number } };
+const sumDue = (rows: Invoice[]): Due => {
+  const open = rows.filter((i) => i.status === 'ISSUED' && i.documentType !== 'CREDIT_NOTE');
+  const agg = (xs: Invoice[]) => ({ count: xs.length, amount: Math.round(xs.reduce((a, i) => a + i.total, 0) * 100) / 100 });
+  return { outstanding: agg(open), overdue: agg(open.filter((i) => i.overdue)) };
+};
+
+/**
+ * Amount due for the whole account — never only the visible page. Uses `outstanding`/`overdue` from
+ * /billing/subscription; an API that doesn't send them falls back to one unpaginated-in-practice request
+ * (pageSize=100: a company has at most a few unpaid invoices, and 100 covers 8+ years of monthly history).
+ */
+function useDue(sub: BillingSubscription | null) {
+  const [fallback, setFallback] = useState<Due | null>(null);
+  const has = !!sub?.outstanding;
+  useEffect(() => {
+    if (!sub || has) return;
+    let alive = true;
+    api.get<Paginated<Invoice>>('/billing/invoices', { page: 1, pageSize: 100 }).then((r) => { if (alive) setFallback(sumDue(r.data)); }).catch(() => {});
+    return () => { alive = false; };
+  }, [sub, has]);
+  if (sub?.outstanding) return { outstanding: sub.outstanding, overdue: sub.overdue ?? { count: 0, amount: 0 } };
+  return fallback;
+}
+
 export default function BillingPage() {
   const { t } = useLang();
   const sub = useFetch(() => api.get<BillingSubscription>('/billing/subscription'), []);
   const [page, setPage] = useState(1);
   const inv = useFetch(() => api.get<Paginated<Invoice>>('/billing/invoices', { page, pageSize: 20 }), [page]);
+  const due = useDue(sub.data);
   return (
     <div>
       <PageHeader title={t('الاشتراك والفواتير', 'Subscription & billing')} subtitle={t('باقة منشأتك في شؤون وفواتير الاشتراك', 'Your Shuoon plan and subscription invoices')} />
       <div className="space-y-6">
         <Async loading={sub.loading} error={sub.error} onRetry={sub.reload} hasData={!!sub.data}>
-          {sub.data && <SubscriptionCard s={sub.data} outstanding={(inv.data?.data ?? []).filter((i) => i.status === 'ISSUED')} />}
+          {sub.data && <SubscriptionCard s={sub.data} due={due} />}
         </Async>
         <Card>
           <CardHeader title={t('الفواتير', 'Invoices')} subtitle={t('اضغط على الفاتورة لعرضها أو طباعتها', 'Open an invoice to view or print it')} />
@@ -42,11 +68,12 @@ export default function BillingPage() {
   );
 }
 
-function SubscriptionCard({ s, outstanding }: { s: BillingSubscription; outstanding: Invoice[] }) {
+function SubscriptionCard({ s, due: d }: { s: BillingSubscription; due: Due | null }) {
   const { t, lang } = useLang();
   const end = s.status === 'TRIAL' ? s.trialEndsAt : s.subscriptionEndsAt;
-  const due = outstanding.reduce((a, i) => a + i.total, 0);
-  const overdue = outstanding.some((i) => i.overdue);
+  const due = d?.outstanding.amount ?? 0;
+  const count = d?.outstanding.count ?? 0;
+  const overdue = (d?.overdue.count ?? 0) > 0;
   return (
     <div className="grid gap-4 lg:grid-cols-3">
       <Card className="relative overflow-hidden !border-night !bg-night p-6 text-white lg:col-span-2">
@@ -77,10 +104,10 @@ function SubscriptionCard({ s, outstanding }: { s: BillingSubscription; outstand
       <div className="space-y-4">
         <Card className={clsx('p-5', overdue && 'border-danger/40')}>
           <p className="text-sm text-ink-muted">{t('المستحق عليك', 'Amount due')}</p>
-          <p className={clsx('num mt-1 text-2xl font-bold', overdue ? 'text-danger' : 'text-ink')}>{money(due)}</p>
+          <p className={clsx('num mt-1 text-2xl font-bold', overdue ? 'text-danger' : 'text-ink')}>{d ? money(due) : '—'}</p>
           <p className="mt-1 text-xs text-ink-soft">
-            {outstanding.length
-              ? t(`${outstanding.length} فاتورة غير مدفوعة${overdue ? ' — بعضها متأخر' : ''}`, `${outstanding.length} unpaid${overdue ? ' — some overdue' : ''}`)
+            {!d ? '\u00a0' : count
+              ? t(`${count === 1 ? 'فاتورة واحدة غير مدفوعة' : count === 2 ? 'فاتورتان غير مدفوعتين' : `${count} فواتير غير مدفوعة`}${overdue ? ' — بعضها متأخر' : ''}`, `${count} unpaid${overdue ? ' — some overdue' : ''}`)
               : t('لا توجد فواتير مستحقة — شكراً لك', 'Nothing due — thank you')}
           </p>
         </Card>
@@ -107,14 +134,24 @@ function Tile({ icon, label, value }: { icon: React.ReactNode; label: string; va
   );
 }
 
+function OwnerTotal({ i, className }: { i: Invoice; className?: string }) {
+  if (i.documentType === 'CREDIT_NOTE') return <span className={clsx('num whitespace-nowrap font-semibold text-info', className)}>− {money(i.total)}</span>;
+  return <span className={clsx('num whitespace-nowrap font-semibold', i.status === 'CREDITED' && 'text-ink-soft line-through', className)}>{money(i.total)}</span>;
+}
+
 function InvoiceRows({ rows }: { rows: Invoice[] }) {
   const { t, lang } = useLang();
   const cols: Column<Invoice>[] = [
-    { key: 'number', header: t('رقم الفاتورة', 'Number'), render: (i) => <Link href={viewHref(i.id)} className="num font-semibold text-primary-500 hover:underline" dir="ltr">{i.number}</Link> },
+    { key: 'number', header: t('الرقم', 'Number'), render: (i) => (
+      <div className="leading-tight">
+        <Link href={viewHref(i.id)} className="num font-semibold text-primary-500 hover:underline" dir="ltr">{i.number}</Link>
+        {i.documentType === 'CREDIT_NOTE' && i.creditsNumber && <p className="text-[11px] text-ink-soft">{t('إشعار دائن يخص', 'Credit note for')} <span className="num" dir="ltr">{i.creditsNumber}</span></p>}
+      </div>
+    ) },
     { key: 'period', header: t('الفترة', 'Period'), render: (i) => <span className="text-xs">{invoicePeriod(i, lang)}</span> },
     { key: 'issued', header: t('تاريخ الإصدار', 'Issued'), render: (i) => <span className="text-xs text-ink-muted">{date(i.issueDate, lang)}</span> },
-    { key: 'due', header: t('الاستحقاق', 'Due'), render: (i) => <span className={clsx('text-xs', i.overdue ? 'font-semibold text-danger' : 'text-ink-muted')}>{date(i.dueDate, lang)}</span> },
-    { key: 'total', header: t('الإجمالي', 'Total'), render: (i) => <span className={clsx('num font-semibold', i.status === 'VOID' && 'text-ink-soft line-through')}>{money(i.total)}</span> },
+    { key: 'due', header: t('الاستحقاق', 'Due'), render: (i) => i.documentType === 'CREDIT_NOTE' ? <span className="text-xs text-ink-soft">—</span> : <span className={clsx('text-xs', i.overdue ? 'font-semibold text-danger' : 'text-ink-muted')}>{date(i.dueDate, lang)}</span> },
+    { key: 'total', header: t('الإجمالي', 'Total'), render: (i) => <OwnerTotal i={i} /> },
     { key: 'status', header: t('الحالة', 'Status'), render: (i) => <InvoiceStatusChip inv={i} /> },
     { key: 'act', header: '', className: 'text-end', render: (i) => (
       <Link href={viewHref(i.id)} className="inline-flex h-8 items-center gap-1.5 rounded-xl px-2.5 text-sm font-medium text-primary hover:bg-primary-50"><Eye className="h-4 w-4" />{t('عرض', 'View')}</Link>
@@ -132,7 +169,7 @@ function InvoiceRows({ rows }: { rows: Invoice[] }) {
                 <p className="num text-sm font-semibold text-ink" dir="ltr">{i.number}</p>
                 <p className="truncate text-xs text-ink-soft">{invoicePeriod(i, lang)}</p>
               </div>
-              <div className="flex flex-col items-end gap-1"><span className="num text-sm font-bold">{money(i.total)}</span><InvoiceStatusChip inv={i} /></div>
+              <div className="flex flex-col items-end gap-1"><OwnerTotal i={i} className="text-sm font-bold" /><InvoiceStatusChip inv={i} /></div>
             </Link>
           </li>
         ))}
