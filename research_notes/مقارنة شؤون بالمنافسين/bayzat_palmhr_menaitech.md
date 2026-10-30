@@ -419,10 +419,9 @@ The best patterns to borrow:
 - **Authentication:** MFA with a one-time code by phone or email. Critical actions such as payment processing and sensitive employee-data changes require re-authentication — [Bayzat security](https://www.bayzat.com/security).
 - **SSO:** Google Workspace, Microsoft Azure AD and Okta — [Bayzat HR software](https://www.bayzat.com/hr-software). The homepage lists Microsoft and Google SSO — [Bayzat homepage](https://www.bayzat.com/).
 - **Pen testing:** regular penetration testing and 2FA (third-party summary) — [ZoftwareHub](https://zoftwarehub.com/en-bh/products/bayzat/zoftware-analysis).
-- **Hosting (sources conflict):**
+- **Hosting (sources don't fully agree):**
   - "Tier-1 data centres located as required by local regulations", country not named — [Bayzat security](https://www.bayzat.com/security).
   - "Local KSA data residency on enterprise tier only" — [Bayzat buyer's guide](https://www.bayzat.com/blog/best-hr-software-in-saudi-arabia/).
-  - A UAE page reportedly says data stays in the UAE (per search extraction; the exact page was not pinned).
 - **Privacy law:** Bayzat says it follows GDPR, ISO standards and "regional data privacy laws". Saudi PDPL is not named — [Bayzat IT professionals](https://www.bayzat.com/it-professionals).
 
 #### PalmHR
@@ -447,6 +446,7 @@ The best patterns to borrow:
 
 ### Gaps
 - Cloud provider and region for all three (for example AWS Bahrain, Azure UAE or GCP Dammam). Not disclosed in sources found.
+- A search summary said a Bayzat UAE page states that customer data "stays in the UAE". If so, non-enterprise KSA customers may be hosted in the UAE. I could not pin the exact page, so this is unverified, and it matters for the in-Kingdom hosting comparison.
 - NCA (ECC/CCC) alignment or CST cloud registration for any of the three. Not found.
 - Saudi PDPL-specific statements, DPAs and data-subject-rights handling. Not found for any.
 
