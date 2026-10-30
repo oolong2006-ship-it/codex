@@ -11,7 +11,9 @@ NCA guidance, ISO 27001 readiness, and OWASP Top 10.
 - **Authorization:** role-based + permission-based guards (`JwtAuthGuard`, `PermissionsGuard`);
   code-defined RBAC seeded to DB; `SUPER_ADMIN` role cannot be self-assigned by non-super-admins.
 - **Multi-tenant isolation:** every query is org-scoped via `tenantWhere()`; writes pinned via
-  `resolveOrgId()`; realtime events are emitted only to the tenant's socket room.
+  `resolveOrgId()`; realtime events are emitted only to the tenant's socket room. The socket
+  gateway verifies the access token at connect time, joins each socket to its own org room only
+  (super admins may join others), and disconnects sockets when their token expires.
 - **Transport/headers:** `helmet` secure headers; CORS; global DTO validation
   (`whitelist + forbidNonWhitelisted`) to blunt mass-assignment and injection.
 - **Rate limiting:** `@nestjs/throttler` (Redis-ready) global guard.

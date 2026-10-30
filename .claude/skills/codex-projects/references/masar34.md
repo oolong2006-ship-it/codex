@@ -20,8 +20,11 @@ honest status matrix (✅ / 🟡 / ⚪). Check it before assuming a feature exis
     unit-tested in `analytics.spec.ts`.
   - `decorators/` provides `@CurrentUser`, `@RequirePermissions` and `@Public`.
 - `apps/api/src/realtime/events.gateway.ts` is the socket.io gateway on
-  namespace `/realtime`. Clients join room `org:<id>`, and services call
-  `gateway.emitToOrg(orgId, 'entity:event', payload)`.
+  namespace `/realtime`. It verifies the access token in `handleConnection`
+  and joins the socket to its own `org:<id>` room. Only super admins may
+  `join` another org. Services call `gateway.emitToOrg(orgId,
+  'entity:event', payload)`. Never add a broadcast to all sockets, because
+  that crosses tenants.
 - `apps/api/prisma/` holds `schema.prisma`, `migrations/` and `seed.ts`.
 - `apps/web/src/app/(app)/` holds the authenticated pages (`dashboard`,
   `crowd`, `queues`, `alerts`, `simulation`). `login/` is public.
@@ -91,11 +94,9 @@ the other products changed.
 
 ## Known gaps
 
-- `EventsGateway.handleJoin` accepts any `organizationId` from any socket
-  without checking a JWT. Any client can subscribe to another tenant's live
-  stream. Fix it by verifying the token in `handleConnection` and joining only
-  the user's own org (super admins excepted). Do this before relying on
-  realtime isolation.
+- The web app does not subscribe to the socket stream yet (its pages poll).
+  When it does, pass the access token as `auth: { token }` and reconnect
+  with a fresh token after a refresh.
 - Partner portal, fan PWA, field-ops mobile, report export, the digital twin
   and the Prophet/XGBoost service are scaffolded or documented only (see the
   README status matrix and `ROADMAP.md`).
