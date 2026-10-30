@@ -1,0 +1,14 @@
+# Build context for apps/web/Dockerfile (and apps/api/Dockerfile with the legacy builder; BuildKit
+# uses apps/api/Dockerfile.dockerignore instead). Dependencies and builds are produced inside the images.
+**/node_modules
+**/.next
+**/out
+**/dist
+**/coverage
+**/*.tsbuildinfo
+**/*.log
+**/.env*
+!**/.env.example
+# production secrets and database dumps must never enter an image or the build cache
+deploy
+.git

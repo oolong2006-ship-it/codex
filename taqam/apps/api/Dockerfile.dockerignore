@@ -1,6 +1,16 @@
+# BuildKit uses this file (instead of taqam/.dockerignore) for apps/api/Dockerfile. Keep in sync.
 **/node_modules
-**/dist
-**/.env
-**/coverage
 **/.next
+**/out
+**/dist
+**/coverage
+**/*.tsbuildinfo
+**/*.log
+**/.env*
+!**/.env.example
+# production secrets and database dumps must never enter an image or the build cache
+deploy
+.git
+# not needed by the API image
 apps/web
+marketing

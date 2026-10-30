@@ -15,6 +15,9 @@ www.{$DOMAIN} {
 		Strict-Transport-Security "max-age=31536000; includeSubDomains"
 		X-Content-Type-Options "nosniff"
 		Referrer-Policy "strict-origin-when-cross-origin"
+		# منع تضمين الموقع ولوحة /admin داخل إطار في موقع آخر (clickjacking)
+		X-Frame-Options "DENY"
+		Content-Security-Policy "frame-ancestors 'none'"
 		-Server
 	}
 	reverse_proxy web:3100

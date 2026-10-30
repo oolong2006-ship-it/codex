@@ -24,8 +24,10 @@ RUN npm run build
 FROM node:22-alpine AS run
 WORKDIR /app
 ENV NODE_ENV=production PORT=3100 HOSTNAME=0.0.0.0 NEXT_TELEMETRY_DISABLED=1
-COPY --from=build /app/apps/web/.next/standalone ./
-COPY --from=build /app/apps/web/.next/static ./.next/static
-COPY --from=build /app/apps/web/public ./public
+# owned by the unprivileged `node` user so Next can write its runtime cache (.next/cache)
+COPY --from=build --chown=node:node /app/apps/web/.next/standalone ./
+COPY --from=build --chown=node:node /app/apps/web/.next/static ./.next/static
+COPY --from=build --chown=node:node /app/apps/web/public ./public
+USER node
 EXPOSE 3100
 CMD ["node", "server.js"]

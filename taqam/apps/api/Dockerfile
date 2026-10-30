@@ -38,6 +38,8 @@ COPY --from=build /repo/apps/api/dist ./dist
 COPY --from=build /repo/apps/api/prisma ./prisma
 # prisma CLI (a devDependency) is installed here at build time so boot never depends on the npm registry
 RUN npm install --no-save --no-audit --no-fund prisma@5.22.0 && npm cache clean --force
+# run as the unprivileged `node` user (files above stay root-owned and read-only for it)
+USER node
 EXPOSE 4100
 # apply pending migrations, then start
 CMD ["sh", "-c", "npx prisma migrate deploy && node dist/main.js"]

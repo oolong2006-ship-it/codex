@@ -1,4 +1,6 @@
 # طاقم — تشغيل كامل المنصة بأمر واحد: docker compose up --build
+# ⚠️ للتطوير المحلي فقط (كلمات مرور تجريبية). للخادم الحقيقي استخدم deploy/docker-compose.prod.yml (انظر deploy/README.md).
+#    المنافذ مربوطة بـ 127.0.0.1: Docker يتجاوز جدار ufw، فربطها بكل العناوين يكشفها للإنترنت.
 services:
   db:
     image: postgres:16-alpine
@@ -25,7 +27,7 @@ services:
       CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3100}
       PORT: 4100
     ports:
-      - "4100:4100"
+      - "127.0.0.1:4100:4100"
     depends_on:
       db:
         condition: service_healthy
@@ -52,7 +54,7 @@ services:
       args:
         NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:4100/api}
     ports:
-      - "3100:3100"
+      - "127.0.0.1:3100:3100"
     depends_on:
       - api
 

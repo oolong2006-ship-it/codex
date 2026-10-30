@@ -81,3 +81,61 @@ jobs:
         run: npm run build
         env:
           NEXT_PUBLIC_API_URL: http://localhost:4100/api
+
+  deploy-config:
+    name: Deploy config (compose, shellcheck, Caddyfile)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compose config (values with $ # and spaces must survive unchanged)
+        run: |
+          cat > "$RUNNER_TEMP/ci.env" <<'ENV'
+          DOMAIN='example.com'
+          ACME_EMAIL='ops@example.com'
+          POSTGRES_PASSWORD='ci_db_password'
+          JWT_SECRET='0123456789abcdef0123456789abcdef'
+          PLATFORM_ADMIN_EMAIL='admin@example.com'
+          PLATFORM_ADMIN_PASSWORD='My$ecretPass#2026 x'
+          ENV
+          docker compose -f taqam/deploy/docker-compose.prod.yml --env-file "$RUNNER_TEMP/ci.env" config > "$RUNNER_TEMP/config.yml"
+          # compose prints a literal $ as $$
+          grep -F 'PLATFORM_ADMIN_PASSWORD: My$$ecretPass#2026 x' "$RUNNER_TEMP/config.yml"
+          # the example env file must also be valid input
+          cp taqam/deploy/.env.example "$RUNNER_TEMP/example.env"
+          sed -i "s/^POSTGRES_PASSWORD=.*/POSTGRES_PASSWORD='x'/; s/^JWT_SECRET=.*/JWT_SECRET='x'/; s/^PLATFORM_ADMIN_EMAIL=.*/PLATFORM_ADMIN_EMAIL='a@b.co'/; s/^PLATFORM_ADMIN_PASSWORD=.*/PLATFORM_ADMIN_PASSWORD='x'/" "$RUNNER_TEMP/example.env"
+          docker compose -f taqam/deploy/docker-compose.prod.yml --env-file "$RUNNER_TEMP/example.env" config --quiet
+          JWT_SECRET=ci-only-0123456789abcdef0123456789 docker compose -f taqam/docker-compose.yml config --quiet
+      - name: ShellCheck deploy scripts
+        run: shellcheck -x taqam/deploy/scripts/*.sh
+      - name: Validate Caddyfile
+        run: |
+          docker run --rm -e DOMAIN=example.com -e ACME_EMAIL=ops@example.com \
+            -v "$PWD/taqam/deploy/Caddyfile:/etc/caddy/Caddyfile:ro" \
+            caddy:2-alpine caddy validate --config /etc/caddy/Caddyfile
+
+  docker-build:
+    name: Docker build (${{ matrix.image }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - image: api
+            context: taqam
+            file: taqam/apps/api/Dockerfile
+          - image: web
+            context: taqam
+            file: taqam/apps/web/Dockerfile
+          - image: backup
+            context: taqam/deploy/backup
+            file: taqam/deploy/backup/Dockerfile
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.context }}
+          file: ${{ matrix.file }}
+          push: false
+          cache-from: type=gha,scope=${{ matrix.image }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.image }}
