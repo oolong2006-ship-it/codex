@@ -14,6 +14,7 @@ set -euo pipefail
 umask 077
 cd "$(dirname "$0")/.."
 # shellcheck source=lib.sh
+# shellcheck source=lib.sh source-path=SCRIPTDIR
 . scripts/lib.sh
 require_env
 db_running || { echo "✗ قاعدة البيانات لا تعمل. شغّلها أولاً: docker compose -f deploy/docker-compose.prod.yml --env-file deploy/.env up -d db" >&2; exit 1; }

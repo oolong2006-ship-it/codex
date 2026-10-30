@@ -6,6 +6,7 @@ set -euo pipefail
 umask 077
 cd "$(dirname "$0")/.."
 # shellcheck source=lib.sh
+# shellcheck source=lib.sh source-path=SCRIPTDIR
 . scripts/lib.sh
 require_env
 [ -n "$(env_get OFFSITE_S3_BUCKET)" ] || { echo "✗ النسخ الخارجي غير مُعدّ: عبّئ OFFSITE_S3_* و BACKUP_ENCRYPTION_PASSPHRASE في deploy/.env (انظر README)"; exit 1; }

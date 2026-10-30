@@ -5,6 +5,7 @@ set -euo pipefail
 umask 077   # النسخ تحتوي رواتب وآيبانات كل الشركات: للمالك root فقط
 cd "$(dirname "$0")/.."
 # shellcheck source=lib.sh
+# shellcheck source=lib.sh source-path=SCRIPTDIR
 . scripts/lib.sh
 require_env
 db_running || { echo "✗ قاعدة البيانات لا تعمل الآن. شغّل المنصة أولاً: bash deploy/scripts/deploy.sh --no-pull" >&2; exit 1; }

@@ -6,6 +6,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 # shellcheck source=lib.sh
+# shellcheck source=lib.sh source-path=SCRIPTDIR
 . scripts/lib.sh
 require_env
 
