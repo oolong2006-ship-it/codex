@@ -73,6 +73,8 @@ export const ERROR_CODES = [
   'PERIOD_LOCKED',
   'PERIOD_ALREADY_LOCKED',
   'PERIOD_NOT_LOCKED',
+  'SHIFT_OVERLAP',
+  'SHIFT_NOT_FOUND',
 ] as const;
 
 export type ErrorCode = (typeof ERROR_CODES)[number];

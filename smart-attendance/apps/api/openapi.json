@@ -1088,6 +1088,130 @@
           "attendance"
         ]
       }
+    },
+    "/v1/shift-templates": {
+      "post": {
+        "operationId": "ShiftsController_createTemplate",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TemplateDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "قالب وردية ثابت: توقيت محلي وأيام الأسبوع.",
+        "tags": [
+          "shifts"
+        ]
+      },
+      "get": {
+        "operationId": "ShiftsController_listTemplates",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "قوالب الورديات.",
+        "tags": [
+          "shifts"
+        ]
+      }
+    },
+    "/v1/employees/{id}/shift-assignments": {
+      "post": {
+        "operationId": "ShiftsController_assign",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssignShiftDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "تعيين وردية لموظف بنافذة صلاحية؛ لا يتداخل مع تعيين آخر.",
+        "tags": [
+          "shifts"
+        ]
+      }
+    },
+    "/v1/attendance/shift-report": {
+      "get": {
+        "operationId": "ShiftsController_report",
+        "parameters": [
+          {
+            "name": "from",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "تقرير الورديات لفترة: التأخر والخروج المبكر والغياب. format=csv للتصدير.",
+        "tags": [
+          "shifts"
+        ]
+      }
     }
   },
   "info": {
@@ -1552,6 +1676,57 @@
         },
         "required": [
           "reason"
+        ]
+      },
+      "TemplateDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "start_time": {
+            "type": "string",
+            "example": "08:00",
+            "description": "توقيت محلي HH:MM"
+          },
+          "end_time": {
+            "type": "string",
+            "example": "06:00",
+            "description": "أقل من البداية = وردية تنتهي في اليوم التالي"
+          },
+          "days": {
+            "description": "أيام ISO: 1 الاثنين … 7 الأحد",
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          }
+        },
+        "required": [
+          "name",
+          "start_time",
+          "end_time",
+          "days"
+        ]
+      },
+      "AssignShiftDto": {
+        "type": "object",
+        "properties": {
+          "shift_template_id": {
+            "type": "string"
+          },
+          "valid_from": {
+            "type": "string",
+            "example": "2026-10-01"
+          },
+          "valid_to": {
+            "type": "string",
+            "example": "2026-12-31"
+          }
+        },
+        "required": [
+          "shift_template_id",
+          "valid_from"
         ]
       }
     }

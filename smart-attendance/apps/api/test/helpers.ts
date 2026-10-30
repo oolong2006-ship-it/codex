@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { INestApplication } from '@nestjs/common';
 import { authenticator } from 'otplib';
 import { Client } from 'pg';
@@ -118,4 +119,20 @@ export async function bindingsOf(employeeId: string) {
     'SELECT id, status, device_id FROM device_bindings WHERE employee_id = $1 ORDER BY created_at',
     [employeeId],
   );
+}
+
+/**
+ * مسؤول عميل جديد لكل ملف اختبار. كل حساب يخطو في TOTP وحده، فلا تتزاحم
+ * الملفات على خطوات الرمز نفسه (replay protection يمنع الإعادة في النافذة الواحدة).
+ */
+export async function freshTenantAdmin(app: INestApplication, tenantSlug: string, prefix: string): Promise<Session> {
+  const { hash } = await import('@node-rs/argon2');
+  const email = `${prefix}-${randomUUID().slice(0, 8)}@${tenantSlug}.dev`;
+  const tenant = await tenantId(tenantSlug);
+  const user = await q<{ id: string }>(
+    'INSERT INTO user_accounts (tenant_id, email, password_hash) VALUES ($1, $2, $3) RETURNING id',
+    [tenant, email, await hash(PASSWORD)],
+  );
+  await q("INSERT INTO user_role_assignments (tenant_id, user_id, role_code) VALUES ($1, $2, 'tenant_admin')", [tenant, user[0]!.id]);
+  return login(app, email);
 }

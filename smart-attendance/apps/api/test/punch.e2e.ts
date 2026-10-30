@@ -14,6 +14,7 @@ import {
   issueCode,
   login,
   q,
+  freshTenantAdmin,
 } from './helpers';
 
 /** البصمة من طرف الهاتف إلى الخادم (phase-2 §5، specs §B/§D، مصفوفة F1–F5). */
@@ -31,7 +32,7 @@ describe('attendance punch (specs §B, §D)', () => {
   beforeAll(async () => {
     app = await bootApp();
     // مسؤول العميل بدل HR: لدى HR حساب يتحقق منه اختبار تسجيل MFA، ولا يتعلق الترتيب بين الملفات.
-    hr = await login(app, 'admin@b.dev');
+    hr = await freshTenantAdmin(app, 'tenant-b', 'punch');
     emp = await login(app, 'emp3@b.dev');
     empId = await employeeIdByEmail('emp3@b.dev');
 

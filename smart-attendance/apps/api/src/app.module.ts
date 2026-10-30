@@ -24,6 +24,8 @@ import { SessionsService } from './attendance/sessions.service';
 import { ExceptionsService } from './attendance/exceptions.service';
 import { PeriodsController } from './attendance/periods.controller';
 import { PeriodsService } from './attendance/periods.service';
+import { ShiftsController } from './attendance/shifts.controller';
+import { ShiftsService } from './attendance/shifts.service';
 import { SitesController, SitesService } from './sites/sites.module';
 import { PoliciesService } from './common/policies.service';
 import { PlatformController, PlatformService } from './platform/platform.controller';
@@ -40,7 +42,7 @@ class HealthController {
 
 export function buildAppModule(config: AppConfig) {
   @Module({
-    controllers: [HealthController, AuthController, DevicesController, OrgController, PlatformController, SitesController, AttendanceController, RecordsController, PeriodsController],
+    controllers: [HealthController, AuthController, DevicesController, OrgController, PlatformController, SitesController, AttendanceController, RecordsController, PeriodsController, ShiftsController],
     providers: [
       { provide: APP_CONFIG, useValue: config },
       { provide: AttestationAdapter, useFactory: () => createAttestationAdapter(config) },
@@ -57,6 +59,7 @@ export function buildAppModule(config: AppConfig) {
       SessionsService,
       ExceptionsService,
       PeriodsService,
+      ShiftsService,
       { provide: APP_GUARD, useClass: AuthGuard },
       { provide: APP_GUARD, useClass: PermissionGuard },
       { provide: APP_INTERCEPTOR, useClass: AuditInterceptor },

@@ -1,5 +1,5 @@
 import { INestApplication } from '@nestjs/common';
-import { Session, bearer, bootApp, deviceRegistration, http, issueCode, login, q, tenantId } from './helpers';
+import { Session, bearer, bootApp, deviceRegistration, http, issueCode, login, q, tenantId, freshTenantAdmin } from './helpers';
 import { CENTER, metersNorth, punchClient } from './punch-client';
 
 /** الجلسات والاستثناءات والتسويات وكشف CSV على بصمات حقيقية (phase-2 §3، §5، F17). */
@@ -14,7 +14,7 @@ describe('sessions, exceptions and monthly export', () => {
 
   beforeAll(async () => {
     app = await bootApp();
-    admin = await login(app, 'admin@b.dev');
+    admin = await freshTenantAdmin(app, 'tenant-b', 'sessions');
     const tenant = await tenantId('tenant-b');
     const branch = (await q<{ id: string }>("SELECT id FROM branches WHERE tenant_id = $1 AND code = 'BR-1'", [tenant]))[0]!.id;
 
@@ -181,5 +181,19 @@ describe('sessions, exceptions and monthly export', () => {
     expect(approved.status).toBe(200);
     const periods = await http(app).get('/v1/attendance/periods').set(bearer(admin));
     expect(periods.body[0]).toEqual(expect.objectContaining({ status: 'OPEN', reopen_reason: 'تصحيح بعد مراجعة الشركة' }));
+  });
+  it('the shift report reads the real session of the day for an assigned employee', async () => {
+    const template = await http(app).post('/v1/shift-templates').set(bearer(admin)).send({ name: 'كل الأيام', start_time: '00:00', end_time: '23:59', days: [1, 2, 3, 4, 5, 6, 7] });
+    expect(template.status).toBe(201);
+    const assigned = await http(app).post(`/v1/employees/${empId}/shift-assignments`).set(bearer(admin)).send({ shift_template_id: template.body.id, valid_from: '2020-01-01' });
+    expect(assigned.status).toBe(201);
+
+    const today = new Date().toISOString().slice(0, 10);
+    const report = await http(app).get(`/v1/attendance/shift-report?from=${today}&to=${today}&employee_id=${empId}`).set(bearer(admin));
+    expect(report.status).toBe(200);
+    expect(report.body.rows).toHaveLength(1);
+    // جلسات اليوم بدأت بعد منتصف الليل: لا يمكن أن تكون غائبة.
+    expect(['PRESENT', 'LATE', 'INCOMPLETE', 'EARLY_LEAVE']).toContain(report.body.rows[0].outcome);
+    expect(report.body.rows[0].started_at).not.toBeNull();
   });
 });

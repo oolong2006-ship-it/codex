@@ -55,5 +55,7 @@
   "EXCEPTION_SELF_DECISION": "You cannot approve or reject your own exception.",
   "PERIOD_LOCKED": "The period is locked. It must be reopened first by someone with reopen permission.",
   "PERIOD_ALREADY_LOCKED": "The period is already locked.",
-  "PERIOD_NOT_LOCKED": "The period is not locked."
+  "PERIOD_NOT_LOCKED": "The period is not locked.",
+  "SHIFT_OVERLAP": "This assignment overlaps another shift assignment for the employee.",
+  "SHIFT_NOT_FOUND": "The shift template was not found."
 }
