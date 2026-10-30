@@ -47,18 +47,22 @@ Payroll run stores `wpsExportedAt` on export.
 - True labor cost per branch for a period: gross + GOSI employer + government fees for non-Saudis. Company settings `expatLevyMonthly` (default 800) and `iqamaFeeAnnual` (default 650; monthly = /12). Source: payslips of the period's run when it exists, else contract salaries (flag `estimated: true`). Output per branch: headcount, saudis, gross, gosiEmployer, govFees, total, perEmployee.
 - Fee defaults labelled «قابلة للتعديل من الإعدادات — تحقق من الرسوم الحالية».
 
-## 6. Anti-tamper attendance
-- Selfie: optional JPEG data URL ≤ 200 KB on check-in/out; stored in `AttendancePhoto`. Company setting `requireSelfie` (default false); when true a missing selfie → 400 «التقاط صورة مطلوب لتسجيل الحضور». Managers view photos on the attendance board. No face recognition is claimed.
-- Branch kiosk: OWNER/HR/branch manager pairs a device to a branch (`KioskDevice`, token shown once, stored hashed). Kiosk calls `POST /kiosk/punch {employeeNumber, pin, selfie?}` with header `X-Kiosk-Token`; employee PIN (4–6 digits, hashed) set by HR or by the employee in /me. Employee must belong to the kiosk's branch. 5 wrong PINs in 15 min → locked 15 min. Source `KIOSK`. Web route `/kiosk` (fullscreen keypad, RTL).
-- Offline: ESS queues punches in IndexedDB when offline with `capturedAt`; server accepts `capturedAt` within the last 12 hours (not future), uses it as the punch time, and adds flag `OFFLINE` to the record. Geofence still checked with the captured coordinates.
-- `AttendanceRecord.flags: string[]` (`OFFLINE`, `NO_SELFIE` when selfie optional and absent is NOT flagged; flag only `OFFLINE`, `KIOSK`).
+## 6. Anti-tamper attendance (privacy-respecting — NO photos)
+Owner decision: no selfies or any employee photo capture (cultural/religious acceptability, especially for female staff). Never add camera capture of people.
+- **Device binding:** the ESS app generates a random device id (stored in localStorage) sent as header `X-Device-Id` on check-in/out. First punch binds it (`EmployeeDevice`). A different device → 403 «هذا الجهاز غير مسجل لحسابك. اطلب من الموارد البشرية اعتماد الجهاز الجديد» and a pending device request HR can approve (replaces the old binding) or reject. Company setting `deviceBinding` (default true).
+- **Rotating branch code:** each branch kiosk screen shows a 6-digit code that changes every 30 seconds (HMAC-SHA256 TOTP from a per-branch secret; accept current ±1 step). Company setting `requireBranchCode` (default false); when true, ESS check-in/out must include `branchCode` → else 400 «أدخل رمز الفرع الظاهر على شاشة الحضور»; wrong → 400 «رمز الفرع غير صحيح أو منتهي».
+- **Branch kiosk:** OWNER/HR/branch manager pairs a device to a branch (`KioskDevice`, token shown once, stored hashed). Kiosk calls `POST /kiosk/punch {employeeNumber, pin}` with header `X-Kiosk-Token`; employee PIN (4–6 digits, hashed) set by HR or by the employee in /me. Employee must belong to the kiosk's branch. 5 wrong PINs in 15 min → locked 15 min. Source `KIOSK`. Web route `/kiosk` (fullscreen keypad + the rotating branch code). The kiosk never uses the camera.
+- **Offline:** ESS queues punches in IndexedDB when offline with `capturedAt`; server accepts `capturedAt` within the last 12 hours (not future), uses it as the punch time, and adds flag `OFFLINE`. Geofence and device binding still apply; branch code is not required for offline punches but the flag is shown to managers.
+- `AttendanceRecord.flags: string[]` (`OFFLINE`, `KIOSK`, `NEW_DEVICE_APPROVED`).
 
 ## 7. Open shifts and swaps
 - Open shift: manager publishes `{branchId, shiftId, date, slots, note}`; employees of that branch see it in the app and claim; a claim creates the ShiftAssignment immediately when the employee has no assignment that date (atomic slot decrement); status FILLED at 0 slots. Manager can cancel.
 - Swap: employee proposes swapping their assignment with a colleague's (same branch, or give-away with `targetAssignmentId = null`) → colleague accepts → manager approves → assignments swapped atomically (conditional on both unchanged). States PENDING_PEER → PENDING_MANAGER → APPROVED, or REJECTED / CANCELLED. Notifications at each step.
 
-## 8. Repricing
-- Essential **12** SAR, Growth **19** SAR per active employee/month, Enterprise on request; annual billing −15%; minimum billed 10 employees; monthly billing allowed (differentiator vs annual-only competitors); 14-day trial.
-- Essential: core HR, geofenced attendance with selfie and offline, leave, requests, payroll + WPS checker, GOSI two regimes, document tracking, ESS app.
-- Growth adds: Qiwa-documented Saudization + compliance center, true labor cost per branch, kiosk mode, open shifts & swaps, performance, recruitment, advanced reports.
-- Existing platform settings rows still holding the old defaults (19/29) are migrated to 12/19; customised prices untouched. Existing companies' `pricePerEmployee` overrides untouched.
+## 8. Repricing (owner decision: monthly equal to Jisr, annual discount chosen by the team)
+- Essential **10** SAR, Growth **16** SAR per active employee/month on **monthly** billing (same as Jisr's list prices, but Jisr bills annually only).
+- Annual billing discount **20%** → effective 8 / 12.80 SAR per employee/month. Platform setting `annualDiscount` 0.20.
+- Enterprise on request; minimum billed 10 employees; 14-day trial; monthly billing allowed.
+- Essential: core HR, geofenced attendance with device binding and offline, leave, requests, payroll + WPS checker, GOSI two regimes, document tracking, ESS app.
+- Growth adds: Qiwa-documented Saudization + compliance center, true labor cost per branch, kiosk mode with rotating branch code, open shifts & swaps, performance, recruitment, advanced reports.
+- Existing platform settings rows still holding the old defaults (19/29 and 0.15) are migrated to 10/16 and 0.20; customised values untouched. Existing companies' `pricePerEmployee` overrides untouched.

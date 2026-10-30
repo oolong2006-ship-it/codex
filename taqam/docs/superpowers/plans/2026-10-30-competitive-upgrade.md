@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Close the seven competitive gaps from the research report and reprice Shuoon to compete (Essential 12 / Growth 19 SAR).
+**Goal:** Close the seven competitive gaps from the research report and reprice Shuoon to compete (Essential 10 / Growth 16 SAR monthly, 20% off annual).
 
 **Architecture:** Pure rules live in `packages/core` (vitest), persisted and exposed by the NestJS API (`apps/api`, Prisma migrations, jest unit + supertest e2e), and rendered by the Next.js app (`apps/web`) whose in-browser demo mock (`apps/web/src/demo/**`) must mirror every new endpoint so the GitHub Pages demo keeps working.
 
@@ -146,33 +146,36 @@ expect(marginToDrop(5, 10)).toBe(1); // 50%→ 4/9=44.4 still PLATINUM, 3/8=37.5
 - [ ] **Step 4: Web + mock** — page: headline «خدماتك الحكومية: مخاطر …» with level colour, risk item cards linking to the fixing page, branch cost table + horizontal bar chart (dataviz rules: neutral palette, labelled values, accessible contrast), period picker, «تقديري» badge when estimated, fees note from the spec; settings fields for the two fees. Mock mirrors. tsc + vitest + quick Playwright screenshot review.
 - [ ] **Step 5: Commit** `feat: compliance center (government-services risk + true labor cost per branch)`
 
-### Task 6: Selfie and offline punches
+### Task 6: Device binding, rotating branch code, offline punches (no photos)
 
 **Files:**
-- Modify: schema (Company.requireSelfie `Boolean @default(false)`; AttendanceRecord.flags `String[] @default([])`; new model `AttendancePhoto { id, companyId, recordId, kind 'IN'|'OUT', mime, data Bytes, createdAt; @@unique([recordId, kind]) }`), migration `attendance_selfie_offline`
-- Modify: `apps/api/src/me/me.controller.ts` (LocationDto + `selfie?`, `capturedAt?`), attendance service/controller (`GET /attendance/:id/photo/:kind`), e2e `apps/api/test/attendance-anti-tamper.e2e-spec.ts`
-- Modify: web ESS check-in (`src/components/ess/CheckInCard.tsx` camera capture via `<input type="file" accept="image/*" capture="user">` resized to ≤ 200 KB with canvas), new `src/lib/offlineQueue.ts` (IndexedDB, + test with fake-indexeddb or an injected store), attendance board photo viewer, settings toggle, mock
+- Create: `packages/core/src/branch-code.ts` (+ test) — `branchCode(secretHex: string, at: Date, stepSeconds = 30): string` (6 digits, HMAC-SHA256 over the step counter, dynamic truncation as RFC 4226) and `verifyBranchCode(secretHex, code, at, window = 1): boolean`. Core must stay runtime-agnostic: use a small pure SHA-256/HMAC implementation or accept an injected `hmac(keyHex, msgBytes) => Uint8Array` — choose injection; API passes node `crypto`, web passes `crypto.subtle`-free pure fallback from `src/lib/hmac.ts`.
+- Modify: schema (Company.deviceBinding `Boolean @default(true)`, requireBranchCode `Boolean @default(false)`; Branch.codeSecret `String` (random 32-byte hex, backfilled); AttendanceRecord.flags `String[] @default([])`; model `EmployeeDevice { id, companyId, employeeId, deviceId, status ACTIVE|PENDING|REJECTED|REVOKED, userAgent, createdAt, approvedById?; @@unique([employeeId, deviceId]) }`), migration `attendance_device_branchcode_offline`
+- Modify: `apps/api/src/me/me.controller.ts` (body adds `branchCode?`, `capturedAt?`; header `X-Device-Id`), attendance service; new HR endpoints `GET /devices?status=PENDING`, `POST /devices/:id/approve|reject`, `DELETE /employees/:id/devices` (reset); e2e `apps/api/test/attendance-anti-tamper.e2e-spec.ts`
+- Modify: web ESS `src/components/ess/CheckInCard.tsx` (device id in localStorage `shuoon.deviceId`, branch-code input when required), new `src/lib/offlineQueue.ts` (+ test), HR page «الأجهزة بانتظار الاعتماد» (attendance section), settings toggles, mock
 
 **Interfaces:**
-- API: check-in/out body `{ lat, lng, selfie?: string /* data:image/jpeg;base64 */, capturedAt?: string /* ISO */ }`. Errors: selfie > 200 KB or not JPEG/PNG → 400 «الصورة غير صالحة أو أكبر من 200 كيلوبايت»; required & missing → 400 «التقاط صورة مطلوب لتسجيل الحضور»; capturedAt older than 12h or in the future (> now + 2 min) → 400 «وقت التسجيل خارج المدة المسموحة (12 ساعة)».
-- Offline replay idempotency: a second check-in replay for the same day with the same `capturedAt` returns 200 with the existing record (no 409).
-- Web: `enqueuePunch(p: { kind: 'IN'|'OUT'; lat: number; lng: number; capturedAt: string; selfie?: string }): Promise<void>`; `flushPunches(send: (p) => Promise<void>): Promise<{ sent: number; failed: number }>`.
+- Errors (exact): device mismatch 403 «هذا الجهاز غير مسجل لحسابك. اطلب من الموارد البشرية اعتماد الجهاز الجديد» (creates/keeps one PENDING request); branch code missing 400 «أدخل رمز الفرع الظاهر على شاشة الحضور»; wrong 400 «رمز الفرع غير صحيح أو منتهي»; capturedAt older than 12h or > now + 2 min → 400 «وقت التسجيل خارج المدة المسموحة (12 ساعة)».
+- Offline replay idempotency: a replay for the same day and kind with the same `capturedAt` returns 200 with the existing record.
+- Web: `enqueuePunch(p: { kind: 'IN'|'OUT'; lat: number; lng: number; capturedAt: string }): Promise<void>`; `flushPunches(send: (p) => Promise<void>): Promise<{ sent: number; failed: number }>`.
+- No camera, no photos anywhere (owner decision).
 
-- [ ] **Step 1: API e2e first** — requireSelfie on → no selfie 400 with the message; with a tiny JPEG → 200 and photo retrievable by HR, not by another company; 300 KB → 400; `capturedAt` 3h ago → record checkIn equals capturedAt and flags contain `OFFLINE`; 13h ago → 400; same replay twice → 200 both, one record. FAIL → implement + migration → PASS.
-- [ ] **Step 2: Web tests first** — offline queue: enqueue twice, flush with a sender that fails the 2nd → `{sent:1, failed:1}` and the failed item stays queued. FAIL → implement → PASS.
-- [ ] **Step 3: UI + mock** — check-in card camera step (shown when required or user taps «إضافة صورة»), offline banner «لا يوجد اتصال — سيُرسل التسجيل تلقائياً عند عودة الاتصال», auto-flush on `online` event; attendance board badge «دون اتصال» and photo thumbnail; mock mirrors (store photo data URL). tsc + vitest.
-- [ ] **Step 4: Commit** `feat: selfie check-in and offline punch queue`
+- [ ] **Step 1: Core tests first** — RFC 4226 test vector via injected HMAC (secret `3132333435363738393031323334353637383930`, counter 1 → `287082`); `verifyBranchCode` accepts previous step, rejects 2 steps old. FAIL → implement → PASS.
+- [ ] **Step 2: API e2e first** — first punch binds device; second device → 403 + PENDING request; HR approves → new device works, old one revoked; requireBranchCode on → missing 400, wrong 400, current code 200; capturedAt 3h ago → checkIn = capturedAt and flag `OFFLINE`; 13h → 400; same replay twice → one record. FAIL → implement → PASS.
+- [ ] **Step 3: Web tests first** — offline queue: enqueue twice, flush with a sender failing the 2nd → `{sent:1, failed:1}`, failed stays queued. FAIL → implement → PASS.
+- [ ] **Step 4: UI + mock** — offline banner «لا يوجد اتصال — سيُرسل التسجيل تلقائياً عند عودة الاتصال», auto-flush on `online`; branch-code field; pending-devices page; attendance board badges «دون اتصال»/«جهاز جديد»; mock mirrors. tsc + vitest.
+- [ ] **Step 5: Commit** `feat: device binding, rotating branch code and offline punches`
 
 ### Task 7: Branch kiosk mode
 
 **Files:**
 - Modify: schema (model `KioskDevice { id, companyId, branchId, name, tokenHash @unique, lastSeenAt, revokedAt, createdAt }`; Employee.kioskPinHash `String?`, kioskFailCount `Int @default(0)`, kioskFirstFailAt `DateTime?`, kioskLockedUntil `DateTime?` — count resets when the first failure is older than 15 min or on success), migration `kiosk_mode`
 - Create: `apps/api/src/kiosk/{kiosk.controller.ts,kiosk.service.ts,kiosk.guard.ts,kiosk.module.ts}` (+ `kiosk.service.spec.ts`), e2e `apps/api/test/kiosk.e2e-spec.ts`
-- Create: `apps/web/src/app/kiosk/page.tsx` (fullscreen keypad, branch name, clock, success screen with name and time, optional selfie), branch page «أجهزة الحضور» (pair/revoke), ESS profile «رمز الحضور السريع (PIN)», mock
+- Create: `apps/web/src/app/kiosk/page.tsx` (fullscreen keypad, branch name, clock, success screen with name and time, the rotating branch code, never the camera), branch page «أجهزة الحضور» (pair/revoke), ESS profile «رمز الحضور السريع (PIN)», mock
 
 **Interfaces:**
-- API: `POST /branches/:id/kiosks {name}` (OWNER/HR_ADMIN/that branch's manager) → `{ id, name, token }` (token once, 32 random bytes hex; stored sha256); `GET /branches/:id/kiosks`; `DELETE /kiosks/:id` (revoke); `POST /me/kiosk-pin {pin}` (4–6 digits) and `POST /employees/:id/kiosk-pin {pin}` (OWNER/HR_ADMIN); `POST /kiosk/punch` with header `X-Kiosk-Token` body `{ employeeNumber, pin, selfie? }` → `{ action: 'IN'|'OUT', employeeName, time, lateMinutes }` (IN when no check-in today, else OUT); `GET /kiosk/me` → `{ branchName, companyName }`.
-- Errors: bad/revoked token → 401; unknown employee, wrong PIN, or other branch → the same 401 «رقم الموظف أو الرمز غير صحيح»; locked → 423 «تم إيقاف الرمز مؤقتاً لكثرة المحاولات، حاول بعد 15 دقيقة» (only after 5 failures in 15 min for an existing employee); records get `source: 'KIOSK'` and flag `KIOSK`; selfie rule from Task 6 applies.
+- API: `POST /branches/:id/kiosks {name}` (OWNER/HR_ADMIN/that branch's manager) → `{ id, name, token }` (token once, 32 random bytes hex; stored sha256); `GET /branches/:id/kiosks`; `DELETE /kiosks/:id` (revoke); `POST /me/kiosk-pin {pin}` (4–6 digits) and `POST /employees/:id/kiosk-pin {pin}` (OWNER/HR_ADMIN); `POST /kiosk/punch` with header `X-Kiosk-Token` body `{ employeeNumber, pin }` → `{ action: 'IN'|'OUT', employeeName, time, lateMinutes }` (IN when no check-in today, else OUT); `GET /kiosk/me` → `{ branchName, companyName, branchCode, codeExpiresInSeconds }` (the kiosk screen shows the rotating code from Task 6).
+- Errors: bad/revoked token → 401; unknown employee, wrong PIN, or other branch → the same 401 «رقم الموظف أو الرمز غير صحيح»; locked → 423 «تم إيقاف الرمز مؤقتاً لكثرة المحاولات، حاول بعد 15 دقيقة» (only after 5 failures in 15 min for an existing employee); records get `source: 'KIOSK'` and flag `KIOSK`.
 
 - [ ] **Step 1: API e2e first** — pair → token works once listed; punch IN then OUT; wrong PIN ×5 → 423 on 6th even with the right PIN; unknown employee number → 401 (same message); employee from another branch → 401; revoked device → 401; EMPLOYEE role cannot pair (403). FAIL → implement (guard resolves device by sha256, updates lastSeenAt; reuse attendance compute from me.controller via the attendance service) → PASS.
 - [ ] **Step 2: UI + mock** — kiosk page stores token in localStorage after a pairing screen («أدخل رمز الجهاز»), large keypad, Arabic-Indic digits accepted, auto-reset after 5 s; mock mirrors (seed one paired demo kiosk for «فرع العليا» and PIN 1234 for demo employees, shown on the demo kiosk screen). tsc + vitest (PIN lock logic test in mock).
@@ -197,16 +200,16 @@ expect(marginToDrop(5, 10)).toBe(1); // 50%→ 4/9=44.4 still PLATINUM, 3/8=37.5
 ### Task 9: Competitive repricing and copy
 
 **Files:**
-- Modify: `apps/api/src/platform/platform.service.ts` (`DEFAULT_PRICES` ESSENTIALS 12, GROWTH 19), schema default JSON for `PlatformSettings.prices`, migration `repricing` (UPDATE the row only when prices still equal `{"ESSENTIALS":19,"GROWTH":29,"ENTERPRISE":null}`), affected unit/e2e expectations
-- Modify: `apps/web/src/components/marketing/data.ts` (TIERS 12/19, features per spec §8, COMPARISON rows for new features, FAQ min-10/monthly/annual −15%), pricing page copy, `apps/web/src/demo/seed-platform.ts` settings, `taqam/marketing/build/profile.template.html` (+ rebuild PDF via `cd apps/web && node ../../marketing/build/build.cjs`, no OVERFLOW), `taqam/README.md`, `taqam/docs/ADMIN_PORTAL.md` price lines
+- Modify: `apps/api/src/platform/platform.service.ts` (`DEFAULT_PRICES` ESSENTIALS 10, GROWTH 16; default `annualDiscount` 0.20), schema default JSON for `PlatformSettings.prices`, migration `repricing` (UPDATE prices only when still `{"ESSENTIALS":19,"GROWTH":29,"ENTERPRISE":null}` and annualDiscount only when still 0.15), affected unit/e2e expectations
+- Modify: `apps/web/src/components/marketing/data.ts` (TIERS 10/16, annual −20%, features per spec §8, COMPARISON rows for new features, FAQ min-10/monthly/annual −15%), pricing page copy, `apps/web/src/demo/seed-platform.ts` settings, `taqam/marketing/build/profile.template.html` (+ rebuild PDF via `cd apps/web && node ../../marketing/build/build.cjs`, no OVERFLOW), `taqam/README.md`, `taqam/docs/ADMIN_PORTAL.md` price lines
 
-- [ ] **Step 1: Tests first** — platform settings unit: defaults ESSENTIALS 12 / GROWTH 19; migration e2e/check: settings row with old defaults becomes 12/19, a customised row (e.g. GROWTH 25) unchanged; web test: TIERS prices 12/19 and Growth lists «مركز الامتثال». FAIL → implement → PASS.
+- [ ] **Step 1: Tests first** — platform settings unit: defaults ESSENTIALS 10 / GROWTH 16 / annualDiscount 0.2; migration check: row with old defaults becomes 10/16/0.2, a customised row (e.g. GROWTH 25) unchanged; web test: TIERS prices 10/16 and ANNUAL_DISCOUNT 0.2 and Growth lists «مركز الامتثال». FAIL → implement → PASS.
 - [ ] **Step 2:** update copy, profile PDF (pricing + the new features pages) and docs; rebuild PDF; run all web/api suites.
-- [ ] **Step 3: Commit** `feat: competitive pricing (12/19 SAR) and updated product copy`
+- [ ] **Step 3: Commit** `feat: competitive pricing (10/16 SAR monthly, 20% off annual) and updated copy`
 
 ### Task 10: Final verification and release
 
 - [ ] Run `packages/core npm test`, `apps/api npx tsc --noEmit && npm test && npm run test:e2e && npm run build`, `apps/web npx tsc --noEmit && npx vitest run`, demo build `NEXT_PUBLIC_DEMO=1 NEXT_PUBLIC_BASE_PATH= npx next build` and standalone `npx next build`.
-- [ ] Playwright smoke on the export: compliance center, saudization official/internal, WPS checker on a run, sector documents tab, ESS selfie + offline banner, kiosk punch with PIN 1234, open-shift claim and swap approval, pricing page 12/19; screenshots reviewed.
+- [ ] Playwright smoke on the export: compliance center, saudization official/internal, WPS checker on a run, sector documents tab, ESS device binding + branch code + offline banner, kiosk punch with PIN 1234 showing the rotating code, open-shift claim and swap approval, pricing page 10/16 with annual −20%; screenshots reviewed.
 - [ ] Code review of the whole branch diff with the `code-review` skill (high) and fix confirmed findings.
 - [ ] Push; confirm CI, Taqam CI and Pages are green.
