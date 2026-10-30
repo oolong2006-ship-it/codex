@@ -54,6 +54,7 @@ Arabic RTL as the default. Pages poll the API and (roadmap) subscribe to the Web
 
 ## Realtime
 
-`EventsGateway` namespaces `/realtime`; clients `join` an `org:<id>` room, and the API emits
+`EventsGateway` namespaces `/realtime`; clients authenticate with their access token at connect
+time and are placed in their own `org:<id>` room (only super admins may `join` another), and the API emits
 `alert:new`, `incident:new`, `task:updated`, `sim:tick`, etc. only to that room — realtime respects
 tenant isolation.

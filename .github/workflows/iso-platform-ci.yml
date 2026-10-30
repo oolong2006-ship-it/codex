@@ -1,0 +1,45 @@
+name: ISO Platform CI
+
+on:
+  push:
+    paths: ["iso-platform/**", ".github/workflows/iso-platform-ci.yml"]
+  pull_request:
+    paths: ["iso-platform/**", ".github/workflows/iso-platform-ci.yml"]
+
+defaults:
+  run:
+    working-directory: iso-platform
+
+jobs:
+  verify:
+    name: typecheck, tests (real Postgres + RLS), build
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      PGSUPER_URL: postgresql://postgres:postgres@localhost:5432/postgres
+      DATABASE_URL: postgresql://iso_app:iso_app_dev@localhost:5432/iso_platform
+      MIGRATION_DATABASE_URL: postgresql://iso_owner:iso_owner_dev@localhost:5432/iso_platform
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: iso-platform/package-lock.json
+      - run: sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client poppler-utils
+      - run: npm ci
+      - run: npx playwright-core install --with-deps chromium
+      - run: bash scripts/db-setup.sh
+      - run: npm run db:migrate
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+      - run: npm audit --omit=dev --audit-level=high
