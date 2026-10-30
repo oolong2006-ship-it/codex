@@ -127,12 +127,6 @@
       "skillPath": "plugins/expo/skills/expo-router/SKILL.md",
       "computedHash": "8cd1a4358b14380b259b79e22c4170016a077ec316dc36a09f810efd8120ece3"
     },
-    "expo-skill-eval": {
-      "source": "expo/skills",
-      "sourceType": "github",
-      "skillPath": ".claude/skills/expo-skill-eval/SKILL.md",
-      "computedHash": "9bfe29f568a34312cda412e6d6969b53bc26cff127bfd5b791e0112d8fbdfee6"
-    },
     "expo-ui": {
       "source": "expo/skills",
       "sourceType": "github",
