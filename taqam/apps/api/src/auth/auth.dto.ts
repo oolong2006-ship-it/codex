@@ -1,12 +1,13 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEmail, IsInt, IsOptional, IsString, Min, MinLength } from 'class-validator';
+import { IsEmail, IsInt, IsOptional, IsString, MaxLength, Min, MinLength } from 'class-validator';
+import { cleanNameTransform, NAME_MAX } from '../common/text';
 import { Transform } from 'class-transformer';
 
 const lower = ({ value }: { value: unknown }) => (typeof value === 'string' ? value.trim().toLowerCase() : value);
 
 export class RegisterDto {
-  @ApiProperty() @IsString() @MinLength(2) companyNameAr: string;
-  @ApiPropertyOptional() @IsOptional() @IsString() companyNameEn?: string;
+  @ApiProperty({ maxLength: NAME_MAX }) @Transform(cleanNameTransform) @IsString() @MinLength(2) @MaxLength(NAME_MAX) companyNameAr: string;
+  @ApiPropertyOptional({ maxLength: NAME_MAX }) @IsOptional() @Transform(cleanNameTransform) @IsString() @MaxLength(NAME_MAX) companyNameEn?: string;
   @ApiProperty({ example: 'RESTAURANTS' }) @IsString() sector: string;
   @ApiPropertyOptional() @IsOptional() @IsInt() @Min(1) employeesCount?: number;
   @ApiProperty() @IsString() @MinLength(2) ownerName: string;

@@ -12,6 +12,15 @@ const DEFAULT_AR: Record<number, string> = {
   500: 'حدث خطأ غير متوقع',
 };
 
+const OUT_OF_RANGE = { message: 'Value out of range', messageAr: 'القيمة خارج النطاق المسموح' };
+
+/** Numeric overflow from the database: P2020 (value out of range for the column) or SQLSTATE 22003. */
+function isOverflow(e: { code?: string; message?: string; meta?: unknown }): boolean {
+  if (e.code === 'P2020') return true;
+  const meta = (e.meta ?? {}) as { code?: unknown };
+  return meta.code === '22003' || /\b22003\b|numeric field overflow|out of range for type/i.test(e.message ?? '');
+}
+
 /** Normalises every error to `{ statusCode, message, messageAr?, ...extra }`. */
 @Catch()
 export class HttpExceptionFilter implements ExceptionFilter {
@@ -39,7 +48,13 @@ export class HttpExceptionFilter implements ExceptionFilter {
       } else if (exception.code === 'P2003') {
         status = 400;
         body = { message: 'Invalid reference', messageAr: 'مرجع غير صالح' };
+      } else if (isOverflow(exception)) {
+        status = 400;
+        body = OUT_OF_RANGE;
       }
+    } else if (exception instanceof Prisma.PrismaClientUnknownRequestError && isOverflow(exception)) {
+      status = 400;
+      body = OUT_OF_RANGE;
     } else if (exception instanceof Prisma.PrismaClientValidationError) {
       status = 400;
       body = { message: 'Invalid input' };

@@ -19,13 +19,13 @@ export class BillingController {
     return this.billing.subscription(u.companyId);
   }
 
-  @ApiOperation({ summary: 'Own invoices (VOID included), newest first' })
+  @ApiOperation({ summary: 'Own invoices and credit notes, newest first' })
   @Get('invoices')
   invoices(@CurrentUser() u: AuthUser, @Query() q: OwnerInvoicesQuery) {
     return this.billing.ownerInvoices(u.companyId, q);
   }
 
-  @ApiOperation({ summary: 'Printable tax invoice (own company only)' })
+  @ApiOperation({ summary: 'Printable invoice / credit note (own company only)' })
   @Get('invoices/:id')
   invoice(@CurrentUser() u: AuthUser, @Param('id') id: string) {
     return this.billing.ownerInvoice(u.companyId, id);

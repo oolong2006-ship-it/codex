@@ -13,6 +13,11 @@ function fakePrisma() {
         rows.push(row);
         return row;
       }),
+      updateMany: jest.fn(async ({ where, data }: { where: { status: string; error: string; createdAt: { lt: Date } }; data: Record<string, unknown> }) => {
+        const hit = rows.filter((r) => r.status === where.status && r.error === where.error && (r.createdAt as Date) < where.createdAt.lt);
+        hit.forEach((r) => Object.assign(r, data));
+        return { count: hit.length };
+      }),
       update: jest.fn(async ({ where, data }: { where: { id: string }; data: Record<string, unknown> }) => {
         const row = rows.find((r) => r.id === where.id)!;
         Object.assign(row, data);
@@ -74,5 +79,21 @@ describe('MailService', () => {
     expect(html).toContain('dir="rtl"');
     expect(html).toContain('سطر &lt;1&gt;<br>سطر 2');
     expect(html).toContain('English &amp; more');
+  });
+
+  it('v2.1: releaseStaleClaims frees "sending…" claims older than 15 minutes (dedupe key released)', async () => {
+    const prisma = fakePrisma();
+    const now = new Date('2026-10-29T09:00:00Z');
+    prisma.rows.push(
+      { id: 'old', status: 'FAILED', error: 'sending…', dedupeKey: 'K:old', createdAt: new Date(now.getTime() - 16 * 60000) },
+      { id: 'fresh', status: 'FAILED', error: 'sending…', dedupeKey: 'K:fresh', createdAt: new Date(now.getTime() - 5 * 60000) },
+      { id: 'sent', status: 'SENT', error: null, dedupeKey: 'K:sent', createdAt: new Date(now.getTime() - 60 * 60000) },
+    );
+    const mail = new MailService(prisma as never);
+    expect(await mail.releaseStaleClaims(now)).toBe(1);
+    expect(prisma.rows.find((r) => r.id === 'old')).toMatchObject({ status: 'FAILED', dedupeKey: null });
+    expect((prisma.rows.find((r) => r.id === 'old') as { error: string }).error).not.toBe('sending…');
+    expect(prisma.rows.find((r) => r.id === 'fresh')).toMatchObject({ dedupeKey: 'K:fresh', error: 'sending…' });
+    expect(prisma.rows.find((r) => r.id === 'sent')).toMatchObject({ dedupeKey: 'K:sent' });
   });
 });

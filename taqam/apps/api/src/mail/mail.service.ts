@@ -38,6 +38,10 @@ export function textToHtml(text: string): string {
 }
 
 const isUniqueViolation = (e: unknown) => (e as { code?: string })?.code === 'P2002';
+/** Marker of a row claimed for SMTP sending (status FAILED until the server accepts it). */
+export const SENDING = 'sending…';
+/** A claim older than this is considered abandoned (process died mid-send). */
+export const STALE_CLAIM_MS = 15 * 60000;
 
 /**
  * Outbound email. With SMTP_HOST set, sends via SMTP (nodemailer); otherwise the message is only stored in
@@ -82,6 +86,19 @@ export class MailService {
   }
 
   /**
+   * Releases "sending…" claims older than 15 minutes (the process died between claim and send): the row stays
+   * FAILED with an explanatory error and its dedupe key is freed so the next reminder run retries. Returns the count.
+   */
+  async releaseStaleClaims(now = new Date()): Promise<number> {
+    const res = await this.prisma.emailLog.updateMany({
+      where: { status: 'FAILED', error: SENDING, createdAt: { lt: new Date(now.getTime() - STALE_CLAIM_MS) } },
+      data: { error: 'send not confirmed (stale claim released)', dedupeKey: null },
+    });
+    if (res.count) this.logger.warn(`released ${res.count} stale email claim${res.count === 1 ? '' : 's'}`);
+    return res.count;
+  }
+
+  /**
    * Sends (or logs) one email. Returns the EmailLog row, or null when skipped because `dedupeKey` was
    * already used (the key is claimed before sending, so concurrent runs never double-send).
    */
@@ -98,7 +115,7 @@ export class MailService {
           type: m.type,
           // claimed as FAILED("sending…") until the SMTP server accepts it
           status: smtp ? 'FAILED' : 'LOGGED',
-          error: smtp ? 'sending…' : null,
+          error: smtp ? SENDING : null,
           dedupeKey: m.dedupeKey ?? null,
         },
       });

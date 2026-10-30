@@ -6,7 +6,8 @@
 import { BillingCycle, CompanyEventType, CompanyStatus, EmailType, PaymentMethod, Plan, Prisma, PrismaClient } from '@prisma/client';
 import { SAUDI_LEAVE_POLICIES } from '@taqam/core';
 import { addDays, day, riyadhDateTime, todayStr } from '../src/common/dates';
-import { addDaysStr, addMonthsClamped, computeInvoice, DEFAULT_BILLING, nextInvoiceNumber, periodEndOf } from '../src/billing/billing.math';
+import { addDaysStr, addMonthsClamped, buyerSnapshot, computeInvoice, isValidTrn, mergeBilling, periodEndOf, sellerSnapshot } from '../src/billing/billing.math';
+import { nextDocumentNumber } from '../src/billing/billing.numbers';
 import { EmailContent, expiredEmail, invoiceIssuedEmail, invoiceOverdueEmail, paymentReceivedEmail, trialEndingEmail } from '../src/billing/billing.emails';
 
 export const ADMIN_EMAIL = 'admin@shuoon.demo';
@@ -104,14 +105,14 @@ export const EXTRA_COMPANIES: ExtraCompany[] = [
   },
   {
     nameAr: 'شركة مسار للخدمات اللوجستية', nameEn: 'Masar Logistics', sector: 'LOGISTICS', city: 'جدة', crNumber: '4030998877',
-    status: 'ACTIVE', plan: 'ENTERPRISE', billingCycle: 'ANNUAL', maxEmployees: 200, pricePerEmployee: 22, createdDaysAgo: 300,
+    status: 'ACTIVE', plan: 'ENTERPRISE', billingCycle: 'ANNUAL', maxEmployees: 200, pricePerEmployee: 22, createdDaysAgo: 355,
     owner: { name: 'ماجد الغامدي', email: 'owner.masar@shuoon.demo', phone: '+966577778899' },
     branch: { nameAr: 'مستودع الخمرة', lat: 21.3891, lng: 39.2105 }, employees: 15,
-    activatedDaysAgo: 290, subscriptionEndsInDays: 65, lastActivityHoursAgo: 2,
+    activatedDaysAgo: 345, subscriptionEndsInDays: 20, lastActivityHoursAgo: 2,
     adminNotes: 'عميل مؤسسي — سعر خاص 22 ر.س للموظف بعقد سنوي.',
     history: [
-      ['REGISTERED', 300, null, 'PENDING', { sector: 'LOGISTICS', employeesCount: 120 }],
-      ['ACTIVATED', 290, 'PENDING', 'ACTIVE', { mode: 'PAID', plan: 'ENTERPRISE', billingCycle: 'ANNUAL', pricePerEmployee: 22, maxEmployees: 150 }],
+      ['REGISTERED', 355, null, 'PENDING', { sector: 'LOGISTICS', employeesCount: 120 }],
+      ['ACTIVATED', 345, 'PENDING', 'ACTIVE', { mode: 'PAID', plan: 'ENTERPRISE', billingCycle: 'ANNUAL', pricePerEmployee: 22, maxEmployees: 150 }],
       ['PLAN_CHANGED', 120, 'ACTIVE', 'ACTIVE', { changes: { maxEmployees: { from: 150, to: 200 } } }],
       ['NOTE', 119, 'ACTIVE', 'ACTIVE', { note: 'عميل مؤسسي — سعر خاص 22 ر.س للموظف بعقد سنوي.' }],
       ['IMPERSONATED', 30, 'ACTIVE', 'ACTIVE', { email: 'owner.masar@shuoon.demo' }],
@@ -128,7 +129,7 @@ const LEADS: { name: string; company: string; email: string; phone: string; empl
   { name: 'منيرة الشهري', company: 'صيدليات الشفاء الأولى', email: 'munira@shifa1.sa', phone: '+966551234222', employeesCount: 30, sector: 'HEALTHCARE', message: 'نرغب بعرض توضيحي لنظام الإجازات والسعودة.', status: 'NEW', notes: null, daysAgo: 2 },
   { name: 'عمر باعشن', company: 'مؤسسة الرصيف للمقاولات', email: 'omar@alraseef.sa', phone: '+966561234333', employeesCount: 140, sector: 'CONTRACTING', message: 'كم تكلفة باقة المؤسسات لـ 140 عاملاً؟', status: 'CONTACTED', notes: 'اتصال أول — طلب عرض سعر مكتوب.', daysAgo: 6 },
   { name: 'ريما الحربي', company: 'متاجر لمسات', email: 'reema@lamasat.sa', phone: '+966571234444', employeesCount: 18, sector: 'RETAIL', message: 'هل يدعم النظام أكثر من فرع في مدن مختلفة؟', status: 'CONTACTED', notes: 'عرض توضيحي مجدول الأحد القادم.', daysAgo: 9 },
-  { name: 'ماجد الغامدي', company: 'شركة مسار للخدمات اللوجستية', email: 'majed@masar-logistics.sa', phone: '+966577778899', employeesCount: 120, sector: 'LOGISTICS', message: 'نبحث عن بديل لنظام الرواتب الحالي.', status: 'CONVERTED', notes: 'تحوّل لعميل — باقة المؤسسات (سنوي).', daysAgo: 305 },
+  { name: 'ماجد الغامدي', company: 'شركة مسار للخدمات اللوجستية', email: 'majed@masar-logistics.sa', phone: '+966577778899', employeesCount: 120, sector: 'LOGISTICS', message: 'نبحث عن بديل لنظام الرواتب الحالي.', status: 'CONVERTED', notes: 'تحوّل لعميل — باقة المؤسسات (سنوي).', daysAgo: 360 },
   { name: 'نايف السبيعي', company: 'مغاسل الندى', email: 'naif@alnada.sa', phone: '+966581234555', employeesCount: 9, sector: 'OTHER', message: 'نريد تجربة مجانية.', status: 'LOST', notes: 'اختار حلاً محاسبياً أبسط.', daysAgo: 40 },
 ];
 export const LEAD_EMAILS = LEADS.map((l) => l.email);
@@ -150,8 +151,15 @@ const TITLES: Record<string, string[]> = {
 
 export async function wipePlatformDemo(prisma: PrismaClient, companyIds: string[]) {
   if (companyIds.length) await prisma.companyEvent.deleteMany({ where: { companyId: { in: companyIds } } });
-  // invoices cascade with the companies; the email log is not FK-bound
-  if (companyIds.length) await prisma.emailLog.deleteMany({ where: { companyId: { in: companyIds } } });
+  // demo reset only: invoices are retained by the app (FK RESTRICT) — the seed removes its own demo documents and
+  // rewinds the counters to the highest remaining number. The email log is not FK-bound.
+  if (companyIds.length) {
+    await prisma.invoice.deleteMany({ where: { companyId: { in: companyIds } } });
+    await prisma.$executeRaw`UPDATE "InvoiceCounter" c SET "last" = COALESCE((
+      SELECT MAX(CAST(substring(i."number" FROM '^[A-Z]+-[0-9]{4}-([0-9]+)$') AS INTEGER)) FROM "Invoice" i
+      WHERE i."number" LIKE c."series" || '-' || c."year" || '-%'), 0)`;
+    await prisma.emailLog.deleteMany({ where: { companyId: { in: companyIds } } });
+  }
   await prisma.lead.deleteMany({ where: { email: { in: LEAD_EMAILS } } });
 }
 
@@ -299,15 +307,23 @@ export async function seedPlatform(prisma: PrismaClient, opts: { passwordHash: s
 }
 
 /**
- * Billing demo (docs/ADMIN_PORTAL.md v2): Ward Al-Sham gets 3 PAID past monthly invoices + 1 ISSUED current one,
- * Masar Logistics an overdue ISSUED annual renewal, and a few LOGGED emails (with the dedupe keys the reminder job
- * would have used, so running it today does not resend them).
+ * Billing demo (docs/ADMIN_PORTAL.md v2 / v2.1): Ward Al-Sham gets 3 PAID past monthly invoices, a mistaken invoice
+ * for the current month credited by a credit note (SHC-…), and the corrected ISSUED invoice; Masar Logistics an
+ * annual renewal issued 10 days before… its period starts in 3 weeks and the invoice is 3 days overdue. Documents are
+ * created in issue order so numbers are chronological, with seller/buyer snapshots and the VAT gate of the API
+ * (no valid seller TRN in the settings → plain invoices without VAT). A few LOGGED emails carry the dedupe keys
+ * the reminder job would have used, so running it today does not resend them.
  */
 async function seedBilling(prisma: PrismaClient, opts: { demoCompanyId: string; admin: { id: string; name: string } }) {
   const today = todayStr();
   const at = (d: string, hour = '10:00') => riyadhDateTime(d, hour);
   const settings = await prisma.platformSettings.findUniqueOrThrow({ where: { id: 1 } });
-  const vatRate = DEFAULT_BILLING.vatRate;
+  const billing = mergeBilling(settings.billing);
+  const registered = isValidTrn(billing.sellerVatNumber);
+  const vatRate = registered ? billing.vatRate : 0;
+  const documentType = registered ? ('TAX_INVOICE' as const) : ('INVOICE' as const);
+  const seller = sellerSnapshot(billing) as unknown as Prisma.InputJsonValue;
+  const bank = { sellerName: billing.sellerName, bankName: billing.bankName, iban: billing.iban };
   const by = { adminId: opts.admin.id, adminName: opts.admin.name };
   let invoices = 0;
   let emails = 0;
@@ -323,32 +339,35 @@ async function seedBilling(prisma: PrismaClient, opts: { demoCompanyId: string; 
 
   type InvoiceDef = {
     companyId: string;
-    companyName: string;
     plan: Plan;
     cycle: BillingCycle;
     employees: number;
     unitPrice: number;
     periodStart: string;
     issueDate: string;
+    issueTime?: string;
     paid?: { date: string; method: PaymentMethod; ref: string };
   };
   const issue = async (d: InvoiceDef) => {
-    const year = Number(d.issueDate.slice(0, 4));
-    const existing = await prisma.invoice.findMany({ where: { number: { startsWith: `SH-${year}-` } }, select: { number: true } });
-    const number = nextInvoiceNumber(year, existing.map((e) => e.number));
+    const company = await prisma.company.findUniqueOrThrow({ where: { id: d.companyId } });
+    const number = await nextDocumentNumber(prisma, 'SH', Number(d.issueDate.slice(0, 4)));
     const a = computeInvoice({ employees: d.employees, unitPrice: d.unitPrice, billingCycle: d.cycle, annualDiscount: settings.annualDiscount, vatRate });
-    const periodEnd = periodEndOf(d.periodStart, a.months);
-    const dueDate = addDaysStr(d.issueDate, DEFAULT_BILLING.invoiceDueDays);
+    const anchorDay = Number(d.periodStart.slice(8, 10));
+    const periodEnd = periodEndOf(d.periodStart, a.months, anchorDay);
+    const dueDate = addDaysStr(d.issueDate, billing.invoiceDueDays);
+    const issuedAt = at(d.issueDate, d.issueTime ?? '09:30');
     const inv = await prisma.invoice.create({
       data: {
         number,
+        documentType,
         companyId: d.companyId,
-        companyName: d.companyName,
+        companyName: company.nameAr,
         status: d.paid ? 'PAID' : 'ISSUED',
         plan: d.plan,
         billingCycle: d.cycle,
         periodStart: day(d.periodStart),
         periodEnd: day(periodEnd),
+        anchorDay,
         months: a.months,
         employees: d.employees,
         unitPrice: d.unitPrice,
@@ -360,55 +379,94 @@ async function seedBilling(prisma: PrismaClient, opts: { demoCompanyId: string; 
         vat: a.vat,
         total: a.total,
         issueDate: day(d.issueDate),
+        issuedAt,
         dueDate: day(dueDate),
+        seller,
+        buyer: buyerSnapshot(company) as unknown as Prisma.InputJsonValue,
         paidAt: d.paid ? at(d.paid.date, '13:20') : null,
         paymentMethod: d.paid?.method ?? null,
         paymentRef: d.paid?.ref ?? null,
         createdById: opts.admin.id,
         createdByName: opts.admin.name,
-        createdAt: at(d.issueDate, '09:30'),
+        createdAt: issuedAt,
       },
     });
     invoices++;
-    const status = (await prisma.company.findUniqueOrThrow({ where: { id: d.companyId }, select: { status: true } })).status;
     await prisma.companyEvent.create({
-      data: { companyId: d.companyId, companyName: d.companyName, type: 'INVOICE_ISSUED', fromStatus: status, toStatus: status, data: { invoiceId: inv.id, number, total: a.total }, ...by, createdAt: at(d.issueDate, '09:30') },
+      data: { companyId: d.companyId, companyName: company.nameAr, type: 'INVOICE_ISSUED', fromStatus: company.status, toStatus: company.status, data: { invoiceId: inv.id, number, documentType, total: a.total }, ...by, createdAt: issuedAt },
     });
     if (d.paid) {
       await prisma.companyEvent.create({
-        data: { companyId: d.companyId, companyName: d.companyName, type: 'INVOICE_PAID', fromStatus: status, toStatus: status, data: { invoiceId: inv.id, number, total: a.total, paymentMethod: d.paid.method }, ...by, createdAt: at(d.paid.date, '13:20') },
+        data: { companyId: d.companyId, companyName: company.nameAr, type: 'INVOICE_PAID', fromStatus: company.status, toStatus: company.status, data: { invoiceId: inv.id, number, total: a.total, paymentMethod: d.paid.method }, ...by, createdAt: at(d.paid.date, '13:20') },
       });
     }
-    const ctx = { number, periodStart: d.periodStart, periodEnd, total: a.total, dueDate, employees: d.employees, plan: d.plan };
+    const ctx = { number, periodStart: d.periodStart, periodEnd, total: a.total, dueDate, employees: d.employees, plan: d.plan, documentType };
     return { inv, ctx };
   };
+  /** Credit note against `inv` (same snapshot/lines/amounts), like POST /admin/invoices/:id/credit. */
+  const credit = async (inv: Awaited<ReturnType<typeof issue>>['inv'], when: Date, reason: string) => {
+    const number = await nextDocumentNumber(prisma, 'SHC', Number(todayStr(when).slice(0, 4)));
+    const { id: _id, number: _n, createdAt: _c, updatedAt: _u, documentType: _t, status: _s, paidAt: _p, paymentMethod: _m, paymentRef: _r, notes: _no, seller: s, buyer: b, ...lines } = inv;
+    const note = await prisma.invoice.create({
+      data: {
+        ...lines,
+        seller: s as Prisma.InputJsonValue,
+        buyer: b as Prisma.InputJsonValue,
+        number,
+        documentType: 'CREDIT_NOTE',
+        status: 'ISSUED',
+        issueDate: day(todayStr(when)),
+        issuedAt: when,
+        dueDate: day(todayStr(when)),
+        reason,
+        creditsInvoiceId: inv.id,
+        creditsNumber: inv.number,
+        creditedByNumber: null,
+        createdAt: when,
+      },
+    });
+    await prisma.invoice.update({ where: { id: inv.id }, data: { status: 'CREDITED', reason, creditedAt: when, creditedByNumber: number } });
+    invoices++;
+    const company = await prisma.company.findUniqueOrThrow({ where: { id: inv.companyId }, select: { status: true, nameAr: true } });
+    await prisma.companyEvent.create({
+      data: { companyId: inv.companyId, companyName: company.nameAr, type: 'INVOICE_CREDITED', fromStatus: company.status, toStatus: company.status, data: { invoiceId: inv.id, number: inv.number, creditNoteId: note.id, creditNoteNumber: number, total: Number(inv.total), reason }, ...by, createdAt: when },
+    });
+    return note;
+  };
 
-  // ---- Ward Al-Sham: monthly GROWTH, 40 staff × 29 SAR; 3 paid months + the current month issued ----
   const demo = await prisma.company.findUniqueOrThrow({ where: { id: opts.demoCompanyId } });
   const demoOwner = await owner(demo.id);
+  const masar = await prisma.company.findFirstOrThrow({ where: { nameEn: 'Masar Logistics' } });
+  const masarOwner = await owner(masar.id);
+
+  // ---- Ward Al-Sham: monthly GROWTH, 40 staff × 29 SAR; 3 paid months (issued 3 days before each period) ----
   const monthStart = `${today.slice(0, 7)}-01`;
-  const base = { companyId: demo.id, companyName: demo.nameAr, plan: demo.plan, cycle: 'MONTHLY' as BillingCycle, employees: 40, unitPrice: 29 };
+  const base = { companyId: demo.id, plan: demo.plan, cycle: 'MONTHLY' as BillingCycle, employees: 40, unitPrice: 29 };
   let lastPaid: Awaited<ReturnType<typeof issue>> | null = null;
   for (let m = 3; m >= 1; m--) {
     const periodStart = addMonthsClamped(monthStart, -m);
     const issueDate = addDaysStr(periodStart, -3);
     lastPaid = await issue({ ...base, periodStart, issueDate, paid: { date: addDaysStr(issueDate, 2), method: 'BANK_TRANSFER', ref: `TRX-${periodStart.replace(/-/g, '').slice(0, 6)}-0${m}` } });
   }
-  const current = await issue({ ...base, periodStart: monthStart, issueDate: addDaysStr(today, -2) });
   await email(demo.id, 'PAYMENT_RECEIVED', paymentReceivedEmail({ companyName: demo.nameAr, ownerName: demoOwner.name, invoice: lastPaid!.ctx, paymentMethod: 'BANK_TRANSFER', subscriptionEndsAt: demo.subscriptionEndsAt ? todayStr(demo.subscriptionEndsAt) : null }), at(lastPaid!.inv.paidAt ? todayStr(lastPaid!.inv.paidAt) : today, '13:25'));
-  await email(demo.id, 'INVOICE_ISSUED', invoiceIssuedEmail({ companyName: demo.nameAr, ownerName: demoOwner.name, invoice: current.ctx, billing: DEFAULT_BILLING }), at(addDaysStr(today, -2), '09:31'));
 
-  // ---- Masar Logistics (ACTIVE, ENTERPRISE annual @ 22): renewal invoice issued 20 days ago, now overdue ----
-  const masar = await prisma.company.findFirstOrThrow({ where: { nameEn: 'Masar Logistics' } });
-  const masarOwner = await owner(masar.id);
+  // ---- Masar Logistics (ACTIVE, ENTERPRISE annual @ 22): renewal issued 10 days ago for the period after its
+  //      subscription ends (in 20 days); due 3 days ago → overdue, the 1-day reminder went out 2 days ago ----
   const renewalStart = addDaysStr(todayStr(masar.subscriptionEndsAt!), 1);
-  const overdue = await issue({ companyId: masar.id, companyName: masar.nameAr, plan: masar.plan, cycle: 'ANNUAL', employees: 15, unitPrice: 22, periodStart: renewalStart, issueDate: addDaysStr(today, -20) });
-  await email(masar.id, 'INVOICE_ISSUED', invoiceIssuedEmail({ companyName: masar.nameAr, ownerName: masarOwner.name, invoice: overdue.ctx, billing: DEFAULT_BILLING }), at(addDaysStr(today, -20), '09:31'));
+  const overdue = await issue({ companyId: masar.id, plan: masar.plan, cycle: 'ANNUAL', employees: 15, unitPrice: 22, periodStart: renewalStart, issueDate: addDaysStr(today, -10) });
+  await email(masar.id, 'INVOICE_ISSUED', invoiceIssuedEmail({ companyName: masar.nameAr, ownerName: masarOwner.name, invoice: overdue.ctx, billing: bank }), at(addDaysStr(today, -10), '09:31'));
   for (const days of [1, 7]) {
     const sentDay = addDaysStr(overdue.ctx.dueDate, days);
-    await email(masar.id, 'INVOICE_OVERDUE', invoiceOverdueEmail({ companyName: masar.nameAr, ownerName: masarOwner.name, invoice: overdue.ctx, daysOverdue: days, billing: DEFAULT_BILLING }), at(sentDay, '09:00'), `INVOICE_OVERDUE:${overdue.inv.id}:${days}`);
+    if (sentDay > today) continue;
+    await email(masar.id, 'INVOICE_OVERDUE', invoiceOverdueEmail({ companyName: masar.nameAr, ownerName: masarOwner.name, invoice: overdue.ctx, daysOverdue: days, billing: bank }), at(sentDay, '09:00'), `INVOICE_OVERDUE:${overdue.inv.id}:${days}`);
     await prisma.companyEvent.create({ data: { companyId: masar.id, companyName: masar.nameAr, type: 'REMINDER_SENT', fromStatus: 'ACTIVE', toStatus: 'ACTIVE', data: { type: 'INVOICE_OVERDUE', daysOverdue: days, invoiceId: overdue.inv.id, number: overdue.inv.number }, createdAt: at(sentDay, '09:00') } });
   }
+
+  // ---- Ward Al-Sham, current month: issued with a wrong head count (45), credited, then re-issued for 40 ----
+  const wrong = await issue({ ...base, employees: 45, periodStart: monthStart, issueDate: addDaysStr(today, -3), issueTime: '11:00' });
+  await credit(wrong.inv, at(addDaysStr(today, -2), '09:10'), 'عدد الموظفين غير صحيح (45 بدلاً من 40)');
+  const current = await issue({ ...base, periodStart: monthStart, issueDate: addDaysStr(today, -2), issueTime: '09:30' });
+  await email(demo.id, 'INVOICE_ISSUED', invoiceIssuedEmail({ companyName: demo.nameAr, ownerName: demoOwner.name, invoice: current.ctx, billing: bank }), at(addDaysStr(today, -2), '09:31'));
 
   // ---- trial ending soon (Bin Al-Deera, 3 days left): the 7-day reminder went out 4 days ago, the 3-day one today ----
   const deera = await prisma.company.findFirstOrThrow({ where: { nameEn: 'Bin Al-Deera Coffee' } });

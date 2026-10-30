@@ -1,4 +1,5 @@
 import { BadRequestException, ForbiddenException, Logger } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { HttpExceptionFilter } from '../http-exception.filter';
 
 function run(ex: unknown) {
@@ -28,5 +29,13 @@ describe('HttpExceptionFilter', () => {
     const r = run(new Error('boom'));
     expect(r.code).toBe(500);
     expect(run(new ForbiddenException()).body.messageAr).toBe('ليس لديك صلاحية لهذا الإجراء');
+  });
+  it('v2.1: maps numeric overflow (P2020 / SQLSTATE 22003) to 400 instead of 500', () => {
+    const p2020 = new Prisma.PrismaClientKnownRequestError('Value out of range for the type.', { code: 'P2020', clientVersion: '5.22.0' });
+    expect(run(p2020)).toMatchObject({ code: 400, body: { statusCode: 400, messageAr: 'القيمة خارج النطاق المسموح' } });
+    const raw = new Prisma.PrismaClientKnownRequestError('Raw query failed. Code: `22003`. Message: `numeric field overflow`', { code: 'P2010', clientVersion: '5.22.0', meta: { code: '22003' } });
+    expect(run(raw).code).toBe(400);
+    const unknown = new Prisma.PrismaClientUnknownRequestError('db error: ERROR: numeric field overflow (22003)', { clientVersion: '5.22.0' });
+    expect(run(unknown).code).toBe(400);
   });
 });

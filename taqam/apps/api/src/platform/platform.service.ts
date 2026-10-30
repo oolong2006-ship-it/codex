@@ -68,11 +68,13 @@ export function parseEndDate(v: string | null | undefined): Date | null {
 export class PlatformService {
   private readonly logger = new Logger('Platform');
   private readonly expiryListeners: ExpiryListener[] = [];
+  private readonly pendingListeners = new Set<Promise<void>>();
   constructor(private readonly prisma: PrismaService) {}
 
   /**
    * Register a callback run after a company is moved to EXPIRED (used by billing for the EXPIRED email —
-   * keeps PlatformService free of a dependency on billing/mail). Listener errors are logged, never thrown.
+   * keeps PlatformService free of a dependency on billing/mail). Listeners run fire-and-forget so a slow SMTP
+   * server never blocks the request that noticed the expiry (e.g. a login); errors are logged, never thrown.
    */
   onExpired(fn: ExpiryListener) {
     this.expiryListeners.push(fn);
@@ -156,14 +158,22 @@ export class PlatformService {
         data: { endedAt: c.status === 'TRIAL' ? c.trialEndsAt : c.subscriptionEndsAt },
       });
       for (const fn of this.expiryListeners) {
-        try {
-          await fn(c);
-        } catch (e) {
-          this.logger.error(`expiry listener failed for ${c.id}: ${(e as Error).message}`);
-        }
+        const p: Promise<void> = Promise.resolve()
+          .then(() => fn(c))
+          .then(
+            () => undefined,
+            (e) => this.logger.error(`expiry listener failed for ${c.id}: ${(e as Error)?.message ?? e}`),
+          )
+          .finally(() => this.pendingListeners.delete(p));
+        this.pendingListeners.add(p);
       }
     }
     return res.count > 0;
+  }
+
+  /** Wait for in-flight expiry listeners (reminder job / tests); never throws. */
+  async settleListeners(): Promise<void> {
+    while (this.pendingListeners.size) await Promise.allSettled([...this.pendingListeners]);
   }
 
   /** Expire every company whose trial/subscription has ended. */

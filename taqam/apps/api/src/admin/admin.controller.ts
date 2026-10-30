@@ -19,7 +19,7 @@ import {
 } from './admin.dto';
 import { AdminService } from './admin.service';
 import { BillingService } from '../billing/billing.service';
-import { CreateInvoiceDto, EmailsQuery, InvoicesQuery, PayInvoiceDto, RemindDto, VoidInvoiceDto } from '../billing/billing.dto';
+import { CreateInvoiceDto, CreditInvoiceDto, EmailsQuery, InvoicesQuery, PayInvoiceDto, RemindDto } from '../billing/billing.dto';
 
 /** Platform admin portal (SUPER_ADMIN only) — docs/ADMIN_PORTAL.md. */
 @ApiBearerAuth()
@@ -101,7 +101,7 @@ export class AdminController {
   }
 
   @ApiTags('admin · companies')
-  @ApiOperation({ summary: 'Hard delete the company and all tenant data (confirmName must equal nameAr)' })
+  @ApiOperation({ summary: 'Hard delete the company and all tenant data (confirmName must equal nameAr); 409 when it has invoices' })
   @Delete('companies/:id')
   remove(@CurrentAdmin() a: PlatformUser, @Param('id') id: string, @Body() dto: DeleteCompanyDto, @Query('confirmName') confirmName?: string) {
     return this.admin.remove(a, id, dto, confirmName);
@@ -176,7 +176,7 @@ export class AdminController {
   }
 
   @ApiTags('admin · billing')
-  @ApiOperation({ summary: 'Printable tax invoice: Invoice & { company, seller }' })
+  @ApiOperation({ summary: 'Printable document: Invoice (with seller/buyer snapshots, qr) & { company }' })
   @Get('invoices/:id')
   invoice(@Param('id') id: string) {
     return this.billing.detail(id);
@@ -198,11 +198,10 @@ export class AdminController {
   }
 
   @ApiTags('admin · billing')
-  @ApiOperation({ summary: 'Void an issued invoice (reason required)' })
-  @HttpCode(200)
-  @Post('invoices/:id/void')
-  voidInvoice(@CurrentAdmin() a: PlatformUser, @Param('id') id: string, @Body() dto: VoidInvoiceDto) {
-    return this.billing.void(a, id, dto);
+  @ApiOperation({ summary: 'Issue a credit note (SHC-…) against an ISSUED or PAID invoice; the invoice becomes CREDITED' })
+  @Post('invoices/:id/credit')
+  creditInvoice(@CurrentAdmin() a: PlatformUser, @Param('id') id: string, @Body() dto: CreditInvoiceDto) {
+    return this.billing.credit(a, id, dto);
   }
 
   @ApiTags('admin · billing')

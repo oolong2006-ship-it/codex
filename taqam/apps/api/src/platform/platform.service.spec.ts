@@ -89,8 +89,31 @@ describe('PlatformService expiry listeners', () => {
       seen.push(`${c.id}:${c.status}`);
     });
     expect(await svc.expire({ ...row } as never)).toBe(true);
+    await svc.settleListeners();
     expect(seen).toEqual(['c1:TRIAL']); // receives the pre-expiry snapshot (status it expired from)
     expect(await svc.expire({ ...row, status: 'TRIAL' } as never)).toBe(false); // already EXPIRED in the store
     expect(seen).toHaveLength(1);
+  });
+
+  it('v2.1: expire() never waits for a slow listener (fire-and-forget; errors logged)', async () => {
+    const row: Row = { id: 'c2', nameAr: 'منشأة', status: 'TRIAL', trialEndsAt: past, subscriptionEndsAt: null };
+    const svc = new PlatformService(fakePrisma(row) as never);
+    let release: () => void = () => undefined;
+    const slow = new Promise<void>((r) => (release = r));
+    let done = false;
+    svc.onExpired(async () => {
+      await slow;
+      done = true;
+    });
+    svc.onExpired(async () => {
+      throw new Error('smtp down');
+    });
+    const t0 = Date.now();
+    expect(await svc.expire({ ...row } as never)).toBe(true);
+    expect(Date.now() - t0).toBeLessThan(200);
+    expect(done).toBe(false);
+    release();
+    await svc.settleListeners();
+    expect(done).toBe(true);
   });
 });

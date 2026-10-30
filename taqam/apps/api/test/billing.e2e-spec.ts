@@ -8,7 +8,7 @@ import { PlatformService, endOfDay } from '../src/platform/platform.service';
 import { addDaysStr, periodEndOf } from '../src/billing/billing.math';
 import { day, todayStr } from '../src/common/dates';
 
-/** Billing (invoices) & subscription reminders — docs/ADMIN_PORTAL.md v2. */
+/** Billing (invoices) & subscription reminders — docs/ADMIN_PORTAL.md v2 (+ v2.1 changes). */
 describe('Billing & reminders (e2e)', () => {
   let app: INestApplication;
   let http: ReturnType<typeof request>;
@@ -25,6 +25,7 @@ describe('Billing & reminders (e2e)', () => {
   let inv1 = { id: '', number: '' };
   let inv2 = { id: '', number: '' };
   let invB = { id: '', number: '' };
+  let creditNote = { id: '', number: '' };
 
   const login = (email: string, password = PASSWORD) => http.post('/api/auth/login').send({ email, password });
   const employee = (n: number) => ({
@@ -45,6 +46,7 @@ describe('Billing & reminders (e2e)', () => {
     await app.init();
     http = request(app.getHttpServer());
     prisma = app.get(PrismaService);
+    await prisma.invoice.deleteMany({}); // invoices are retained (FK RESTRICT): clear them before the companies
     await prisma.company.deleteMany({});
     await prisma.companyEvent.deleteMany({});
     await prisma.emailLog.deleteMany({});
@@ -62,7 +64,7 @@ describe('Billing & reminders (e2e)', () => {
     expect(s.body.billing).toEqual({
       sellerName: 'شؤون لتقنية المعلومات', sellerNameEn: 'Shuoon IT', sellerVatNumber: '', sellerCrNumber: '',
       sellerAddress: 'الرياض، المملكة العربية السعودية', sellerEmail: 'hello@shuoon.net', sellerPhone: '+966 55 042 1235',
-      vatRate: 0.15, invoiceDueDays: 7, bankName: '', iban: '',
+      vatRate: 0.15, invoiceDueDays: 7, bankName: '', iban: '', minBilledEmployees: 10,
     });
     expect(s.body.reminders).toEqual({ enabled: true, trialDays: [7, 3, 1], subscriptionDays: [14, 7, 1], notifyOnExpiry: true, overdueInvoiceDays: [1, 7] });
 
@@ -95,7 +97,10 @@ describe('Billing & reminders (e2e)', () => {
 
     await http.post(`/api/admin/companies/${A.id}/invoices`).set(auth(adminToken)).send({ periodStart: '2026-13-01' }).expect(400);
     const res = await http.post(`/api/admin/companies/${A.id}/invoices`).set(auth(adminToken)).send({}).expect(201);
+    // v2.1: seller has no VAT number → plain invoice, no VAT; GROWTH bills at least minBilledEmployees (10)
     expect(res.body).toMatchObject({
+      documentType: 'INVOICE',
+      qr: null,
       companyId: A.id,
       companyName: A.name,
       status: 'ISSUED',
@@ -105,22 +110,27 @@ describe('Billing & reminders (e2e)', () => {
       periodStart: today,
       periodEnd: periodEndOf(today, 1),
       months: 1,
-      employees: 2,
+      employees: 10,
       unitPrice: 29,
-      subtotal: 58,
+      subtotal: 290,
       discountRate: 0,
       discount: 0,
-      taxable: 58,
-      vatRate: 0.15,
-      vat: 8.7,
-      total: 66.7,
+      taxable: 290,
+      vatRate: 0,
+      vat: 0,
+      total: 290,
       issueDate: today,
       dueDate: addDaysStr(today, 7),
       paidAt: null,
       paymentMethod: null,
       paymentRef: null,
-      voidReason: null,
+      reason: null,
+      creditsInvoiceId: null,
+      creditsNumber: null,
+      creditedByNumber: null,
     });
+    expect(res.body).not.toHaveProperty('voidReason');
+    expect(new Date(res.body.issuedAt).toISOString()).toBe(res.body.issuedAt);
     expect(res.body.number).toMatch(new RegExp(`^SH-${today.slice(0, 4)}-\\d{4}$`));
     expect(typeof res.body.createdByName).toBe('string');
     inv1 = res.body;
@@ -132,7 +142,7 @@ describe('Billing & reminders (e2e)', () => {
       .send({ employees: 10, unitPrice: 20, billingCycle: 'ANNUAL', notes: 'عقد سنوي', sendEmail: false })
       .expect(201);
     const start2 = addDaysStr(periodEndOf(today, 1), 1);
-    expect(r2.body).toMatchObject({ periodStart: start2, periodEnd: periodEndOf(start2, 12), months: 12, subtotal: 2400, discountRate: 0.15, discount: 360, taxable: 2040, vat: 306, total: 2346, notes: 'عقد سنوي' });
+    expect(r2.body).toMatchObject({ periodStart: start2, periodEnd: periodEndOf(start2, 12, Number(today.slice(8, 10))), months: 12, subtotal: 2400, discountRate: 0.15, discount: 360, taxable: 2040, vat: 0, total: 2040, notes: 'عقد سنوي' });
     expect(Number(r2.body.number.slice(-4))).toBe(Number(inv1.number.slice(-4)) + 1);
     inv2 = r2.body;
 
@@ -169,28 +179,33 @@ describe('Billing & reminders (e2e)', () => {
     await http.post(`/api/admin/invoices/${inv2.id}/pay`).set(auth(adminToken)).send({ paymentMethod: 'NOPE' }).expect(400);
   });
 
-  it('void: reason required, ISSUED → VOID once; a void invoice cannot be paid', async () => {
-    await http.post(`/api/admin/invoices/${inv2.id}/void`).set(auth(adminToken)).send({}).expect(400);
-    const v = await http.post(`/api/admin/invoices/${inv2.id}/void`).set(auth(adminToken)).send({ reason: 'أصدرت بالخطأ' }).expect(200);
-    expect(v.body).toMatchObject({ status: 'VOID', voidReason: 'أصدرت بالخطأ' });
-    expect((await http.post(`/api/admin/invoices/${inv2.id}/void`).set(auth(adminToken)).send({ reason: 'x' }).expect(409)).body.messageAr).toBe('تمت معالجة هذه الفاتورة مسبقاً');
+  it('credit (v2.1, replaces void): reason required, ISSUED → CREDITED once + credit note; a credited invoice cannot be paid', async () => {
+    await http.post(`/api/admin/invoices/${inv2.id}/void`).set(auth(adminToken)).send({ reason: 'x' }).expect(404); // removed
+    await http.post(`/api/admin/invoices/${inv2.id}/credit`).set(auth(adminToken)).send({}).expect(400);
+    const cn = await http.post(`/api/admin/invoices/${inv2.id}/credit`).set(auth(adminToken)).send({ reason: 'أصدرت بالخطأ' }).expect(201);
+    expect(cn.body).toMatchObject({ documentType: 'CREDIT_NOTE', status: 'ISSUED', reason: 'أصدرت بالخطأ', creditsInvoiceId: inv2.id, creditsNumber: inv2.number, total: 2040 });
+    expect(cn.body.number).toMatch(new RegExp(`^SHC-${today.slice(0, 4)}-\\d{4}$`));
+    creditNote = cn.body;
+    const orig = await http.get(`/api/admin/invoices/${inv2.id}`).set(auth(adminToken)).expect(200);
+    expect(orig.body).toMatchObject({ status: 'CREDITED', creditedByNumber: cn.body.number, reason: 'أصدرت بالخطأ' });
+    expect((await http.post(`/api/admin/invoices/${inv2.id}/credit`).set(auth(adminToken)).send({ reason: 'x' }).expect(409)).body.messageAr).toBe('تمت معالجة هذه الفاتورة مسبقاً');
     await http.post(`/api/admin/invoices/${inv2.id}/pay`).set(auth(adminToken)).send({ paymentMethod: 'CASH' }).expect(409);
-    await http.post(`/api/admin/invoices/${inv1.id}/void`).set(auth(adminToken)).send({ reason: 'x' }).expect(409);
-    expect((await http.get(`/api/admin/events?companyId=${A.id}&type=INVOICE_VOIDED`).set(auth(adminToken)).expect(200)).body.total).toBe(1);
+    expect((await http.get(`/api/admin/events?companyId=${A.id}&type=INVOICE_CREDITED`).set(auth(adminToken)).expect(200)).body.total).toBe(1);
   });
 
   it('a SUSPENDED company stays suspended when paying (subscription still extended); paidAt date honoured', async () => {
     B.id = await register(B);
     await http.post(`/api/admin/companies/${B.id}/activate`).set(auth(adminToken)).send({ plan: 'ESSENTIALS', billingCycle: 'MONTHLY', mode: 'PAID' }).expect(200);
     B.token = (await login(B.email).expect(200)).body.accessToken;
-    const created = await http.post(`/api/admin/companies/${B.id}/invoices`).set(auth(adminToken)).send({ periodStart: '2026-01-01' }).expect(201);
-    expect(created.body).toMatchObject({ employees: 1, unitPrice: 19, periodEnd: '2026-01-31', total: 21.85 });
+    const pastStart = addDaysStr(today, -45);
+    const created = await http.post(`/api/admin/companies/${B.id}/invoices`).set(auth(adminToken)).send({ periodStart: pastStart }).expect(201);
+    expect(created.body).toMatchObject({ employees: 10, unitPrice: 19, periodEnd: periodEndOf(pastStart, 1), total: 190 });
     await http.post(`/api/admin/companies/${B.id}/suspend`).set(auth(adminToken)).send({ reason: 'تأخر السداد' }).expect(200);
-    const paid = await http.post(`/api/admin/invoices/${created.body.id}/pay`).set(auth(adminToken)).send({ paymentMethod: 'CASH', paidAt: '2026-02-03' }).expect(200);
-    expect(paid.body.paidAt.slice(0, 10)).toBe('2026-02-03');
+    const paid = await http.post(`/api/admin/invoices/${created.body.id}/pay`).set(auth(adminToken)).send({ paymentMethod: 'CASH', paidAt: today }).expect(200);
+    expect(todayStr(new Date(paid.body.paidAt))).toBe(today);
     const c = await prisma.company.findUniqueOrThrow({ where: { id: B.id } });
     expect(c.status).toBe('SUSPENDED');
-    expect(c.subscriptionEndsAt!.toISOString()).toBe(endOfDay('2026-01-31').toISOString());
+    expect(c.subscriptionEndsAt!.toISOString()).toBe(endOfDay(periodEndOf(pastStart, 1)).toISOString());
     await http.post(`/api/admin/companies/${B.id}/reactivate`).set(auth(adminToken)).send({}).expect(200);
     await prisma.company.update({ where: { id: B.id }, data: { subscriptionEndsAt: null } });
     B.token = (await login(B.email).expect(200)).body.accessToken;
@@ -199,13 +214,13 @@ describe('Billing & reminders (e2e)', () => {
 
   it('OWNER /billing: own company only; non-admins get 403 on /admin/invoices', async () => {
     const list = await http.get('/api/billing/invoices').set(auth(A.token)).expect(200);
-    expect(list.body).toMatchObject({ total: 2, page: 1, pageSize: 20 });
-    expect(list.body.data.map((i: { id: string }) => i.id).sort()).toEqual([inv1.id, inv2.id].sort());
-    expect(list.body.data.find((i: { id: string }) => i.id === inv2.id).status).toBe('VOID');
+    expect(list.body).toMatchObject({ total: 3, page: 1, pageSize: 20 });
+    expect(list.body.data.map((i: { id: string }) => i.id).sort()).toEqual([inv1.id, inv2.id, creditNote.id].sort());
+    expect(list.body.data.find((i: { id: string }) => i.id === inv2.id).status).toBe('CREDITED');
 
     await http.get(`/api/billing/invoices/${invB.id}`).set(auth(A.token)).expect(404);
     const detail = await http.get(`/api/billing/invoices/${inv1.id}`).set(auth(A.token)).expect(200);
-    expect(detail.body).toMatchObject({ id: inv1.id, status: 'PAID', company: { id: A.id, nameAr: A.name, ownerEmail: A.email }, seller: { sellerName: 'شؤون لتقنية المعلومات', iban: 'SA0380000000608010167519' } });
+    expect(detail.body).toMatchObject({ id: inv1.id, status: 'PAID', company: { id: A.id, nameAr: A.name, ownerEmail: A.email }, seller: { name: 'شؤون لتقنية المعلومات', iban: 'SA0380000000608010167519' }, buyer: { nameAr: A.name } });
 
     const sub = await http.get('/api/billing/subscription').set(auth(A.token)).expect(200);
     expect(sub.body).toMatchObject({ status: 'ACTIVE', plan: 'GROWTH', billingCycle: 'MONTHLY', effectivePrice: 29, maxEmployees: null, activeEmployees: 2, trialEndsAt: null });
@@ -221,25 +236,29 @@ describe('Billing & reminders (e2e)', () => {
   it('admin invoice list: filters, search, overdue flag and summary (ignores filters); detail', async () => {
     await prisma.invoice.update({ where: { id: invB.id }, data: { dueDate: day(addDaysStr(today, -1)) } });
     const all = await http.get('/api/admin/invoices').set(auth(adminToken)).expect(200);
-    expect(all.body.total).toBe(4);
-    expect(all.body.summary.outstanding).toEqual({ count: 1, amount: 21.85 }); // 1 × 19 × 1.15
-    expect(all.body.summary.overdue).toEqual({ count: 1, amount: 21.85 });
-    expect(all.body.summary.paidThisMonth).toEqual({ count: 1, amount: 66.7 }); // B's payment was dated 2026-02-03
+    expect(all.body.total).toBe(5); // 4 invoices + 1 credit note
+    expect(all.body.summary.outstanding).toEqual({ count: 1, amount: 190 }); // credit notes are not outstanding
+    expect(all.body.summary.overdue).toEqual({ count: 1, amount: 190 });
+    expect(all.body.summary.paidThisMonth).toEqual({ count: 2, amount: 480 });
 
     const overdue = await http.get('/api/admin/invoices?overdue=true').set(auth(adminToken)).expect(200);
     expect(overdue.body.data.map((i: { id: string }) => i.id)).toEqual([invB.id]);
     expect(overdue.body.data[0].overdue).toBe(true);
-    expect(overdue.body.summary.paidThisMonth.count).toBe(1);
+    expect(overdue.body.summary.paidThisMonth.count).toBe(2);
 
-    expect((await http.get('/api/admin/invoices?status=VOID').set(auth(adminToken)).expect(200)).body.total).toBe(1);
-    expect((await http.get(`/api/admin/invoices?companyId=${A.id}`).set(auth(adminToken)).expect(200)).body.total).toBe(2);
+    expect((await http.get('/api/admin/invoices?status=CREDITED').set(auth(adminToken)).expect(200)).body.data.map((i: { id: string }) => i.id)).toEqual([inv2.id]);
+    expect((await http.get('/api/admin/invoices?type=CREDIT_NOTE').set(auth(adminToken)).expect(200)).body.data.map((i: { id: string }) => i.id)).toEqual([creditNote.id]);
+    expect((await http.get('/api/admin/invoices?type=INVOICE').set(auth(adminToken)).expect(200)).body.total).toBe(4);
+    await http.get('/api/admin/invoices?status=VOID').set(auth(adminToken)).expect(400);
+    expect((await http.get(`/api/admin/invoices?companyId=${A.id}`).set(auth(adminToken)).expect(200)).body.total).toBe(3);
     expect((await http.get(`/api/admin/invoices?search=${inv1.number}`).set(auth(adminToken)).expect(200)).body.total).toBe(1);
     expect((await http.get(`/api/admin/invoices?search=${encodeURIComponent('أخرى')}`).set(auth(adminToken)).expect(200)).body.total).toBe(2);
     await http.get('/api/admin/invoices?status=NOPE').set(auth(adminToken)).expect(400);
 
     const d = await http.get(`/api/admin/invoices/${inv1.id}`).set(auth(adminToken)).expect(200);
     expect(d.body.company).toEqual({ id: A.id, nameAr: A.name, nameEn: null, crNumber: null, vatNumber: null, city: null, ownerName: 'مالك', ownerEmail: A.email, ownerPhone: '+966500000077' });
-    expect(d.body.seller).toMatchObject({ sellerEmail: 'hello@shuoon.net', vatRate: 0.15 });
+    expect(d.body.seller).toEqual({ name: 'شؤون لتقنية المعلومات', nameEn: 'Shuoon IT', vatNumber: '', crNumber: '', address: 'الرياض، المملكة العربية السعودية', email: 'hello@shuoon.net', phone: '+966 55 042 1235', bankName: 'مصرف الراجحي', iban: 'SA0380000000608010167519' });
+    expect(d.body.buyer).toEqual({ nameAr: A.name, nameEn: null, vatNumber: null, crNumber: null, address: null, city: null });
     await http.get('/api/admin/invoices/nope').set(auth(adminToken)).expect(404);
   });
 
@@ -280,6 +299,7 @@ describe('Billing & reminders (e2e)', () => {
   it('expiry sends one EXPIRED email (notifyOnExpiry), even when expiry is re-detected', async () => {
     await prisma.company.update({ where: { id: C.id }, data: { trialEndsAt: new Date(Date.now() - 60000) } });
     expect(await app.get(PlatformService).expireDue()).toBe(1);
+    await app.get(PlatformService).settleListeners(); // v2.1: the EXPIRED email is fire-and-forget
     const res = await http.get(`/api/admin/emails?type=EXPIRED&companyId=${C.id}`).set(auth(adminToken)).expect(200);
     expect(res.body.total).toBe(1);
     expect(res.body.data[0].to).toBe(C.email);
@@ -295,7 +315,7 @@ describe('Billing & reminders (e2e)', () => {
     expect(r.body.body).toContain('www.shuoon.net');
 
     const d = await http.get(`/api/admin/companies/${A.id}`).set(auth(adminToken)).expect(200);
-    expect(d.body.invoices.map((i: { id: string }) => i.id).sort()).toEqual([inv1.id, inv2.id].sort());
+    expect(d.body.invoices.map((i: { id: string }) => i.id).sort()).toEqual([inv1.id, inv2.id, creditNote.id].sort());
     expect(d.body.invoices[0]).toHaveProperty('overdue');
     expect(d.body.emails.map((e: { type: string }) => e.type)).toEqual(expect.arrayContaining(['INVOICE_ISSUED', 'PAYMENT_RECEIVED', 'SUBSCRIPTION_ENDING', 'MANUAL_REMINDER']));
   });
@@ -307,13 +327,17 @@ describe('Billing & reminders (e2e)', () => {
     await http.patch('/api/admin/settings').set(auth(adminToken)).send({ reminders: { enabled: true } }).expect(200);
   });
 
-  it('hard delete still works: invoices cascade, email log is kept', async () => {
-    const before = await prisma.emailLog.count({ where: { companyId: A.id } });
+  it('v2.1 retention: a company with invoices cannot be deleted (409); one without invoices is deleted, email log kept', async () => {
+    const blocked = await http.delete(`/api/admin/companies/${A.id}`).set(auth(adminToken)).send({ confirmName: A.name }).expect(409);
+    expect(blocked.body.messageAr).toBe('لا يمكن حذف منشأة لها فواتير صادرة؛ أوقف الحساب بدلاً من ذلك');
+    expect(await prisma.invoice.count({ where: { companyId: A.id } })).toBe(3);
+    expect(await prisma.company.count({ where: { id: A.id } })).toBe(1);
+
+    const before = await prisma.emailLog.count({ where: { companyId: C.id } });
     expect(before).toBeGreaterThan(0);
-    await http.delete(`/api/admin/companies/${A.id}`).set(auth(adminToken)).send({ confirmName: A.name }).expect(200, { ok: true });
-    expect(await prisma.invoice.count({ where: { companyId: A.id } })).toBe(0);
-    expect(await prisma.emailLog.count({ where: { companyId: A.id } })).toBe(before);
-    const emails = await http.get(`/api/admin/emails?companyId=${A.id}`).set(auth(adminToken)).expect(200);
+    await http.delete(`/api/admin/companies/${C.id}`).set(auth(adminToken)).send({ confirmName: C.name }).expect(200, { ok: true });
+    expect(await prisma.emailLog.count({ where: { companyId: C.id } })).toBe(before);
+    const emails = await http.get(`/api/admin/emails?companyId=${C.id}`).set(auth(adminToken)).expect(200);
     expect(emails.body.total).toBe(before);
     expect(emails.body.data[0].companyName).toBeNull();
   });

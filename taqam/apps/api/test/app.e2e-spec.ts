@@ -49,7 +49,7 @@ describe('Shuoon API (e2e)', () => {
   });
 
   it('GET /api/health', async () => {
-    await http.get('/api/health').expect(200, { status: 'ok' });
+    await http.get('/api/health').expect(200, { status: 'ok', db: 'up' });
   });
 
   it('register → login → me', async () => {

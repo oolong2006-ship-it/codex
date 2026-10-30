@@ -16,10 +16,12 @@ import {
   IsString,
   Matches,
   Max,
+  MaxLength,
   Min,
   MinLength,
   ValidateNested,
 } from 'class-validator';
+import { cleanNameTransform, NAME_MAX } from '../common/text';
 
 export const COMPANY_STATUSES: CompanyStatus[] = ['PENDING', 'TRIAL', 'ACTIVE', 'SUSPENDED', 'EXPIRED'];
 export const PLAN_VALUES: Plan[] = ['ESSENTIALS', 'GROWTH', 'ENTERPRISE'];
@@ -27,9 +29,12 @@ export const CYCLES: BillingCycle[] = ['MONTHLY', 'ANNUAL'];
 export const LEAD_STATUSES: LeadStatus[] = ['NEW', 'CONTACTED', 'CONVERTED', 'LOST'];
 export const EVENT_TYPES: CompanyEventType[] = [
   'REGISTERED', 'ACTIVATED', 'SUSPENDED', 'REACTIVATED', 'PLAN_CHANGED', 'EXTENDED', 'NOTE', 'IMPERSONATED', 'EXPIRED', 'DELETED',
-  'INVOICE_ISSUED', 'INVOICE_PAID', 'INVOICE_VOIDED', 'REMINDER_SENT',
+  'INVOICE_ISSUED', 'INVOICE_PAID', 'INVOICE_VOIDED', 'REMINDER_SENT', 'INVOICE_CREDITED',
 ];
 export const COMPANY_SORTS = ['createdAt', 'name', 'employees', 'lastActivityAt'] as const;
+
+/** Decimal(10,2) ceiling for prices per employee. */
+const MAX_PRICE = 99999999;
 
 const lower = ({ value }: { value: unknown }) => (typeof value === 'string' ? value.trim().toLowerCase() : value);
 
@@ -54,7 +59,7 @@ export class ActivateDto {
   @ApiProperty({ enum: PLAN_VALUES }) @IsOptional() @IsIn(PLAN_VALUES) plan?: Plan;
   @ApiProperty({ enum: CYCLES }) @IsOptional() @IsIn(CYCLES) billingCycle?: BillingCycle;
   @ApiPropertyOptional({ nullable: true }) @IsOptional() @IsInt() @Min(1) maxEmployees?: number | null;
-  @ApiPropertyOptional({ nullable: true }) @IsOptional() @IsNumber() @Min(0) pricePerEmployee?: number | null;
+  @ApiPropertyOptional({ nullable: true }) @IsOptional() @IsNumber({ maxDecimalPlaces: 2 }) @Min(0) @Max(MAX_PRICE) pricePerEmployee?: number | null;
   @ApiProperty({ enum: ['TRIAL', 'PAID'] }) @IsIn(['TRIAL', 'PAID']) mode: 'TRIAL' | 'PAID';
   @ApiPropertyOptional({ default: 14 }) @IsOptional() @IsInt() @Min(1) @Max(365) trialDays?: number;
   @ApiPropertyOptional({ nullable: true }) @IsOptional() @IsDateString() subscriptionEndsAt?: string | null;
@@ -68,12 +73,12 @@ export class UpdateCompanyAdminDto {
   @ApiPropertyOptional({ enum: PLAN_VALUES }) @IsOptional() @IsIn(PLAN_VALUES) plan?: Plan;
   @ApiPropertyOptional({ enum: CYCLES }) @IsOptional() @IsIn(CYCLES) billingCycle?: BillingCycle;
   @ApiPropertyOptional({ nullable: true }) @IsOptional() @IsInt() @Min(1) maxEmployees?: number | null;
-  @ApiPropertyOptional({ nullable: true }) @IsOptional() @IsNumber() @Min(0) pricePerEmployee?: number | null;
+  @ApiPropertyOptional({ nullable: true }) @IsOptional() @IsNumber({ maxDecimalPlaces: 2 }) @Min(0) @Max(MAX_PRICE) pricePerEmployee?: number | null;
   @ApiPropertyOptional({ nullable: true }) @IsOptional() @IsDateString() trialEndsAt?: string | null;
   @ApiPropertyOptional({ nullable: true }) @IsOptional() @IsDateString() subscriptionEndsAt?: string | null;
   @ApiPropertyOptional({ nullable: true }) @IsOptional() @IsString() adminNotes?: string | null;
-  @ApiPropertyOptional() @IsOptional() @IsString() @MinLength(2) nameAr?: string;
-  @ApiPropertyOptional({ nullable: true }) @IsOptional() @IsString() nameEn?: string | null;
+  @ApiPropertyOptional({ maxLength: NAME_MAX }) @IsOptional() @Transform(cleanNameTransform) @IsString() @MinLength(2) @MaxLength(NAME_MAX) nameAr?: string;
+  @ApiPropertyOptional({ nullable: true, maxLength: NAME_MAX }) @IsOptional() @Transform(cleanNameTransform) @IsString() @MaxLength(NAME_MAX) nameEn?: string | null;
 }
 
 export class ExtendDto {
@@ -111,23 +116,24 @@ export class UpdateAdminDto {
 }
 
 export class PricesDto {
-  @ApiPropertyOptional({ nullable: true }) @IsOptional() @IsNumber() @Min(0) ESSENTIALS?: number | null;
-  @ApiPropertyOptional({ nullable: true }) @IsOptional() @IsNumber() @Min(0) GROWTH?: number | null;
-  @ApiPropertyOptional({ nullable: true }) @IsOptional() @IsNumber() @Min(0) ENTERPRISE?: number | null;
+  @ApiPropertyOptional({ nullable: true }) @IsOptional() @IsNumber({ maxDecimalPlaces: 2 }) @Min(0) @Max(MAX_PRICE) ESSENTIALS?: number | null;
+  @ApiPropertyOptional({ nullable: true }) @IsOptional() @IsNumber({ maxDecimalPlaces: 2 }) @Min(0) @Max(MAX_PRICE) GROWTH?: number | null;
+  @ApiPropertyOptional({ nullable: true }) @IsOptional() @IsNumber({ maxDecimalPlaces: 2 }) @Min(0) @Max(MAX_PRICE) ENTERPRISE?: number | null;
 }
 
 export class BillingSettingsDto {
-  @ApiPropertyOptional() @IsOptional() @IsString() sellerName?: string;
-  @ApiPropertyOptional() @IsOptional() @IsString() sellerNameEn?: string;
-  @ApiPropertyOptional() @IsOptional() @IsString() sellerVatNumber?: string;
-  @ApiPropertyOptional() @IsOptional() @IsString() sellerCrNumber?: string;
-  @ApiPropertyOptional() @IsOptional() @IsString() sellerAddress?: string;
-  @ApiPropertyOptional() @IsOptional() @IsString() sellerEmail?: string;
-  @ApiPropertyOptional() @IsOptional() @IsString() sellerPhone?: string;
+  @ApiPropertyOptional() @IsOptional() @Transform(cleanNameTransform) @IsString() @MaxLength(NAME_MAX) sellerName?: string;
+  @ApiPropertyOptional() @IsOptional() @Transform(cleanNameTransform) @IsString() @MaxLength(NAME_MAX) sellerNameEn?: string;
+  @ApiPropertyOptional({ description: "'' (not VAT-registered) or a 15-digit TRN starting and ending with 3" }) @IsOptional() @IsString() @MaxLength(40) sellerVatNumber?: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() @MaxLength(40) sellerCrNumber?: string;
+  @ApiPropertyOptional() @IsOptional() @Transform(cleanNameTransform) @IsString() @MaxLength(300) sellerAddress?: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() @MaxLength(200) sellerEmail?: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() @MaxLength(40) sellerPhone?: string;
   @ApiPropertyOptional({ example: 0.15 }) @IsOptional() @IsNumber() @Min(0) @Max(1) vatRate?: number;
   @ApiPropertyOptional({ example: 7 }) @IsOptional() @IsInt() @Min(0) @Max(90) invoiceDueDays?: number;
-  @ApiPropertyOptional() @IsOptional() @IsString() bankName?: string;
-  @ApiPropertyOptional() @IsOptional() @IsString() iban?: string;
+  @ApiPropertyOptional() @IsOptional() @Transform(cleanNameTransform) @IsString() @MaxLength(NAME_MAX) bankName?: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() @MaxLength(40) iban?: string;
+  @ApiPropertyOptional({ example: 10, description: 'default billed seats for ESSENTIALS / GROWTH' }) @IsOptional() @IsInt() @Min(1) @Max(100000) minBilledEmployees?: number;
 }
 
 /** Reminder day list: up to 6 integers 0..60. */

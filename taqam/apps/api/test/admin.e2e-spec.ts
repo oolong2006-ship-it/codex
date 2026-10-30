@@ -40,6 +40,7 @@ describe('Platform admin portal (e2e)', () => {
     http = request(app.getHttpServer());
     prisma = app.get(PrismaService);
     // Start from an empty platform so overview numbers are exact (files run in band).
+    await prisma.invoice.deleteMany({}); // invoices are retained (FK RESTRICT)
     await prisma.company.deleteMany({});
     await prisma.companyEvent.deleteMany({});
     await prisma.lead.deleteMany({});

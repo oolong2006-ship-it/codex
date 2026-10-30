@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpCode, Post } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, Post, ServiceUnavailableException } from '@nestjs/common';
 import { ApiProperty, ApiPropertyOptional, ApiTags } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsEmail, IsIn, IsInt, IsNumber, IsOptional, IsString, Matches, Min, MinLength, ValidateNested } from 'class-validator';
@@ -50,9 +50,15 @@ export class EosbDto {
 export class PublicController {
   constructor(private readonly prisma: PrismaService) {}
 
+  /** Liveness + database check (`SELECT 1`): 200 `{ status: 'ok', db: 'up' }`, 503 when the database is unreachable. */
   @Get('health')
-  health() {
-    return { status: 'ok' };
+  async health() {
+    try {
+      await this.prisma.$queryRaw`SELECT 1`;
+    } catch {
+      throw new ServiceUnavailableException({ status: 'error', db: 'down', message: 'Database unavailable', messageAr: 'قاعدة البيانات غير متاحة' });
+    }
+    return { status: 'ok', db: 'up' };
   }
 
   @Throttle({ default: { limit: 10, ttl: 60000 } })

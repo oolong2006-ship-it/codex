@@ -8,7 +8,7 @@ import { NotifyService } from '../shared/notifications.service';
 import { AuthService } from '../auth/auth.service';
 import { AuditService } from '../shared/audit.service';
 import { BillingService } from '../billing/billing.service';
-import { normalizeDays } from '../billing/billing.math';
+import { isValidTrn, normalizeDays } from '../billing/billing.math';
 import { DAY_MS, extendFrom, parseEndDate, PLANS, PlatformService, PlatformSettingsView } from '../platform/platform.service';
 import { PlatformUser } from '../common/types';
 import { badRequest, conflict, notFound } from '../common/errors';
@@ -531,13 +531,17 @@ export class AdminService {
     if (confirmName !== c.nameAr.trim()) {
       throw badRequest('confirmName does not match the company name', 'اسم المنشأة غير مطابق');
     }
+    // v2.1 retention: issued invoices / credit notes are kept for tax purposes → suspend instead
+    if (await this.prisma.invoice.count({ where: { companyId: id } })) {
+      throw conflict('A company with issued invoices cannot be deleted; suspend it instead', 'لا يمكن حذف منشأة لها فواتير صادرة؛ أوقف الحساب بدلاً من ذلك');
+    }
     const owner = await this.prisma.user.findFirst({ where: { companyId: id, role: 'OWNER' }, orderBy: { createdAt: 'asc' }, select: { email: true } });
     const w = { where: { companyId: id } };
     await this.prisma.$transaction(
       async (tx) => {
         await tx.notification.deleteMany(w);
         await tx.auditLog.deleteMany(w);
-        await tx.invoice.deleteMany(w); // EmailLog rows are kept (not FK-bound), like CompanyEvent
+        // no invoices here (checked above; the FK is RESTRICT). EmailLog rows are kept (not FK-bound), like CompanyEvent
         await tx.performanceReview.deleteMany(w);
         await tx.reviewCycle.deleteMany(w);
         await tx.candidate.deleteMany(w);
@@ -642,6 +646,9 @@ export class AdminService {
   }
 
   async updateSettings(dto: UpdateSettingsDto) {
+    if (dto.billing?.sellerVatNumber !== undefined && dto.billing.sellerVatNumber !== '' && !isValidTrn(dto.billing.sellerVatNumber)) {
+      throw badRequest('sellerVatNumber must be empty or 15 digits starting and ending with 3', 'الرقم الضريبي يجب أن يكون 15 رقماً يبدأ وينتهي بالرقم 3');
+    }
     const current = await this.platform.getSettings();
     const prices = { ...current.prices };
     if (dto.prices) for (const p of PLANS) if (dto.prices[p] !== undefined) prices[p] = dto.prices[p] ?? null;

@@ -1,7 +1,7 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { round2 } from '@taqam/core';
-import { Company, EmailLog, EmailType, Invoice, Prisma } from '@prisma/client';
+import { Company, EmailLog, EmailType, Invoice, InvoiceDocumentType, Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { MailService } from '../mail/mail.service';
 import { NotifyService } from '../shared/notifications.service';
@@ -11,7 +11,21 @@ import { badRequest, conflict, notFound } from '../common/errors';
 import { pageParams, Paginated } from '../common/pagination';
 import { day, dayStr, riyadhDateTime, todayStr } from '../common/dates';
 import { num } from '../common/money';
-import { addDaysStr, computeInvoice, dedupeKey, nextInvoiceNumber, periodEndOf, selectReminders } from './billing.math';
+import {
+  addDaysStr,
+  anchorDayFor,
+  BuyerSnapshot,
+  buyerSnapshot,
+  computeInvoice,
+  dedupeKey,
+  isValidTrn,
+  MAX_INVOICE_TOTAL,
+  periodEndOf,
+  selectReminders,
+  SellerSnapshot,
+  sellerSnapshot,
+  zatcaQr,
+} from './billing.math';
 import {
   EmailContent,
   expiredEmail,
@@ -23,11 +37,13 @@ import {
   subscriptionEndingEmail,
   trialEndingEmail,
 } from './billing.emails';
-import { CreateInvoiceDto, EmailsQuery, InvoicesQuery, PayInvoiceDto, RemindDto, VoidInvoiceDto } from './billing.dto';
+import { nextDocumentNumber } from './billing.numbers';
+import { CreateInvoiceDto, CreditInvoiceDto, EmailsQuery, InvoicesQuery, PayInvoiceDto, RemindDto } from './billing.dto';
 
 export interface InvoiceView {
   id: string;
   number: string;
+  documentType: InvoiceDocumentType;
   companyId: string;
   companyName: string;
   status: Invoice['status'];
@@ -47,12 +63,20 @@ export interface InvoiceView {
   vat: number;
   total: number;
   issueDate: string;
+  issuedAt: Date;
   dueDate: string;
+  seller: SellerSnapshot;
+  buyer: BuyerSnapshot;
   paidAt: Date | null;
   paymentMethod: Invoice['paymentMethod'];
   paymentRef: string | null;
   notes: string | null;
-  voidReason: string | null;
+  reason: string | null;
+  creditsInvoiceId: string | null;
+  creditsNumber: string | null;
+  creditedByNumber: string | null;
+  /** ZATCA Phase-1 TLV (base64) for tax invoices and their credit notes, else null */
+  qr: string | null;
   createdByName: string | null;
   createdAt: Date;
 }
@@ -64,7 +88,13 @@ const ALREADY_PROCESSED = () => conflict('Invoice was already processed', 'تم�
 const invoiceNotFound = () => notFound('Invoice', 'الفاتورة غير موجودة');
 const companyNotFound = () => notFound('Company', 'المنشأة غير موجودة');
 const isRealDay = (s: string) => dayStr(new Date(`${s}T00:00:00.000Z`)) === s;
-const isUniqueViolation = (e: unknown) => (e as { code?: string })?.code === 'P2002';
+/** Advisory-lock namespace for per-company invoice issuing (pg_advisory_xact_lock(ns, hashtext(companyId))). */
+const ISSUE_LOCK_NS = 72021;
+const PERIOD_PAST_DAYS = 60;
+const PERIOD_FUTURE_DAYS = 90;
+/** Interactive transactions wait on row / advisory locks: allow more than Prisma's 5 s default. */
+const TX_OPTS = { maxWait: 10000, timeout: 20000 } as const;
+const NOT_CREDIT_NOTE: Prisma.InvoiceWhereInput = { documentType: { not: 'CREDIT_NOTE' } };
 
 const NOTIFY_TITLE: Record<EmailType, string> = {
   TRIAL_ENDING: 'تنتهي الفترة التجريبية لمنشأتك قريباً',
@@ -98,13 +128,21 @@ export class BillingService implements OnModuleInit {
   // ================= views =================
   view(i: Invoice, today = todayStr()): InvoiceView {
     const dueDate = dayStr(i.dueDate)!;
+    const seller = i.seller as unknown as SellerSnapshot;
+    const total = num(i.total);
+    const vat = num(i.vat);
+    const qr =
+      i.documentType !== 'INVOICE' && isValidTrn(seller?.vatNumber)
+        ? zatcaQr({ sellerName: seller.name, vatNumber: seller.vatNumber, timestamp: i.issuedAt, total, vat })
+        : null;
     return {
       id: i.id,
       number: i.number,
+      documentType: i.documentType,
       companyId: i.companyId,
       companyName: i.companyName,
       status: i.status,
-      overdue: i.status === 'ISSUED' && dueDate < today,
+      overdue: i.status === 'ISSUED' && i.documentType !== 'CREDIT_NOTE' && dueDate < today,
       plan: i.plan,
       billingCycle: i.billingCycle,
       periodStart: dayStr(i.periodStart)!,
@@ -117,26 +155,35 @@ export class BillingService implements OnModuleInit {
       discount: num(i.discount),
       taxable: num(i.taxable),
       vatRate: i.vatRate,
-      vat: num(i.vat),
-      total: num(i.total),
+      vat,
+      total,
       issueDate: dayStr(i.issueDate)!,
+      issuedAt: i.issuedAt,
       dueDate,
+      seller,
+      buyer: i.buyer as unknown as BuyerSnapshot,
       paidAt: i.paidAt,
       paymentMethod: i.paymentMethod,
       paymentRef: i.paymentRef,
       notes: i.notes,
-      voidReason: i.voidReason,
+      reason: i.reason,
+      creditsInvoiceId: i.creditsInvoiceId,
+      creditsNumber: i.creditsNumber,
+      creditedByNumber: i.creditedByNumber,
+      qr,
       createdByName: i.createdByName,
       createdAt: i.createdAt,
     };
   }
 
-  /** Invoice & { company (buyer), seller (billing settings) } — the printable tax invoice. */
+  /**
+   * Invoice & { company } — the printable document. `seller` / `buyer` come from the invoice's own snapshot;
+   * `company` is the live company (links / owner contact), never used for the document itself.
+   */
   async detailView(i: Invoice) {
-    const [company, owner, s] = await Promise.all([
+    const [company, owner] = await Promise.all([
       this.prisma.company.findUnique({ where: { id: i.companyId }, select: { id: true, nameAr: true, nameEn: true, crNumber: true, vatNumber: true, city: true } }),
       this.ownerOf(i.companyId),
-      this.platform.getSettings(),
     ]);
     return {
       ...this.view(i),
@@ -151,12 +198,15 @@ export class BillingService implements OnModuleInit {
         ownerEmail: owner?.email ?? null,
         ownerPhone: owner?.phone ?? null,
       },
-      seller: s.billing,
     };
   }
 
   private invoiceCtx(i: InvoiceView): InvoiceCtx {
-    return { number: i.number, periodStart: i.periodStart, periodEnd: i.periodEnd, total: i.total, dueDate: i.dueDate, employees: i.employees, plan: i.plan };
+    return { number: i.number, periodStart: i.periodStart, periodEnd: i.periodEnd, total: i.total, dueDate: i.dueDate, employees: i.employees, plan: i.plan, documentType: i.documentType };
+  }
+
+  private bankInfo(i: InvoiceView) {
+    return { sellerName: i.seller.name, bankName: i.seller.bankName, iban: i.seller.iban };
   }
 
   /** Email recipient: the company's first active OWNER (fallback: first OWNER). */
@@ -175,6 +225,7 @@ export class BillingService implements OnModuleInit {
     const content = build(owner.name);
     const log = await this.mail.send({ companyId, to: owner.email, subject: content.subject, body: content.body, type, dedupeKey: opts.dedupeKey ?? null });
     if (!log) return null;
+    if (log.status === 'FAILED') return log; // v2.1: no in-app notification for a message that never left
     try {
       await this.notify.toUsers(companyId, [owner.id], NOTIFY_TITLE[type], content.subject.split(' | ')[0], '/app/billing');
     } catch (e) {
@@ -194,10 +245,14 @@ export class BillingService implements OnModuleInit {
     const today = todayStr();
     const where: Prisma.InvoiceWhereInput = {};
     const and: Prisma.InvoiceWhereInput[] = [];
-    if (q.status) and.push({ status: q.status });
+    if (q.type === 'CREDIT_NOTE') and.push({ documentType: 'CREDIT_NOTE' });
+    if (q.type === 'INVOICE') and.push(NOT_CREDIT_NOTE);
+    // status tabs describe invoices; credit notes only when asked for explicitly (type=CREDIT_NOTE)
+    if (q.status) and.push(q.type === 'CREDIT_NOTE' ? { status: q.status } : { status: q.status, ...NOT_CREDIT_NOTE });
     if (q.companyId) and.push({ companyId: q.companyId });
-    if (q.overdue === true || q.overdue === 'true') and.push({ status: 'ISSUED', dueDate: { lt: day(today) } });
-    if (q.overdue === false || q.overdue === 'false') and.push({ NOT: { status: 'ISSUED', dueDate: { lt: day(today) } } });
+    const overdue: Prisma.InvoiceWhereInput = { status: 'ISSUED', dueDate: { lt: day(today) }, ...NOT_CREDIT_NOTE };
+    if (q.overdue === true || q.overdue === 'true') and.push(overdue);
+    if (q.overdue === false || q.overdue === 'false') and.push({ NOT: overdue });
     const search = q.search?.trim();
     if (search) {
       const has = { contains: search, mode: 'insensitive' as const };
@@ -212,14 +267,18 @@ export class BillingService implements OnModuleInit {
     return { data: rows.map((r) => this.view(r, today)), total, page, pageSize, summary };
   }
 
-  /** Platform-wide tiles (ignore list filters). */
+  /** Platform-wide tiles (ignore list filters). Credit notes are never outstanding; paidThisMonth = current Riyadh month. */
   async summary(today = todayStr()) {
-    const monthStart = riyadhDateTime(`${today.slice(0, 7)}-01`, '00:00');
+    const month = today.slice(0, 7);
+    const monthStart = riyadhDateTime(`${month}-01`, '00:00');
+    const [y, m] = month.split('-').map(Number);
+    const nextMonth = new Date(Date.UTC(y, m, 1)).toISOString().slice(0, 7);
+    const monthEnd = riyadhDateTime(`${nextMonth}-01`, '00:00');
     const agg = (where: Prisma.InvoiceWhereInput) => this.prisma.invoice.aggregate({ where, _count: { _all: true }, _sum: { total: true } });
     const [outstanding, overdue, paid] = await Promise.all([
-      agg({ status: 'ISSUED' }),
-      agg({ status: 'ISSUED', dueDate: { lt: day(today) } }),
-      agg({ status: 'PAID', paidAt: { gte: monthStart } }),
+      agg({ status: 'ISSUED', ...NOT_CREDIT_NOTE }),
+      agg({ status: 'ISSUED', dueDate: { lt: day(today) }, ...NOT_CREDIT_NOTE }),
+      agg({ status: 'PAID', paidAt: { gte: monthStart, lt: monthEnd } }),
     ]);
     const tile = (a: Awaited<ReturnType<typeof agg>>) => ({ count: a._count._all, amount: round2(num(a._sum.total)) });
     return { outstanding: tile(outstanding), overdue: tile(overdue), paidThisMonth: tile(paid) };
@@ -250,73 +309,98 @@ export class BillingService implements OnModuleInit {
     const unitPrice = dto.unitPrice ?? this.platform.effectivePrice(c, s);
     if (unitPrice === null || unitPrice === undefined) throw badRequest('Set a price per employee for this company first', 'حدد سعر الموظف لهذه المنشأة أولاً');
 
-    const today = todayStr();
-    let periodStart = dto.periodStart;
-    if (!periodStart) {
-      const last = await this.prisma.invoice.findFirst({ where: { companyId, status: { not: 'VOID' } }, orderBy: { periodEnd: 'desc' }, select: { periodEnd: true } });
-      periodStart = last ? addDaysStr(dayStr(last.periodEnd)!, 1) : today;
-    }
-    const employees = dto.employees ?? Math.max(1, await this.prisma.employee.count({ where: { companyId, status: { not: 'TERMINATED' } } }));
+    const now = new Date();
+    const today = todayStr(now);
+    // VAT registration gate: no valid TRN → plain invoice without VAT
+    const registered = isValidTrn(s.billing.sellerVatNumber);
+    const documentType: InvoiceDocumentType = registered ? 'TAX_INVOICE' : 'INVOICE';
+    const vatRate = registered ? s.billing.vatRate : 0;
+    const active = await this.prisma.employee.count({ where: { companyId, status: { not: 'TERMINATED' } } });
+    const employees = dto.employees ?? (c.plan === 'ENTERPRISE' ? Math.max(1, active) : Math.max(s.billing.minBilledEmployees, active));
     const billingCycle = dto.billingCycle ?? c.billingCycle;
-    const amounts = computeInvoice({ employees, unitPrice, billingCycle, annualDiscount: s.annualDiscount, vatRate: s.billing.vatRate });
-    const periodEnd = periodEndOf(periodStart, amounts.months);
+    const amounts = computeInvoice({ employees, unitPrice, billingCycle, annualDiscount: s.annualDiscount, vatRate });
+    if (amounts.subtotal > MAX_INVOICE_TOTAL || amounts.total > MAX_INVOICE_TOTAL) {
+      throw badRequest('Invoice total exceeds the allowed maximum', 'إجمالي الفاتورة يتجاوز الحد المسموح');
+    }
     const dueDate = addDaysStr(today, s.billing.invoiceDueDays);
     const year = Number(today.slice(0, 4));
 
-    let created: Invoice | null = null;
-    for (let attempt = 0; !created; attempt++) {
-      const existing = await this.prisma.invoice.findMany({ where: { number: { startsWith: `SH-${year}-` } }, select: { number: true } });
-      const number = nextInvoiceNumber(year, existing.map((e) => e.number));
-      try {
-        created = await this.prisma.$transaction(async (tx) => {
-          const inv = await tx.invoice.create({
-            data: {
-              number,
-              companyId,
-              companyName: c.nameAr,
-              plan: c.plan,
-              billingCycle,
-              periodStart: day(periodStart!),
-              periodEnd: day(periodEnd),
-              months: amounts.months,
-              employees,
-              unitPrice,
-              subtotal: amounts.subtotal,
-              discountRate: amounts.discountRate,
-              discount: amounts.discount,
-              taxable: amounts.taxable,
-              vatRate: s.billing.vatRate,
-              vat: amounts.vat,
-              total: amounts.total,
-              issueDate: day(today),
-              dueDate: day(dueDate),
-              notes: dto.notes?.trim() || null,
-              createdById: admin.id,
-              createdByName: admin.name,
-            },
-          });
-          await this.platform.logEvent(
-            {
-              companyId,
-              companyName: c.nameAr,
-              type: 'INVOICE_ISSUED',
-              fromStatus: c.status,
-              toStatus: c.status,
-              data: { invoiceId: inv.id, number, total: amounts.total, periodStart, periodEnd },
-              admin: { id: admin.id, name: admin.name },
-            },
-            tx,
-          );
-          return inv;
-        });
-      } catch (e) {
-        if (isUniqueViolation(e) && attempt < 5) continue; // number taken by a concurrent issue → next one
-        throw e;
+    const created = await this.prisma.$transaction(async (tx) => {
+      // one issuer per company at a time: the default period and the overlap check see every committed invoice
+      await tx.$executeRaw(Prisma.sql`SELECT pg_advisory_xact_lock(${ISSUE_LOCK_NS}::int, hashtext(${companyId}))`);
+      const last = await tx.invoice.findFirst({
+        where: { companyId, status: { not: 'CREDITED' }, ...NOT_CREDIT_NOTE },
+        orderBy: { periodEnd: 'desc' },
+        select: { periodEnd: true, anchorDay: true },
+      });
+      let periodStart = dto.periodStart;
+      if (!periodStart) {
+        const after = last ? addDaysStr(dayStr(last.periodEnd)!, 1) : today;
+        periodStart = c.status === 'EXPIRED' && after < today ? today : after;
       }
-    }
+      if (periodStart < addDaysStr(today, -PERIOD_PAST_DAYS) || periodStart > addDaysStr(today, PERIOD_FUTURE_DAYS)) {
+        throw badRequest(
+          `periodStart must be within ${PERIOD_PAST_DAYS} days before and ${PERIOD_FUTURE_DAYS} days after today`,
+          'بداية الفترة يجب أن تكون بين 60 يوماً مضت و90 يوماً قادمة',
+        );
+      }
+      const anchorDay = anchorDayFor(periodStart, last ? { periodEnd: dayStr(last.periodEnd)!, anchorDay: last.anchorDay } : null);
+      const periodEnd = periodEndOf(periodStart, amounts.months, anchorDay);
+      const overlap = await tx.invoice.findFirst({
+        where: { companyId, status: { not: 'CREDITED' }, ...NOT_CREDIT_NOTE, periodStart: { lte: day(periodEnd) }, periodEnd: { gte: day(periodStart) } },
+        select: { number: true },
+      });
+      if (overlap) throw conflict(`Invoice ${overlap.number} already covers this period`, 'توجد فاتورة تغطي هذه الفترة');
+
+      const number = await nextDocumentNumber(tx, 'SH', year);
+      const inv = await tx.invoice.create({
+        data: {
+          number,
+          documentType,
+          companyId,
+          companyName: c.nameAr,
+          plan: c.plan,
+          billingCycle,
+          periodStart: day(periodStart),
+          periodEnd: day(periodEnd),
+          anchorDay,
+          months: amounts.months,
+          employees,
+          unitPrice,
+          subtotal: amounts.subtotal,
+          discountRate: amounts.discountRate,
+          discount: amounts.discount,
+          taxable: amounts.taxable,
+          vatRate,
+          vat: amounts.vat,
+          total: amounts.total,
+          issueDate: day(today),
+          issuedAt: now,
+          dueDate: day(dueDate),
+          seller: sellerSnapshot(s.billing) as unknown as Prisma.InputJsonValue,
+          buyer: buyerSnapshot(c) as unknown as Prisma.InputJsonValue,
+          notes: dto.notes?.trim() || null,
+          createdById: admin.id,
+          createdByName: admin.name,
+        },
+      });
+      await this.platform.logEvent(
+        {
+          companyId,
+          companyName: c.nameAr,
+          type: 'INVOICE_ISSUED',
+          fromStatus: c.status,
+          toStatus: c.status,
+          data: { invoiceId: inv.id, number, documentType, total: amounts.total, periodStart, periodEnd },
+          admin: { id: admin.id, name: admin.name },
+        },
+        tx,
+      );
+      return inv;
+    }, TX_OPTS);
     const v = this.view(created, today);
     if (dto.sendEmail !== false) {
-      await this.deliver(companyId, 'INVOICE_ISSUED', (ownerName) => invoiceIssuedEmail({ companyName: c.nameAr, ownerName, invoice: this.invoiceCtx(v), billing: s.billing }));
+      await this.deliver(companyId, 'INVOICE_ISSUED', (ownerName) => invoiceIssuedEmail({ companyName: c.nameAr, ownerName, invoice: this.invoiceCtx(v), billing: this.bankInfo(v) }));
     }
     return v;
   }
@@ -324,36 +408,42 @@ export class BillingService implements OnModuleInit {
   async pay(admin: PlatformUser, id: string, dto: PayInvoiceDto): Promise<InvoiceView> {
     const inv = await this.prisma.invoice.findUnique({ where: { id } });
     if (!inv) throw invoiceNotFound();
+    if (inv.documentType === 'CREDIT_NOTE') throw badRequest('A credit note cannot be paid', 'لا يمكن تسجيل دفعة على إشعار دائن');
     if (inv.status !== 'ISSUED') throw ALREADY_PROCESSED();
     if (dto.paidAt && !isRealDay(dto.paidAt)) throw badRequest('paidAt is not a valid date', 'تاريخ الدفع غير صحيح');
     const now = new Date();
     const today = todayStr(now);
+    if (dto.paidAt && dto.paidAt > today) throw badRequest('paidAt cannot be in the future', 'تاريخ الدفع لا يمكن أن يكون في المستقبل');
+    if (dto.paidAt && dto.paidAt < dayStr(inv.issueDate)!) throw badRequest('paidAt cannot be before the issue date', 'تاريخ الدفع لا يمكن أن يسبق تاريخ إصدار الفاتورة');
     const paidAt = !dto.paidAt || dto.paidAt === today ? now : riyadhDateTime(dto.paidAt, '12:00');
     const extend = dto.extendSubscription !== false;
 
     let company: Company | null = null;
     await this.prisma.$transaction(async (tx) => {
-      const res = await tx.invoice.updateMany({
-        where: { id, status: 'ISSUED' },
-        data: { status: 'PAID', paidAt, paymentMethod: dto.paymentMethod, paymentRef: dto.paymentRef?.trim() || null },
-      });
-      if (!res.count) throw ALREADY_PROCESSED();
+      // serialise concurrent payments of the same company so no extension is lost
+      await tx.$queryRaw(Prisma.sql`SELECT "id" FROM "Company" WHERE "id" = ${inv.companyId} FOR UPDATE`);
       const c = await tx.company.findUnique({ where: { id: inv.companyId } });
       if (!c) throw companyNotFound();
       const data: Prisma.CompanyUpdateInput = {};
       let toStatus = c.status;
       if (extend) {
         const end = endOfDay(dayStr(inv.periodEnd)!);
-        if (!c.subscriptionEndsAt || c.subscriptionEndsAt < end) data.subscriptionEndsAt = end;
+        const newEnd = !c.subscriptionEndsAt || c.subscriptionEndsAt < end ? end : c.subscriptionEndsAt;
+        if (newEnd.getTime() !== c.subscriptionEndsAt?.getTime()) data.subscriptionEndsAt = newEnd;
         if (c.status === 'TRIAL' || c.status === 'EXPIRED') {
+          if (newEnd <= now) throw badRequest('This invoice period has already ended; issue an invoice for a current period', 'فترة هذه الفاتورة انتهت؛ أصدر فاتورة لفترة حالية');
           toStatus = 'ACTIVE';
           data.status = 'ACTIVE';
           data.trialEndsAt = null;
           if (!c.activatedAt) data.activatedAt = now;
         }
-        if (Object.keys(data).length) company = await tx.company.update({ where: { id: c.id }, data });
       }
-      company = company ?? c;
+      const res = await tx.invoice.updateMany({
+        where: { id, status: 'ISSUED', ...NOT_CREDIT_NOTE },
+        data: { status: 'PAID', paidAt, paymentMethod: dto.paymentMethod, paymentRef: dto.paymentRef?.trim() || null },
+      });
+      if (!res.count) throw ALREADY_PROCESSED();
+      company = Object.keys(data).length ? await tx.company.update({ where: { id: c.id }, data }) : c;
       await this.platform.logEvent(
         {
           companyId: c.id,
@@ -361,12 +451,12 @@ export class BillingService implements OnModuleInit {
           type: 'INVOICE_PAID',
           fromStatus: c.status,
           toStatus,
-          data: { invoiceId: id, number: inv.number, total: num(inv.total), paymentMethod: dto.paymentMethod, paymentRef: dto.paymentRef ?? null, subscriptionEndsAt: company.subscriptionEndsAt },
+          data: { invoiceId: id, number: inv.number, total: num(inv.total), paymentMethod: dto.paymentMethod, paymentRef: dto.paymentRef ?? null, subscriptionEndsAt: (company as Company).subscriptionEndsAt },
           admin: { id: admin.id, name: admin.name },
         },
         tx,
       );
-    });
+    }, TX_OPTS);
     const v = this.view(await this.prisma.invoice.findUniqueOrThrow({ where: { id } }));
     const c = company as Company | null;
     await this.deliver(inv.companyId, 'PAYMENT_RECEIVED', (ownerName) =>
@@ -381,29 +471,77 @@ export class BillingService implements OnModuleInit {
     return v;
   }
 
-  async void(admin: PlatformUser, id: string, dto: VoidInvoiceDto): Promise<InvoiceView> {
-    const inv = await this.prisma.invoice.findUnique({ where: { id } });
-    if (!inv) throw invoiceNotFound();
+  /**
+   * Credit note (v2.1, replaces void): ISSUED or PAID invoice → CREDITED, plus a CREDIT_NOTE document (SHC-<year>-<seq>)
+   * with the same snapshot, lines and amounts. Atomic; the subscription is not changed and no email is sent.
+   */
+  async credit(admin: PlatformUser, id: string, dto: CreditInvoiceDto): Promise<InvoiceView> {
     const reason = dto.reason.trim();
-    if (!reason) throw badRequest('reason is required', 'سبب الإلغاء مطلوب');
-    await this.prisma.$transaction(async (tx) => {
-      const res = await tx.invoice.updateMany({ where: { id, status: 'ISSUED' }, data: { status: 'VOID', voidReason: reason, voidedAt: new Date() } });
+    if (!reason) throw badRequest('reason is required', 'سبب إصدار الإشعار الدائن مطلوب');
+    const now = new Date();
+    const today = todayStr(now);
+    const year = Number(today.slice(0, 4));
+    const cn = await this.prisma.$transaction(async (tx) => {
+      const inv = await tx.invoice.findUnique({ where: { id } });
+      if (!inv) throw invoiceNotFound();
+      if (inv.documentType === 'CREDIT_NOTE') throw ALREADY_PROCESSED();
+      const res = await tx.invoice.updateMany({
+        where: { id, status: { in: ['ISSUED', 'PAID'] }, ...NOT_CREDIT_NOTE },
+        data: { status: 'CREDITED', reason, creditedAt: now },
+      });
       if (!res.count) throw ALREADY_PROCESSED();
+      const number = await nextDocumentNumber(tx, 'SHC', year);
+      const note = await tx.invoice.create({
+        data: {
+          number,
+          documentType: 'CREDIT_NOTE',
+          companyId: inv.companyId,
+          companyName: inv.companyName,
+          status: 'ISSUED',
+          plan: inv.plan,
+          billingCycle: inv.billingCycle,
+          periodStart: inv.periodStart,
+          periodEnd: inv.periodEnd,
+          anchorDay: inv.anchorDay,
+          months: inv.months,
+          employees: inv.employees,
+          unitPrice: inv.unitPrice,
+          subtotal: inv.subtotal,
+          discountRate: inv.discountRate,
+          discount: inv.discount,
+          taxable: inv.taxable,
+          vatRate: inv.vatRate,
+          vat: inv.vat,
+          total: inv.total,
+          issueDate: day(today),
+          issuedAt: now,
+          dueDate: day(today),
+          seller: inv.seller as Prisma.InputJsonValue,
+          buyer: inv.buyer as Prisma.InputJsonValue,
+          reason,
+          creditsInvoiceId: inv.id,
+          creditsNumber: inv.number,
+          createdById: admin.id,
+          createdByName: admin.name,
+        },
+      });
+      await tx.invoice.update({ where: { id }, data: { creditedByNumber: number } });
       const c = await tx.company.findUnique({ where: { id: inv.companyId }, select: { status: true, nameAr: true } });
       await this.platform.logEvent(
         {
           companyId: inv.companyId,
           companyName: c?.nameAr ?? inv.companyName,
-          type: 'INVOICE_VOIDED',
+          type: 'INVOICE_CREDITED',
           fromStatus: c?.status ?? null,
           toStatus: c?.status ?? null,
-          data: { invoiceId: id, number: inv.number, total: num(inv.total), reason },
+          data: { invoiceId: id, number: inv.number, creditNoteId: note.id, creditNoteNumber: number, total: num(inv.total), reason },
           admin: { id: admin.id, name: admin.name },
         },
         tx,
       );
-    });
-    return this.view(await this.prisma.invoice.findUniqueOrThrow({ where: { id } }));
+      return note;
+    }, TX_OPTS);
+    return this.view(cn, today);
   }
 
   // ================= admin: emails =================
@@ -458,11 +596,13 @@ export class BillingService implements OnModuleInit {
 
   /**
    * The reminder job (daily 09:00 Riyadh + POST /admin/reminders/run): persists due expiries first (which send
-   * EXPIRED emails via the expiry listener), then sends due TRIAL_ENDING / SUBSCRIPTION_ENDING / INVOICE_OVERDUE
-   * reminders. Dedupe keys make re-runs no-ops. `sent` counts the reminders of this run that were sent or logged.
+   * EXPIRED emails via the expiry listener) and releases stale "sending…" email claims, then sends due
+   * TRIAL_ENDING / SUBSCRIPTION_ENDING / INVOICE_OVERDUE reminders (catch-up thresholds). Dedupe keys make re-runs no-ops. `sent` counts the reminders of this run that were sent or logged.
    */
   async runReminders(now = new Date()): Promise<{ sent: number }> {
+    await this.mail.releaseStaleClaims(now);
     await this.platform.expireDue(now);
+    await this.platform.settleListeners();
     const s = await this.platform.getSettings();
     if (!s.reminders.enabled) return { sent: 0 };
     const today = todayStr(now);
@@ -471,7 +611,7 @@ export class BillingService implements OnModuleInit {
         where: { OR: [{ status: 'TRIAL', trialEndsAt: { gt: now } }, { status: 'ACTIVE', subscriptionEndsAt: { gt: now } }] },
         select: { id: true, nameAr: true, status: true, plan: true, trialEndsAt: true, subscriptionEndsAt: true },
       }),
-      this.prisma.invoice.findMany({ where: { status: 'ISSUED', dueDate: { lt: day(today) } } }),
+      this.prisma.invoice.findMany({ where: { status: 'ISSUED', dueDate: { lt: day(today) }, ...NOT_CREDIT_NOTE } }),
     ]);
     const due = selectReminders({
       companies,
@@ -490,7 +630,7 @@ export class BillingService implements OnModuleInit {
           const inv = byInvoice.get(r.invoiceId)!;
           const v = this.view(inv, today);
           const name = (await this.prisma.company.findUnique({ where: { id: inv.companyId }, select: { nameAr: true } }))?.nameAr ?? inv.companyName;
-          log = await this.deliver(inv.companyId, 'INVOICE_OVERDUE', (ownerName) => invoiceOverdueEmail({ companyName: name, ownerName, invoice: this.invoiceCtx(v), daysOverdue: r.daysOverdue, billing: s.billing }), {
+          log = await this.deliver(inv.companyId, 'INVOICE_OVERDUE', (ownerName) => invoiceOverdueEmail({ companyName: name, ownerName, invoice: this.invoiceCtx(v), daysOverdue: r.daysOverdue, billing: this.bankInfo(v) }), {
             dedupeKey: r.dedupeKey,
           });
           data = { type: r.type, daysOverdue: r.daysOverdue, invoiceId: inv.id, number: inv.number };

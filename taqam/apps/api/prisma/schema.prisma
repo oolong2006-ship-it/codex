@@ -52,14 +52,26 @@ enum CompanyEventType {
   DELETED
   INVOICE_ISSUED
   INVOICE_PAID
+  /// legacy (v2): kept for historical events only
   INVOICE_VOIDED
   REMINDER_SENT
+  INVOICE_CREDITED
 }
 
 enum InvoiceStatus {
   ISSUED
   PAID
-  VOID
+  /// a credit note was issued against it (v2.1 — replaces VOID)
+  CREDITED
+}
+
+enum InvoiceDocumentType {
+  /// seller VAT-registered: فاتورة ضريبية
+  TAX_INVOICE
+  /// seller not VAT-registered: فاتورة (no VAT)
+  INVOICE
+  /// إشعار دائن against an invoice (series SHC-)
+  CREDIT_NOTE
 }
 
 enum PaymentMethod {
@@ -802,45 +814,72 @@ model PlatformSettings {
 
 /// Subscription invoice issued by the platform to a subscriber company (docs/ADMIN_PORTAL.md v2).
 model Invoice {
-  id            String         @id @default(uuid())
-  /// SH-<issue year>-<4-digit sequence per year>
-  number        String         @unique
-  companyId     String
+  id               String              @id @default(uuid())
+  /// SH-<issue year>-<4-digit sequence per year>; credit notes SHC-<year>-<seq> (InvoiceCounter)
+  number           String              @unique
+  documentType     InvoiceDocumentType @default(TAX_INVOICE)
+  companyId        String
   /// buyer name at issue time
-  companyName   String
-  status        InvoiceStatus  @default(ISSUED)
-  plan          Plan
-  billingCycle  BillingCycle
-  periodStart   DateTime       @db.Date
-  periodEnd     DateTime       @db.Date
-  months        Int
-  employees     Int
-  unitPrice     Decimal        @db.Decimal(10, 2)
-  subtotal      Decimal        @db.Decimal(12, 2)
-  discountRate  Float          @default(0)
-  discount      Decimal        @db.Decimal(12, 2)
-  taxable       Decimal        @db.Decimal(12, 2)
-  vatRate       Float
-  vat           Decimal        @db.Decimal(12, 2)
-  total         Decimal        @db.Decimal(12, 2)
-  issueDate     DateTime       @db.Date
-  dueDate       DateTime       @db.Date
-  paidAt        DateTime?
-  paymentMethod PaymentMethod?
-  paymentRef    String?
-  notes         String?
-  voidReason    String?
-  voidedAt      DateTime?
-  createdById   String?
-  createdByName String?
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
+  companyName      String
+  status           InvoiceStatus       @default(ISSUED)
+  plan             Plan
+  billingCycle     BillingCycle
+  periodStart      DateTime            @db.Date
+  periodEnd        DateTime            @db.Date
+  /// day of month monthly/annual periods are anchored on (null = periodStart's day)
+  anchorDay        Int?
+  months           Int
+  employees        Int
+  unitPrice        Decimal             @db.Decimal(10, 2)
+  subtotal         Decimal             @db.Decimal(12, 2)
+  discountRate     Float               @default(0)
+  discount         Decimal             @db.Decimal(12, 2)
+  taxable          Decimal             @db.Decimal(12, 2)
+  vatRate          Float
+  vat              Decimal             @db.Decimal(12, 2)
+  total            Decimal             @db.Decimal(12, 2)
+  issueDate        DateTime            @db.Date
+  /// issue instant (printed with time)
+  issuedAt         DateTime            @default(now())
+  dueDate          DateTime            @db.Date
+  /// seller snapshot at issue: { name, nameEn, vatNumber, crNumber, address, email, phone, bankName, iban }
+  seller           Json
+  /// buyer snapshot at issue: { nameAr, nameEn, vatNumber, crNumber, address, city }
+  buyer            Json
+  paidAt           DateTime?
+  paymentMethod    PaymentMethod?
+  paymentRef       String?
+  notes            String?
+  /// credit note: why it was issued; credited original: same reason
+  reason           String?
+  /// credit notes: the invoice they credit
+  creditsInvoiceId String?             @unique
+  creditsNumber    String?
+  /// credited originals: the credit note's number
+  creditedByNumber String?
+  creditedAt       DateTime?
+  createdById      String?
+  createdByName    String?
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
 
-  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  company        Company  @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  creditsInvoice Invoice? @relation("CreditNote", fields: [creditsInvoiceId], references: [id], onDelete: NoAction)
+  creditNote     Invoice? @relation("CreditNote")
 
   @@index([companyId])
   @@index([status])
   @@index([dueDate])
+}
+
+/// Gap-free-ish, never-reused document numbers: one row per (series, year), bumped with UPDATE … RETURNING.
+model InvoiceCounter {
+  /// 'SH' (invoices) | 'SHC' (credit notes)
+  series String
+  year   Int
+  last   Int    @default(0)
+
+  @@id([series, year])
 }
 
 /// Outbox / log of every email the platform sends to subscribers. Not FK-bound: kept after a company is deleted.

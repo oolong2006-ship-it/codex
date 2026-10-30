@@ -13,13 +13,15 @@ import {
   IsString,
   Matches,
   Max,
+  MaxLength,
   Min,
   MinLength,
 } from 'class-validator';
+import { cleanNameTransform, NAME_MAX } from '../common/text';
 
 export class UpdateCompanyDto {
-  @ApiPropertyOptional() @IsOptional() @IsString() nameAr?: string;
-  @ApiPropertyOptional() @IsOptional() @IsString() nameEn?: string;
+  @ApiPropertyOptional({ maxLength: NAME_MAX }) @IsOptional() @Transform(cleanNameTransform) @IsString() @MaxLength(NAME_MAX) nameAr?: string;
+  @ApiPropertyOptional({ maxLength: NAME_MAX }) @IsOptional() @Transform(cleanNameTransform) @IsString() @MaxLength(NAME_MAX) nameEn?: string;
   @ApiPropertyOptional() @IsOptional() @IsString() crNumber?: string;
   @ApiPropertyOptional() @IsOptional() @IsString() establishmentId?: string;
   @ApiPropertyOptional() @IsOptional() @IsString() gosiNumber?: string;
