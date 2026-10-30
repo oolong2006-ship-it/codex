@@ -61,6 +61,8 @@ export class CreateEmployeeDto {
   @ApiPropertyOptional() @IsOptional() @Transform(emptyToUndef) @IsString() iban?: string;
   @ApiPropertyOptional() @IsOptional() @IsString() bankCode?: string;
   @ApiPropertyOptional() @IsOptional() @IsBoolean() gosiRegistered?: boolean;
+  /** First GOSI registration: on/after 2024-07-03 ⇒ NEW Social Insurance Law regime; null ⇒ LEGACY. */
+  @ApiPropertyOptional({ example: '2025-01-10', nullable: true }) @IsOptional() @Transform(emptyToUndef) @Matches(DATE) gosiFirstRegisteredAt?: string | null;
   @ApiPropertyOptional() @IsOptional() @IsInt() @Min(1) @Max(12) hoursPerDay?: number;
   @ApiPropertyOptional() @IsOptional() @IsString() avatarColor?: string;
   @ApiPropertyOptional() @IsOptional() @IsNumber() @Min(0) annualLeaveCarryOver?: number;

@@ -27,7 +27,7 @@ const empty: FormState = {
   firstNameAr: '', lastNameAr: '', fullNameEn: '', nationality: 'SA', gender: 'MALE', birthDate: '', maritalStatus: '',
   nationalId: '', idExpiry: '', passportNumber: '', passportExpiry: '', phone: '', email: '',
   branchId: '', departmentId: '', managerId: '', jobTitle: '', hireDate: '', contractType: 'UNLIMITED', contractEndDate: '', probationEndDate: '',
-  basicSalary: '', housingAllowance: '', transportAllowance: '', otherAllowances: '0', iban: '', bankCode: '', gosiRegistered: true, hoursPerDay: '8',
+  basicSalary: '', housingAllowance: '', transportAllowance: '', otherAllowances: '0', iban: '', bankCode: '', gosiRegistered: true, gosiFirstRegisteredAt: '', hoursPerDay: '8',
   createLogin: false, loginEmail: '', loginPassword: '',
 };
 const d10 = (v?: string | null) => (v ? v.slice(0, 10) : '');
@@ -41,6 +41,7 @@ function fromEmployee(e: Employee): FormState {
     hireDate: d10(e.hireDate), contractType: e.contractType, contractEndDate: d10(e.contractEndDate), probationEndDate: d10(e.probationEndDate),
     basicSalary: String(e.basicSalary ?? ''), housingAllowance: String(e.housingAllowance ?? ''), transportAllowance: String(e.transportAllowance ?? ''),
     otherAllowances: String(e.otherAllowances ?? 0), iban: e.iban ?? '', bankCode: e.bankCode ?? '', gosiRegistered: !!e.gosiRegistered, hoursPerDay: String(e.hoursPerDay ?? 8),
+    gosiFirstRegisteredAt: d10(e.gosiFirstRegisteredAt),
   };
 }
 
@@ -90,6 +91,7 @@ export function EmployeeFormModal({ open, onClose, employee, onSaved, initialSec
       contractEndDate: s('contractType') === 'FIXED' ? opt('contractEndDate') : null, probationEndDate: opt('probationEndDate'),
       basicSalary: n('basicSalary'), housingAllowance: n('housingAllowance'), transportAllowance: n('transportAllowance'), otherAllowances: n('otherAllowances'),
       iban: opt('iban')?.replace(/\s/g, '').toUpperCase() ?? null, bankCode: opt('bankCode'), gosiRegistered: !!f.gosiRegistered, hoursPerDay: n('hoursPerDay') || 8,
+      gosiFirstRegisteredAt: opt('gosiFirstRegisteredAt'),
     };
     if (!editing && f.createLogin) body.createUser = { email: s('loginEmail').trim(), password: s('loginPassword') };
     let saved: Employee | null = null;
@@ -181,6 +183,13 @@ export function EmployeeFormModal({ open, onClose, employee, onSaved, initialSec
             <Field label={t('رمز البنك', 'Bank code')}><Input dir="ltr" value={s('bankCode')} onChange={set('bankCode')} placeholder={s('iban').length >= 6 ? s('iban').slice(4, 6) : ''} /></Field>
           </div>
           <Toggle checked={!!f.gosiRegistered} onChange={(v) => setF((x) => ({ ...x, gosiRegistered: v }))} label={t('مسجل في التأمينات الاجتماعية (GOSI)', 'Registered in GOSI')} />
+          {!!f.gosiRegistered && (
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <Field label={t('تاريخ أول تسجيل في التأمينات', 'First GOSI registration date')} hint={t('يحدد نظام النسب (القديم/الجديد)', 'Sets the contribution regime (legacy/new)')}>
+                <Input type="date" value={s('gosiFirstRegisteredAt')} onChange={set('gosiFirstRegisteredAt')} />
+              </Field>
+            </div>
+          )}
         </div>
       )}
 

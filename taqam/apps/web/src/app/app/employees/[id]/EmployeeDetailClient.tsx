@@ -2,6 +2,7 @@
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { gosiRegime } from '@taqam/core';
 import { ArrowRight, Building2, Calendar, Mail, Pencil, Phone, BadgeCheck } from 'lucide-react';
 import { Badge, Button, Card, CardBody, CardHeader, Tabs } from '@/components/ui';
 import { Async, Avatar, KV, StatusBadge } from '@/components/app/primitives';
@@ -161,7 +162,21 @@ export default function EmployeeDetailPage() {
                         { label: 'IBAN', value: <span className="num" dir="ltr">{e.iban || '—'}</span> },
                         { label: t('رمز البنك', 'Bank code'), value: <span className="num">{e.bankCode || '—'}</span> },
                         { label: t('التأمينات الاجتماعية', 'GOSI'), value: e.gosiRegistered ? <Badge tone="success">{t('مسجل', 'Registered')}</Badge> : <Badge tone="warning">{t('غير مسجل', 'Not registered')}</Badge> },
+                        ...(e.gosiRegistered && e.isSaudi ? [{
+                          label: t('نظام نسب التأمينات', 'GOSI regime'),
+                          value: (
+                            <span className="inline-flex flex-wrap items-center gap-2">
+                              {gosiRegime(true, e.gosiFirstRegisteredAt ? e.gosiFirstRegisteredAt.slice(0, 10) : null) === 'NEW'
+                                ? <Badge tone="info">{t('النظام الجديد', 'New regime')}</Badge>
+                                : <Badge tone="neutral">{t('النظام القديم', 'Legacy regime')}</Badge>}
+                              {e.gosiFirstRegisteredAt && <span className="text-xs text-ink-soft">{t('أول تسجيل', 'First registered')} {date(e.gosiFirstRegisteredAt, lang)}</span>}
+                            </span>
+                          ),
+                        }] : []),
                       ]} /></div>
+                      {e.gosiRegistered && e.isSaudi && (
+                        <p className="text-xs text-ink-soft">{t('النسب وفق نظام التأمينات الجديد؛ يُنصح بمطابقتها مع التأمينات', 'Rates follow the new Social Insurance Law; reconcile them with GOSI.')}</p>
+                      )}
                     </CardBody>
                   </Card>
                 ) : null}

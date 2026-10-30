@@ -3,7 +3,7 @@
  * Every calculation is delegated to @taqam/core exactly like the real backend.
  */
 import {
-  annualLeaveBalance, calculateAttendance, calculatePayslip, countLeaveDays, serviceDuration, sickLeavePay,
+  annualLeaveBalance, calculateAttendance, calculatePayslip, countLeaveDays, gosiRatesFor, serviceDuration, sickLeavePay,
   type AttendanceCalc, type GosiRates, type PayslipResult, type WageComponents,
 } from '@taqam/core';
 import { payslipHref } from '@/lib/paths';
@@ -268,7 +268,8 @@ export class Services {
       const result: PayslipResult = calculatePayslip({
         period: run.period, wage, isSaudi: e.isSaudi, hireDate: e.hireDate, terminationDate: e.terminationDate, overtimeHours, absentDays,
         unpaidLeaveDays, sickLeaveDeduction, additions, deductions: otherDeductions, loanDeduction: loanRequested,
-        gosiRates: e.gosiRegistered ? undefined : NO_GOSI, hoursPerDay: e.hoursPerDay,
+        // New Social Insurance Law: the Saudi pension rate depends on the first-registration regime and the period.
+        gosiRates: e.gosiRegistered ? gosiRatesFor({ isSaudi: e.isSaudi, firstRegisteredAt: e.gosiFirstRegisteredAt }, run.period) : NO_GOSI, hoursPerDay: e.hoursPerDay,
       });
       let loanApplied = result.deductions.find((d) => d.code === 'LOAN')?.amount ?? 0;
       const loanDeductions = loanParts

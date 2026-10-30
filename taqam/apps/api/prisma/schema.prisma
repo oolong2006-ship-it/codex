@@ -315,46 +315,48 @@ model User {
 }
 
 model Employee {
-  id                   String         @id @default(uuid())
-  companyId            String
-  employeeNumber       String
-  firstNameAr          String
-  lastNameAr           String
-  fullNameEn           String?
-  nationality          String
-  isSaudi              Boolean        @default(false)
-  gender               Gender
-  birthDate            DateTime?      @db.Date
-  maritalStatus        String?
-  nationalId           String
-  idExpiry             DateTime?      @db.Date
-  passportNumber       String?
-  passportExpiry       DateTime?      @db.Date
-  phone                String?
-  email                String?
-  branchId             String?
-  departmentId         String?
-  managerId            String?
-  jobTitle             String?
-  hireDate             DateTime       @db.Date
-  contractType         ContractType   @default(UNLIMITED)
-  contractEndDate      DateTime?      @db.Date
-  probationEndDate     DateTime?      @db.Date
-  status               EmployeeStatus @default(ACTIVE)
-  terminationDate      DateTime?      @db.Date
-  terminationReason    String?
-  basicSalary          Decimal        @default(0) @db.Decimal(12, 2)
-  housingAllowance     Decimal        @default(0) @db.Decimal(12, 2)
-  transportAllowance   Decimal        @default(0) @db.Decimal(12, 2)
-  otherAllowances      Decimal        @default(0) @db.Decimal(12, 2)
-  iban                 String?
-  bankCode             String?
-  gosiRegistered       Boolean        @default(true)
-  hoursPerDay          Int            @default(8)
-  avatarColor          String         @default("#1F7A7C")
-  annualLeaveCarryOver Decimal        @default(0) @db.Decimal(6, 2)
-  createdAt            DateTime       @default(now())
-  updatedAt            DateTime       @updatedAt
+  id                    String         @id @default(uuid())
+  companyId             String
+  employeeNumber        String
+  firstNameAr           String
+  lastNameAr            String
+  fullNameEn            String?
+  nationality           String
+  isSaudi               Boolean        @default(false)
+  gender                Gender
+  birthDate             DateTime?      @db.Date
+  maritalStatus         String?
+  nationalId            String
+  idExpiry              DateTime?      @db.Date
+  passportNumber        String?
+  passportExpiry        DateTime?      @db.Date
+  phone                 String?
+  email                 String?
+  branchId              String?
+  departmentId          String?
+  managerId             String?
+  jobTitle              String?
+  hireDate              DateTime       @db.Date
+  contractType          ContractType   @default(UNLIMITED)
+  contractEndDate       DateTime?      @db.Date
+  probationEndDate      DateTime?      @db.Date
+  status                EmployeeStatus @default(ACTIVE)
+  terminationDate       DateTime?      @db.Date
+  terminationReason     String?
+  basicSalary           Decimal        @default(0) @db.Decimal(12, 2)
+  housingAllowance      Decimal        @default(0) @db.Decimal(12, 2)
+  transportAllowance    Decimal        @default(0) @db.Decimal(12, 2)
+  otherAllowances       Decimal        @default(0) @db.Decimal(12, 2)
+  iban                  String?
+  bankCode              String?
+  gosiRegistered        Boolean        @default(true)
+  /// First GOSI registration — on/after 2024-07-03 ⇒ NEW Social Insurance Law regime (null ⇒ LEGACY)
+  gosiFirstRegisteredAt DateTime?      @db.Date
+  hoursPerDay           Int            @default(8)
+  avatarColor           String         @default("#1F7A7C")
+  annualLeaveCarryOver  Decimal        @default(0) @db.Decimal(6, 2)
+  createdAt             DateTime       @default(now())
+  updatedAt             DateTime       @updatedAt
 
   company          Company             @relation(fields: [companyId], references: [id], onDelete: Cascade)
   branch           Branch?             @relation("EmployeeBranch", fields: [branchId], references: [id], onDelete: SetNull)

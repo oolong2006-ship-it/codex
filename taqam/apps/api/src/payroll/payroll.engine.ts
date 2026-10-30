@@ -3,7 +3,7 @@
  * Kept framework-free (takes a PrismaClient) so the seed script runs the exact same logic.
  */
 import { AdjustmentType, Prisma, PrismaClient } from '@prisma/client';
-import { calculatePayslip, calendarDays, GosiRates, PayslipResult, sickLeavePay, WageComponents } from '@taqam/core';
+import { calculatePayslip, calendarDays, GosiRates, gosiRatesFor, PayslipResult, sickLeavePay, WageComponents } from '@taqam/core';
 import { addDays, maxDate, minDate, periodRange } from '../common/dates';
 import { num, r2 } from '../common/money';
 
@@ -134,7 +134,8 @@ export async function calculatePayrollRun(db: PrismaClient, companyId: string, r
       additions,
       deductions: otherDeductions,
       loanDeduction: loanRequested,
-      gosiRates: e.gosiRegistered ? undefined : NO_GOSI,
+      // New Social Insurance Law: the Saudi pension rate depends on the first-registration regime and the period.
+      gosiRates: e.gosiRegistered ? gosiRatesFor({ isSaudi: e.isSaudi, firstRegisteredAt: e.gosiFirstRegisteredAt }, run.period) : NO_GOSI,
       hoursPerDay: e.hoursPerDay,
     });
 

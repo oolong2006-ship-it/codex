@@ -21,7 +21,7 @@ import { CreateEmployeeDto, DocumentDto, TerminateDto, UpdateEmployeeDto } from 
 import { employeeInclude, employeeView, fullName } from './employee.view';
 
 const AVATAR_COLORS = ['#0F3D3E', '#145A5C', '#1F7A7C', '#F2A541', '#3B7EA1', '#2E8B57', '#C8553D', '#7A5C99'];
-const DATE_FIELDS = ['birthDate', 'idExpiry', 'passportExpiry', 'hireDate', 'contractEndDate', 'probationEndDate', 'terminationDate'] as const;
+const DATE_FIELDS = ['birthDate', 'idExpiry', 'passportExpiry', 'hireDate', 'contractEndDate', 'probationEndDate', 'terminationDate', 'gosiFirstRegisteredAt'] as const;
 
 export interface EmployeeQuery {
   page?: string;

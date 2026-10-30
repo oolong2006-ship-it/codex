@@ -84,7 +84,9 @@ export interface Employee {
   hireDate: string; contractType: 'UNLIMITED' | 'FIXED'; contractEndDate: string | null; probationEndDate: string | null;
   status: 'ACTIVE' | 'ON_LEAVE' | 'TERMINATED'; terminationDate: string | null; terminationReason: string | null;
   basicSalary: number; housingAllowance: number; transportAllowance: number; otherAllowances: number; iban: string | null;
-  bankCode: string | null; gosiRegistered: boolean; hoursPerDay: number; avatarColor: string; annualLeaveCarryOver: number;
+  bankCode: string | null; gosiRegistered: boolean;
+  /** First GOSI registration (YYYY-MM-DD): on/after 2024-07-03 ⇒ NEW Social Insurance Law regime; null ⇒ LEGACY. */
+  gosiFirstRegisteredAt: string | null; hoursPerDay: number; avatarColor: string; annualLeaveCarryOver: number;
   createdAt: string; updatedAt: string;
 }
 export interface EmployeeDocument {
@@ -207,7 +209,7 @@ export interface DB {
 }
 
 export const STORAGE_KEY = 'taqam.demo.v2';
-export const DB_VERSION = 7;
+export const DB_VERSION = 8;
 /** Seeded data is relative to "today"; a snapshot older than this is re-seeded so attendance and payroll stay current. */
 export const MAX_AGE_DAYS = 7;
 

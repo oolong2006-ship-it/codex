@@ -66,6 +66,8 @@ export interface Employee {
   status: EmployeeStatus; terminationDate?: string | null; terminationReason?: TerminationReason | null;
   basicSalary: number; housingAllowance: number; transportAllowance: number; otherAllowances: number;
   iban?: string | null; bankCode?: string | null; gosiRegistered: boolean; hoursPerDay: number;
+  /** First GOSI registration: on/after 2024-07-03 ⇒ NEW Social Insurance Law regime; null ⇒ LEGACY. */
+  gosiFirstRegisteredAt?: string | null;
   avatarColor?: string | null; createdAt: string;
 }
 export type DocumentType = 'IQAMA' | 'PASSPORT' | 'CONTRACT' | 'CERTIFICATE' | 'INSURANCE' | 'OTHER';

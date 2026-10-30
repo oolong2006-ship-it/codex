@@ -7,6 +7,7 @@ import {
   calculatePayslip, validateSaudiIban, bankCodeFromIban, generateWpsCsv, makeSaudiIban,
   saudizationRate, nitaqatBand, hiresNeededForBand, DEFAULT_NITAQAT_THRESHOLDS,
   daysUntil, expiryStatus, resignationFactor, calendarDays, WageComponents, ShiftDef, WpsEmployeeRow,
+  gosiRegime, saudiPensionRate, gosiRatesFor, NEW_REGIME_PENSION_SCHEDULE,
 } from './index';
 
 const W10K: WageComponents = { basic: 7000, housing: 2000, transport: 1000, other: 0 };
@@ -78,6 +79,54 @@ describe('GOSI', () => {
   });
   it('exposes defaults', () => {
     expect(DEFAULT_GOSI_RATES).toMatchObject({ saudiEmployee: 0.0975, saudiEmployer: 0.1175, nonSaudiEmployee: 0, nonSaudiEmployer: 0.02, minBase: 1500, maxBase: 45000 });
+  });
+});
+
+describe('GOSI two regimes (new Social Insurance Law)', () => {
+  it('regime: Saudi registered on/after 2024-07-03 is NEW, otherwise LEGACY', () => {
+    expect(gosiRegime(true, '2024-07-02')).toBe('LEGACY');
+    expect(gosiRegime(true, '2024-07-03')).toBe('NEW');
+    expect(gosiRegime(true, new Date('2025-03-01T00:00:00Z'))).toBe('NEW');
+    expect(gosiRegime(true, null)).toBe('LEGACY');
+    expect(gosiRegime(false, '2025-01-01')).toBe('LEGACY');
+  });
+  it('pension rate: NEW steps up each July, LEGACY stays 9%', () => {
+    expect(saudiPensionRate('NEW', '2025-06')).toBe(0.09);
+    expect(saudiPensionRate('NEW', '2025-07')).toBe(0.095);
+    expect(saudiPensionRate('NEW', '2026-06')).toBe(0.095);
+    expect(saudiPensionRate('NEW', '2026-07')).toBe(0.10);
+    expect(saudiPensionRate('NEW', '2027-07')).toBe(0.105);
+    expect(saudiPensionRate('NEW', '2028-06')).toBe(0.105);
+    expect(saudiPensionRate('NEW', '2028-07')).toBe(0.11);
+    expect(saudiPensionRate('NEW', '2031-01')).toBe(0.11);
+    expect(saudiPensionRate('LEGACY', '2030-01')).toBe(0.09);
+    expect(saudiPensionRate('LEGACY', '2024-01')).toBe(0.09);
+  });
+  it('schedule is a sorted data table', () => {
+    expect(NEW_REGIME_PENSION_SCHEDULE.map((s) => s.from)).toEqual(['2025-07', '2026-07', '2027-07', '2028-07']);
+  });
+  it('gosiRatesFor: NEW Saudi in 2026-07 → 10.75% / 12.75%', () => {
+    const r = gosiRatesFor({ isSaudi: true, firstRegisteredAt: '2025-01-10' }, '2026-07');
+    expect(r.saudiEmployee).toBeCloseTo(0.1075, 6); // 10% + 0.75% SANED
+    expect(r.saudiEmployer).toBeCloseTo(0.1275, 6); // 10% + 0.75% + 2%
+    expect(calculateGosi({ basic: 10000, housing: 2500, isSaudi: true }, r).employee).toBe(1343.75);
+    expect(calculateGosi({ basic: 10000, housing: 2500, isSaudi: true }, r).employer).toBe(1593.75);
+  });
+  it('gosiRatesFor: LEGACY Saudi and non-Saudi keep the defaults', () => {
+    const legacy = gosiRatesFor({ isSaudi: true, firstRegisteredAt: null }, '2026-07');
+    expect(legacy).toEqual({ ...DEFAULT_GOSI_RATES });
+    expect(legacy.saudiEmployee).toBeCloseTo(0.0975, 6);
+    const nonSaudi = gosiRatesFor({ isSaudi: false, firstRegisteredAt: '2025-01-10' }, '2026-07');
+    expect(nonSaudi).toEqual({ ...DEFAULT_GOSI_RATES });
+    expect(calculateGosi({ basic: 10000, housing: 2500, isSaudi: false }, nonSaudi)).toEqual({
+      base: 12500, employee: 0, employer: 250, total: 250,
+    });
+  });
+  it('gosiRatesFor: base clamp unchanged', () => {
+    const r = gosiRatesFor({ isSaudi: true, firstRegisteredAt: '2024-08-01' }, '2028-07');
+    expect(r.minBase).toBe(1500);
+    expect(r.maxBase).toBe(45000);
+    expect(calculateGosi({ basic: 60000, housing: 0, isSaudi: true }, r).base).toBe(45000);
   });
 });
 
@@ -544,5 +593,15 @@ describe('documents', () => {
     expect(expiryStatus('2025-04-02', f)).toBe('OK');
     expect(expiryStatus(null, f)).toBe('NONE');
     expect(expiryStatus(undefined)).toBe('NONE');
+  });
+});
+
+describe('GOSI two regimes — robustness', () => {
+  it('treats an impossible registration date as LEGACY instead of throwing', () => {
+    expect(gosiRegime(true, '2025-02-30')).toBe('LEGACY');
+    expect(gosiRegime(true, 'not-a-date')).toBe('LEGACY');
+  });
+  it('rejects a malformed period instead of guessing a rate', () => {
+    expect(() => saudiPensionRate('NEW', '2026-1')).toThrow(/YYYY-MM/);
   });
 });

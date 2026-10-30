@@ -1,6 +1,6 @@
 /** Demo API — auth, public, dashboard, settings, organization, employees, attendance (ports of apps/api controllers). */
 import {
-  SAUDI_LEAVE_POLICIES, bankCodeFromIban, calculateEndOfService, calculateGosi, expiryStatus, nitaqatBand, saudizationRate, validateSaudiIban,
+  SAUDI_LEAVE_POLICIES, bankCodeFromIban, calculateEndOfService, calculateGosi, expiryStatus, gosiRatesFor, nitaqatBand, saudizationRate, validateSaudiIban,
   type TerminationReason,
 } from '@taqam/core';
 import { newEmployeeId, NEW_EMPLOYEE_POOL } from './ids';
@@ -74,13 +74,13 @@ export function resolveUser(db: DB, svc: Services, token: string | null): AuthUs
 }
 
 // ---------- employees helpers ----------
-const EMP_DATE_FIELDS = ['birthDate', 'idExpiry', 'passportExpiry', 'hireDate', 'contractEndDate', 'probationEndDate', 'terminationDate'] as const;
+const EMP_DATE_FIELDS = ['birthDate', 'idExpiry', 'passportExpiry', 'hireDate', 'contractEndDate', 'probationEndDate', 'terminationDate', 'gosiFirstRegisteredAt'] as const;
 const EMP_FIELDS = [
   'employeeNumber', 'firstNameAr', 'lastNameAr', 'fullNameEn', 'nationality', 'gender', 'birthDate', 'maritalStatus', 'nationalId', 'idExpiry', 'passportNumber',
   'passportExpiry', 'phone', 'email', 'branchId', 'departmentId', 'managerId', 'jobTitle', 'hireDate', 'contractType', 'contractEndDate', 'probationEndDate', 'status',
-  'basicSalary', 'housingAllowance', 'transportAllowance', 'otherAllowances', 'iban', 'bankCode', 'gosiRegistered', 'hoursPerDay', 'avatarColor', 'annualLeaveCarryOver',
+  'basicSalary', 'housingAllowance', 'transportAllowance', 'otherAllowances', 'iban', 'bankCode', 'gosiRegistered', 'gosiFirstRegisteredAt', 'hoursPerDay', 'avatarColor', 'annualLeaveCarryOver',
 ] as const;
-const EMPTY_TO_UNDEF = new Set(['birthDate', 'idExpiry', 'passportExpiry', 'email', 'branchId', 'departmentId', 'managerId', 'contractEndDate', 'probationEndDate', 'iban', 'terminationDate']);
+const EMPTY_TO_UNDEF = new Set(['birthDate', 'idExpiry', 'passportExpiry', 'email', 'branchId', 'departmentId', 'managerId', 'contractEndDate', 'probationEndDate', 'iban', 'terminationDate', 'gosiFirstRegisteredAt']);
 
 function employeeDto(body: Record<string, unknown>, partial: boolean) {
   const dto = pick(body, partial ? [...EMP_FIELDS, 'terminationDate', 'terminationReason'] : EMP_FIELDS);
@@ -323,9 +323,11 @@ export const coreRoutes: Route[] = [
     let monthlyPayrollCostSource: 'LAST_RUN' | 'ESTIMATE';
     if (lastApproved && u.role !== 'BRANCH_MANAGER') { monthlyPayrollCost = lastApproved.totalEmployerCost; monthlyPayrollCostSource = 'LAST_RUN'; }
     else {
+      const period = today.slice(0, 7);
       monthlyPayrollCost = r2(employees.reduce((s, e) => {
         const wage = e.basicSalary + e.housingAllowance + e.transportAllowance + e.otherAllowances;
-        const gosi = e.gosiRegistered ? calculateGosi({ basic: e.basicSalary, housing: e.housingAllowance, isSaudi: e.isSaudi }).employer : 0;
+        const rates = gosiRatesFor({ isSaudi: e.isSaudi, firstRegisteredAt: e.gosiFirstRegisteredAt }, period);
+        const gosi = e.gosiRegistered ? calculateGosi({ basic: e.basicSalary, housing: e.housingAllowance, isSaudi: e.isSaudi }, rates).employer : 0;
         return s + wage + gosi;
       }, 0));
       monthlyPayrollCostSource = 'ESTIMATE';
@@ -587,7 +589,7 @@ export const coreRoutes: Route[] = [
       maritalStatus: null, nationalId: '', idExpiry: null, passportNumber: null, passportExpiry: null, phone: null, email: null, branchId: null, departmentId: null,
       managerId: null, jobTitle: null, hireDate: todayStr(), contractType: 'UNLIMITED', contractEndDate: null, probationEndDate: null, status: 'ACTIVE',
       terminationDate: null, terminationReason: null, basicSalary: 0, housingAllowance: 0, transportAllowance: 0, otherAllowances: 0, iban: null, bankCode: null,
-      gosiRegistered: true, hoursPerDay: 8, avatarColor: AVATAR_COLORS[mine.length % AVATAR_COLORS.length], annualLeaveCarryOver: 0, createdAt: now, updatedAt: now,
+      gosiRegistered: true, gosiFirstRegisteredAt: null, hoursPerDay: 8, avatarColor: AVATAR_COLORS[mine.length % AVATAR_COLORS.length], annualLeaveCarryOver: 0, createdAt: now, updatedAt: now,
       ...data, employeeNumber,
     } as Employee;
     if (!dto.avatarColor) e.avatarColor = AVATAR_COLORS[mine.length % AVATAR_COLORS.length];

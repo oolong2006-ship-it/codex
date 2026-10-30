@@ -99,6 +99,56 @@ describe('payroll engine', () => {
     expect(data.totalEmployerCost).toBe(expected.employerCost);
   });
 
+  describe('GOSI two regimes (new Social Insurance Law)', () => {
+    const july2026 = (emp: Record<string, unknown>) =>
+      fakeDb({
+        payrollRun: { findFirst: jest.fn(async () => ({ id: 'run1', companyId: 'c1', period: '2026-07', status: 'DRAFT' })) },
+        attendanceRecord: { groupBy: jest.fn(async () => []) },
+        leaveRequest: { findMany: jest.fn(async () => []) },
+        payrollAdjustment: { findMany: jest.fn(async () => []) },
+        loan: { findMany: jest.fn(async () => []) },
+        employee: {
+          findMany: jest.fn(async () => [
+            {
+              id: 'e1',
+              isSaudi: true,
+              hireDate: D('2020-01-01'),
+              terminationDate: null,
+              basicSalary: dec(10000),
+              housingAllowance: dec(2500),
+              transportAllowance: dec(0),
+              otherAllowances: dec(0),
+              gosiRegistered: true,
+              gosiFirstRegisteredAt: null,
+              hoursPerDay: 8,
+              ...emp,
+            },
+          ]),
+        },
+      });
+
+    it('a NEW-regime Saudi (first registered 2025-01-10) pays 10.75% in 2026-07; employer 12.75%', async () => {
+      const { db, created } = july2026({ gosiFirstRegisteredAt: D('2025-01-10') });
+      await calculatePayrollRun(db as never, 'c1', 'run1');
+      expect(created[0].gosiEmployee).toBe(1343.75); // 12,500 × 10.75%
+      expect(created[0].gosiEmployer).toBe(1593.75); // 12,500 × 12.75%
+    });
+
+    it('a LEGACY Saudi (no first-registration date) still pays 9.75% / 11.75%', async () => {
+      const { db, created } = july2026({ gosiFirstRegisteredAt: null });
+      await calculatePayrollRun(db as never, 'c1', 'run1');
+      expect(created[0].gosiEmployee).toBe(1218.75); // 12,500 × 9.75%
+      expect(created[0].gosiEmployer).toBe(1468.75);
+    });
+
+    it('an employee not registered in GOSI pays nothing regardless of regime', async () => {
+      const { db, created } = july2026({ gosiRegistered: false, gosiFirstRegisteredAt: D('2025-01-10') });
+      await calculatePayrollRun(db as never, 'c1', 'run1');
+      expect(created[0].gosiEmployee).toBe(0);
+      expect(created[0].gosiEmployer).toBe(0);
+    });
+  });
+
   it('refuses to recalculate an approved run', async () => {
     const { db } = fakeDb({
       payrollRun: { findFirst: jest.fn(async () => ({ id: 'run1', period: '2026-09', status: 'APPROVED' })) },

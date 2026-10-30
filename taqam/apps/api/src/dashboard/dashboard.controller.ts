@@ -1,6 +1,6 @@
 import { Controller, Get, Module } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import { calculateGosi, expiryStatus, nitaqatBand, saudizationRate } from '@taqam/core';
+import { calculateGosi, expiryStatus, gosiRatesFor, nitaqatBand, saudizationRate } from '@taqam/core';
 import { PrismaService } from '../prisma/prisma.service';
 import { ScopeService } from '../shared/scope.service';
 import { AttendanceCalcService } from '../shared/attendance-calc.service';
@@ -37,6 +37,7 @@ export class DashboardController {
         transportAllowance: true,
         otherAllowances: true,
         gosiRegistered: true,
+        gosiFirstRegisteredAt: true,
       },
     });
     const headcount = employees.length;
@@ -68,10 +69,12 @@ export class DashboardController {
       monthlyPayrollCost = num(lastApproved.totalEmployerCost);
       monthlyPayrollCostSource = 'LAST_RUN';
     } else {
+      const period = today.slice(0, 7);
       monthlyPayrollCost = r2(
         employees.reduce((s, e) => {
           const wage = num(e.basicSalary) + num(e.housingAllowance) + num(e.transportAllowance) + num(e.otherAllowances);
-          const gosi = e.gosiRegistered ? calculateGosi({ basic: num(e.basicSalary), housing: num(e.housingAllowance), isSaudi: e.isSaudi }).employer : 0;
+          const rates = gosiRatesFor({ isSaudi: e.isSaudi, firstRegisteredAt: e.gosiFirstRegisteredAt }, period);
+          const gosi = e.gosiRegistered ? calculateGosi({ basic: num(e.basicSalary), housing: num(e.housingAllowance), isSaudi: e.isSaudi }, rates).employer : 0;
           return s + wage + gosi;
         }, 0),
       );

@@ -90,6 +90,8 @@ const PEOPLE: Seed[] = [
   { key: 'left', b: 'MALQA', first: 'كريم', last: 'منصور', en: 'Karim Mansour', nat: 'EG', g: 'MALE', dept: 'SERVICE', title: 'نادل', basic: 2600, hire: '2021-03-14', shift: 'E', terminated: { date: 'PREV2-20', reason: 'RESIGNATION' } },
 ];
 const HABITUALLY_LATE = new Set(['o10', 'm8', 'd6']);
+/** Saudis first registered in GOSI on/after 2024-07-03 → NEW Social Insurance Law regime (registered on their hire date). */
+const GOSI_FIRST_REGISTERED: Record<string, string> = { m3: '2025-01-19', d2: '2025-03-09', j3: '2026-09-15' };
 
 function plusMonths(d: string, n: number): string {
   const x = day(d);
@@ -197,7 +199,7 @@ export function buildSeed(now: Date = new Date()): DB {
       jobTitle: p.title, hireDate: p.hire, contractType: isSaudi ? 'UNLIMITED' : 'FIXED', contractEndDate, probationEndDate: addDays(p.hire, 90),
       status: p.terminated ? 'TERMINATED' : 'ACTIVE', terminationDate, terminationReason: p.terminated?.reason ?? null, basicSalary: p.basic,
       housingAllowance: Math.round(p.basic * 0.25), transportAllowance: Math.max(300, Math.round(p.basic * 0.1)), otherAllowances: p.other ?? 0,
-      iban, bankCode: bank, gosiRegistered: true, hoursPerDay: 8, avatarColor: COLORS[n % COLORS.length], annualLeaveCarryOver: years > 1 ? randInt(4, 15) : 0,
+      iban, bankCode: bank, gosiRegistered: true, gosiFirstRegisteredAt: GOSI_FIRST_REGISTERED[p.key] ?? null, hoursPerDay: 8, avatarColor: COLORS[n % COLORS.length], annualLeaveCarryOver: years > 1 ? randInt(4, 15) : 0,
       createdAt: ts(p.hire), updatedAt: createdAt,
     };
     db.employees.push(rec);
