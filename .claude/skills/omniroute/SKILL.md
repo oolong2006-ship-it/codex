@@ -125,6 +125,31 @@ omniroute configure claude      # or: omniroute run claude --model openai/gpt-5.
 omniroute configure codex       # or: omniroute run codex --model glm/glm-5.2
 ```
 
+### `omniroute setup-claude` (per-model Claude Code profiles)
+
+This command reads `/v1/models` from a running OmniRoute and writes one
+`~/.claude/profiles/<name>/settings.json` per model. Each file sets
+`ANTHROPIC_BASE_URL`, `ANTHROPIC_MODEL` and `model`. It never changes the
+default `~/.claude/settings.json`, and it never writes the API key to disk.
+
+```bash
+omniroute setup-claude --dry-run                    # preview, writes nothing
+omniroute setup-claude --api-key "$OMNIROUTE_API_KEY"
+omniroute setup-claude --remote http://192.168.0.15:20128 --api-key ...
+omniroute setup-claude --only glm,kimi              # only models whose id matches
+
+# launch a profile (the token is injected from the active context)
+omniroute launch --profile <name>
+# or by hand:
+export ANTHROPIC_AUTH_TOKEN="$OMNIROUTE_API_KEY"
+CLAUDE_CONFIG_DIR=~/.claude/profiles/<name> claude
+```
+
+Options: `--port` (default 20128), `--remote <url>`, `--api-key` (default
+`OMNIROUTE_API_KEY`), `--claude-home <dir>`, `--only <list>`, `--dry-run`.
+Re-running overwrites each profile in place. OmniRoute must already be running
+and have at least one provider connected, or the command can't fetch models.
+
 ## Adding the MCP server to Claude Code
 
 ```bash
@@ -158,8 +183,9 @@ conventions. Then:
 
 ## Limitations
 
-- OmniRoute's documented API is OpenAI format. The README doesn't document an
-  Anthropic `/v1/messages` endpoint, so use the OpenAI SDK.
+- For app code, use the OpenAI format, which is the documented API. Claude Code
+  reaches OmniRoute through `ANTHROPIC_BASE_URL` (see `setup-claude`), so
+  OmniRoute also accepts Anthropic-format requests.
 - Free-tier quotas and terms change often. Check the dashboard, not numbers
   from the README.
 - A cloud session (such as Claude Code on the web) can't reach `localhost` on the
