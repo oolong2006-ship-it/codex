@@ -1,4 +1,8 @@
 {
+  "enabledPlugins": {
+    "expo@expo-plugins": true,
+    "expo-experiments@expo-plugins": true
+  },
   "extraKnownMarketplaces": {
     "expo-plugins": {
       "source": {
@@ -6,8 +10,5 @@
         "repo": "expo/skills"
       }
     }
-  },
-  "enabledPlugins": {
-    "expo@expo-plugins": true
   }
 }
