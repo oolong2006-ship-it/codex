@@ -156,6 +156,7 @@ npm run build           # builds API (dist/) and web (.next standalone)
 | Field tasks (assignment + status flow) | ✅ |
 | Simulation engine (10 scenarios) + WebSocket broadcast | ✅ |
 | Executive dashboard, crowd, queues, alerts, simulation UI (RTL/i18n) | ✅ |
+| Ops Copilot briefing via OmniRoute (severity-routed, rule-based fallback) — see `docs/OPS_COPILOT.md` | ✅ |
 | Swagger/OpenAPI, health/liveness/readiness, Docker, CI | ✅ |
 | Partner portal / Fan PWA / Field-ops mobile / Reports export / Digital-twin UI | 🟡→⚪ |
 | Prophet/XGBoost AI service, SMS/WhatsApp senders, integration connectors | ⚪ |

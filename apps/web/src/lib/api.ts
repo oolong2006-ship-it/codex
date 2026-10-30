@@ -74,6 +74,7 @@ export const api = {
     }),
   overview: () => request<DashboardOverview>('/dashboard/overview'),
   crowdCurrent: () => request<CrowdZone[]>('/crowd/current'),
+  copilotBriefing: () => request<CopilotBriefing>('/copilot/briefing'),
   queuesCurrent: () => request<QueueGate[]>('/queues/current'),
   alerts: () => request<Alert[]>('/alerts'),
   acknowledgeAlert: (id: string) => request(`/alerts/${id}/acknowledge`, { method: 'POST' }),
@@ -100,6 +101,19 @@ export interface DashboardOverview {
     predictedCongestion: string;
   };
   highRiskZones: { zoneId: string; zoneName: string; riskLevel: string; occupancyPercentage: number }[];
+}
+
+export interface CopilotBriefing {
+  level: 'CALM' | 'WATCH' | 'ELEVATED' | 'CRITICAL';
+  summary: string;
+  actions: { priority: 'HIGH' | 'MEDIUM' | 'LOW'; target: string; action: string }[];
+  source: 'omniroute' | 'rules';
+  route: { tier: 'routine' | 'priority'; model: string; timeoutMs: number };
+  servedModel: string | null;
+  fallbackReason: 'not_configured' | 'gateway_error' | 'timeout' | 'invalid_response' | null;
+  latencyMs: number;
+  generatedAt: string;
+  cached: boolean;
 }
 
 export interface CrowdZone {

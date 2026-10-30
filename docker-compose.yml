@@ -48,6 +48,12 @@ services:
       JWT_REFRESH_TTL: ${JWT_REFRESH_TTL:-604800}
       BCRYPT_ROUNDS: ${BCRYPT_ROUNDS:-12}
       SEED_DEMO_PASSWORD: ${SEED_DEMO_PASSWORD:-Masar34!Demo}
+      OMNIROUTE_BASE_URL: ${OMNIROUTE_BASE_URL:-}
+      OMNIROUTE_API_KEY: ${OMNIROUTE_API_KEY:-}
+      OMNIROUTE_MODEL_ROUTINE: ${OMNIROUTE_MODEL_ROUTINE:-masar-routine}
+      OMNIROUTE_MODEL_PRIORITY: ${OMNIROUTE_MODEL_PRIORITY:-masar-priority}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     ports:
       - "${API_PORT:-4000}:4000"
     command: sh -c "npx prisma migrate deploy && npm run db:seed && node dist/main.js"

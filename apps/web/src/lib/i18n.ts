@@ -24,6 +24,22 @@ export const dict: Dict = {
   recommendation: { ar: 'الإجراء المقترح', en: 'Recommended action' },
   utilization: { ar: 'الاستغلال', en: 'Utilization' },
   menu: { ar: 'القائمة', en: 'Menu' },
+  // Ops Copilot (OmniRoute)
+  copilotTitle: { ar: 'المستشار التشغيلي', en: 'Ops Copilot' },
+  copilotRefresh: { ar: 'تحديث الإحاطة', en: 'Refresh briefing' },
+  copilotLoading: { ar: 'جارٍ إعداد الإحاطة…', en: 'Preparing briefing…' },
+  copilotViaOmni: { ar: 'عبر OmniRoute', en: 'via OmniRoute' },
+  copilotViaRules: { ar: 'قواعد احتياطية', en: 'Rule-based fallback' },
+  copilotTierRoutine: { ar: 'مسار اعتيادي', en: 'Routine route' },
+  copilotTierPriority: { ar: 'مسار أولوية', en: 'Priority route' },
+  copilotCached: { ar: 'من الذاكرة المؤقتة', en: 'cached' },
+  levelCALM: { ar: 'مستقر', en: 'Calm' },
+  levelWATCH: { ar: 'تحت المراقبة', en: 'Watch' },
+  levelELEVATED: { ar: 'مرتفع', en: 'Elevated' },
+  levelCRITICAL: { ar: 'حرج', en: 'Critical' },
+  priorityHIGH: { ar: 'عاجل', en: 'High' },
+  priorityMEDIUM: { ar: 'متوسط', en: 'Medium' },
+  priorityLOW: { ar: 'منخفض', en: 'Low' },
   // Landing
   heroTitle: {
     ar: 'إدارة الحشود والعمليات في الزمن الحقيقي',

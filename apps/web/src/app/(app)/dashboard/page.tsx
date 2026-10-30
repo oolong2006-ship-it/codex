@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { api, DashboardOverview, CrowdZone } from '@/lib/api';
 import { t } from '@/lib/i18n';
 import { useLang } from '@/lib/lang-context';
+import { CopilotCard } from '@/components/CopilotCard';
 import {
   BarChart,
   Bar,
@@ -88,6 +89,8 @@ export default function DashboardPage() {
         <Kpi label={t('highRiskZones', lang)} value={k.highRiskZones} />
         <Kpi label={t('gateThroughput', lang)} value={k.gateThroughput} />
       </div>
+
+      <CopilotCard />
 
       <div className="kpi-card">
         <div className="mb-4 text-sm font-semibold">{t('occupancy', lang)} — {t('zone', lang)}</div>

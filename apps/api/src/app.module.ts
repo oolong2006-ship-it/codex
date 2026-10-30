@@ -21,6 +21,7 @@ import { IncidentsModule } from './incidents/incidents.module';
 import { TasksModule } from './tasks/tasks.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { SimulatorModule } from './simulator/simulator.module';
+import { CopilotModule } from './copilot/copilot.module';
 
 @Module({
   imports: [
@@ -49,6 +50,7 @@ import { SimulatorModule } from './simulator/simulator.module';
     TasksModule,
     DashboardModule,
     SimulatorModule,
+    CopilotModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })
