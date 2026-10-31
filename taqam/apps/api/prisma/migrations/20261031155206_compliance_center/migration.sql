@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "Company" ADD COLUMN     "expatLevyMonthly" DECIMAL(10,2) NOT NULL DEFAULT 800,
+ADD COLUMN     "iqamaFeeAnnual" DECIMAL(10,2) NOT NULL DEFAULT 650;

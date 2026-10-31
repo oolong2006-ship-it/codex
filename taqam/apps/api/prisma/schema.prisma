@@ -201,22 +201,26 @@ enum CandidateStage {
 }
 
 model Company {
-  id              String   @id @default(uuid())
-  nameAr          String
-  nameEn          String?
-  crNumber        String?
-  establishmentId String?
-  gosiNumber      String?
-  vatNumber       String?
-  sector          String?
-  city            String?
-  iban            String?
-  bankCode        String?
-  weekendDays     Int[]    @default([5, 6])
-  payrollDay      Int      @default(27)
-  employeesCount  Int?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id               String   @id @default(uuid())
+  nameAr           String
+  nameEn           String?
+  crNumber         String?
+  establishmentId  String?
+  gosiNumber       String?
+  vatNumber        String?
+  sector           String?
+  city             String?
+  iban             String?
+  bankCode         String?
+  weekendDays      Int[]    @default([5, 6])
+  payrollDay       Int      @default(27)
+  employeesCount   Int?
+  /// المقابل المالي: monthly expat levy per non-Saudi (labor cost estimate; verify current fees)
+  expatLevyMonthly Decimal  @default(800) @db.Decimal(10, 2)
+  /// رسوم الإقامة: annual iqama fee per non-Saudi (monthly = /12)
+  iqamaFeeAnnual   Decimal  @default(650) @db.Decimal(10, 2)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
   // ---- platform lifecycle (admin portal) ----
   status             CompanyStatus @default(ACTIVE)

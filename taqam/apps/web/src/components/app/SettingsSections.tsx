@@ -9,6 +9,7 @@ import { useLang } from '@/lib/i18n';
 import { date, num } from '@/lib/format';
 import { ROLE, SECTOR, label } from '@/lib/labels';
 import type { AppUser, AuditLog, Company, Holiday, LeaveType } from '@/lib/types';
+import { FEES_NOTE, parseFee } from '@/lib/compliance';
 import { activityText } from './charts';
 import { useEmployeeOptions } from './hooks';
 import { Async, ConfirmModal, Toggle } from './primitives';
@@ -21,15 +22,23 @@ export function CompanySection() {
   const { data, loading, error, reload } = useFetch(() => api.get<Company>('/company'), []);
   const [f, setF] = useState<Company | null>(null);
   const { busy, run } = useAction();
+  const [feeErrors, setFeeErrors] = useState<{ expatLevyMonthly?: string; iqamaFeeAnnual?: string }>({});
   useEffect(() => { if (data) setF(data); }, [data]);
   const s = (k: keyof Company) => (f?.[k] as string | null | undefined) ?? '';
   const set = (k: keyof Company) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => setF((x) => (x ? { ...x, [k]: e.target.value } : x));
   const save = async () => {
     if (!f) return;
+    // fee inputs: rounded to 2 decimals; an empty or invalid value is an error, never silently the default
+    const levy = parseFee(f.expatLevyMonthly);
+    const iqama = parseFee(f.iqamaFeeAnnual);
+    const msg = (r: ReturnType<typeof parseFee>) => ('error' in r ? (lang === 'ar' ? r.error.ar : r.error.en) : undefined);
+    setFeeErrors({ expatLevyMonthly: msg(levy), iqamaFeeAnnual: msg(iqama) });
+    if (!('value' in levy) || !('value' in iqama)) return;
     const body = {
       nameAr: f.nameAr, nameEn: f.nameEn || null, crNumber: f.crNumber || null, establishmentId: f.establishmentId || null, gosiNumber: f.gosiNumber || null,
       vatNumber: f.vatNumber || null, sector: f.sector || null, city: f.city || null, iban: f.iban ? f.iban.replace(/\s/g, '').toUpperCase() : null,
       bankCode: f.bankCode || null, weekendDays: f.weekendDays, payrollDay: Number(f.payrollDay) || 27,
+      expatLevyMonthly: levy.value, iqamaFeeAnnual: iqama.value,
     };
     if (await run('save', () => api.patch('/company', body), t('تم حفظ بيانات المنشأة', 'Company saved'))) { reload(); void refresh(); }
   };
@@ -56,6 +65,18 @@ export function CompanySection() {
               <Field label={t('يوم صرف الرواتب', 'Payroll day')}><Input type="number" min={1} max={28} dir="ltr" value={String(f.payrollDay ?? '')} onChange={(e) => setF({ ...f, payrollDay: Number(e.target.value) })} /></Field>
               <Field label={t('آيبان المنشأة', 'Company IBAN')} className="lg:col-span-2"><Input dir="ltr" value={s('iban')} onChange={set('iban')} placeholder="SA…" /></Field>
               <Field label={t('رمز البنك', 'Bank code')}><Input dir="ltr" value={s('bankCode')} onChange={set('bankCode')} /></Field>
+            </CardBody>
+          </Card>
+          <Card>
+            <CardHeader title={t('الرسوم الحكومية لغير السعوديين', 'Government fees for non-Saudis')}
+              subtitle={`${t('تُستخدم في التكلفة الحقيقية للعمالة بمركز الامتثال', 'Used for the true labor cost in the compliance center')} · ${lang === 'ar' ? FEES_NOTE.ar : FEES_NOTE.en}`} />
+            <CardBody className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <Field label={t('المقابل المالي (شهرياً لكل عامل)', 'Expat levy (monthly, per worker)')} hint={t('الافتراضي 800 ر.س', 'Default 800 SAR')} error={feeErrors.expatLevyMonthly}>
+                <Input type="number" min={0} step="0.01" dir="ltr" value={String(f.expatLevyMonthly ?? '')} onChange={(e) => setF({ ...f, expatLevyMonthly: e.target.value === '' ? undefined : Number(e.target.value) })} />
+              </Field>
+              <Field label={t('رسوم الإقامة (سنوياً لكل عامل)', 'Iqama fee (yearly, per worker)')} hint={t('الافتراضي 650 ر.س — تُحتسب شهرياً ÷ 12', 'Default 650 SAR — monthly = ÷ 12')} error={feeErrors.iqamaFeeAnnual}>
+                <Input type="number" min={0} step="0.01" dir="ltr" value={String(f.iqamaFeeAnnual ?? '')} onChange={(e) => setF({ ...f, iqamaFeeAnnual: e.target.value === '' ? undefined : Number(e.target.value) })} />
+              </Field>
             </CardBody>
           </Card>
           <Card>

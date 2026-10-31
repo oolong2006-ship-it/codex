@@ -1,7 +1,7 @@
 import {
   LayoutDashboard, Users, Network, Building2, FolderTree, Clock, CalendarRange, Timer, BarChart3,
   CalendarCheck, Inbox, Wallet, SlidersHorizontal, HandCoins, Flag, FileWarning, Target, Briefcase,
-  PieChart, Megaphone, Settings, ReceiptText, type LucideIcon,
+  PieChart, Megaphone, Settings, ReceiptText, ShieldCheck, type LucideIcon,
 } from 'lucide-react';
 import type { Role } from '@/lib/auth';
 
@@ -40,6 +40,7 @@ export const NAV: NavGroup[] = [
     { href: '/app/payroll/loans', label: ['السلف', 'Loans'], icon: HandCoins, roles: AP },
   ] },
   { label: ['الامتثال والمواهب', 'Compliance & talent'], items: [
+    { href: '/app/compliance', label: ['مركز الامتثال', 'Compliance center'], icon: ShieldCheck, roles: AP },
     { href: '/app/saudization', label: ['السعودة (نطاقات)', 'Saudization'], icon: Flag, roles: A },
     { href: '/app/performance', label: ['الأداء', 'Performance'], icon: Target, roles: ABM },
     { href: '/app/recruitment', label: ['التوظيف', 'Recruitment'], icon: Briefcase, roles: A },
@@ -66,4 +67,10 @@ export function isActive(item: NavItem, pathname: string) {
 export function navItemFor(pathname: string): NavItem | undefined {
   return FLAT.filter((i) => pathname === i.href || pathname.startsWith(i.href + '/'))
     .sort((a, b) => b.href.length - a.href.length)[0];
+}
+
+/** Whether a role may open the page at `href` (same rule as the nav / route guard) — used to decide if a card is a link. */
+export function canVisit(href: string, role: Role | undefined | null): boolean {
+  const item = navItemFor(href);
+  return !!role && !!item && item.roles.includes(role);
 }

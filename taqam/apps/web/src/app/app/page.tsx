@@ -1,7 +1,8 @@
 'use client';
 import Link from 'next/link';
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import { ArrowLeft, CalendarCheck, Clock, FileWarning, Inbox, UserCheck, Users, Wallet, Activity, Flag } from 'lucide-react';
+import { ArrowLeft, CalendarCheck, Clock, FileWarning, Inbox, UserCheck, Users, Wallet, Activity, Flag, ShieldAlert, ShieldCheck, AlertTriangle } from 'lucide-react';
+import { riskHeadline } from '@taqam/core';
 import { Badge, Card, CardBody, CardHeader, EmptyState, PageHeader, StatCard, ButtonLink } from '@/components/ui';
 import { Async, Avatar, BAND_COLOR, Gauge, StatusBadge } from '@/components/app/primitives';
 import { CHART, ChartTooltip, Legend, axisProps, compact, useChartDir, activityText } from '@/components/app/charts';
@@ -14,7 +15,7 @@ import { useLang } from '@/lib/i18n';
 import { date, money, num, pct, period } from '@/lib/format';
 import { DOC_TYPE, EXPIRY_STATUS, NITAQAT_BAND, label } from '@/lib/labels';
 import { OFFICIAL_ESTIMATE } from '@/lib/saudization';
-import type { DashboardData } from '@/lib/types';
+import type { ComplianceOverview, DashboardData } from '@/lib/types';
 
 export default function DashboardPage() {
   const { t, lang } = useLang();
@@ -42,6 +43,8 @@ export default function DashboardPage() {
               <StatCard label={t('تكلفة الرواتب الشهرية', 'Monthly payroll cost')} value={money(data.monthlyPayrollCost, { decimals: 0 })} tone="info" icon={<Wallet className="h-5 w-5" />}
                 hint={t('الإجمالي + حصة المنشأة في التأمينات', 'Gross + employer GOSI')} />
             </div>
+
+            {can(user, ADMIN_PAYROLL) && <ComplianceCard />}
 
             <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
               <Card className="xl:col-span-2">
@@ -207,4 +210,26 @@ function PendingRow({ href, icon, label: lbl, count }: { href?: string; icon: Re
   return href
     ? <Link href={href} className="flex items-center gap-3 rounded-xl border border-line p-3 transition-colors hover:border-primary-500 hover:bg-primary-50">{inner}</Link>
     : <div className="flex items-center gap-3 rounded-xl border border-line p-3">{inner}</div>;
+}
+
+/** Compliance center summary: overall government-services risk + the top items, linking to /app/compliance. */
+function ComplianceCard() {
+  const { t, lang } = useLang();
+  const { data } = useFetch(() => api.get<ComplianceOverview>('/compliance/overview'), []);
+  if (!data) return null;
+  const { level, items } = data.risk;
+  const style = { HIGH: { Icon: ShieldAlert, cls: 'border-danger/30 bg-danger-50 text-danger' }, MEDIUM: { Icon: AlertTriangle, cls: 'border-warning/30 bg-warning-50 text-warning' }, LOW: { Icon: ShieldCheck, cls: 'border-success/30 bg-success-50 text-success' } }[level];
+  const h = riskHeadline(level);
+  return (
+    <Link href="/app/compliance" className={`flex flex-wrap items-center gap-4 rounded-2xl border p-4 transition-colors hover:border-primary-500 ${style.cls}`}>
+      <span className="rounded-xl bg-white p-2.5"><style.Icon className="h-5 w-5" aria-hidden /></span>
+      <div className="min-w-0 flex-1">
+        <p className="font-semibold text-ink">{lang === 'ar' ? h.ar : h.en}</p>
+        <p className="truncate text-sm text-ink-muted">
+          {items.length ? items.slice(0, 3).map((i) => `${lang === 'ar' ? i.titleAr : i.titleEn}${i.key === 'NITAQAT' || i.key === 'WPS_NOT_EXPORTED' ? '' : ` (${num(i.count)})`}`).join(' · ') : t('لا توجد مخاطر حالياً', 'No risks right now')}
+        </p>
+      </div>
+      <span className="inline-flex items-center gap-1 text-sm font-medium text-primary-500">{t('مركز الامتثال', 'Compliance center')}<ArrowLeft className="h-4 w-4 ltr:rotate-180" aria-hidden /></span>
+    </Link>
+  );
 }

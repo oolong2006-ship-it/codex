@@ -14,6 +14,8 @@ export interface Company {
   id: string; nameAr: string; nameEn: string | null; crNumber: string | null; establishmentId: string | null; gosiNumber: string | null;
   vatNumber: string | null; sector: string | null; city: string | null; iban: string | null; bankCode: string | null;
   weekendDays: number[]; payrollDay: number; employeesCount: number | null; createdAt: string; updatedAt: string;
+  /** compliance center labor cost (spec §5): monthly expat levy and annual iqama fee per non-Saudi — defaults to verify */
+  expatLevyMonthly: number; iqamaFeeAnnual: number;
   // platform lifecycle (docs/ADMIN_PORTAL.md)
   status: CompanyStatus; plan: Plan; billingCycle: BillingCycle; maxEmployees: number | null; pricePerEmployee: number | null;
   trialEndsAt: string | null; subscriptionEndsAt: string | null; activatedAt: string | null; suspendedAt: string | null;
@@ -213,7 +215,7 @@ export interface DB {
 }
 
 export const STORAGE_KEY = 'taqam.demo.v2';
-export const DB_VERSION = 11;
+export const DB_VERSION = 12;
 /** Seeded data is relative to "today"; a snapshot older than this is re-seeded so attendance and payroll stay current. */
 export const MAX_AGE_DAYS = 7;
 

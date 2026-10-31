@@ -26,6 +26,7 @@ import { PlatformModule } from './platform/platform.module';
 import { AdminModule } from './admin/admin.module';
 import { MailModule } from './mail/mail.service';
 import { BillingModule } from './billing/billing.module';
+import { ComplianceModule } from './compliance/compliance.module';
 
 @Module({
   imports: [
@@ -50,6 +51,7 @@ import { BillingModule } from './billing/billing.module';
     RequestsModule,
     PayrollModule,
     SaudizationModule,
+    ComplianceModule,
     PerformanceModule,
     RecruitmentModule,
     CommsModule,

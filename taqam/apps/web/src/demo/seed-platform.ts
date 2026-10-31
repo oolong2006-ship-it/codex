@@ -167,7 +167,7 @@ export function seedPlatform(db: DB, svc: Services, now: Date) {
     const c: Company = {
       id: companyId, nameAr: d.nameAr, nameEn: d.nameEn, crNumber: `${pick(['1010', '4030', '2050', '1131'])}${digits(6)}`, establishmentId: d.status === 'PENDING' ? null : `70${digits(8)}`,
       gosiNumber: d.status === 'PENDING' ? null : `5${digits(8)}`, vatNumber: null, sector: d.sector, city: d.city, iban: null, bankCode: null,
-      weekendDays: [5, 6], payrollDay: 27, employeesCount: d.employees, createdAt: created, updatedAt: createdAt,
+      weekendDays: [5, 6], payrollDay: 27, employeesCount: d.employees, expatLevyMonthly: 800, iqamaFeeAnnual: 650, createdAt: created, updatedAt: createdAt,
       ...lifecycleDefaults(),
       status: d.status, plan: d.plan, billingCycle: d.cycle, maxEmployees: d.max, pricePerEmployee: d.price,
       trialEndsAt: d.trialEndsIn !== undefined ? endOfDay(rel(d.trialEndsIn)) : null,

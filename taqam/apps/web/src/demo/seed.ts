@@ -125,7 +125,7 @@ export function buildSeed(now: Date = new Date()): DB {
   db.companies.push({
     id: companyId, nameAr: 'مطاعم ورد الشام', nameEn: 'Ward Al-Sham Restaurants', crNumber: '1010654321', establishmentId: '7001845236',
     gosiNumber: '512345678', vatNumber: '310456789100003', sector: 'RESTAURANTS', city: 'الرياض', iban: saudiIban('80'), bankCode: '80',
-    weekendDays: [5, 6], payrollDay: 27, employeesCount: 40, createdAt: ts(rel(-120)), updatedAt: createdAt,
+    weekendDays: [5, 6], payrollDay: 27, employeesCount: 40, expatLevyMonthly: 800, iqamaFeeAnnual: 650, createdAt: ts(rel(-120)), updatedAt: createdAt,
     ...lifecycleDefaults(),
     status: 'ACTIVE', plan: 'GROWTH', billingCycle: 'MONTHLY', maxEmployees: 60, activatedAt: ts(rel(-119), 10),
     subscriptionEndsAt: endOfDay(plusMonths(today, 10)), adminNotes: 'عميل مرجعي — حساب العرض التجريبي العام',

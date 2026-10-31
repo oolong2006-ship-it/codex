@@ -9,6 +9,7 @@ import {
   IsEnum,
   IsIn,
   IsInt,
+  IsNumber,
   IsOptional,
   IsString,
   Matches,
@@ -32,6 +33,10 @@ export class UpdateCompanyDto {
   @ApiPropertyOptional() @IsOptional() @IsString() bankCode?: string;
   @ApiPropertyOptional({ type: [Number] }) @IsOptional() @IsArray() @ArrayMaxSize(7) @IsInt({ each: true }) @Min(0, { each: true }) @Max(6, { each: true }) weekendDays?: number[];
   @ApiPropertyOptional() @IsOptional() @IsInt() @Min(1) @Max(28) payrollDay?: number;
+  /** Compliance center labor cost: monthly expat levy per non-Saudi (default 800 — verify current fees). */
+  @ApiPropertyOptional({ example: 800 }) @IsOptional() @IsNumber({ maxDecimalPlaces: 2 }) @Min(0) @Max(100000) expatLevyMonthly?: number;
+  /** Annual iqama fee per non-Saudi (default 650; monthly = /12). */
+  @ApiPropertyOptional({ example: 650 }) @IsOptional() @IsNumber({ maxDecimalPlaces: 2 }) @Min(0) @Max(100000) iqamaFeeAnnual?: number;
 }
 
 /** Roles a company may assign — SUPER_ADMIN is platform-only. */

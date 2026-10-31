@@ -11,10 +11,11 @@ import { adminRoutes } from './routes-admin';
 import { billingRoutes } from './routes-billing';
 import { coreRoutes, resolveUser } from './routes-core';
 import { moreRoutes } from './routes-more';
+import { complianceRoutes } from './routes-compliance';
 import { buildSeed } from './seed';
 import { STAFF, Services, type AuthUser } from './services';
 
-const routes = [...coreRoutes, ...moreRoutes, ...adminRoutes, ...billingRoutes];
+const routes = [...coreRoutes, ...moreRoutes, ...complianceRoutes, ...adminRoutes, ...billingRoutes];
 let db: DB | null = null;
 
 function fresh(): DB {

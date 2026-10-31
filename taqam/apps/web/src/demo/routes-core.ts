@@ -18,6 +18,27 @@ const MANAGERS: Role[] = ['OWNER', 'HR_ADMIN', 'BRANCH_MANAGER'];
 /** Prisma enum DocumentType (incl. the sector documents of spec §4). */
 export const DOCUMENT_TYPES = ['IQAMA', 'PASSPORT', 'CONTRACT', 'CERTIFICATE', 'INSURANCE', 'OTHER', ...SECTOR_DOC_TYPES] as const;
 
+/** Sector documents compliance (spec §4) — same as GET /documents/compliance; reused by the compliance center. */
+export function documentsCompliance(svc: Services, u: AuthUser) {
+  const db = svc.db;
+  const where = svc.employeeWhere(u);
+  const emps = db.employees.filter((e) => where(e) && e.status !== 'TERMINATED').sort(byNumber);
+  const ids = new Set(emps.map((e) => e.id));
+  const rows = documentCompliance({
+    sector: svc.company(u.companyId)?.sector ?? null,
+    today: todayStr(),
+    employees: emps.map((e) => ({ id: e.id, isSaudi: e.isSaudi, exemptions: e.docExemptions ?? [], idExpiry: e.idExpiry })),
+    documents: db.documents.filter((d) => d.companyId === u.companyId && ids.has(d.employeeId)).map((d) => ({ employeeId: d.employeeId, type: d.type, expiryDate: d.expiryDate })),
+  });
+  const rank: Record<DocumentComplianceStatus, number> = { MISSING: 0, EXPIRED: 1, CRITICAL: 2, WARNING: 3 };
+  const counts: Record<DocumentComplianceStatus, number> = { MISSING: 0, EXPIRED: 0, CRITICAL: 0, WARNING: 0 };
+  const items = rows
+    .map((r, i) => { counts[r.status]++; const e = svc.emp(r.employeeId)!; return { ...r, employeeName: fullName(e), branchName: svc.branch(e.branchId)?.nameAr ?? null, i }; })
+    .sort((a, b) => rank[a.status] - rank[b.status] || a.i - b.i)
+    .map(({ i: _i, ...r }) => r);
+  return { items, counts };
+}
+
 // ---------- auth helpers ----------
 /** Legacy demo token ("demo.<userId>") — still accepted so sessions saved before the admin portal keep working. */
 export const TOKEN_PREFIX = 'demo.';
@@ -224,10 +245,11 @@ function branchesView(svc: Services, u: AuthUser) {
   });
 }
 function companyDto(b: Record<string, unknown>) {
-  const dto = pick(b, ['nameAr', 'nameEn', 'crNumber', 'establishmentId', 'gosiNumber', 'vatNumber', 'sector', 'city', 'iban', 'bankCode', 'weekendDays', 'payrollDay']);
+  const dto = pick(b, ['nameAr', 'nameEn', 'crNumber', 'establishmentId', 'gosiNumber', 'vatNumber', 'sector', 'city', 'iban', 'bankCode', 'weekendDays', 'payrollDay', 'expatLevyMonthly', 'iqamaFeeAnnual']);
   if (typeof dto.nameAr === 'string') dto.nameAr = cleanCompanyName(dto.nameAr, 'nameAr');
   if (typeof dto.nameEn === 'string') dto.nameEn = cleanCompanyName(dto.nameEn, 'nameEn') || null;
   if (dto.payrollDay !== undefined) dto.payrollDay = v.num(dto, 'payrollDay', { min: 1, max: 28 });
+  for (const k of ['expatLevyMonthly', 'iqamaFeeAnnual'] as const) if (dto[k] !== undefined) dto[k] = v.num(dto, k, { min: 0, max: 100000, maxDecimals: 2 });
   if (dto.weekendDays !== undefined && !(Array.isArray(dto.weekendDays) && dto.weekendDays.length <= 7 && dto.weekendDays.every((d) => Number.isInteger(d) && d >= 0 && d <= 6))) throw badRequest('weekendDays must be an array');
   return dto;
 }
@@ -288,7 +310,7 @@ export const coreRoutes: Route[] = [
     const settings = db.settings;
     const company: Company = {
       id: companyId, nameAr: cleanCompanyName(String(body.companyNameAr), 'companyNameAr'), nameEn: typeof body.companyNameEn === 'string' ? cleanCompanyName(body.companyNameEn, 'companyNameEn') || null : null, crNumber: null, establishmentId: null, gosiNumber: null, vatNumber: null,
-      sector: String(body.sector), city: null, iban: null, bankCode: null, weekendDays: [5, 6], payrollDay: 27, employeesCount: body.employeesCount ? Number(body.employeesCount) : null, createdAt: now, updatedAt: now,
+      sector: String(body.sector), city: null, iban: null, bankCode: null, weekendDays: [5, 6], payrollDay: 27, employeesCount: body.employeesCount ? Number(body.employeesCount) : null, expatLevyMonthly: 800, iqamaFeeAnnual: 650, createdAt: now, updatedAt: now,
       ...lifecycleDefaults(),
       ...(settings.requireApproval ? {} : { status: 'TRIAL' as const, trialEndsAt: endOfDay(addDays(todayStr(), settings.trialDays)) }),
     };
@@ -698,24 +720,7 @@ export const coreRoutes: Route[] = [
       .map((d) => { const e = svc.emp(d.employeeId)!; return { id: d.id, employeeId: d.employeeId, employeeName: fullName(e), branchName: svc.branch(e.branchId)?.nameAr ?? null, type: d.type, number: d.number, expiryDate: d.expiryDate, status: expiryStatus(d.expiryDate, today) }; });
   }),
   /** Sector documents compliance (spec §4) — missing/expiring required documents of active staff, worst first. */
-  route('GET', '/documents/compliance', MANAGERS, ({ db, svc, user: u }) => {
-    const where = svc.employeeWhere(u);
-    const emps = db.employees.filter((e) => where(e) && e.status !== 'TERMINATED').sort(byNumber);
-    const ids = new Set(emps.map((e) => e.id));
-    const rows = documentCompliance({
-      sector: svc.company(u.companyId)?.sector ?? null,
-      today: todayStr(),
-      employees: emps.map((e) => ({ id: e.id, isSaudi: e.isSaudi, exemptions: e.docExemptions ?? [], idExpiry: e.idExpiry })),
-      documents: db.documents.filter((d) => d.companyId === u.companyId && ids.has(d.employeeId)).map((d) => ({ employeeId: d.employeeId, type: d.type, expiryDate: d.expiryDate })),
-    });
-    const rank: Record<DocumentComplianceStatus, number> = { MISSING: 0, EXPIRED: 1, CRITICAL: 2, WARNING: 3 };
-    const counts: Record<DocumentComplianceStatus, number> = { MISSING: 0, EXPIRED: 0, CRITICAL: 0, WARNING: 0 };
-    const items = rows
-      .map((r, i) => { counts[r.status]++; const e = svc.emp(r.employeeId)!; return { ...r, employeeName: fullName(e), branchName: svc.branch(e.branchId)?.nameAr ?? null, i }; })
-      .sort((a, b) => rank[a.status] - rank[b.status] || a.i - b.i)
-      .map(({ i: _i, ...r }) => r);
-    return { items, counts };
-  }),
+  route('GET', '/documents/compliance', MANAGERS, ({ svc, user: u }) => documentsCompliance(svc, u)),
   route('GET', '/org-chart', STAFF, ({ db, svc, user: u }) => {
     const where = svc.employeeWhere(u);
     return db.employees.filter((e) => where(e) && e.status !== 'TERMINATED').sort(byNumber)

@@ -60,11 +60,13 @@ export const v = {
     if (opts.min && x.length < opts.min) throw invalid(k, `must be longer than or equal to ${opts.min} characters`);
     return x;
   },
-  num(b: Record<string, unknown>, k: string, opts: { optional?: boolean; min?: number; max?: number } = {}): number | undefined {
+  num(b: Record<string, unknown>, k: string, opts: { optional?: boolean; min?: number; max?: number; maxDecimals?: number } = {}): number | undefined {
     const x = b[k];
     if (x === undefined || x === null || x === '') { if (opts.optional) return undefined; throw invalid(k, 'must be a number'); }
     const n = Number(x);
     if (!Number.isFinite(n)) throw invalid(k, 'must be a number');
+    // @IsNumber({ maxDecimalPlaces })
+    if (opts.maxDecimals !== undefined && (String(x).split('.')[1]?.length ?? 0) > opts.maxDecimals) throw invalid(k, 'must be a number conforming to the specified constraints');
     if (opts.min !== undefined && n < opts.min) throw invalid(k, `must not be less than ${opts.min}`);
     if (opts.max !== undefined && n > opts.max) throw invalid(k, `must not be greater than ${opts.max}`);
     return n;

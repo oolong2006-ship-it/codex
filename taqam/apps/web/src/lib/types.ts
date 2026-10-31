@@ -34,6 +34,8 @@ export interface Company {
   id: ID; nameAr: string; nameEn?: string | null; crNumber?: string | null; establishmentId?: string | null;
   gosiNumber?: string | null; vatNumber?: string | null; sector?: Sector | string | null; city?: string | null;
   iban?: string | null; bankCode?: string | null; weekendDays: number[]; payrollDay: number;
+  /** Compliance center labor cost (spec §5): monthly expat levy and annual iqama fee per non-Saudi — defaults 800 / 650 to verify. */
+  expatLevyMonthly?: number; iqamaFeeAnnual?: number;
 }
 export interface AppUser {
   id: ID; email: string; name: string; role: Role; isActive: boolean; employeeId?: ID | null;
@@ -166,6 +168,27 @@ export interface WpsCheck {
   /** Paid date, else the company payroll day in the period (the date written in the WPS file). */
   scheduledPaymentDate: string;
   exportedAt: string | null; ready: boolean; errors: number; warnings: number; issues: WpsIssue[] }
+// ---------- Compliance center (spec §5) ----------
+export type RiskLevel = 'HIGH' | 'MEDIUM' | 'LOW';
+export interface RiskItem { key: string; level: RiskLevel; count: number; titleAr: string; titleEn: string; href: string }
+/** GET /compliance/overview — `wps` is null for a branch manager (payroll is company-level). */
+export interface ComplianceOverview {
+  /** BRANCH: a branch manager's figures cover their branch only */
+  scope: 'COMPANY' | 'BRANCH';
+  risk: { level: RiskLevel; items: RiskItem[] };
+  saudization: { total: number; saudis: number; documentedSaudis: number; undocumentedSaudis: number; officialRate: number; internalRate: number; band: NitaqatBand; marginToDrop: number; alert: boolean };
+  wps: { prevPeriod: string; due: boolean; exported: boolean; exportedAt: string | null; latestRunId: ID | null; latestRunPeriod: string | null; errors: number } | null;
+  /** Task 4 status counts (iqama included) + the split the risk uses (iqama never counted twice). */
+  documents: { MISSING: number; EXPIRED: number; CRITICAL: number; WARNING: number; expiredIqamas: number; iqamasExpiring30: number; docsExpired: number; docsMissing: number };
+}
+export interface LaborCost { headcount: number; saudis: number; gross: number; gosiEmployer: number; govFees: number; total: number; perEmployee: number }
+/** GET /compliance/branch-costs?period=YYYY-MM — payslips of the period run, else contract salaries (`estimated`). */
+export interface BranchCosts {
+  period: string; estimated: boolean; runId: ID | null;
+  fees: { expatLevyMonthly: number; iqamaFeeAnnual: number };
+  branches: (LaborCost & { branchId: ID | null; branchName: string | null })[];
+  totals: LaborCost;
+}
 export type AdjustmentType = 'BONUS' | 'COMMISSION' | 'ALLOWANCE' | 'DEDUCTION' | 'PENALTY';
 export interface Adjustment {
   id: ID; employeeId: ID; employee?: { id: ID; name: string } | null; period: string; type: AdjustmentType;
