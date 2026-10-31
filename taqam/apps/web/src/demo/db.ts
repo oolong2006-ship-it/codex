@@ -87,6 +87,8 @@ export interface Employee {
   bankCode: string | null; gosiRegistered: boolean;
   /** First GOSI registration (YYYY-MM-DD): on/after 2024-07-03 ⇒ NEW Social Insurance Law regime; null ⇒ LEGACY. */
   gosiFirstRegisteredAt: string | null; hoursPerDay: number; avatarColor: string; annualLeaveCarryOver: number;
+  /** Contract documented in Qiwa — since 15 Apr 2026 only documented Saudis count for Nitaqat. qiwaDocumentedAt is an ISO timestamp. */
+  qiwaDocumented: boolean; qiwaDocumentedAt: string | null;
   createdAt: string; updatedAt: string;
 }
 export interface EmployeeDocument {
@@ -209,7 +211,7 @@ export interface DB {
 }
 
 export const STORAGE_KEY = 'taqam.demo.v2';
-export const DB_VERSION = 8;
+export const DB_VERSION = 9;
 /** Seeded data is relative to "today"; a snapshot older than this is re-seeded so attendance and payroll stay current. */
 export const MAX_AGE_DAYS = 7;
 

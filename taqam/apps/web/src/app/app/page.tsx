@@ -13,6 +13,7 @@ import { useFetch } from '@/lib/useFetch';
 import { useLang } from '@/lib/i18n';
 import { date, money, num, pct, period } from '@/lib/format';
 import { DOC_TYPE, EXPIRY_STATUS, NITAQAT_BAND, label } from '@/lib/labels';
+import { OFFICIAL_ESTIMATE } from '@/lib/saudization';
 import type { DashboardData } from '@/lib/types';
 
 export default function DashboardPage() {
@@ -69,13 +70,17 @@ export default function DashboardPage() {
               </Card>
 
               <Card>
-                <CardHeader title={t('نسبة السعودة', 'Saudization')} subtitle={t('نطاقات — مستوى المنشأة', 'Nitaqat — company level')}
+                <CardHeader title={t('نسبة السعودة الرسمية', 'Official Saudization')} subtitle={t('نطاقات — السعوديون الموثقة عقودهم في قوى', 'Nitaqat — Saudis with Qiwa-documented contracts')}
                   action={<Flag className="h-5 w-5 text-accent" />} />
                 <CardBody className="flex flex-col items-center gap-3">
-                  <Gauge value={data.saudizationRate} color={BAND_COLOR[data.nitaqatBand]} label={`${num(data.saudis)} / ${num(data.headcount)}`} />
+                  <Gauge value={data.saudizationRate} color={BAND_COLOR[data.nitaqatBand]} label={`${num(data.documentedSaudis)} / ${num(data.headcount)}`} />
                   <span className="rounded-full px-3 py-1 text-sm font-semibold text-white" style={{ background: BAND_COLOR[data.nitaqatBand] }}>
                     {label(NITAQAT_BAND, data.nitaqatBand, lang)}
                   </span>
+                  <p className="text-xs text-ink-soft">{lang === 'ar' ? OFFICIAL_ESTIMATE.ar : OFFICIAL_ESTIMATE.en}</p>
+                  {data.internalSaudizationRate !== data.saudizationRate && (
+                    <p className="text-xs text-ink-muted">{t('النسبة الداخلية (كل السعوديين):', 'Internal rate (all Saudis):')} <span className="num font-semibold" dir="ltr">{pct(data.internalSaudizationRate)}</span></p>
+                  )}
                   {can(user, ADMIN) && <Link href="/app/saudization" className="text-sm font-medium text-primary-500 hover:underline">{t('محاكاة أثر التوظيف', 'Simulate hiring impact')}</Link>}
                 </CardBody>
               </Card>

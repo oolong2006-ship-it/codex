@@ -2,7 +2,7 @@ import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestj
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { ADMIN, CurrentUser, Roles, STAFF } from '../common/decorators';
 import { AuthUser } from '../common/types';
-import { CreateEmployeeDto, DocumentDto, EosbQueryDto, TerminateDto, UpdateEmployeeDto } from './employees.dto';
+import { CreateEmployeeDto, DocumentDto, EosbQueryDto, QiwaDocumentedDto, TerminateDto, UpdateEmployeeDto } from './employees.dto';
 import { EmployeeQuery, EmployeesService } from './employees.service';
 
 @ApiTags('employees')
@@ -27,6 +27,13 @@ export class EmployeesController {
   @Post('employees')
   create(@CurrentUser() u: AuthUser, @Body() dto: CreateEmployeeDto) {
     return this.svc.create(u, dto);
+  }
+
+  /** Confirm (or undo) that contracts are documented in Qiwa — since 15 Apr 2026 only documented Saudis count for Nitaqat. */
+  @Roles(...ADMIN)
+  @Post('employees/qiwa-documented')
+  qiwaDocumented(@CurrentUser() u: AuthUser, @Body() dto: QiwaDocumentedDto) {
+    return this.svc.setQiwaDocumented(u, dto);
   }
 
   @Roles(...ADMIN)

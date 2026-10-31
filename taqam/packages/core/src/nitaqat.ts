@@ -69,3 +69,63 @@ export function hiresNeededForBand(
   while (!reached(x)) x++;
   return x;
 }
+
+/**
+ * How many documented Saudis (each leaving reduces both counts) can leave before the
+ * official band drops. 0 when already RED or there are no employees.
+ */
+export function marginToDrop(
+  documentedSaudis: number,
+  total: number,
+  t: NitaqatThresholds = DEFAULT_NITAQAT_THRESHOLDS,
+): number {
+  const d = Math.max(0, Math.floor(documentedSaudis));
+  const n = Math.max(d, Math.floor(total));
+  if (!(n > 0)) return 0;
+  const band = nitaqatBand(saudizationRate(d, n), t);
+  if (band === 'RED') return 0;
+  let k = 0;
+  while (k < d && nitaqatBand(saudizationRate(d - k - 1, n - k - 1), t) === band) k++;
+  return k;
+}
+
+export interface OfficialSaudization {
+  total: number;
+  saudis: number;
+  documentedSaudis: number;
+  undocumentedSaudis: number;
+  /** documented Saudis / all active employees (counts for Nitaqat since 15 Apr 2026) */
+  officialRate: number;
+  /** all Saudis / all active employees */
+  internalRate: number;
+  /** band of the official rate */
+  band: NitaqatBand;
+  marginToDrop: number;
+}
+
+/** Since 15 Apr 2026 only Saudis whose contracts are documented in Qiwa count for Nitaqat. */
+export function officialSaudization(
+  employees: { isSaudi: boolean; qiwaDocumented: boolean }[],
+  t: NitaqatThresholds = DEFAULT_NITAQAT_THRESHOLDS,
+): OfficialSaudization {
+  const total = employees.length;
+  const saudis = employees.filter((e) => e.isSaudi).length;
+  const documentedSaudis = employees.filter((e) => e.isSaudi && e.qiwaDocumented).length;
+  const officialRate = saudizationRate(documentedSaudis, total);
+  return {
+    total,
+    saudis,
+    documentedSaudis,
+    undocumentedSaudis: saudis - documentedSaudis,
+    officialRate,
+    internalRate: saudizationRate(saudis, total),
+    band: nitaqatBand(officialRate, t),
+    marginToDrop: marginToDrop(documentedSaudis, total, t),
+  };
+}
+
+/** «تنبيه نطاقات»: some Saudi contracts are undocumented, or ≤ 1 documented departure drops the band. Never for an empty branch. */
+export function nitaqatAlert(s: Pick<OfficialSaudization, 'total' | 'undocumentedSaudis' | 'marginToDrop'>): boolean {
+  if (!(s.total > 0)) return false;
+  return s.undocumentedSaudis > 0 || s.marginToDrop <= 1;
+}

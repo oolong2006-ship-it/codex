@@ -92,6 +92,8 @@ const PEOPLE: Seed[] = [
 const HABITUALLY_LATE = new Set(['o10', 'm8', 'd6']);
 /** Saudis first registered in GOSI on/after 2024-07-03 → NEW Social Insurance Law regime (registered on their hire date). */
 const GOSI_FIRST_REGISTERED: Record<string, string> = { m3: '2025-01-19', d2: '2025-03-09', j3: '2026-09-15' };
+/** Saudis whose contracts are not yet documented in Qiwa (so the demo shows «تنبيه نطاقات»); everyone else is documented on hire. */
+const QIWA_UNDOCUMENTED = new Set(['o6', 'j3']);
 
 function plusMonths(d: string, n: number): string {
   const x = day(d);
@@ -200,6 +202,7 @@ export function buildSeed(now: Date = new Date()): DB {
       status: p.terminated ? 'TERMINATED' : 'ACTIVE', terminationDate, terminationReason: p.terminated?.reason ?? null, basicSalary: p.basic,
       housingAllowance: Math.round(p.basic * 0.25), transportAllowance: Math.max(300, Math.round(p.basic * 0.1)), otherAllowances: p.other ?? 0,
       iban, bankCode: bank, gosiRegistered: true, gosiFirstRegisteredAt: GOSI_FIRST_REGISTERED[p.key] ?? null, hoursPerDay: 8, avatarColor: COLORS[n % COLORS.length], annualLeaveCarryOver: years > 1 ? randInt(4, 15) : 0,
+      qiwaDocumented: !QIWA_UNDOCUMENTED.has(p.key), qiwaDocumentedAt: QIWA_UNDOCUMENTED.has(p.key) ? null : ts(p.hire),
       createdAt: ts(p.hire), updatedAt: createdAt,
     };
     db.employees.push(rec);

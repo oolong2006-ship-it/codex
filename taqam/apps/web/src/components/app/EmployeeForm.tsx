@@ -27,7 +27,7 @@ const empty: FormState = {
   firstNameAr: '', lastNameAr: '', fullNameEn: '', nationality: 'SA', gender: 'MALE', birthDate: '', maritalStatus: '',
   nationalId: '', idExpiry: '', passportNumber: '', passportExpiry: '', phone: '', email: '',
   branchId: '', departmentId: '', managerId: '', jobTitle: '', hireDate: '', contractType: 'UNLIMITED', contractEndDate: '', probationEndDate: '',
-  basicSalary: '', housingAllowance: '', transportAllowance: '', otherAllowances: '0', iban: '', bankCode: '', gosiRegistered: true, gosiFirstRegisteredAt: '', hoursPerDay: '8',
+  basicSalary: '', housingAllowance: '', transportAllowance: '', otherAllowances: '0', iban: '', bankCode: '', gosiRegistered: true, gosiFirstRegisteredAt: '', qiwaDocumented: false, hoursPerDay: '8',
   createLogin: false, loginEmail: '', loginPassword: '',
 };
 const d10 = (v?: string | null) => (v ? v.slice(0, 10) : '');
@@ -41,7 +41,7 @@ function fromEmployee(e: Employee): FormState {
     hireDate: d10(e.hireDate), contractType: e.contractType, contractEndDate: d10(e.contractEndDate), probationEndDate: d10(e.probationEndDate),
     basicSalary: String(e.basicSalary ?? ''), housingAllowance: String(e.housingAllowance ?? ''), transportAllowance: String(e.transportAllowance ?? ''),
     otherAllowances: String(e.otherAllowances ?? 0), iban: e.iban ?? '', bankCode: e.bankCode ?? '', gosiRegistered: !!e.gosiRegistered, hoursPerDay: String(e.hoursPerDay ?? 8),
-    gosiFirstRegisteredAt: d10(e.gosiFirstRegisteredAt),
+    gosiFirstRegisteredAt: d10(e.gosiFirstRegisteredAt), qiwaDocumented: !!e.qiwaDocumented,
   };
 }
 
@@ -91,7 +91,7 @@ export function EmployeeFormModal({ open, onClose, employee, onSaved, initialSec
       contractEndDate: s('contractType') === 'FIXED' ? opt('contractEndDate') : null, probationEndDate: opt('probationEndDate'),
       basicSalary: n('basicSalary'), housingAllowance: n('housingAllowance'), transportAllowance: n('transportAllowance'), otherAllowances: n('otherAllowances'),
       iban: opt('iban')?.replace(/\s/g, '').toUpperCase() ?? null, bankCode: opt('bankCode'), gosiRegistered: !!f.gosiRegistered, hoursPerDay: n('hoursPerDay') || 8,
-      gosiFirstRegisteredAt: opt('gosiFirstRegisteredAt'),
+      gosiFirstRegisteredAt: opt('gosiFirstRegisteredAt'), qiwaDocumented: !!f.qiwaDocumented,
     };
     if (!editing && f.createLogin) body.createUser = { email: s('loginEmail').trim(), password: s('loginPassword') };
     let saved: Employee | null = null;
@@ -161,6 +161,15 @@ export function EmployeeFormModal({ open, onClose, employee, onSaved, initialSec
           </Field>
           {s('contractType') === 'FIXED' && <Field label={t('نهاية العقد', 'Contract end')}><Input type="date" value={s('contractEndDate')} onChange={set('contractEndDate')} /></Field>}
           <Field label={t('ساعات العمل اليومية', 'Hours per day')}><Input type="number" min={1} max={12} dir="ltr" value={s('hoursPerDay')} onChange={set('hoursPerDay')} /></Field>
+          <div className="sm:col-span-2 lg:col-span-3">
+            <label className="inline-flex cursor-pointer items-center gap-2 text-sm text-ink">
+              <input type="checkbox" className="h-4 w-4 accent-primary-500" checked={!!f.qiwaDocumented} onChange={(e) => setF((x) => ({ ...x, qiwaDocumented: e.target.checked }))} />
+              {t('العقد موثق في منصة قوى', 'Contract documented in Qiwa')}
+            </label>
+            {s('nationality') === 'SA' && (
+              <p className="mt-1 text-xs text-ink-soft">{t('منذ 15 أبريل 2026 لا يُحتسب السعودي في نطاقات إلا إذا كان عقده موثقاً في قوى.', 'Since 15 April 2026 a Saudi counts toward Nitaqat only if their contract is documented in Qiwa.')}</p>
+            )}
+          </div>
         </div>
       )}
 

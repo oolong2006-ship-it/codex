@@ -139,6 +139,12 @@ export default function EmployeeDetailPage() {
                       { label: t('نهاية التجربة', 'Probation end'), value: date(e.probationEndDate, lang) },
                       { label: t('نوع العقد', 'Contract'), value: e.contractType === 'FIXED' ? t('محدد المدة', 'Fixed term') : t('غير محدد المدة', 'Unlimited') },
                       { label: t('نهاية العقد', 'Contract end'), value: date(e.contractEndDate, lang) },
+                      ...(e.isSaudi ? [{
+                        label: t('توثيق العقد في قوى', 'Qiwa contract'),
+                        value: e.qiwaDocumented
+                          ? <span className="inline-flex flex-wrap items-center gap-2"><Badge tone="success">{t('موثق', 'Documented')}</Badge>{e.qiwaDocumentedAt && <span className="text-xs text-ink-soft">{date(e.qiwaDocumentedAt, lang)}</span>}</span>
+                          : <Badge tone="warning">{t('غير موثق — لا يُحتسب في نطاقات', 'Not documented — not counted in Nitaqat')}</Badge>,
+                      }] : []),
                       { label: t('ساعات العمل اليومية', 'Hours/day'), value: <span className="num">{e.hoursPerDay}</span> },
                     ]} />
                   </CardBody>

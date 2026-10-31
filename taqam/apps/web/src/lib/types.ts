@@ -15,12 +15,13 @@ export type TerminationReason =
 
 // ---------- Dashboard ----------
 export interface DashboardData {
-  headcount: number; saudis: number; nonSaudis: number; saudizationRate: number; nitaqatBand: NitaqatBand;
+  /** saudizationRate/nitaqatBand are official (Qiwa-documented Saudis); internalSaudizationRate counts every Saudi. */
+  headcount: number; saudis: number; nonSaudis: number; documentedSaudis: number; saudizationRate: number; internalSaudizationRate: number; nitaqatBand: NitaqatBand;
   presentToday: number; lateToday: number; absentToday: number; onLeaveToday: number;
   pendingLeaves: number; pendingRequests: number;
   monthlyPayrollCost: number;
   expiringDocuments: { employeeId: ID; employeeName: string; type: DocumentType; expiryDate: string; status: ExpiryStatus }[];
-  headcountByBranch: { branchId: ID; branchName: string; count: number; saudis: number }[];
+  headcountByBranch: { branchId: ID; branchName: string; count: number; saudis: number; documentedSaudis: number; saudizationRate: number; internalSaudizationRate: number }[];
   headcountByDepartment: { departmentId: ID; name: string; count: number }[];
   payrollTrend: { period: string; gross: number; net: number }[];
   attendanceTrend: { date: string; present: number; late: number; absent: number }[];
@@ -46,7 +47,8 @@ export interface AuditLog { id: ID; action: string; entity: string; entityId?: s
 export interface Branch {
   id: ID; nameAr: string; nameEn?: string | null; city: string; address?: string | null;
   lat: number; lng: number; radiusMeters: number; managerEmployeeId?: ID | null;
-  employeesCount: number; saudis: number; saudizationRate: number; nitaqatBand: NitaqatBand; managerName?: string | null;
+  /** saudizationRate/nitaqatBand are official (Qiwa-documented Saudis); internalSaudizationRate counts every Saudi. */
+  employeesCount: number; saudis: number; documentedSaudis: number; saudizationRate: number; internalSaudizationRate: number; nitaqatBand: NitaqatBand; managerName?: string | null;
 }
 export interface Department { id: ID; name: string; parentId: ID | null; employeesCount: number }
 
@@ -68,6 +70,8 @@ export interface Employee {
   iban?: string | null; bankCode?: string | null; gosiRegistered: boolean; hoursPerDay: number;
   /** First GOSI registration: on/after 2024-07-03 ⇒ NEW Social Insurance Law regime; null ⇒ LEGACY. */
   gosiFirstRegisteredAt?: string | null;
+  /** Contract documented in Qiwa — since 15 Apr 2026 only documented Saudis count for Nitaqat. */
+  qiwaDocumented?: boolean; qiwaDocumentedAt?: string | null;
   avatarColor?: string | null; createdAt: string;
 }
 export type DocumentType = 'IQAMA' | 'PASSPORT' | 'CONTRACT' | 'CERTIFICATE' | 'INSURANCE' | 'OTHER';
@@ -147,9 +151,17 @@ export interface Adjustment {
 }
 
 // ---------- Saudization ----------
+/** Official = Qiwa-documented Saudis / all active (counts for Nitaqat since 15 Apr 2026); internal = all Saudis / all active. `rate`/`band` are official. */
+export interface SaudizationSummary {
+  total: number; saudis: number; documentedSaudis: number; undocumentedSaudis: number;
+  rate: number; officialRate: number; internalRate: number; band: NitaqatBand; marginToDrop: number; alert: boolean; hiresToNextBand: number;
+}
 export interface SaudizationData {
-  company: { total: number; saudis: number; rate: number; band: NitaqatBand; hiresToNextBand: number };
-  branches: { branchId: ID; branchName: string; total: number; saudis: number; rate: number; band: NitaqatBand }[];
+  /** BRANCH: a branch manager's figures cover their own branch only. */
+  scope: 'COMPANY' | 'BRANCH';
+  company: SaudizationSummary & { nonSaudis: number; nextBand: NitaqatBand | null };
+  branches: (SaudizationSummary & { branchId: ID; branchName: string })[];
+  undocumented: { id: ID; employeeNumber: string; name: string; branchId: ID | null; branchName: string | null }[];
   thresholds: { platinum: number; highGreen: number; midGreen: number; lowGreen: number };
 }
 export interface SaudizationSim { before: { rate: number; band: NitaqatBand }; after: { rate: number; band: NitaqatBand } }

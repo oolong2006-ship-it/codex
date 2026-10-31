@@ -17,7 +17,7 @@ import { addDays, day, todayStr } from '../common/dates';
 import { badRequest, conflict, forbidden, notFound } from '../common/errors';
 import { num } from '../common/money';
 import { pageParams } from '../common/pagination';
-import { CreateEmployeeDto, DocumentDto, TerminateDto, UpdateEmployeeDto } from './employees.dto';
+import { CreateEmployeeDto, DocumentDto, QiwaDocumentedDto, TerminateDto, UpdateEmployeeDto } from './employees.dto';
 import { employeeInclude, employeeView, fullName } from './employee.view';
 
 const AVATAR_COLORS = ['#0F3D3E', '#145A5C', '#1F7A7C', '#F2A541', '#3B7EA1', '#2E8B57', '#C8553D', '#7A5C99'];
@@ -31,6 +31,8 @@ export interface EmployeeQuery {
   departmentId?: string;
   status?: string;
   nationality?: string;
+  /** 'true' | 'false' — Saudis whose contracts are (not) documented in Qiwa; implies Saudis (with NON_SA ⇒ empty) */
+  qiwaDocumented?: string;
 }
 
 @Injectable()
@@ -51,6 +53,10 @@ export class EmployeesService {
     if (q.nationality === 'SA') extra.isSaudi = true;
     else if (q.nationality === 'NON_SA') extra.isSaudi = false;
     else if (q.nationality && q.nationality.length === 2) extra.nationality = q.nationality.toUpperCase();
+    // implies Saudis and is AND-ed with the nationality filter (NON_SA + qiwaDocumented ⇒ empty), same as the demo mock
+    if (q.qiwaDocumented === 'true' || q.qiwaDocumented === 'false') {
+      extra.AND = [{ isSaudi: true }, { qiwaDocumented: q.qiwaDocumented === 'true' }];
+    }
     if (q.search?.trim()) {
       const s = q.search.trim();
       const parts = s.split(/\s+/);
@@ -127,6 +133,7 @@ export class EmployeesService {
       data.bankCode = dto.bankCode || bankCodeFromIban(iban);
     }
     for (const k of ['branchId', 'departmentId', 'managerId']) if (data[k] === '') data[k] = null;
+    if (dto.qiwaDocumented !== undefined) data.qiwaDocumentedAt = dto.qiwaDocumented ? new Date() : null;
     return data;
   }
 
@@ -196,9 +203,22 @@ export class EmployeesService {
       if (dup) throw conflict('Employee number already exists', 'الرقم الوظيفي مستخدم مسبقاً');
     }
     const data = this.toData(dto);
+    // re-confirming an already documented contract keeps its original documentation date
+    if (dto.qiwaDocumented === true && current.qiwaDocumented) delete data.qiwaDocumentedAt;
     const e = await this.prisma.employee.update({ where: { id }, data: data as Prisma.EmployeeUncheckedUpdateInput, include: employeeInclude });
     await this.audit.log(u, 'UPDATE', 'Employee', id, dto);
     return employeeView(e);
+  }
+
+  /** Bulk confirm/undo Qiwa documentation. Only rows of this company whose flag changes are updated (keeps existing dates). */
+  async setQiwaDocumented(u: AuthUser, dto: QiwaDocumentedDto) {
+    const ids = [...new Set(dto.employeeIds)];
+    const { count } = await this.prisma.employee.updateMany({
+      where: this.scope.employeeWhere(u, { id: { in: ids }, qiwaDocumented: !dto.documented }),
+      data: { qiwaDocumented: dto.documented, qiwaDocumentedAt: dto.documented ? new Date() : null },
+    });
+    await this.audit.log(u, 'QIWA_DOCUMENTED', 'Employee', null, { employeeIds: ids, documented: dto.documented, updated: count });
+    return { updated: count };
   }
 
   async eosb(u: AuthUser, id: string, endDate?: string, reason?: TerminationReason) {

@@ -2,6 +2,9 @@ import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 import { ContractType, DocumentType, EmployeeStatus, Gender } from '@prisma/client';
 import { Transform, Type } from 'class-transformer';
 import {
+  ArrayMaxSize,
+  ArrayMinSize,
+  IsArray,
   IsBoolean,
   IsDateString,
   IsEmail,
@@ -16,6 +19,7 @@ import {
   Max,
   Min,
   MinLength,
+  ValidateIf,
   ValidateNested,
 } from 'class-validator';
 import { TerminationReason } from '@taqam/core';
@@ -63,6 +67,8 @@ export class CreateEmployeeDto {
   @ApiPropertyOptional() @IsOptional() @IsBoolean() gosiRegistered?: boolean;
   /** First GOSI registration: on/after 2024-07-03 ⇒ NEW Social Insurance Law regime; null ⇒ LEGACY. */
   @ApiPropertyOptional({ example: '2025-01-10', nullable: true }) @IsOptional() @Transform(emptyToUndef) @Matches(DATE) gosiFirstRegisteredAt?: string | null;
+  /** Contract documented in Qiwa — since 15 Apr 2026 only documented Saudis count for Nitaqat. The date is set by the server. */
+  @ApiPropertyOptional() @ValidateIf((_o, v) => v !== undefined) @IsBoolean() qiwaDocumented?: boolean;
   @ApiPropertyOptional() @IsOptional() @IsInt() @Min(1) @Max(12) hoursPerDay?: number;
   @ApiPropertyOptional() @IsOptional() @IsString() avatarColor?: string;
   @ApiPropertyOptional() @IsOptional() @IsNumber() @Min(0) annualLeaveCarryOver?: number;
@@ -75,6 +81,8 @@ export class CreateEmployeeDto {
 
 /** Status TERMINATED and terminationDate are set only by POST /employees/:id/terminate (EOSB + login deactivation). */
 export class UpdateEmployeeDto extends PartialType(CreateEmployeeDto) {
+  /** Re-declared: PartialType makes every field @IsOptional (null would slip through to Prisma's non-nullable column). */
+  @ApiPropertyOptional() @ValidateIf((_o, v) => v !== undefined) @IsBoolean() qiwaDocumented?: boolean;
   @ApiPropertyOptional() @IsOptional() @IsString() terminationReason?: string | null;
 }
 
@@ -94,4 +102,10 @@ export class DocumentDto {
   @ApiPropertyOptional() @IsOptional() @Transform(emptyToUndef) @Matches(DATE) issueDate?: string;
   @ApiPropertyOptional() @IsOptional() @Transform(emptyToUndef) @Matches(DATE) expiryDate?: string;
   @ApiPropertyOptional() @IsOptional() @IsString() note?: string;
+}
+
+/** Bulk confirm (or undo) Qiwa contract documentation; ids outside the company are ignored. */
+export class QiwaDocumentedDto {
+  @ApiProperty({ type: [String] }) @IsArray() @ArrayMinSize(1) @ArrayMaxSize(1000) @IsString({ each: true }) employeeIds: string[];
+  @ApiProperty() @IsBoolean() documented: boolean;
 }

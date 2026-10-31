@@ -10,7 +10,7 @@ const login = async (email: string) => (await call('POST', '/auth/login', null, 
 /** GOSI two regimes (new Social Insurance Law) — mock parity with the API (spec §3). */
 describe('demo mock: GOSI two regimes', () => {
   it('bumps the demo DB version for the new employee field', () => {
-    expect(DB_VERSION).toBe(8);
+    expect(DB_VERSION).toBeGreaterThanOrEqual(8);
   });
 
   it('seeds 3 Saudi employees registered on/after 2024-07-03 (NEW regime); the rest stay LEGACY', async () => {

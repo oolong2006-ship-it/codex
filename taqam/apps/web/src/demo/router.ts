@@ -81,6 +81,12 @@ export const v = {
     if (!values.includes(x as T)) throw invalid(k, `must be one of ${values.join(', ')}`);
     return x as T;
   },
+  bool(b: Record<string, unknown>, k: string, optional = false): boolean | undefined {
+    const x = b[k];
+    if (x === undefined && optional) return undefined;
+    if (typeof x !== 'boolean') throw invalid(k, 'must be a boolean value');
+    return x;
+  },
   email(b: Record<string, unknown>, k: string, optional = false): string | undefined {
     const x = b[k];
     if (x === undefined || x === null || (optional && x === '')) { if (optional) return undefined; throw invalid(k, 'must be an email'); }

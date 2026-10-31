@@ -38,11 +38,14 @@ export class DashboardController {
         otherAllowances: true,
         gosiRegistered: true,
         gosiFirstRegisteredAt: true,
+        qiwaDocumented: true,
       },
     });
     const headcount = employees.length;
     const saudis = employees.filter((e) => e.isSaudi).length;
-    const saudizationRateVal = saudizationRate(saudis, headcount);
+    // official rate (since 15 Apr 2026 only Qiwa-documented Saudis count for Nitaqat) — same as GET /saudization
+    const documentedSaudis = employees.filter((e) => e.isSaudi && e.qiwaDocumented).length;
+    const saudizationRateVal = saudizationRate(documentedSaudis, headcount);
 
     const board = await this.att.board(this.scope.employeeWhere(u), today);
     const presentToday = board.filter((r) => r.status === 'PRESENT' || r.status === 'LATE' || r.status === 'INCOMPLETE').length;
@@ -114,7 +117,16 @@ export class DashboardController {
       .map((b) => {
         const list = employees.filter((e) => e.branchId === b.id);
         const s = list.filter((e) => e.isSaudi).length;
-        return { branchId: b.id, branchName: b.nameAr, count: list.length, saudis: s, saudizationRate: saudizationRate(s, list.length) };
+        const d = list.filter((e) => e.isSaudi && e.qiwaDocumented).length;
+        return {
+          branchId: b.id,
+          branchName: b.nameAr,
+          count: list.length,
+          saudis: s,
+          documentedSaudis: d,
+          saudizationRate: saudizationRate(d, list.length),
+          internalSaudizationRate: saudizationRate(s, list.length),
+        };
       });
     const headcountByDepartment = departments
       .map((d) => ({ departmentId: d.id, name: d.name, count: employees.filter((e) => e.departmentId === d.id).length }))
@@ -145,7 +157,9 @@ export class DashboardController {
       headcount,
       saudis,
       nonSaudis: headcount - saudis,
+      documentedSaudis,
       saudizationRate: saudizationRateVal,
+      internalSaudizationRate: saudizationRate(saudis, headcount),
       nitaqatBand: nitaqatBand(saudizationRateVal),
       presentToday,
       lateToday,

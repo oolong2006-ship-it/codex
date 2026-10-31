@@ -210,7 +210,8 @@ export function seedPlatform(db: DB, svc: Services, now: Date) {
         hireDate: hire, contractType: saudi ? 'UNLIMITED' : 'FIXED', contractEndDate: saudi ? null : rel(randInt(60, 700)), probationEndDate: addDays(hire, 90),
         status: 'ACTIVE', terminationDate: null, terminationReason: null, basicSalary: k === 0 ? 15000 : basic, housingAllowance: Math.round((k === 0 ? 15000 : basic) * 0.25),
         transportAllowance: Math.max(300, Math.round((k === 0 ? 15000 : basic) * 0.1)), otherAllowances: 0, iban: saudiIban(bank), bankCode: bank, gosiRegistered: true,
-        gosiFirstRegisteredAt: null, hoursPerDay: 8, avatarColor: COLORS[(empSeq + k) % COLORS.length], annualLeaveCarryOver: 0, createdAt: created, updatedAt: createdAt,
+        gosiFirstRegisteredAt: null, hoursPerDay: 8, avatarColor: COLORS[(empSeq + k) % COLORS.length], annualLeaveCarryOver: 0,
+        qiwaDocumented: true, qiwaDocumentedAt: created, createdAt: created, updatedAt: createdAt,
       };
       db.employees.push(e);
       emps.push(e);

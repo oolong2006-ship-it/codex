@@ -79,6 +79,7 @@ const EMP_FIELDS = [
   'employeeNumber', 'firstNameAr', 'lastNameAr', 'fullNameEn', 'nationality', 'gender', 'birthDate', 'maritalStatus', 'nationalId', 'idExpiry', 'passportNumber',
   'passportExpiry', 'phone', 'email', 'branchId', 'departmentId', 'managerId', 'jobTitle', 'hireDate', 'contractType', 'contractEndDate', 'probationEndDate', 'status',
   'basicSalary', 'housingAllowance', 'transportAllowance', 'otherAllowances', 'iban', 'bankCode', 'gosiRegistered', 'gosiFirstRegisteredAt', 'hoursPerDay', 'avatarColor', 'annualLeaveCarryOver',
+  'qiwaDocumented',
 ] as const;
 const EMPTY_TO_UNDEF = new Set(['birthDate', 'idExpiry', 'passportExpiry', 'email', 'branchId', 'departmentId', 'managerId', 'contractEndDate', 'probationEndDate', 'iban', 'terminationDate', 'gosiFirstRegisteredAt']);
 
@@ -100,6 +101,7 @@ function employeeDto(body: Record<string, unknown>, partial: boolean) {
   if (dto.status !== undefined) v.oneOf(dto, 'status', ['ACTIVE', 'ON_LEAVE', 'TERMINATED'] as const);
   for (const f of EMP_DATE_FIELDS) if (dto[f] !== undefined && dto[f] !== null) v.match(dto, f, DATE_RE);
   if (dto.email !== undefined && dto.email !== null) v.email(dto, 'email');
+  v.bool(dto, 'qiwaDocumented', true);
   return dto;
 }
 function employeeData(dto: Record<string, unknown>) {
@@ -113,6 +115,7 @@ function employeeData(dto: Record<string, unknown>) {
     data.bankCode = dto.bankCode || bankCodeFromIban(iban);
   }
   for (const k of ['branchId', 'departmentId', 'managerId']) if (data[k] === '') data[k] = null;
+  if (dto.qiwaDocumented !== undefined) data.qiwaDocumentedAt = dto.qiwaDocumented ? nowIso() : null;
   return data as Partial<Employee>;
 }
 function validateEmployeeRefs(svc: Services, u: AuthUser, dto: Record<string, unknown>, selfId?: string) {
@@ -204,9 +207,11 @@ function branchesView(svc: Services, u: AuthUser) {
   return svc.db.branches.filter((b) => b.companyId === u.companyId).sort(byCreatedAsc).map((b) => {
     const list = active.filter((e) => e.branchId === b.id);
     const saudis = list.filter((e) => e.isSaudi).length;
-    const rate = saudizationRate(saudis, list.length);
+    // official rate (only Qiwa-documented Saudis count for Nitaqat) — same as GET /saudization
+    const documentedSaudis = list.filter((e) => e.isSaudi && e.qiwaDocumented).length;
+    const rate = saudizationRate(documentedSaudis, list.length);
     const m = svc.emp(b.managerEmployeeId);
-    return { ...b, employeesCount: list.length, saudis, saudizationRate: rate, nitaqatBand: nitaqatBand(rate), managerName: m ? fullName(m) : null, manager: m ? { id: m.id, name: fullName(m) } : null };
+    return { ...b, employeesCount: list.length, saudis, documentedSaudis, saudizationRate: rate, internalSaudizationRate: saudizationRate(saudis, list.length), nitaqatBand: nitaqatBand(rate), managerName: m ? fullName(m) : null, manager: m ? { id: m.id, name: fullName(m) } : null };
   });
 }
 function companyDto(b: Record<string, unknown>) {
@@ -308,7 +313,9 @@ export const coreRoutes: Route[] = [
     const employees = db.employees.filter((e) => where(e) && e.status !== 'TERMINATED');
     const headcount = employees.length;
     const saudis = employees.filter((e) => e.isSaudi).length;
-    const rate = saudizationRate(saudis, headcount);
+    // official rate (only Qiwa-documented Saudis count for Nitaqat) — same as GET /saudization
+    const documentedSaudis = employees.filter((e) => e.isSaudi && e.qiwaDocumented).length;
+    const rate = saudizationRate(documentedSaudis, headcount);
     const board = svc.board(where, today);
     const presentToday = board.filter((r) => r.status === 'PRESENT' || r.status === 'LATE' || r.status === 'INCOMPLETE').length;
     const lateToday = board.filter((r) => r.status === 'LATE').length;
@@ -342,7 +349,8 @@ export const coreRoutes: Route[] = [
     const headcountByBranch = db.branches.filter((b) => b.companyId === u.companyId && (u.role !== 'BRANCH_MANAGER' || b.id === u.branchId)).sort(byCreatedAsc).map((b) => {
       const list = employees.filter((e) => e.branchId === b.id);
       const s = list.filter((e) => e.isSaudi).length;
-      return { branchId: b.id, branchName: b.nameAr, count: list.length, saudis: s, saudizationRate: saudizationRate(s, list.length) };
+      const d = list.filter((e) => e.isSaudi && e.qiwaDocumented).length;
+      return { branchId: b.id, branchName: b.nameAr, count: list.length, saudis: s, documentedSaudis: d, saudizationRate: saudizationRate(d, list.length), internalSaudizationRate: saudizationRate(s, list.length) };
     });
     const headcountByDepartment = db.departments.filter((d) => d.companyId === u.companyId).sort(byCreatedAsc)
       .map((d) => ({ departmentId: d.id, name: d.name, count: employees.filter((e) => e.departmentId === d.id).length }))
@@ -357,7 +365,7 @@ export const coreRoutes: Route[] = [
     const recentActivity = db.audit.filter((l) => l.companyId === u.companyId && (u.role !== 'BRANCH_MANAGER' || l.userId === u.id)).sort(byCreatedDesc).slice(0, 10)
       .map((l) => ({ id: l.id, action: l.action, entity: l.entity, entityId: l.entityId, createdAt: l.createdAt, userName: l.userName }));
     return {
-      headcount, saudis, nonSaudis: headcount - saudis, saudizationRate: rate, nitaqatBand: nitaqatBand(rate), presentToday, lateToday, absentToday, onLeaveToday,
+      headcount, saudis, nonSaudis: headcount - saudis, documentedSaudis, saudizationRate: rate, internalSaudizationRate: saudizationRate(saudis, headcount), nitaqatBand: nitaqatBand(rate), presentToday, lateToday, absentToday, onLeaveToday,
       pendingLeaves, pendingRequests, monthlyPayrollCost, monthlyPayrollCostSource, expiringDocuments, headcountByBranch, headcountByDepartment, payrollTrend, attendanceTrend, recentActivity,
     };
   }),
@@ -555,6 +563,8 @@ export const coreRoutes: Route[] = [
       if (q.nationality === 'SA' && !e.isSaudi) return false;
       if (q.nationality === 'NON_SA' && e.isSaudi) return false;
       if (q.nationality && q.nationality.length === 2 && q.nationality !== 'SA' && e.nationality !== q.nationality.toUpperCase()) return false;
+      // implies Saudis and is AND-ed with the nationality filter (NON_SA + qiwaDocumented ⇒ empty), same as the API
+      if ((q.qiwaDocumented === 'true' || q.qiwaDocumented === 'false') && !(e.isSaudi && e.qiwaDocumented === (q.qiwaDocumented === 'true'))) return false;
       if (s) {
         const has = (x: string | null) => !!x && x.toLowerCase().includes(s);
         const hit = has(e.firstNameAr) || has(e.lastNameAr) || has(e.fullNameEn) || has(e.employeeNumber) || has(e.nationalId) || has(e.phone) || has(e.email) || has(e.jobTitle)
@@ -589,7 +599,8 @@ export const coreRoutes: Route[] = [
       maritalStatus: null, nationalId: '', idExpiry: null, passportNumber: null, passportExpiry: null, phone: null, email: null, branchId: null, departmentId: null,
       managerId: null, jobTitle: null, hireDate: todayStr(), contractType: 'UNLIMITED', contractEndDate: null, probationEndDate: null, status: 'ACTIVE',
       terminationDate: null, terminationReason: null, basicSalary: 0, housingAllowance: 0, transportAllowance: 0, otherAllowances: 0, iban: null, bankCode: null,
-      gosiRegistered: true, gosiFirstRegisteredAt: null, hoursPerDay: 8, avatarColor: AVATAR_COLORS[mine.length % AVATAR_COLORS.length], annualLeaveCarryOver: 0, createdAt: now, updatedAt: now,
+      gosiRegistered: true, gosiFirstRegisteredAt: null, hoursPerDay: 8, avatarColor: AVATAR_COLORS[mine.length % AVATAR_COLORS.length], annualLeaveCarryOver: 0,
+      qiwaDocumented: false, qiwaDocumentedAt: null, createdAt: now, updatedAt: now,
       ...data, employeeNumber,
     } as Employee;
     if (!dto.avatarColor) e.avatarColor = AVATAR_COLORS[mine.length % AVATAR_COLORS.length];
@@ -598,12 +609,35 @@ export const coreRoutes: Route[] = [
     svc.audit(u, 'CREATE', 'Employee', e.id, { employeeNumber, name: fullName(e) });
     return employeeView(svc, e);
   }),
+  /** Confirm (or undo) Qiwa contract documentation; ids outside the company are ignored; only changed rows count. */
+  route('POST', '/employees/qiwa-documented', ADMIN, ({ db, svc, user: u, body }) => {
+    const raw = body.employeeIds;
+    if (!Array.isArray(raw)) throw badRequest('employeeIds must be an array');
+    if (raw.length < 1) throw badRequest('employeeIds must contain at least 1 elements');
+    if (raw.length > 1000) throw badRequest('employeeIds must contain no more than 1000 elements');
+    if (!raw.every((x) => typeof x === 'string')) throw badRequest('each value in employeeIds must be a string');
+    const documented = v.bool(body, 'documented')!;
+    const ids = new Set(raw as string[]);
+    const where = svc.employeeWhere(u);
+    const now = nowIso();
+    let updated = 0;
+    for (const e of db.employees) {
+      if (!ids.has(e.id) || !where(e) || e.qiwaDocumented === documented) continue;
+      Object.assign(e, { qiwaDocumented: documented, qiwaDocumentedAt: documented ? now : null, updatedAt: now });
+      updated++;
+    }
+    svc.audit(u, 'QIWA_DOCUMENTED', 'Employee', null, { employeeIds: [...ids], documented, updated });
+    return { updated };
+  }),
   route('PATCH', '/employees/:id', ADMIN, ({ db, svc, user: u, params, body }) => {
     const e = svc.scopedEmployee(u, params.id);
     const dto = employeeDto(body, true);
     validateEmployeeRefs(svc, u, dto, e.id);
     if (dto.employeeNumber && db.employees.some((x) => x.companyId === u.companyId && x.employeeNumber === dto.employeeNumber && x.id !== e.id)) throw conflict('Employee number already exists', 'الرقم الوظيفي مستخدم مسبقاً');
-    Object.assign(e, employeeData(dto), { updatedAt: nowIso() });
+    const data = employeeData(dto);
+    // re-confirming an already documented contract keeps its original documentation date
+    if (dto.qiwaDocumented === true && e.qiwaDocumented) delete data.qiwaDocumentedAt;
+    Object.assign(e, data, { updatedAt: nowIso() });
     svc.audit(u, 'UPDATE', 'Employee', e.id, dto);
     return employeeView(svc, e);
   }),

@@ -8,6 +8,7 @@ import {
   saudizationRate, nitaqatBand, hiresNeededForBand, DEFAULT_NITAQAT_THRESHOLDS,
   daysUntil, expiryStatus, resignationFactor, calendarDays, WageComponents, ShiftDef, WpsEmployeeRow,
   gosiRegime, saudiPensionRate, gosiRatesFor, NEW_REGIME_PENSION_SCHEDULE,
+  officialSaudization, marginToDrop, nitaqatAlert,
 } from './index';
 
 const W10K: WageComponents = { basic: 7000, housing: 2000, transport: 1000, other: 0 };
@@ -574,6 +575,45 @@ describe('Nitaqat', () => {
     expect(hiresNeededForBand(5, 10, 'HIGH_GREEN')).toBe(0);
     expect(hiresNeededForBand(0, 10, 'RED')).toBe(0);
     expect(hiresNeededForBand(0, 0, 'LOW_GREEN')).toBe(1);
+  });
+});
+
+describe('Qiwa-documented Saudization', () => {
+  const emps = [...Array(7)].map(() => ({ isSaudi: false, qiwaDocumented: false }))
+    .concat([{ isSaudi: true, qiwaDocumented: true }, { isSaudi: true, qiwaDocumented: true }, { isSaudi: true, qiwaDocumented: false }]);
+
+  it('official rate counts only documented Saudis; band uses the official rate', () => {
+    const s = officialSaudization(emps);
+    expect(s).toMatchObject({ total: 10, saudis: 3, documentedSaudis: 2, undocumentedSaudis: 1, officialRate: 20, internalRate: 30, band: 'MID_GREEN' });
+    expect(s.marginToDrop).toBe(0); // losing 1 of 2 → 11.11% (<12) drops two bands
+  });
+
+  it('zero employees → zeros, never NaN', () => {
+    expect(officialSaudization([])).toEqual({
+      total: 0, saudis: 0, documentedSaudis: 0, undocumentedSaudis: 0,
+      officialRate: 0, internalRate: 0, band: 'RED', marginToDrop: 0,
+    });
+    expect(marginToDrop(0, 0)).toBe(0);
+  });
+
+  it('a non-Saudi flagged as documented does not count', () => {
+    const s = officialSaudization([{ isSaudi: false, qiwaDocumented: true }, { isSaudi: true, qiwaDocumented: true }]);
+    expect(s).toMatchObject({ total: 2, saudis: 1, documentedSaudis: 1, officialRate: 50 });
+  });
+
+  it('marginToDrop', () => {
+    expect(marginToDrop(0, 10)).toBe(0);
+    expect(marginToDrop(5, 10)).toBe(1); // 50%→ 4/9=44.4 still PLATINUM, 3/8=37.5 drops
+    expect(marginToDrop(1, 20)).toBe(0); // already RED
+    expect(marginToDrop(3, 3)).toBe(2); // 100% → 1/1 still PLATINUM, 0/0 drops
+    expect(marginToDrop(5, 10, { platinum: 60, highGreen: 45, midGreen: 30, lowGreen: 10 })).toBe(0); // 50% HIGH_GREEN; 4/9=44.4 drops below 45
+  });
+
+  it('alert when any Saudi is undocumented or the margin is ≤ 1; never for an empty branch', () => {
+    expect(nitaqatAlert(officialSaudization(emps))).toBe(true);
+    expect(nitaqatAlert({ total: 10, undocumentedSaudis: 0, marginToDrop: 1 })).toBe(true);
+    expect(nitaqatAlert({ total: 10, undocumentedSaudis: 0, marginToDrop: 2 })).toBe(false);
+    expect(nitaqatAlert(officialSaudization([]))).toBe(false);
   });
 });
 

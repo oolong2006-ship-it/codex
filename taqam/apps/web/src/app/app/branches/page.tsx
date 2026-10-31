@@ -11,6 +11,7 @@ import { useFetch } from '@/lib/useFetch';
 import { useLang } from '@/lib/i18n';
 import { num, pct } from '@/lib/format';
 import { NITAQAT_BAND, label } from '@/lib/labels';
+import { OFFICIAL_ESTIMATE } from '@/lib/saudization';
 import type { Branch } from '@/lib/types';
 
 export default function BranchesPage() {
@@ -51,8 +52,12 @@ export default function BranchesPage() {
                     <div className="rounded-xl bg-sand p-2.5"><Radius className="mx-auto h-4 w-4 text-ink-soft" /><p className="num mt-1 font-bold text-ink">{num(b.radiusMeters)}</p><p className="text-[11px] text-ink-soft">{t('متر', 'm')}</p></div>
                   </div>
                   <div className="mt-4">
-                    <div className="mb-1 flex justify-between text-xs"><span className="text-ink-muted">{t('نسبة السعودة', 'Saudization')}</span><span className="num font-semibold text-ink">{pct(b.saudizationRate)}</span></div>
+                    <div className="mb-1 flex justify-between text-xs"><span className="text-ink-muted">{t('نسبة السعودة الرسمية', 'Official Saudization')}</span><span className="num font-semibold text-ink">{pct(b.saudizationRate)}</span></div>
                     <div className="h-2 overflow-hidden rounded-full bg-sand-200"><div className="h-full rounded-full" style={{ width: `${Math.min(100, b.saudizationRate)}%`, background: BAND_COLOR[b.nitaqatBand] }} /></div>
+                    <div className="mt-1 flex justify-between gap-2 text-[11px] text-ink-soft">
+                      <span>{lang === 'ar' ? OFFICIAL_ESTIMATE.ar : OFFICIAL_ESTIMATE.en}</span>
+                      {b.internalSaudizationRate !== b.saudizationRate && <span>{t('الداخلية', 'Internal')} <span className="num" dir="ltr">{pct(b.internalSaudizationRate)}</span></span>}
+                    </div>
                   </div>
                   <p className="mb-5 mt-4 flex items-center gap-1.5 text-sm text-ink-muted"><UserRound className="h-4 w-4" />{t('المدير:', 'Manager:')} <span className="text-ink">{b.managerName || '—'}</span></p>
                   <div className="mt-auto flex items-center justify-between gap-2 border-t border-line pt-4">

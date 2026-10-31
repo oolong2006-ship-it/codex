@@ -26,20 +26,25 @@ export class OrgController {
       orderBy: { createdAt: 'asc' },
     });
     const counts = await this.prisma.employee.groupBy({
-      by: ['branchId', 'isSaudi'],
+      by: ['branchId', 'isSaudi', 'qiwaDocumented'],
       where: { companyId: u.companyId, status: { not: 'TERMINATED' } },
       _count: { _all: true },
     });
     return branches.map((b) => {
       const total = counts.filter((c) => c.branchId === b.id).reduce((s, c) => s + c._count._all, 0);
-      const saudis = counts.find((c) => c.branchId === b.id && c.isSaudi)?._count._all ?? 0;
-      const rate = saudizationRate(saudis, total);
+      const sum = (f: (c: (typeof counts)[number]) => boolean) => counts.filter((c) => c.branchId === b.id && f(c)).reduce((s, c) => s + c._count._all, 0);
+      const saudis = sum((c) => c.isSaudi);
+      // official rate (only Qiwa-documented Saudis count for Nitaqat) — same as GET /saudization
+      const documentedSaudis = sum((c) => c.isSaudi && c.qiwaDocumented);
+      const rate = saudizationRate(documentedSaudis, total);
       const { manager, ...rest } = b;
       return {
         ...rest,
         employeesCount: total,
         saudis,
+        documentedSaudis,
         saudizationRate: rate,
+        internalSaudizationRate: saudizationRate(saudis, total),
         nitaqatBand: nitaqatBand(rate),
         managerName: manager ? `${manager.firstNameAr} ${manager.lastNameAr}` : null,
         manager: manager ? { id: manager.id, name: `${manager.firstNameAr} ${manager.lastNameAr}` } : null,

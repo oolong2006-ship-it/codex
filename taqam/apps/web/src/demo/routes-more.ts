@@ -1,5 +1,5 @@
 /** Demo API — leaves, requests & loans, payroll, saudization, performance, recruitment, comms, reports, self-service. */
-import { DEFAULT_NITAQAT_THRESHOLDS, generateWpsCsv, haversineMeters, hiresNeededForBand, isWithinGeofence, nitaqatBand, saudizationRate, type NitaqatBand } from '@taqam/core';
+import { DEFAULT_NITAQAT_THRESHOLDS, generateWpsCsv, haversineMeters, hiresNeededForBand, isWithinGeofence, nitaqatAlert, nitaqatBand, officialSaudization, saudizationRate, type NitaqatBand } from '@taqam/core';
 import { jobId, JOB_POOL, runId } from './ids';
 import { addMonths, periodOf, periodRange, r2, todayStr } from './dates';
 import { nextId, type Employee, type Goal } from './db';
@@ -148,9 +148,19 @@ function assertPeriodOpen(svc: Services, companyId: string, period: string) {
 }
 
 // ---------- saudization / reports ----------
+/** Active employees the viewer may see — a BRANCH_MANAGER gets their branch only (same scope as the dashboard). */
 function counts(svc: Services, u: AuthUser) {
-  const active = svc.db.employees.filter((e) => e.companyId === u.companyId && e.status !== 'TERMINATED');
-  return { active, total: active.length, saudis: active.filter((e) => e.isSaudi).length };
+  const where = svc.employeeWhere(u);
+  const active = svc.db.employees.filter((e) => where(e) && e.status !== 'TERMINATED');
+  return { active, total: active.length, saudis: active.filter((e) => e.isSaudi).length, documentedSaudis: active.filter((e) => e.isSaudi && e.qiwaDocumented).length };
+}
+/** Official (Qiwa-documented) vs internal Saudization — `rate`/`band` are the official rate (since 15 Apr 2026). */
+function saudizationSummary(emps: Employee[]) {
+  const s = officialSaudization(emps);
+  return {
+    total: s.total, saudis: s.saudis, documentedSaudis: s.documentedSaudis, undocumentedSaudis: s.undocumentedSaudis,
+    rate: s.officialRate, officialRate: s.officialRate, internalRate: s.internalRate, band: s.band, marginToDrop: s.marginToDrop, alert: nitaqatAlert(s),
+  };
 }
 function headcount(svc: Services, u: AuthUser) {
   const emps = svc.db.employees.filter((e) => e.companyId === u.companyId);
@@ -367,25 +377,25 @@ export const moreRoutes: Route[] = [
 
   // ---------- saudization ----------
   route('GET', '/saudization', STAFF, ({ db, svc, user: u }) => {
-    const { active, total, saudis } = counts(svc, u);
-    const rate = saudizationRate(saudis, total);
-    const band = nitaqatBand(rate);
-    const nb = nextBand(band);
+    const { active } = counts(svc, u);
+    const company = saudizationSummary(active);
+    const nb = nextBand(company.band);
     return {
-      company: { total, saudis, nonSaudis: total - saudis, rate, band, nextBand: nb, hiresToNextBand: nb ? hiresNeededForBand(saudis, total, nb) : 0 },
-      branches: db.branches.filter((b) => b.companyId === u.companyId).sort(byCreatedAsc).map((b) => {
-        const bt = active.filter((e) => e.branchId === b.id).length;
-        const bs = active.filter((e) => e.branchId === b.id && e.isSaudi).length;
-        const br = saudizationRate(bs, bt);
-        const bb = nitaqatBand(br);
-        const bn = nextBand(bb);
-        return { branchId: b.id, branchName: b.nameAr, total: bt, saudis: bs, rate: br, band: bb, hiresToNextBand: bn ? hiresNeededForBand(bs, bt, bn) : 0 };
+      scope: u.role === 'BRANCH_MANAGER' ? 'BRANCH' : 'COMPANY',
+      company: { ...company, nonSaudis: company.total - company.saudis, nextBand: nb, hiresToNextBand: nb ? hiresNeededForBand(company.documentedSaudis, company.total, nb) : 0 },
+      branches: db.branches.filter((b) => b.companyId === u.companyId && (u.role !== 'BRANCH_MANAGER' || b.id === u.branchId)).sort(byCreatedAsc).map((b) => {
+        const s = saudizationSummary(active.filter((e) => e.branchId === b.id));
+        const bn = nextBand(s.band);
+        return { branchId: b.id, branchName: b.nameAr, ...s, hiresToNextBand: bn ? hiresNeededForBand(s.documentedSaudis, s.total, bn) : 0 };
       }),
+      undocumented: active.filter((e) => e.isSaudi && !e.qiwaDocumented).sort(byNumber)
+        .map((e) => ({ id: e.id, employeeNumber: e.employeeNumber, name: fullName(e), branchId: e.branchId, branchName: svc.branch(e.branchId)?.nameAr ?? null })),
       thresholds: DEFAULT_NITAQAT_THRESHOLDS,
     };
   }),
   route('GET', '/saudization/simulate', STAFF, ({ svc, user: u, query }) => {
-    const { total, saudis } = counts(svc, u);
+    // official count: new hires are assumed to be documented in Qiwa
+    const { total, documentedSaudis: saudis } = counts(svc, u);
     const as = Math.max(0, Number(query.addSaudis) || 0);
     const an = Math.max(0, Number(query.addNonSaudis) || 0);
     const before = saudizationRate(saudis, total);

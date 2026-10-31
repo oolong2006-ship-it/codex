@@ -352,6 +352,9 @@ model Employee {
   gosiRegistered        Boolean        @default(true)
   /// First GOSI registration — on/after 2024-07-03 ⇒ NEW Social Insurance Law regime (null ⇒ LEGACY)
   gosiFirstRegisteredAt DateTime?      @db.Date
+  /// Contract documented in Qiwa — since 15 Apr 2026 only documented Saudis count for Nitaqat
+  qiwaDocumented        Boolean        @default(false)
+  qiwaDocumentedAt      DateTime?
   hoursPerDay           Int            @default(8)
   avatarColor           String         @default("#1F7A7C")
   annualLeaveCarryOver  Decimal        @default(0) @db.Decimal(6, 2)
