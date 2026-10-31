@@ -115,6 +115,12 @@ const PEOPLE: Seed[] = [
 
 const HABITUALLY_LATE = new Set(['o10', 'm8', 'd6']);
 
+/** Office staff of the restaurant handle no food → exempted from the Baladi health certificate. */
+const HEALTH_CERT_EXEMPT = new Set(['gm', 'hr', 'payroll', 'm4']);
+/** Sector compliance demo: food handlers without a health certificate, and certificates about to lapse (days from today). */
+const HEALTH_CERT_MISSING = new Set(['o12', 'm10', 'j3']);
+const HEALTH_CERT_OFFSET: Record<string, number> = { o9: -10, d3: 9, m5: 18, j6: 60 };
+
 async function wipe() {
   const users = await prisma.user.findMany({
     where: { email: { in: [...DEMO_EMAILS, ...EXTRA_OWNER_EMAILS] }, companyId: { not: null } },
@@ -279,6 +285,7 @@ async function main() {
         hoursPerDay: 8,
         avatarColor: COLORS[n % COLORS.length],
         annualLeaveCarryOver: years > 1 ? randInt(4, 15) : 0,
+        docExemptions: HEALTH_CERT_EXEMPT.has(p.key) ? ['HEALTH_CERTIFICATE'] : [],
       },
     });
     emp[p.key] = { id: e.id, seed: p, offDay: p.shift === 'A' ? 5 : (n * 3) % 7, hire, term: terminationDate };
@@ -351,8 +358,17 @@ async function main() {
       const insExp = exp('INSURANCE', rel(randInt(120, 330)))!;
       docs.push({ companyId, employeeId: e.id, type: 'INSURANCE', number: `BUPA-${digits(8)}`, issueDate: addDays(insExp, -365), expiryDate: insExp, note: 'التأمين الطبي' });
     }
-    if (e.seed.dept === 'KITCHEN' || e.seed.dept === 'SERVICE') {
-      docs.push({ companyId, employeeId: e.id, type: 'CERTIFICATE', number: `HC-${digits(6)}`, issueDate: rel(-randInt(30, 300)), expiryDate: rel(randInt(95, 360)), note: 'الشهادة الصحية (بلدي)' });
+    if (!HEALTH_CERT_EXEMPT.has(e.seed.key)) {
+      // kitchen/service keep their original random draws (stable PRNG sequence); delivery drivers get fixed dates
+      const food = e.seed.dept === 'KITCHEN' || e.seed.dept === 'SERVICE';
+      const number = food ? `HC-${digits(6)}` : `HC-${full.employeeNumber.slice(4)}01`;
+      const issueDate = food ? rel(-randInt(30, 300)) : rel(-120);
+      const defExpiry = food ? rel(randInt(95, 360)) : rel(245);
+      const off = HEALTH_CERT_OFFSET[e.seed.key];
+      const expiryDate = off !== undefined ? rel(off) : defExpiry;
+      if (!HEALTH_CERT_MISSING.has(e.seed.key)) {
+        docs.push({ companyId, employeeId: e.id, type: 'HEALTH_CERTIFICATE', number, issueDate: off !== undefined ? addDays(expiryDate, -365) : issueDate, expiryDate, note: 'الشهادة الصحية (بلدي)' });
+      }
     }
   }
   await prisma.employeeDocument.createMany({ data: docs });

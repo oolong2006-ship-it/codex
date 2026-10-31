@@ -127,6 +127,14 @@ enum DocumentType {
   CERTIFICATE
   INSURANCE
   OTHER
+  /// الشهادة الصحية — بلدي (restaurants)
+  HEALTH_CERTIFICATE
+  /// ترخيص مزاولة المهنة — الهيئة السعودية للتخصصات الصحية (healthcare)
+  PROFESSIONAL_LICENSE
+  /// بطاقة السائق — هيئة النقل العام (logistics)
+  DRIVER_CARD
+  /// رخصة القيادة (logistics)
+  DRIVING_LICENSE
 }
 
 enum ApprovalStatus {
@@ -355,6 +363,8 @@ model Employee {
   /// Contract documented in Qiwa — since 15 Apr 2026 only documented Saudis count for Nitaqat
   qiwaDocumented        Boolean        @default(false)
   qiwaDocumentedAt      DateTime?
+  /// Sector documents this employee is exempted from (e.g. an accountant in a clinic needs no professional licence)
+  docExemptions         DocumentType[] @default([])
   hoursPerDay           Int            @default(8)
   avatarColor           String         @default("#1F7A7C")
   annualLeaveCarryOver  Decimal        @default(0) @db.Decimal(6, 2)

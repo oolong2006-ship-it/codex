@@ -6,9 +6,10 @@ import { api, type Paginated } from '@/lib/api';
 import { useFetch } from '@/lib/useFetch';
 import { useLang } from '@/lib/i18n';
 import { date, minutesToHours, money, num, period, todayISO, currentPeriod } from '@/lib/format';
-import { DOC_TYPE, EXPIRY_STATUS, REQUEST_STATUS, TERMINATION_REASON, label } from '@/lib/labels';
+import { DOC_COMPLIANCE_STATUS, DOC_TYPE, EXPIRY_STATUS, REQUEST_STATUS, SECTOR_DOC_HINT, TERMINATION_REASON, label } from '@/lib/labels';
+import { employeeRequirements, toggleExemption } from '@/lib/sector-docs';
 import type {
-  AttendanceSummaryRow, DocumentType, EmployeeDetail, EmployeeDocument, EosbResult, ExpiryStatus, LeaveBalance, LeaveRequest,
+  AttendanceSummaryRow, Company, DocumentType, EmployeeDetail, EmployeeDocument, EosbResult, ExpiryStatus, LeaveBalance, LeaveRequest,
   Payslip, PayrollRun, PayrollRunDetail, TerminationReason,
 } from '@/lib/types';
 import { Async, ConfirmModal, KV, StatusBadge } from './primitives';
@@ -56,6 +57,8 @@ export function DocumentsTab({ employee, canEdit, onChange }: { employee: Employ
     ) }] : []),
   ];
   return (
+    <div className="space-y-6">
+    <SectorRequirements employee={employee} canEdit={canEdit} onChange={onChange} />
     <Card>
       <CardHeader title={t('المستندات', 'Documents')} subtitle={t('الإقامة والجواز والعقد مع تنبيهات الانتهاء', 'Iqama, passport, contract with expiry alerts')}
         action={canEdit && <Button size="sm" onClick={() => setAdding(true)}><FilePlus2 className="h-4 w-4" />{t('إضافة مستند', 'Add document')}</Button>} />
@@ -74,6 +77,51 @@ export function DocumentsTab({ employee, canEdit, onChange }: { employee: Employ
       </Modal>
       <ConfirmModal open={!!del} onClose={() => setDel(null)} onConfirm={remove} danger loading={busy === 'del'}
         title={t('حذف المستند', 'Delete document')} message={t('هل أنت متأكد من حذف هذا المستند؟ لا يمكن التراجع.', 'Delete this document? This cannot be undone.')} confirmLabel={t('حذف', 'Delete')} />
+    </Card>
+    </div>
+  );
+}
+
+/** Documents the company's sector requires of this employee (spec §4), with per-type exemption toggles. */
+function SectorRequirements({ employee, canEdit, onChange }: { employee: EmployeeDetail; canEdit: boolean; onChange: () => void }) {
+  const { t, lang } = useLang();
+  const { busy, run } = useAction();
+  const company = useFetch(() => api.get<Company>('/company'), []);
+  if (!company.data || employee.status === 'TERMINATED') return null;
+  const reqs = employeeRequirements(company.data.sector ?? null, employee, employee.documents ?? [], todayISO());
+  if (!reqs.length) return null;
+  const toggle = async (type: string, exempt: boolean) => {
+    const docExemptions = toggleExemption(employee.docExemptions, type, exempt) as DocumentType[];
+    const ok = await run(`ex-${type}`, () => api.patch(`/employees/${employee.id}`, { docExemptions }),
+      exempt ? t('تم إعفاء الموظف من المستند', 'Employee exempted') : t('أصبح المستند مطلوباً', 'Document now required'));
+    if (ok) onChange();
+  };
+  return (
+    <Card>
+      <CardHeader title={t('مستندات القطاع المطلوبة', 'Required sector documents')}
+        subtitle={t('حسب قطاع المنشأة؛ يمكن إعفاء الموظف إن لم ينطبق عليه المستند (مثل محاسب في عيادة، أو الإقامة لمواطن خليجي غير سعودي)', 'Based on the company sector; exempt the employee when a document does not apply (e.g. an accountant in a clinic, or the iqama for a non-Saudi GCC national)')} />
+      <CardBody className="divide-y divide-line p-0">
+        {reqs.map((r) => (
+          <div key={r.type} className="flex flex-wrap items-center justify-between gap-3 px-5 py-3">
+            <div>
+              <p className="text-sm font-medium text-ink">{label(DOC_TYPE, r.type, lang)}</p>
+              {SECTOR_DOC_HINT[r.type] && <p className="text-xs text-ink-soft">{label(SECTOR_DOC_HINT, r.type, lang)}</p>}
+            </div>
+            <div className="flex items-center gap-3">
+              {r.exempt
+                ? <Badge tone="neutral">{t('معفى', 'Exempt')}</Badge>
+                : r.status === 'OK' ? <Badge tone="success">{t('ساري', 'Valid')}</Badge> : <StatusBadge map={DOC_COMPLIANCE_STATUS} value={r.status} />}
+              {canEdit && (
+                <label className="inline-flex cursor-pointer items-center gap-1.5 text-xs text-ink-muted">
+                  <input type="checkbox" className="h-4 w-4 accent-primary" checked={r.exempt} disabled={busy === `ex-${r.type}`}
+                    onChange={(e) => void toggle(r.type, e.target.checked)} />
+                  {t('إعفاء', 'Exempt')}
+                </label>
+              )}
+            </div>
+          </div>
+        ))}
+      </CardBody>
     </Card>
   );
 }

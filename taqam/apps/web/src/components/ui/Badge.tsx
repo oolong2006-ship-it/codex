@@ -21,7 +21,7 @@ export function statusTone(status: string | null | undefined): Tone {
       return 'success';
     case 'PENDING': case 'CALCULATED': case 'LATE': case 'WARNING': case 'INCOMPLETE': case 'LOW_GREEN': case 'INTERVIEW': case 'OFFER':
       return 'warning';
-    case 'REJECTED': case 'ABSENT': case 'EXPIRED': case 'CRITICAL': case 'RED': case 'TERMINATED':
+    case 'REJECTED': case 'ABSENT': case 'EXPIRED': case 'CRITICAL': case 'RED': case 'TERMINATED': case 'MISSING':
       return 'danger';
     case 'ON_LEAVE': case 'DRAFT': case 'MID_GREEN': case 'SCREENING':
       return 'info';

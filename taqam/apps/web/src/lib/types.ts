@@ -72,9 +72,13 @@ export interface Employee {
   gosiFirstRegisteredAt?: string | null;
   /** Contract documented in Qiwa — since 15 Apr 2026 only documented Saudis count for Nitaqat. */
   qiwaDocumented?: boolean; qiwaDocumentedAt?: string | null;
+  /** Sector documents this employee is exempted from (spec §4). */
+  docExemptions?: DocumentType[];
   avatarColor?: string | null; createdAt: string;
 }
-export type DocumentType = 'IQAMA' | 'PASSPORT' | 'CONTRACT' | 'CERTIFICATE' | 'INSURANCE' | 'OTHER';
+export type DocumentType =
+  | 'IQAMA' | 'PASSPORT' | 'CONTRACT' | 'CERTIFICATE' | 'INSURANCE' | 'OTHER'
+  | 'HEALTH_CERTIFICATE' | 'PROFESSIONAL_LICENSE' | 'DRIVER_CARD' | 'DRIVING_LICENSE';
 export interface EmployeeDocument {
   id: ID; employeeId?: ID; type: DocumentType; number?: string | null; issueDate?: string | null;
   expiryDate?: string | null; note?: string | null; status?: ExpiryStatus;
@@ -86,6 +90,10 @@ export interface EmployeeDetail extends Employee {
   user?: { id: ID; email: string; role: Role } | null;
 }
 export interface ExpiringDocument { id: ID; employeeId: ID; employeeName: string; type: DocumentType; number?: string | null; expiryDate: string; status: ExpiryStatus }
+export type DocumentComplianceStatus = 'MISSING' | 'EXPIRED' | 'CRITICAL' | 'WARNING';
+/** GET /documents/compliance — required sector documents missing or expiring (worst first). */
+export interface DocumentComplianceItem { employeeId: ID; type: DocumentType; status: DocumentComplianceStatus; employeeName: string; branchName: string | null }
+export interface DocumentCompliance { items: DocumentComplianceItem[]; counts: Record<DocumentComplianceStatus, number> }
 export interface OrgNode { id: ID; name: string; jobTitle: string; managerId: ID | null; branchName?: string | null }
 
 // ---------- EOSB ----------

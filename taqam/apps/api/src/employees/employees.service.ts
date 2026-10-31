@@ -1,10 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import * as bcrypt from 'bcryptjs';
-import { Prisma } from '@prisma/client';
+import { DocumentType, Prisma } from '@prisma/client';
 import {
   bankCodeFromIban,
   calculateEndOfService,
+  documentCompliance,
+  DocumentComplianceStatus,
   expiryStatus,
+  requiredDocTypes,
   TerminationReason,
   validateSaudiIban,
 } from '@taqam/core';
@@ -13,7 +16,7 @@ import { AuditService } from '../shared/audit.service';
 import { ScopeService } from '../shared/scope.service';
 import { LeaveCalcService } from '../shared/leave-calc.service';
 import { AuthUser } from '../common/types';
-import { addDays, day, todayStr } from '../common/dates';
+import { addDays, day, dayStr, todayStr } from '../common/dates';
 import { badRequest, conflict, forbidden, notFound } from '../common/errors';
 import { num } from '../common/money';
 import { pageParams } from '../common/pagination';
@@ -134,6 +137,7 @@ export class EmployeesService {
     }
     for (const k of ['branchId', 'departmentId', 'managerId']) if (data[k] === '') data[k] = null;
     if (dto.qiwaDocumented !== undefined) data.qiwaDocumentedAt = dto.qiwaDocumented ? new Date() : null;
+    if (dto.docExemptions) data.docExemptions = [...new Set(dto.docExemptions)];
     return data;
   }
 
@@ -314,6 +318,45 @@ export class EmployeesService {
       expiryDate: d.expiryDate,
       status: expiryStatus(d.expiryDate, today),
     }));
+  }
+
+  /**
+   * Sector documents compliance (spec §4): required documents missing or expiring for active staff,
+   * worst first. Branch managers see their branch only.
+   */
+  async compliance(u: AuthUser) {
+    const today = todayStr();
+    const { sector } = await this.prisma.company.findUniqueOrThrow({ where: { id: u.companyId }, select: { sector: true } });
+    const emps = await this.prisma.employee.findMany({
+      where: this.scope.employeeWhere(u, { status: { not: 'TERMINATED' } }),
+      select: { id: true, firstNameAr: true, lastNameAr: true, isSaudi: true, idExpiry: true, docExemptions: true, branch: { select: { nameAr: true } } },
+      orderBy: { employeeNumber: 'asc' },
+    });
+    const types = [...new Set([...requiredDocTypes(sector, false), ...requiredDocTypes(sector, true)])] as DocumentType[];
+    const docs = emps.length && types.length
+      ? await this.prisma.employeeDocument.findMany({
+          where: { companyId: u.companyId, employeeId: { in: emps.map((e) => e.id) }, type: { in: types } },
+          select: { employeeId: true, type: true, expiryDate: true },
+        })
+      : [];
+    const rows = documentCompliance({
+      sector,
+      today,
+      employees: emps.map((e) => ({ id: e.id, isSaudi: e.isSaudi, exemptions: e.docExemptions, idExpiry: dayStr(e.idExpiry) })),
+      documents: docs.map((d) => ({ employeeId: d.employeeId, type: d.type, expiryDate: dayStr(d.expiryDate) })),
+    });
+    const byId = new Map(emps.map((e) => [e.id, e]));
+    const rank: Record<DocumentComplianceStatus, number> = { MISSING: 0, EXPIRED: 1, CRITICAL: 2, WARNING: 3 };
+    const counts: Record<DocumentComplianceStatus, number> = { MISSING: 0, EXPIRED: 0, CRITICAL: 0, WARNING: 0 };
+    const items = rows
+      .map((r, i) => {
+        counts[r.status]++;
+        const e = byId.get(r.employeeId)!;
+        return { ...r, employeeName: fullName(e), branchName: e.branch?.nameAr ?? null, i };
+      })
+      .sort((a, b) => rank[a.status] - rank[b.status] || a.i - b.i)
+      .map(({ i: _i, ...r }) => r);
+    return { items, counts };
   }
 
   async orgChart(u: AuthUser) {

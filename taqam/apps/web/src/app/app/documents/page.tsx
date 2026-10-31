@@ -1,8 +1,8 @@
 'use client';
 import Link from 'next/link';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { CalendarClock, FileWarning, FileX2, ShieldAlert } from 'lucide-react';
-import { Card, EmptyState, PageHeader, Select, StatCard, Table, type Column } from '@/components/ui';
+import { Card, EmptyState, PageHeader, Select, StatCard, Table, Tabs, type Column } from '@/components/ui';
 import { Async, Avatar, Chips, FilterBar, SearchInput, StatusBadge } from '@/components/app/primitives';
 import { api } from '@/lib/api';
 import { useFetch } from '@/lib/useFetch';
@@ -10,12 +10,37 @@ import { useLang } from '@/lib/i18n';
 import { date, num, todayISO } from '@/lib/format';
 import { DOC_TYPE, EXPIRY_STATUS, label } from '@/lib/labels';
 import type { ExpiringDocument } from '@/lib/types';
+import { ADMIN_BM, can } from '@/components/app/utils';
+import { useAuth } from '@/lib/auth';
+import { SectorCompliance } from './SectorCompliance';
+
+type Tab = 'expiring' | 'compliance';
 
 function daysLeft(d: string) {
   return Math.floor((new Date(`${d.slice(0, 10)}T00:00:00`).getTime() - new Date(`${todayISO()}T00:00:00`).getTime()) / 86400000);
 }
 
 export default function DocumentsPage() {
+  const { t } = useLang();
+  const { user } = useAuth();
+  const [tab, setTab] = useState<Tab>('expiring');
+  const canCompliance = can(user, ADMIN_BM);
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get('tab') === 'compliance') setTab('compliance');
+  }, []);
+  return (
+    <>
+      <PageHeader title={t('مركز المستندات', 'Documents center')} subtitle={t('الإقامات والجوازات والعقود ومستندات القطاع المنتهية أو القريبة من الانتهاء', 'Expired and expiring iqamas, passports, contracts and sector documents')} />
+      {canCompliance && (
+        <Tabs className="mb-5" value={tab} onChange={setTab}
+          tabs={[{ value: 'expiring', label: t('المستندات المنتهية', 'Expiring documents') }, { value: 'compliance', label: t('امتثال القطاع', 'Sector compliance') }]} />
+      )}
+      {canCompliance && tab === 'compliance' ? <SectorCompliance /> : <ExpiringDocuments />}
+    </>
+  );
+}
+
+function ExpiringDocuments() {
   const { t, lang } = useLang();
   const [days, setDays] = useState('90');
   const [status, setStatus] = useState('');
@@ -42,7 +67,6 @@ export default function DocumentsPage() {
 
   return (
     <>
-      <PageHeader title={t('مركز المستندات', 'Documents center')} subtitle={t('الإقامات والجوازات والعقود المنتهية أو القريبة من الانتهاء', 'Expired and expiring iqamas, passports and contracts')} />
       <div className="mb-5 grid grid-cols-1 gap-4 sm:grid-cols-3">
         <StatCard label={t('منتهية', 'Expired')} value={num(count('EXPIRED'))} tone="danger" icon={<FileX2 className="h-5 w-5" />} />
         <StatCard label={t('خلال 30 يوماً', 'Within 30 days')} value={num(count('CRITICAL'))} tone="accent" icon={<ShieldAlert className="h-5 w-5" />} />

@@ -94,6 +94,11 @@ const HABITUALLY_LATE = new Set(['o10', 'm8', 'd6']);
 const GOSI_FIRST_REGISTERED: Record<string, string> = { m3: '2025-01-19', d2: '2025-03-09', j3: '2026-09-15' };
 /** Saudis whose contracts are not yet documented in Qiwa (so the demo shows «تنبيه نطاقات»); everyone else is documented on hire. */
 const QIWA_UNDOCUMENTED = new Set(['o6', 'j3']);
+/** Office staff of the restaurant handle no food → exempted from the Baladi health certificate (spec §4). */
+const HEALTH_CERT_EXEMPT = new Set(['gm', 'hr', 'payroll', 'm4']);
+/** Sector compliance demo: food handlers without a health certificate, and certificates about to lapse (days from today). */
+const HEALTH_CERT_MISSING = new Set(['o12', 'm10', 'j3']);
+const HEALTH_CERT_OFFSET: Record<string, number> = { o9: -10, d3: 9, m5: 18, j6: 60 };
 
 function plusMonths(d: string, n: number): string {
   const x = day(d);
@@ -203,6 +208,7 @@ export function buildSeed(now: Date = new Date()): DB {
       housingAllowance: Math.round(p.basic * 0.25), transportAllowance: Math.max(300, Math.round(p.basic * 0.1)), otherAllowances: p.other ?? 0,
       iban, bankCode: bank, gosiRegistered: true, gosiFirstRegisteredAt: GOSI_FIRST_REGISTERED[p.key] ?? null, hoursPerDay: 8, avatarColor: COLORS[n % COLORS.length], annualLeaveCarryOver: years > 1 ? randInt(4, 15) : 0,
       qiwaDocumented: !QIWA_UNDOCUMENTED.has(p.key), qiwaDocumentedAt: QIWA_UNDOCUMENTED.has(p.key) ? null : ts(p.hire),
+      docExemptions: HEALTH_CERT_EXEMPT.has(p.key) ? ['HEALTH_CERTIFICATE'] : [],
       createdAt: ts(p.hire), updatedAt: createdAt,
     };
     db.employees.push(rec);
@@ -261,9 +267,15 @@ export function buildSeed(now: Date = new Date()): DB {
       const insExp = exp('INSURANCE', rel(randInt(120, 330)))!;
       doc(e.id, 'INSURANCE', `BUPA-${digits(8)}`, addDays(insExp, -365), insExp, 'التأمين الطبي');
     }
-    if (e.seed.dept === 'KITCHEN' || e.seed.dept === 'SERVICE') {
-      const issue = rel(-randInt(30, 300));
-      doc(e.id, 'CERTIFICATE', `HC-${digits(6)}`, issue, rel(randInt(95, 360)), 'الشهادة الصحية (بلدي)');
+    if (!HEALTH_CERT_EXEMPT.has(e.seed.key)) {
+      // kitchen/service keep their original random draws (stable PRNG sequence); delivery drivers get fixed dates
+      const food = e.seed.dept === 'KITCHEN' || e.seed.dept === 'SERVICE';
+      const issue = food ? rel(-randInt(30, 300)) : rel(-120);
+      const number = food ? `HC-${digits(6)}` : `HC-${full.employeeNumber.slice(4)}01`;
+      const defExpiry = food ? rel(randInt(95, 360)) : rel(245);
+      const off = HEALTH_CERT_OFFSET[e.seed.key];
+      const expiry = off !== undefined ? rel(off) : defExpiry;
+      if (!HEALTH_CERT_MISSING.has(e.seed.key)) doc(e.id, 'HEALTH_CERTIFICATE', number, off !== undefined ? addDays(expiry, -365) : issue, expiry, 'الشهادة الصحية (بلدي)');
     }
   }
 

@@ -69,6 +69,13 @@ export class CreateEmployeeDto {
   @ApiPropertyOptional({ example: '2025-01-10', nullable: true }) @IsOptional() @Transform(emptyToUndef) @Matches(DATE) gosiFirstRegisteredAt?: string | null;
   /** Contract documented in Qiwa — since 15 Apr 2026 only documented Saudis count for Nitaqat. The date is set by the server. */
   @ApiPropertyOptional() @ValidateIf((_o, v) => v !== undefined) @IsBoolean() qiwaDocumented?: boolean;
+  /** Sector documents this employee is exempted from (spec §4), e.g. an accountant in a clinic. */
+  @ApiPropertyOptional({ enum: DocumentType, isArray: true })
+  @ValidateIf((_o, v) => v !== undefined)
+  @IsArray()
+  @ArrayMaxSize(20)
+  @IsEnum(DocumentType, { each: true })
+  docExemptions?: DocumentType[];
   @ApiPropertyOptional() @IsOptional() @IsInt() @Min(1) @Max(12) hoursPerDay?: number;
   @ApiPropertyOptional() @IsOptional() @IsString() avatarColor?: string;
   @ApiPropertyOptional() @IsOptional() @IsNumber() @Min(0) annualLeaveCarryOver?: number;
@@ -83,6 +90,12 @@ export class CreateEmployeeDto {
 export class UpdateEmployeeDto extends PartialType(CreateEmployeeDto) {
   /** Re-declared: PartialType makes every field @IsOptional (null would slip through to Prisma's non-nullable column). */
   @ApiPropertyOptional() @ValidateIf((_o, v) => v !== undefined) @IsBoolean() qiwaDocumented?: boolean;
+  @ApiPropertyOptional({ enum: DocumentType, isArray: true })
+  @ValidateIf((_o, v) => v !== undefined)
+  @IsArray()
+  @ArrayMaxSize(20)
+  @IsEnum(DocumentType, { each: true })
+  docExemptions?: DocumentType[];
   @ApiPropertyOptional() @IsOptional() @IsString() terminationReason?: string | null;
 }
 

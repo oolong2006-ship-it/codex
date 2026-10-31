@@ -1,7 +1,7 @@
 /** Demo API — auth, public, dashboard, settings, organization, employees, attendance (ports of apps/api controllers). */
 import {
-  SAUDI_LEAVE_POLICIES, bankCodeFromIban, calculateEndOfService, calculateGosi, expiryStatus, gosiRatesFor, nitaqatBand, saudizationRate, validateSaudiIban,
-  type TerminationReason,
+  SAUDI_LEAVE_POLICIES, SECTOR_DOC_TYPES, bankCodeFromIban, calculateEndOfService, calculateGosi, documentCompliance, expiryStatus, gosiRatesFor, nitaqatBand,
+  saudizationRate, validateSaudiIban, type DocumentComplianceStatus, type TerminationReason,
 } from '@taqam/core';
 import { newEmployeeId, NEW_EMPLOYEE_POOL } from './ids';
 import { addDays, dayStr, eachDay, parseTime, r2, todayStr, weekday } from './dates';
@@ -15,6 +15,8 @@ export const TERMINATION_REASONS: TerminationReason[] = ['EMPLOYER_TERMINATION',
 const ROLES: Role[] = ['OWNER', 'HR_ADMIN', 'PAYROLL', 'BRANCH_MANAGER', 'EMPLOYEE'];
 const AVATAR_COLORS = ['#0F2747', '#1B3A63', '#0E7490', '#14D1C3', '#0369A1', '#1B7F53', '#C2412D', '#7A5C99'];
 const MANAGERS: Role[] = ['OWNER', 'HR_ADMIN', 'BRANCH_MANAGER'];
+/** Prisma enum DocumentType (incl. the sector documents of spec §4). */
+export const DOCUMENT_TYPES = ['IQAMA', 'PASSPORT', 'CONTRACT', 'CERTIFICATE', 'INSURANCE', 'OTHER', ...SECTOR_DOC_TYPES] as const;
 
 // ---------- auth helpers ----------
 /** Legacy demo token ("demo.<userId>") — still accepted so sessions saved before the admin portal keep working. */
@@ -79,7 +81,7 @@ const EMP_FIELDS = [
   'employeeNumber', 'firstNameAr', 'lastNameAr', 'fullNameEn', 'nationality', 'gender', 'birthDate', 'maritalStatus', 'nationalId', 'idExpiry', 'passportNumber',
   'passportExpiry', 'phone', 'email', 'branchId', 'departmentId', 'managerId', 'jobTitle', 'hireDate', 'contractType', 'contractEndDate', 'probationEndDate', 'status',
   'basicSalary', 'housingAllowance', 'transportAllowance', 'otherAllowances', 'iban', 'bankCode', 'gosiRegistered', 'gosiFirstRegisteredAt', 'hoursPerDay', 'avatarColor', 'annualLeaveCarryOver',
-  'qiwaDocumented',
+  'qiwaDocumented', 'docExemptions',
 ] as const;
 const EMPTY_TO_UNDEF = new Set(['birthDate', 'idExpiry', 'passportExpiry', 'email', 'branchId', 'departmentId', 'managerId', 'contractEndDate', 'probationEndDate', 'iban', 'terminationDate', 'gosiFirstRegisteredAt']);
 
@@ -102,6 +104,12 @@ function employeeDto(body: Record<string, unknown>, partial: boolean) {
   for (const f of EMP_DATE_FIELDS) if (dto[f] !== undefined && dto[f] !== null) v.match(dto, f, DATE_RE);
   if (dto.email !== undefined && dto.email !== null) v.email(dto, 'email');
   v.bool(dto, 'qiwaDocumented', true);
+  if (dto.docExemptions !== undefined) {
+    const x = dto.docExemptions;
+    if (!Array.isArray(x)) throw badRequest('docExemptions must be an array');
+    if (x.length > 20) throw badRequest('docExemptions must contain no more than 20 elements');
+    if (!x.every((t) => (DOCUMENT_TYPES as readonly unknown[]).includes(t))) throw badRequest(`each value in docExemptions must be one of the following values: ${DOCUMENT_TYPES.join(', ')}`);
+  }
   return dto;
 }
 function employeeData(dto: Record<string, unknown>) {
@@ -116,6 +124,7 @@ function employeeData(dto: Record<string, unknown>) {
   }
   for (const k of ['branchId', 'departmentId', 'managerId']) if (data[k] === '') data[k] = null;
   if (dto.qiwaDocumented !== undefined) data.qiwaDocumentedAt = dto.qiwaDocumented ? nowIso() : null;
+  if (dto.docExemptions) data.docExemptions = [...new Set(dto.docExemptions as string[])];
   return data as Partial<Employee>;
 }
 function validateEmployeeRefs(svc: Services, u: AuthUser, dto: Record<string, unknown>, selfId?: string) {
@@ -600,7 +609,7 @@ export const coreRoutes: Route[] = [
       managerId: null, jobTitle: null, hireDate: todayStr(), contractType: 'UNLIMITED', contractEndDate: null, probationEndDate: null, status: 'ACTIVE',
       terminationDate: null, terminationReason: null, basicSalary: 0, housingAllowance: 0, transportAllowance: 0, otherAllowances: 0, iban: null, bankCode: null,
       gosiRegistered: true, gosiFirstRegisteredAt: null, hoursPerDay: 8, avatarColor: AVATAR_COLORS[mine.length % AVATAR_COLORS.length], annualLeaveCarryOver: 0,
-      qiwaDocumented: false, qiwaDocumentedAt: null, createdAt: now, updatedAt: now,
+      qiwaDocumented: false, qiwaDocumentedAt: null, docExemptions: [], createdAt: now, updatedAt: now,
       ...data, employeeNumber,
     } as Employee;
     if (!dto.avatarColor) e.avatarColor = AVATAR_COLORS[mine.length % AVATAR_COLORS.length];
@@ -661,7 +670,7 @@ export const coreRoutes: Route[] = [
   }),
   route('POST', '/employees/:id/documents', ADMIN, ({ db, svc, user: u, params, body }) => {
     const e = svc.scopedEmployee(u, params.id);
-    const type = v.oneOf(body, 'type', ['IQAMA', 'PASSPORT', 'CONTRACT', 'CERTIFICATE', 'INSURANCE', 'OTHER'] as const)!;
+    const type = v.oneOf(body, 'type', DOCUMENT_TYPES)!;
     const issueDate = v.match(body, 'issueDate', DATE_RE, true);
     const expiryDate = v.match(body, 'expiryDate', DATE_RE, true);
     const d = { id: nextId(db, 'doc'), companyId: u.companyId, employeeId: e.id, type, number: (body.number as string) ?? null, note: (body.note as string) ?? null, issueDate: issueDate?.slice(0, 10) ?? null, expiryDate: expiryDate?.slice(0, 10) ?? null, createdAt: nowIso() };
@@ -687,6 +696,25 @@ export const coreRoutes: Route[] = [
       .filter((d) => { const e = svc.emp(d.employeeId); return d.companyId === u.companyId && !!d.expiryDate && d.expiryDate <= limit && !!e && where(e) && e.status !== 'TERMINATED'; })
       .sort((a, b) => a.expiryDate!.localeCompare(b.expiryDate!))
       .map((d) => { const e = svc.emp(d.employeeId)!; return { id: d.id, employeeId: d.employeeId, employeeName: fullName(e), branchName: svc.branch(e.branchId)?.nameAr ?? null, type: d.type, number: d.number, expiryDate: d.expiryDate, status: expiryStatus(d.expiryDate, today) }; });
+  }),
+  /** Sector documents compliance (spec §4) — missing/expiring required documents of active staff, worst first. */
+  route('GET', '/documents/compliance', MANAGERS, ({ db, svc, user: u }) => {
+    const where = svc.employeeWhere(u);
+    const emps = db.employees.filter((e) => where(e) && e.status !== 'TERMINATED').sort(byNumber);
+    const ids = new Set(emps.map((e) => e.id));
+    const rows = documentCompliance({
+      sector: svc.company(u.companyId)?.sector ?? null,
+      today: todayStr(),
+      employees: emps.map((e) => ({ id: e.id, isSaudi: e.isSaudi, exemptions: e.docExemptions ?? [], idExpiry: e.idExpiry })),
+      documents: db.documents.filter((d) => d.companyId === u.companyId && ids.has(d.employeeId)).map((d) => ({ employeeId: d.employeeId, type: d.type, expiryDate: d.expiryDate })),
+    });
+    const rank: Record<DocumentComplianceStatus, number> = { MISSING: 0, EXPIRED: 1, CRITICAL: 2, WARNING: 3 };
+    const counts: Record<DocumentComplianceStatus, number> = { MISSING: 0, EXPIRED: 0, CRITICAL: 0, WARNING: 0 };
+    const items = rows
+      .map((r, i) => { counts[r.status]++; const e = svc.emp(r.employeeId)!; return { ...r, employeeName: fullName(e), branchName: svc.branch(e.branchId)?.nameAr ?? null, i }; })
+      .sort((a, b) => rank[a.status] - rank[b.status] || a.i - b.i)
+      .map(({ i: _i, ...r }) => r);
+    return { items, counts };
   }),
   route('GET', '/org-chart', STAFF, ({ db, svc, user: u }) => {
     const where = svc.employeeWhere(u);

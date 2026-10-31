@@ -78,6 +78,13 @@ export class EmployeesController {
     return this.svc.expiring(u, Number(days) || 90);
   }
 
+  /** Sector documents compliance (spec §4) — missing/expiring required documents of active staff. */
+  @Roles('OWNER', 'HR_ADMIN', 'BRANCH_MANAGER')
+  @Get('documents/compliance')
+  compliance(@CurrentUser() u: AuthUser) {
+    return this.svc.compliance(u);
+  }
+
   @Roles(...STAFF)
   @Get('org-chart')
   orgChart(@CurrentUser() u: AuthUser) {
