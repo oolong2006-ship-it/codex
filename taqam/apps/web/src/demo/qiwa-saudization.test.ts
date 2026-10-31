@@ -10,7 +10,7 @@ const login = async (email: string) => (await call('POST', '/auth/login', null, 
 /** Qiwa-documented Saudization — mock parity with the API (spec §1). */
 describe('demo mock: Qiwa-documented Saudization', () => {
   it('bumps the demo DB version for the new employee fields', () => {
-    expect(DB_VERSION).toBe(9);
+    expect(DB_VERSION).toBeGreaterThanOrEqual(9);
   });
 
   it('seeds 2 undocumented active Saudis (others documented) so the demo shows the alert', async () => {

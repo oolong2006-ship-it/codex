@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Payslip, Prisma } from '@prisma/client';
-import { generateWpsCsv } from '@taqam/core';
+import { checkWpsRun, generateWpsCsv } from '@taqam/core';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../shared/audit.service';
 import { NotifyService } from '../shared/notifications.service';
@@ -8,9 +8,11 @@ import { ScopeService } from '../shared/scope.service';
 import { AuthUser } from '../common/types';
 import { badRequest, conflict, notFound } from '../common/errors';
 import { num, r2 } from '../common/money';
+import { periodRange, todayStr } from '../common/dates';
 import { fullName } from '../employees/employee.view';
 import { approvePayrollRun, calculatePayrollRun, PayrollStateError } from './payroll.engine';
 import { AdjustmentDto } from './payroll.dto';
+import { wpsCheckPaymentDate, wpsCheckRow, wpsScheduledPaymentDate } from './wps-check';
 
 export const payslipInclude = {
   employee: {
@@ -157,8 +159,7 @@ export class PayrollService {
       include: { employee: true },
       orderBy: { employee: { employeeNumber: 'asc' } },
     });
-    const payDay = String(Math.min(28, company.payrollDay || 27)).padStart(2, '0');
-    const paymentDate = run.paidAt ? run.paidAt.toISOString().slice(0, 10) : `${run.period}-${payDay}`;
+    const paymentDate = wpsScheduledPaymentDate(run, company.payrollDay);
     const rows = slips.map((s: Payslip & { employee: { employeeNumber: string; nationalId: string; fullNameEn: string | null; firstNameAr: string; lastNameAr: string; iban: string | null; bankCode: string | null } }) => {
       const basic = lineAmount(s.earnings, 'BASIC');
       const housing = lineAmount(s.earnings, 'HOUSING');
@@ -188,6 +189,58 @@ export class PayrollService {
     );
     await this.audit.log(u, 'EXPORT_WPS', 'PayrollRun', id, { count: result.count, errors: result.errors.length });
     return { ...result, period: run.period };
+  }
+
+  /** The WPS file was handed out (not a validate-only call): remember when, for the pre-upload checker. */
+  async markWpsExported(u: AuthUser, id: string) {
+    await this.prisma.payrollRun.updateMany({ where: { id, companyId: u.companyId }, data: { wpsExportedAt: new Date() } });
+  }
+
+  /**
+   * Mudad pre-upload check (spec §2). "Active" = employed during the period as of the period:
+   * hired on/before its end and not terminated before its start (any status, ON_LEAVE included), so
+   * staff who left before the period are never reported missing, while a mid-period leaver still is.
+   * `paymentDate` is the date LATE_PAYMENT is tested against (see wpsCheckPaymentDate).
+   */
+  async wpsCheck(u: AuthUser, id: string) {
+    const run = await this.getRun(u, id);
+    if (run.status === 'DRAFT') throw badRequest('Run is not calculated', 'يجب احتساب المسير أولاً');
+    const { start, end } = periodRange(run.period);
+    const employeeSelect = { id: true, employeeNumber: true, firstNameAr: true, lastNameAr: true } as const;
+    const [company, slips, active] = await Promise.all([
+      this.prisma.company.findUniqueOrThrow({ where: { id: u.companyId }, select: { payrollDay: true } }),
+      this.prisma.payslip.findMany({
+        where: { payrollRunId: id, companyId: u.companyId },
+        include: { employee: { select: { ...employeeSelect, nationalId: true, iban: true, basicSalary: true } } },
+        orderBy: { employee: { employeeNumber: 'asc' } },
+      }),
+      this.prisma.employee.findMany({
+        where: {
+          companyId: u.companyId,
+          hireDate: { lte: end },
+          OR: [{ terminationDate: null, status: { not: 'TERMINATED' } }, { terminationDate: { gte: start } }],
+        },
+        select: employeeSelect,
+        orderBy: { employeeNumber: 'asc' },
+      }),
+    ]);
+    const { paymentDate, scheduledPaymentDate } = wpsCheckPaymentDate(run, company.payrollDay, todayStr());
+    const rows = slips.map((s) => wpsCheckRow(s, run.status));
+    const result = checkWpsRun({ period: run.period, paymentDate, rows, activeEmployeeNumbers: active.map((e) => e.employeeNumber) });
+    const byNumber = new Map([...slips.map((s) => s.employee), ...active].map((e) => [e.employeeNumber, e]));
+    return {
+      period: run.period,
+      paymentDate,
+      scheduledPaymentDate,
+      exportedAt: run.wpsExportedAt,
+      ready: result.ready,
+      errors: result.errors,
+      warnings: result.warnings,
+      issues: result.issues.map((i) => {
+        const e = i.employeeNumber ? byNumber.get(i.employeeNumber) : undefined;
+        return { ...i, employeeId: e?.id ?? null, employeeName: e ? fullName(e) : null };
+      }),
+    };
   }
 
   async payslip(u: AuthUser, id: string) {

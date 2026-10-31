@@ -62,10 +62,17 @@ export class PayrollController {
       }
       return { errors: [], count: r.count, totalNet: r.totalNet };
     }
+    await this.svc.markWpsExported(u, id);
     res.setHeader('Content-Type', 'text/csv; charset=utf-8');
     res.setHeader('Content-Disposition', `attachment; filename="wps-${r.period}.csv"`);
     res.setHeader('X-WPS-Errors', String(r.errors.length));
     return r.csv;
+  }
+
+  /** Mudad pre-upload checker: issues (ERROR blocks «جاهز للرفع», WARNING does not) + when the file was last exported. */
+  @Get('runs/:id/wps-check')
+  wpsCheck(@CurrentUser() u: AuthUser, @Param('id') id: string) {
+    return this.svc.wpsCheck(u, id);
   }
 
   @Get('payslips/:id')

@@ -283,7 +283,8 @@ export function buildSeed(now: Date = new Date()): DB {
   addLeave('emp', 'ANNUAL', rel(20), rel(24), 'PENDING', 'سفر إلى أبها');
   addLeave('o9', 'ANNUAL', rel(-2), rel(5), 'APPROVED', 'زيارة الأهل في بيروت', hrU, 'إجازة سعيدة');
   addLeave('m5', 'SICK', addDays(prev1Start, 9), addDays(prev1Start, 11), 'APPROVED', 'التهاب حاد — تقرير طبي مرفق', hrU);
-  addLeave('j6', 'UNPAID', addDays(prev1Start, 14), addDays(prev1Start, 15), 'APPROVED', 'ظرف شخصي', hrU);
+  // 18 unpaid calendar days (60% of the wage): the last run's WPS pre-upload check shows a DEDUCTION_OVER_HALF warning (net still > 0).
+  addLeave('j6', 'UNPAID', addDays(prev1Start, 5), addDays(prev1Start, 22), 'APPROVED', 'سفر طارئ — ظرف عائلي', hrU);
   addLeave('o7', 'ANNUAL', addDays(prev1Start, 2), addDays(prev1Start, 8), 'APPROVED', 'إجازة سنوية', hrU);
   addLeave('m7', 'ANNUAL', rel(7), rel(9), 'PENDING', 'تجديد جواز السفر في السفارة');
   addLeave('d3', 'ANNUAL', rel(30), rel(34), 'PENDING', 'إجازة سنوية');
@@ -369,7 +370,7 @@ export function buildSeed(now: Date = new Date()): DB {
     const id = runId(period);
     db.runs.push({
       id, companyId, period, status: 'DRAFT', employeesCount: 0, totalGross: 0, totalDeductions: 0, totalNet: 0, totalGosiEmployer: 0, totalEmployerCost: 0,
-      calculatedAt: null, approvedAt: null, approvedById: null, approvedByName: null, paidAt: null, createdAt: ts(`${period}-24`), updatedAt: createdAt,
+      calculatedAt: null, approvedAt: null, approvedById: null, approvedByName: null, paidAt: null, wpsExportedAt: null, createdAt: ts(`${period}-24`), updatedAt: createdAt,
     });
     svc.calculateRun(companyId, id);
     const run = svc.approveRun(companyId, id, payrollUser);
@@ -378,6 +379,7 @@ export function buildSeed(now: Date = new Date()): DB {
     run.approvedAt = ts(`${period}-26`, 10);
     run.status = paid ? 'PAID' : 'APPROVED';
     run.paidAt = paid ? ts(`${period}-27`, 9) : null;
+    run.wpsExportedAt = paid ? ts(`${period}-26`, 11) : null;
     if (paid) {
       const slips = db.payslips.filter((s) => s.payrollRunId === id);
       for (const u of db.users.filter((x) => x.employeeId && slips.some((s) => s.employeeId === x.employeeId))) {

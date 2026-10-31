@@ -125,7 +125,7 @@ export interface PayrollRun {
   id: string; companyId: string; period: string; status: 'DRAFT' | 'CALCULATED' | 'APPROVED' | 'PAID'; employeesCount: number;
   totalGross: number; totalDeductions: number; totalNet: number; totalGosiEmployer: number; totalEmployerCost: number;
   calculatedAt: string | null; approvedAt: string | null; approvedById: string | null; approvedByName: string | null;
-  paidAt: string | null; createdAt: string; updatedAt: string;
+  paidAt: string | null; wpsExportedAt: string | null; createdAt: string; updatedAt: string;
 }
 export interface PayLine { code: string; labelAr: string; labelEn: string; amount: number }
 export interface Payslip {
@@ -211,7 +211,7 @@ export interface DB {
 }
 
 export const STORAGE_KEY = 'taqam.demo.v2';
-export const DB_VERSION = 9;
+export const DB_VERSION = 10;
 /** Seeded data is relative to "today"; a snapshot older than this is re-seeded so attendance and payroll stay current. */
 export const MAX_AGE_DAYS = 7;
 

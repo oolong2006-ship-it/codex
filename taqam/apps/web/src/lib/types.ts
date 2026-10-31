@@ -134,7 +134,7 @@ export type PayrollStatus = 'DRAFT' | 'CALCULATED' | 'APPROVED' | 'PAID';
 export interface PayrollRun {
   id: ID; period: string; status: PayrollStatus; employeesCount: number; totalGross: number; totalDeductions: number;
   totalNet: number; totalGosiEmployer: number; totalEmployerCost: number; createdAt: string;
-  approvedAt?: string | null; paidAt?: string | null; approvedByName?: string | null;
+  approvedAt?: string | null; paidAt?: string | null; approvedByName?: string | null; wpsExportedAt?: string | null;
 }
 export interface PayLine { code: string; labelAr: string; labelEn: string; amount: number }
 export interface Payslip {
@@ -144,6 +144,20 @@ export interface Payslip {
   gosiEmployee: number; gosiEmployer: number; notes: string[];
 }
 export interface PayrollRunDetail extends PayrollRun { payslips: Payslip[] }
+/** GET /payroll/runs/:id/wps-check — Mudad pre-upload checker (spec §2). ERROR blocks «جاهز للرفع», WARNING does not. */
+export type WpsIssueCode = 'INVALID_IBAN' | 'MISSING_NATIONAL_ID' | 'NON_POSITIVE_NET' | 'DUPLICATE_NATIONAL_ID' | 'EMPLOYEE_MISSING_FROM_RUN' | 'NET_MISMATCH' | 'DEDUCTION_OVER_HALF' | 'PAID_BELOW_CONTRACT' | 'LATE_PAYMENT';
+export interface WpsIssue {
+  code: WpsIssueCode; severity: 'ERROR' | 'WARNING'; messageAr: string;
+  /** null for run-level issues (LATE_PAYMENT). */
+  employeeNumber: string | null; employeeId: ID | null; employeeName: string | null;
+}
+export interface WpsCheck {
+  period: string;
+  /** Date LATE_PAYMENT is tested against: paid date; unpaid → scheduled day, or today once that has passed. */
+  paymentDate: string;
+  /** Paid date, else the company payroll day in the period (the date written in the WPS file). */
+  scheduledPaymentDate: string;
+  exportedAt: string | null; ready: boolean; errors: number; warnings: number; issues: WpsIssue[] }
 export type AdjustmentType = 'BONUS' | 'COMMISSION' | 'ALLOWANCE' | 'DEDUCTION' | 'PENALTY';
 export interface Adjustment {
   id: ID; employeeId: ID; employee?: { id: ID; name: string } | null; period: string; type: AdjustmentType;

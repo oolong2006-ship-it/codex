@@ -8,3 +8,4 @@ export * from './payslip';
 export * from './wps';
 export * from './nitaqat';
 export * from './documents';
+export * from './wps-check';

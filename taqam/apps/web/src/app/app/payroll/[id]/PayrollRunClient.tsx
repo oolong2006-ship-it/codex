@@ -13,6 +13,7 @@ import { useLang } from '@/lib/i18n';
 import { date, money, num, period } from '@/lib/format';
 import { PAYROLL_STATUS } from '@/lib/labels';
 import type { Payslip, PayrollRunDetail } from '@/lib/types';
+import { WpsCheckPanel } from './WpsCheckPanel';
 
 type Confirm = 'calculate' | 'approve' | 'mark-paid' | 'delete' | null;
 
@@ -29,6 +30,7 @@ export default function PayrollRunPage() {
   const [branch, setBranch] = useState('');
   const [wpsErrors, setWpsErrors] = useState<{ employeeNumber: string; messageAr: string }[] | null>(null);
   const [wpsBusy, setWpsBusy] = useState(false);
+  const [wpsExports, setWpsExports] = useState(0);
 
   const branches = useMemo(() => Array.from(new Set((run?.payslips ?? []).map((p) => p.employee.branchName).filter(Boolean))) as string[], [run]);
   const slips = useMemo(() => (run?.payslips ?? []).filter((p) =>
@@ -57,6 +59,7 @@ export default function PayrollRunPage() {
         throw e;
       }
       await api.download(`/payroll/runs/${id}/wps`, `WPS-${run.period}.csv`);
+      setWpsExports((n) => n + 1);
       toast(t('تم تنزيل ملف حماية الأجور', 'WPS file downloaded'));
     } catch (e) { toast(errMsg(e), 'error'); } finally { setWpsBusy(false); }
   };
@@ -112,6 +115,7 @@ export default function PayrollRunPage() {
               <StatCard label={t('صافي الرواتب', 'Total net')} value={money(run.totalNet, { decimals: 0 })} tone="success" />
               <StatCard label={t('تكلفة المنشأة', 'Employer cost')} value={money(run.totalEmployerCost, { decimals: 0 })} hint={`${t('تأمينات المنشأة', 'Employer GOSI')} ${money(run.totalGosiEmployer, { decimals: 0 })}`} tone="accent" className="col-span-2 lg:col-span-1" />
             </div>
+            {run.status !== 'DRAFT' && <WpsCheckPanel runId={id} run={run} exports={wpsExports} />}
             {run.status === 'DRAFT' && !run.payslips.length ? (
               <Card><EmptyState title={t('المسير لم يُحتسب بعد', 'Run not calculated yet')} description={t('اضغط "احتساب" لإنشاء قسائم الرواتب', 'Press "Calculate" to generate payslips')}
                 action={<Button size="sm" onClick={() => setConfirm('calculate')}><Calculator className="h-4 w-4" />{t('احتساب', 'Calculate')}</Button>} /></Card>

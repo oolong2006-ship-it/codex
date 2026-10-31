@@ -263,11 +263,11 @@ export function seedPlatform(db: DB, svc: Services, now: Date) {
       const id = runId(period);
       db.runs.push({
         id, companyId, period, status: 'DRAFT', employeesCount: 0, totalGross: 0, totalDeductions: 0, totalNet: 0, totalGosiEmployer: 0, totalEmployerCost: 0,
-        calculatedAt: null, approvedAt: null, approvedById: null, approvedByName: null, paidAt: null, createdAt: `${period}-24T06:00:00.000Z`, updatedAt: createdAt,
+        calculatedAt: null, approvedAt: null, approvedById: null, approvedByName: null, paidAt: null, wpsExportedAt: null, createdAt: `${period}-24T06:00:00.000Z`, updatedAt: createdAt,
       });
       svc.calculateRun(companyId, id);
       const run = svc.approveRun(companyId, id, { id: ownerId, name: d.owner.name });
-      Object.assign(run, { status: 'PAID', calculatedAt: `${period}-25T06:00:00.000Z`, approvedAt: `${period}-26T07:00:00.000Z`, paidAt: `${period}-27T06:00:00.000Z` });
+      Object.assign(run, { status: 'PAID', calculatedAt: `${period}-25T06:00:00.000Z`, approvedAt: `${period}-26T07:00:00.000Z`, paidAt: `${period}-27T06:00:00.000Z`, wpsExportedAt: `${period}-26T08:00:00.000Z` });
     }
 
     // lifecycle history

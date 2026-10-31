@@ -99,6 +99,12 @@ describe('payroll engine', () => {
     expect(data.totalEmployerCost).toBe(expected.employerCost);
   });
 
+  it('a (re)calculation clears wpsExportedAt — a file exported before it no longer matches the run (WPS checker)', async () => {
+    const { db, tx } = fakeDb();
+    await calculatePayrollRun(db as never, 'c1', 'run1');
+    expect(tx.payrollRun.updateMany.mock.calls[0][0].data).toMatchObject({ status: 'CALCULATED', wpsExportedAt: null });
+  });
+
   describe('GOSI two regimes (new Social Insurance Law)', () => {
     const july2026 = (emp: Record<string, unknown>) =>
       fakeDb({

@@ -570,6 +570,7 @@ model PayrollRun {
   approvedById      String?
   approvedByName    String?
   paidAt            DateTime?
+  wpsExportedAt     DateTime?
   createdAt         DateTime      @default(now())
   updatedAt         DateTime      @updatedAt
 

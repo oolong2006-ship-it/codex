@@ -1,5 +1,5 @@
 /** Demo API — leaves, requests & loans, payroll, saudization, performance, recruitment, comms, reports, self-service. */
-import { DEFAULT_NITAQAT_THRESHOLDS, generateWpsCsv, haversineMeters, hiresNeededForBand, isWithinGeofence, nitaqatAlert, nitaqatBand, officialSaudization, saudizationRate, type NitaqatBand } from '@taqam/core';
+import { checkWpsRun, DEFAULT_NITAQAT_THRESHOLDS, generateWpsCsv, haversineMeters, hiresNeededForBand, isWithinGeofence, nitaqatAlert, nitaqatBand, officialSaudization, saudizationRate, type NitaqatBand } from '@taqam/core';
 import { jobId, JOB_POOL, runId } from './ids';
 import { addMonths, periodOf, periodRange, r2, todayStr } from './dates';
 import { nextId, type Employee, type Goal } from './db';
@@ -124,14 +124,66 @@ function runDetail(svc: Services, u: AuthUser, id: string) {
   const slips = svc.db.payslips.filter((p) => p.companyId === u.companyId && p.payrollRunId === id).sort((a, b) => byNumber(svc.emp(a.employeeId)!, svc.emp(b.employeeId)!));
   return { ...run, payslips: slips.map((p) => payslipView(svc, p)) };
 }
+/** Salary payment date used in the WPS file: the paid date, else the company's payroll day in the period. */
+function wpsPaymentDate(run: { period: string; paidAt: string | null }, payrollDay: number | null) {
+  const payDay = String(Math.min(28, payrollDay || 27)).padStart(2, '0');
+  return run.paidAt ? run.paidAt.slice(0, 10) : `${run.period}-${payDay}`;
+}
+/**
+ * Date the checker tests LATE_PAYMENT against: the paid date once paid; before that the scheduled day,
+ * or today (Riyadh) once the scheduled day has passed — an unpaid run checked after the deadline warns.
+ */
+function wpsCheckPaymentDate(run: { period: string; paidAt: string | null }, payrollDay: number | null, today: string) {
+  const scheduledPaymentDate = wpsPaymentDate(run, payrollDay);
+  return { scheduledPaymentDate, paymentDate: run.paidAt || today <= scheduledPaymentDate ? scheduledPaymentDate : today };
+}
+const lineSum = (lines: { code: string; amount: number }[], code: string) => lines.filter((l) => l.code === code).reduce((s, l) => s + l.amount, 0);
+/** Wage-loss lines that legitimately reduce what is paid against the contract (absence, unpaid/sick leave). */
+const WAGE_LOSS_CODES = ['ABSENCE', 'UNPAID_LEAVE', 'SICK'];
+/**
+ * Mudad pre-upload check (spec §2) — same rules as the API (core checkWpsRun). "Active" = employed during
+ * the period as of the period: hired on/before its end and not terminated before its start (ON_LEAVE included).
+ */
+export function wpsCheck(svc: Services, u: AuthUser, id: string) {
+  const run = getRun(svc, u, id);
+  if (run.status === 'DRAFT') throw badRequest('Run is not calculated', 'يجب احتساب المسير أولاً');
+  const company = svc.company(u.companyId);
+  const { start, end } = periodRange(run.period);
+  const slips = svc.db.payslips.filter((p) => p.companyId === u.companyId && p.payrollRunId === id).sort((a, b) => byNumber(svc.emp(a.employeeId)!, svc.emp(b.employeeId)!));
+  const active = svc.db.employees
+    .filter((e) => e.companyId === u.companyId && e.hireDate <= end && (e.terminationDate ? e.terminationDate >= start : e.status !== 'TERMINATED'))
+    .sort(byNumber);
+  const { paymentDate, scheduledPaymentDate } = wpsCheckPaymentDate(run, company.payrollDay, todayStr());
+  const rows = slips.map((s) => {
+    const e = svc.emp(s.employeeId)!;
+    const inputs = (s.inputs ?? {}) as { absentDays?: number; unpaidLeaveDays?: number; sickLeaveDeduction?: number; wage?: { basic?: number } };
+    // current salary while the run can be recalculated; the calculation snapshot once APPROVED/PAID
+    const snapshot = inputs.wage?.basic;
+    const contractBasic = run.status !== 'CALCULATED' && typeof snapshot === 'number' ? snapshot : e.basicSalary;
+    const wageLoss = WAGE_LOSS_CODES.some((code) => lineSum(s.deductions, code) > 0);
+    return {
+      employeeNumber: e.employeeNumber, nationalId: e.nationalId, iban: e.iban || '', gross: s.gross, deductions: s.totalDeductions, net: s.net,
+      basicPaid: lineSum(s.earnings, 'BASIC'), contractBasic, payableDays: s.payableDays,
+      hasAbsenceOrUnpaidLeave: wageLoss || (inputs.absentDays ?? 0) > 0 || (inputs.unpaidLeaveDays ?? 0) > 0 || (inputs.sickLeaveDeduction ?? 0) > 0,
+    };
+  });
+  const result = checkWpsRun({ period: run.period, paymentDate, rows, activeEmployeeNumbers: active.map((e) => e.employeeNumber) });
+  const byEmpNumber = new Map([...slips.map((s) => svc.emp(s.employeeId)!), ...active].map((e) => [e.employeeNumber, e]));
+  return {
+    period: run.period, paymentDate, scheduledPaymentDate, exportedAt: run.wpsExportedAt ?? null, ready: result.ready, errors: result.errors, warnings: result.warnings,
+    issues: result.issues.map((i) => {
+      const e = i.employeeNumber ? byEmpNumber.get(i.employeeNumber) : undefined;
+      return { ...i, employeeId: e?.id ?? null, employeeName: e ? fullName(e) : null };
+    }),
+  };
+}
 function wps(svc: Services, u: AuthUser, id: string) {
   const run = getRun(svc, u, id);
   if (run.status === 'DRAFT') throw badRequest('Run is not calculated', 'يجب احتساب المسير أولاً');
   const company = svc.company(u.companyId);
   const lineAmount = (lines: { code: string; amount: number }[], code: string) => lines.filter((l) => l.code === code).reduce((s, l) => s + l.amount, 0);
   const slips = svc.db.payslips.filter((p) => p.companyId === u.companyId && p.payrollRunId === id).sort((a, b) => byNumber(svc.emp(a.employeeId)!, svc.emp(b.employeeId)!));
-  const payDay = String(Math.min(28, company.payrollDay || 27)).padStart(2, '0');
-  const paymentDate = run.paidAt ? run.paidAt.slice(0, 10) : `${run.period}-${payDay}`;
+  const paymentDate = wpsPaymentDate(run, company.payrollDay);
   const rows = slips.map((s) => {
     const e = svc.emp(s.employeeId)!;
     const basic = lineAmount(s.earnings, 'BASIC');
@@ -304,7 +356,7 @@ export const moreRoutes: Route[] = [
     const period = v.match(body, 'period', PERIOD_RE)!;
     if (db.runs.some((r) => r.companyId === u.companyId && r.period === period)) throw conflict(`Payroll run for ${period} already exists`, `يوجد مسير رواتب لشهر ${period} مسبقاً`);
     const now = nowIso();
-    const run = { id: runId(period), companyId: u.companyId, period, status: 'DRAFT' as const, employeesCount: 0, totalGross: 0, totalDeductions: 0, totalNet: 0, totalGosiEmployer: 0, totalEmployerCost: 0, calculatedAt: null, approvedAt: null, approvedById: null, approvedByName: null, paidAt: null, createdAt: now, updatedAt: now };
+    const run = { id: runId(period), companyId: u.companyId, period, status: 'DRAFT' as const, employeesCount: 0, totalGross: 0, totalDeductions: 0, totalNet: 0, totalGosiEmployer: 0, totalEmployerCost: 0, calculatedAt: null, approvedAt: null, approvedById: null, approvedByName: null, paidAt: null, wpsExportedAt: null, createdAt: now, updatedAt: now };
     db.runs.push(run);
     svc.audit(u, 'CREATE', 'PayrollRun', run.id, { period });
     return run;
@@ -346,8 +398,10 @@ export const moreRoutes: Route[] = [
       if (r.errors.length) throw badRequest('WPS validation failed', 'يوجد أخطاء في ملف حماية الأجور', { errors: r.errors, count: r.count, totalNet: r.totalNet });
       return { errors: [], count: r.count, totalNet: r.totalNet };
     }
+    getRun(svc, user, params.id).wpsExportedAt = nowIso();
     return r.csv;
   }),
+  route('GET', '/payroll/runs/:id/wps-check', [...FINANCE], ({ svc, user, params }) => wpsCheck(svc, user, params.id)),
   route('GET', '/payroll/payslips/:id', [...FINANCE], ({ db, svc, user, params }) => {
     const p = db.payslips.find((x) => x.id === params.id && x.companyId === user.companyId);
     if (!p) throw notFound('Payslip', 'قسيمة الراتب غير موجودة');

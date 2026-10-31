@@ -3,7 +3,7 @@
  * Every calculation is delegated to @taqam/core exactly like the real backend.
  */
 import {
-  annualLeaveBalance, calculateAttendance, calculatePayslip, countLeaveDays, gosiRatesFor, serviceDuration, sickLeavePay,
+  annualLeaveBalance, calculateAttendance, calculatePayslip, calendarDays, countLeaveDays, gosiRatesFor, serviceDuration, sickLeavePay,
   type AttendanceCalc, type GosiRates, type PayslipResult, type WageComponents,
 } from '@taqam/core';
 import { payslipHref } from '@/lib/paths';
@@ -225,7 +225,6 @@ export class Services {
     if (!run) throw new PayrollStateError('NOT_FOUND');
     if (run.status !== 'DRAFT' && run.status !== 'CALCULATED') throw new PayrollStateError('LOCKED');
     const { start, end } = periodRange(run.period);
-    const leaveOpts = this.leaveOpts(companyId);
     const employees = this.db.employees
       .filter((e) => e.companyId === companyId && e.hireDate <= end && (e.status !== 'TERMINATED' || (!!e.terminationDate && e.terminationDate >= start)))
       .sort(byNumber);
@@ -244,7 +243,8 @@ export class Services {
     const daysIn = (s: string, e: string, from: string, to: string) => {
       const a = maxDay(s, from);
       const b = minDay(e, to);
-      return b < a ? 0 : countLeaveDays(a, b, leaveOpts);
+      // UNPAID wage deductions (30-day basis) and Art. 117 sick tiers count calendar days, like the API engine.
+      return b < a ? 0 : calendarDays(a, b);
     };
     const totals = { gross: 0, deductions: 0, net: 0, gosiEmployer: 0, employerCost: 0 };
     const slips = employees.map((e) => {
@@ -287,7 +287,7 @@ export class Services {
     });
     this.db.payslips = this.db.payslips.filter((p) => !(p.companyId === companyId && p.payrollRunId === run.id)).concat(slips);
     Object.assign(run, {
-      status: 'CALCULATED', calculatedAt: nowIso(), updatedAt: nowIso(), employeesCount: slips.length, totalGross: r2(totals.gross),
+      status: 'CALCULATED', calculatedAt: nowIso(), updatedAt: nowIso(), wpsExportedAt: null, employeesCount: slips.length, totalGross: r2(totals.gross),
       totalDeductions: r2(totals.deductions), totalNet: r2(totals.net), totalGosiEmployer: r2(totals.gosiEmployer), totalEmployerCost: r2(totals.employerCost),
     });
     return run;

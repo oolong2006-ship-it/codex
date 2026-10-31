@@ -194,6 +194,8 @@ export async function calculatePayrollRun(db: PrismaClient, companyId: string, r
       data: {
         status: 'CALCULATED',
         calculatedAt: new Date(),
+        // a WPS file exported before this calculation no longer matches the run
+        wpsExportedAt: null,
         employeesCount: slips.length,
         totalGross: r2(totals.gross),
         totalDeductions: r2(totals.deductions),
