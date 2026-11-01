@@ -39,6 +39,7 @@ export function CompanySection() {
       vatNumber: f.vatNumber || null, sector: f.sector || null, city: f.city || null, iban: f.iban ? f.iban.replace(/\s/g, '').toUpperCase() : null,
       bankCode: f.bankCode || null, weekendDays: f.weekendDays, payrollDay: Number(f.payrollDay) || 27,
       expatLevyMonthly: levy.value, iqamaFeeAnnual: iqama.value,
+      deviceBinding: f.deviceBinding ?? true,
     };
     if (await run('save', () => api.patch('/company', body), t('تم حفظ بيانات المنشأة', 'Company saved'))) { reload(); void refresh(); }
   };
@@ -77,6 +78,17 @@ export function CompanySection() {
               <Field label={t('رسوم الإقامة (سنوياً لكل عامل)', 'Iqama fee (yearly, per worker)')} hint={t('الافتراضي 650 ر.س — تُحتسب شهرياً ÷ 12', 'Default 650 SAR — monthly = ÷ 12')} error={feeErrors.iqamaFeeAnnual}>
                 <Input type="number" min={0} step="0.01" dir="ltr" value={String(f.iqamaFeeAnnual ?? '')} onChange={(e) => setF({ ...f, iqamaFeeAnnual: e.target.value === '' ? undefined : Number(e.target.value) })} />
               </Field>
+            </CardBody>
+          </Card>
+          <Card>
+            <CardHeader title={t('البصمة ومنع التلاعب', 'Attendance anti-tamper')}
+              subtitle={t('بلا صور ولا كاميرا — نتحقق من جهاز الموظف وموقعه فقط', 'No photos, no camera — we only check the employee’s device and location')} />
+            <CardBody className="space-y-4">
+              <div>
+                <Toggle checked={f.deviceBinding ?? true} onChange={(v) => setF({ ...f, deviceBinding: v })} label={t('ربط البصمة بجهاز الموظف', 'Bind punches to the employee’s device')} />
+                <p className="ms-[52px] mt-1 text-xs text-ink-soft">{t('أول بصمة تسجّل متصفح الموظف؛ البصمة من متصفح آخر تحتاج اعتماد الموارد البشرية من «الأجهزة بانتظار الاعتماد». تغيير المتصفح أو مسح بيانات الموقع يُعدّ جهازاً جديداً.', 'The first punch registers the employee’s browser; another browser needs HR approval under “Devices awaiting approval”. Switching browser or clearing site data counts as a new device.')}</p>
+              </div>
+              {/* «طلب رمز الفرع المتغير» (requireBranchCode) stays hidden until a branch kiosk can display the code */}
             </CardBody>
           </Card>
           <Card>

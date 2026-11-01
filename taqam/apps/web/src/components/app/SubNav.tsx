@@ -28,6 +28,7 @@ export const ATTENDANCE_NAV: { href: string; label: [string, string]; roles?: Ro
   { href: '/app/attendance', label: ['اليومي', 'Daily'], roles: ['OWNER', 'HR_ADMIN', 'BRANCH_MANAGER'] },
   { href: '/app/attendance/roster', label: ['جدول الورديات', 'Roster'], roles: ['OWNER', 'HR_ADMIN', 'BRANCH_MANAGER'] },
   { href: '/app/attendance/shifts', label: ['الورديات', 'Shifts'], roles: ['OWNER', 'HR_ADMIN', 'BRANCH_MANAGER'] },
+  { href: '/app/attendance/devices', label: ['الأجهزة', 'Devices'], roles: ['OWNER', 'HR_ADMIN', 'BRANCH_MANAGER'] },
   { href: '/app/attendance/summary', label: ['الملخص', 'Summary'] },
 ];
 export const PAYROLL_NAV: { href: string; label: [string, string] }[] = [

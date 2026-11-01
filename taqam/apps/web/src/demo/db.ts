@@ -16,6 +16,8 @@ export interface Company {
   weekendDays: number[]; payrollDay: number; employeesCount: number | null; createdAt: string; updatedAt: string;
   /** compliance center labor cost (spec §5): monthly expat levy and annual iqama fee per non-Saudi — defaults to verify */
   expatLevyMonthly: number; iqamaFeeAnnual: number;
+  /** anti-tamper attendance (spec §6): ESS punches only from the bound device; rotating branch code required */
+  deviceBinding: boolean; requireBranchCode: boolean;
   // platform lifecycle (docs/ADMIN_PORTAL.md)
   status: CompanyStatus; plan: Plan; billingCycle: BillingCycle; maxEmployees: number | null; pricePerEmployee: number | null;
   trialEndsAt: string | null; subscriptionEndsAt: string | null; activatedAt: string | null; suspendedAt: string | null;
@@ -24,6 +26,8 @@ export interface Company {
 export interface Branch {
   id: string; companyId: string; nameAr: string; nameEn: string | null; city: string; address: string | null; lat: number; lng: number;
   radiusMeters: number; managerEmployeeId: string | null; createdAt: string; updatedAt: string;
+  /** rotating branch code secret (32 bytes hex) — never returned by the API */
+  codeSecret: string;
 }
 export interface Department { id: string; companyId: string; name: string; parentId: string | null; createdAt: string }
 export interface User {
@@ -109,6 +113,16 @@ export interface AttendanceRecord {
   checkInLat: number | null; checkInLng: number | null; checkOutLat: number | null; checkOutLng: number | null;
   workedMinutes: number; lateMinutes: number; earlyLeaveMinutes: number; overtimeMinutes: number; status: string; source: string;
   note: string | null; createdAt: string; updatedAt: string;
+  /** OFFLINE / NO_BRANCH_CODE / KIOSK / NEW_DEVICE_APPROVED */
+  flags: string[];
+  /** when the server received a self punch (later than checkIn/checkOut for offline replays) */
+  checkInReceivedAt?: string | null; checkOutReceivedAt?: string | null;
+}
+export type EmployeeDeviceStatus = 'ACTIVE' | 'PENDING' | 'REJECTED' | 'REVOKED';
+/** ESS device binding (no photos of employees, ever). */
+export interface EmployeeDevice {
+  id: string; companyId: string; employeeId: string; deviceId: string; status: EmployeeDeviceStatus; userAgent: string | null;
+  createdAt: string; approvedById: string | null; decidedAt: string | null; lastUsedAt: string | null;
 }
 export interface LeaveType { id: string; companyId: string; code: string; nameAr: string; nameEn: string; paid: boolean; maxDaysPerYear: number | null; createdAt: string }
 export interface LeaveRequest {
@@ -187,6 +201,7 @@ export interface DB {
   shifts: Shift[];
   assignments: ShiftAssignment[];
   attendance: AttendanceRecord[];
+  employeeDevices: EmployeeDevice[];
   leaveTypes: LeaveType[];
   leaves: LeaveRequest[];
   requests: EmployeeRequest[];
@@ -215,14 +230,14 @@ export interface DB {
 }
 
 export const STORAGE_KEY = 'taqam.demo.v2';
-export const DB_VERSION = 12;
+export const DB_VERSION = 13;
 /** Seeded data is relative to "today"; a snapshot older than this is re-seeded so attendance and payroll stay current. */
 export const MAX_AGE_DAYS = 7;
 
 export function emptyDb(seededOn: string): DB {
   return {
     version: DB_VERSION, seededOn, seq: 0, newEmployeeUsed: 0, jobUsed: 0,
-    companies: [], branches: [], departments: [], users: [], employees: [], documents: [], shifts: [], assignments: [], attendance: [],
+    companies: [], branches: [], departments: [], users: [], employees: [], documents: [], shifts: [], assignments: [], attendance: [], employeeDevices: [],
     leaveTypes: [], leaves: [], requests: [], loans: [], runs: [], payslips: [], adjustments: [], holidays: [], announcements: [],
     notifications: [], audit: [], cycles: [], reviews: [], jobs: [], candidates: [], leads: [],
     admins: [], companyEvents: [], settings: JSON.parse(JSON.stringify(DEFAULT_SETTINGS)), invoices: [], counters: {}, emails: [], remindersRunOn: null,

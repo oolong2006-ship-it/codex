@@ -5,7 +5,7 @@ import { toCsv } from './routes-more';
 
 type Body = Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
 const call = async (method: string, path: string, token: string | null, body?: unknown) =>
-  (await demoFetch(method, path, { token, body })) as { status: number; data: Body };
+  (await demoFetch(method, path, { token, body, headers: { 'X-Device-Id': 'demo-device-0001' } })) as { status: number; data: Body };
 const login = async (email: string) => (await call('POST', '/auth/login', null, { email, password: 'Shuoon@2026' })).data;
 
 /** Fake only the clock; real setTimeout keeps demoFetch's latency sleep working. */

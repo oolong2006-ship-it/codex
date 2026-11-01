@@ -36,6 +36,8 @@ export interface Company {
   iban?: string | null; bankCode?: string | null; weekendDays: number[]; payrollDay: number;
   /** Compliance center labor cost (spec §5): monthly expat levy and annual iqama fee per non-Saudi — defaults 800 / 650 to verify. */
   expatLevyMonthly?: number; iqamaFeeAnnual?: number;
+  /** Anti-tamper attendance (spec §6): ESS punches only from the bound device / must include the rotating branch code. */
+  deviceBinding?: boolean; requireBranchCode?: boolean;
 }
 export interface AppUser {
   id: ID; email: string; name: string; role: Role; isActive: boolean; employeeId?: ID | null;
@@ -113,6 +115,17 @@ export interface AttendanceRow {
   employeeId: ID; employeeName: string; branchName?: string | null; shiftName?: string | null;
   checkIn: string | null; checkOut: string | null; workedMinutes: number; lateMinutes: number; overtimeMinutes: number;
   status: AttendanceStatus; recordId: ID | null;
+  /** OFFLINE / NO_BRANCH_CODE / NEW_DEVICE_APPROVED / KIOSK */
+  flags?: string[];
+  /** server receive time of the self punch (later than checkIn/checkOut for offline replays) */
+  checkInReceivedAt?: string | null; checkOutReceivedAt?: string | null;
+}
+/** ESS device binding request or bound device (GET /devices). No photos — a device is only a random browser id. */
+export interface EmployeeDeviceRow {
+  id: ID; employeeId: ID; employeeName: string; employeeNumber: string; branchId: ID | null; branchName: string | null;
+  /** last 6 characters of the random device id (the full id never leaves the server) */
+  deviceIdSuffix: string; status: 'ACTIVE' | 'PENDING' | 'REJECTED' | 'REVOKED'; userAgent: string | null; createdAt: string;
+  decidedAt: string | null; approvedById: ID | null; lastUsedAt: string | null;
 }
 export interface AttendanceSummaryRow {
   employeeId: ID; employeeName: string; presentDays: number; lateDays: number; absentDays: number;

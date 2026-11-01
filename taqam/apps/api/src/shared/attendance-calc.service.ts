@@ -20,6 +20,11 @@ export interface BoardRow {
   overtimeMinutes: number;
   status: BoardStatus;
   recordId: string | null;
+  /** OFFLINE / NO_BRANCH_CODE / KIOSK / NEW_DEVICE_APPROVED — shown to managers as badges */
+  flags: string[];
+  /** when the server received the self punch (an offline replay arrives later than it was captured) */
+  checkInReceivedAt: Date | null;
+  checkOutReceivedAt: Date | null;
 }
 
 /** Shift resolution + attendance metrics (math from @taqam/core.calculateAttendance). */
@@ -139,6 +144,9 @@ export class AttendanceCalcService {
         overtimeMinutes: rec?.overtimeMinutes ?? 0,
         status,
         recordId: rec?.id ?? null,
+        flags: rec?.flags ?? [],
+        checkInReceivedAt: rec?.checkInReceivedAt ?? null,
+        checkOutReceivedAt: rec?.checkOutReceivedAt ?? null,
       };
     });
   }

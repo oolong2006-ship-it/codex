@@ -12,10 +12,11 @@ import { billingRoutes } from './routes-billing';
 import { coreRoutes, resolveUser } from './routes-core';
 import { moreRoutes } from './routes-more';
 import { complianceRoutes } from './routes-compliance';
+import { deviceRoutes } from './routes-devices';
 import { buildSeed } from './seed';
 import { STAFF, Services, type AuthUser } from './services';
 
-const routes = [...coreRoutes, ...moreRoutes, ...complianceRoutes, ...adminRoutes, ...billingRoutes];
+const routes = [...coreRoutes, ...moreRoutes, ...complianceRoutes, ...deviceRoutes, ...adminRoutes, ...billingRoutes];
 let db: DB | null = null;
 
 function fresh(): DB {
@@ -32,6 +33,11 @@ function getDb(): DB {
   return db;
 }
 
+/** Test hook: the live in-memory demo database. */
+export function demoStateForTests(): DB {
+  return getDb();
+}
+
 /** Wipes the browser copy and rebuilds the demo dataset. */
 export function resetDemoData() {
   clearDb();
@@ -43,7 +49,7 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 export interface DemoResponse { status: number; data: unknown }
 
 /** Handle one API call. Resolves with `{ status, data }` (errors use the API's `{ statusCode, message, messageAr }` body). */
-export async function demoFetch(method: string, path: string, opts: { body?: unknown; query?: Record<string, unknown>; token?: string | null } = {}): Promise<DemoResponse> {
+export async function demoFetch(method: string, path: string, opts: { body?: unknown; query?: Record<string, unknown>; token?: string | null; headers?: Record<string, string> } = {}): Promise<DemoResponse> {
   await sleep(150 + Math.random() * 150);
   const state = getDb();
   const svc = new Services(state);
@@ -68,7 +74,7 @@ export async function demoFetch(method: string, path: string, opts: { body?: unk
         touchActivity(svc, user.companyId);
       }
     }
-    const result = m.route.handler({ db: state, svc, user, params: m.params, query, body });
+    const result = m.route.handler({ db: state, svc, user, params: m.params, query, body, headers: opts.headers ?? {} });
     if (method !== 'GET' || svc.dirty || /\/(wps|export)$/.test(path)) saveDb(state);
     const status = method === 'POST' && !/\/(login|calculate|approve|reject|mark-paid|read|read-all|cancel|check-in|check-out|terminate|eosb|pay|void|run)$/.test(path) ? 201 : 200;
     return { status, data: result === undefined ? undefined : typeof result === 'string' ? result : JSON.parse(JSON.stringify(result)) };

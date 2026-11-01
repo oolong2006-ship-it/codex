@@ -10,6 +10,7 @@ import { seedBilling } from './seed-billing';
 import { addDays, addMonths, day, eachDay, periodOf, periodRange, riyadhDateTime, todayStr, weekday } from './dates';
 import { emptyDb, nextId, type Approval, type DB, type Employee, type Goal, type Role } from './db';
 import { Services, fullName } from './services';
+import { seededBranchSecret } from './routes-devices';
 
 export const DEMO_PASSWORD = 'Shuoon@2026';
 /** First id of the admin-portal company pool (src/demo/ids.ts COMPANY_IDS). */
@@ -125,7 +126,7 @@ export function buildSeed(now: Date = new Date()): DB {
   db.companies.push({
     id: companyId, nameAr: 'مطاعم ورد الشام', nameEn: 'Ward Al-Sham Restaurants', crNumber: '1010654321', establishmentId: '7001845236',
     gosiNumber: '512345678', vatNumber: '310456789100003', sector: 'RESTAURANTS', city: 'الرياض', iban: saudiIban('80'), bankCode: '80',
-    weekendDays: [5, 6], payrollDay: 27, employeesCount: 40, expatLevyMonthly: 800, iqamaFeeAnnual: 650, createdAt: ts(rel(-120)), updatedAt: createdAt,
+    weekendDays: [5, 6], payrollDay: 27, employeesCount: 40, expatLevyMonthly: 800, iqamaFeeAnnual: 650, deviceBinding: true, requireBranchCode: false, createdAt: ts(rel(-120)), updatedAt: createdAt,
     ...lifecycleDefaults(),
     status: 'ACTIVE', plan: 'GROWTH', billingCycle: 'MONTHLY', maxEmployees: 60, activatedAt: ts(rel(-119), 10),
     subscriptionEndsAt: endOfDay(plusMonths(today, 10)), adminNotes: 'عميل مرجعي — حساب العرض التجريبي العام',
@@ -155,7 +156,7 @@ export function buildSeed(now: Date = new Date()): DB {
     JEDDAH: { id: 'br-jeddah', nameAr: 'فرع التحلية', nameEn: 'Jeddah – Tahlia', city: 'جدة', address: 'شارع التحلية، حي الأندلس', lat: 21.5491, lng: 39.1497, radiusMeters: 150 },
     DAMMAM: { id: 'br-dammam', nameAr: 'فرع كورنيش الدمام', nameEn: 'Dammam – Corniche', city: 'الدمام', address: 'طريق الكورنيش، حي الشاطئ', lat: 26.4473, lng: 50.1135, radiusMeters: 150 },
   };
-  Object.values(branchDefs).forEach((b, i) => db.branches.push({ ...b, companyId, managerEmployeeId: null, createdAt: ts(rel(-120), i), updatedAt: createdAt }));
+  Object.values(branchDefs).forEach((b, i) => db.branches.push({ ...b, companyId, managerEmployeeId: null, createdAt: ts(rel(-120), i), updatedAt: createdAt, codeSecret: seededBranchSecret(b.id) }));
   const deptDefs: [DeptKey, string][] = [['ADMIN', 'الإدارة العامة'], ['FINHR', 'المالية والموارد البشرية'], ['KITCHEN', 'المطبخ'], ['SERVICE', 'الصالة وخدمة العملاء'], ['DELIVERY', 'التوصيل والمشتريات']];
   const depts = {} as Record<DeptKey, string>;
   deptDefs.forEach(([k, name], i) => {
@@ -323,7 +324,7 @@ export function buildSeed(now: Date = new Date()): DB {
       if (d > today || onLeave(e.id, d)) continue;
       const shiftStart = riyadhDateTime(d, sh.startTime);
       const shiftDef = { startTime: sh.startTime, endTime: sh.endTime, breakMinutes: sh.breakMinutes, graceMinutes: sh.graceMinutes };
-      const base = { companyId, employeeId: e.id, date: d, shiftId: sh.id, checkOut: null, checkOutLat: null, checkOutLng: null, earlyLeaveMinutes: 0, overtimeMinutes: 0, source: 'SEED', note: null, createdAt, updatedAt: createdAt };
+      const base = { companyId, employeeId: e.id, date: d, shiftId: sh.id, checkOut: null, checkOutLat: null, checkOutLng: null, earlyLeaveMinutes: 0, overtimeMinutes: 0, source: 'SEED', note: null, createdAt, updatedAt: createdAt, flags: [] as string[] };
       if (d === today) {
         if (e.seed.key === 'emp' || e.seed.key === 'mgrOlaya') continue;
         if (now.getTime() < shiftStart.getTime() + 20 * 60000) continue;
@@ -354,6 +355,42 @@ export function buildSeed(now: Date = new Date()): DB {
       });
     }
   }
+
+  // ---------- ESS devices (anti-tamper, spec §6 — no photos) ----------
+  // Every active employee punches from one bound phone, except the public demo employee: any visitor's browser binds on its first punch.
+  const UA = {
+    iphone: 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.1 Mobile/15E148 Safari/604.1',
+    android: 'Mozilla/5.0 (Linux; Android 14; SM-A546E) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Mobile Safari/537.36',
+  };
+  const device = (key: string, suffix: string, status: 'ACTIVE' | 'PENDING', daysAgo: number, extra: Partial<DB['employeeDevices'][number]> = {}) => {
+    const e = emp[key];
+    db.employeeDevices.push({
+      id: nextId(db, 'dev'), companyId, employeeId: e.id, deviceId: `seed-${key}-${suffix}`, status,
+      userAgent: key.charCodeAt(key.length - 1) % 2 ? UA.iphone : UA.android, createdAt: ts(rel(-daysAgo)), approvedById: null, decidedAt: null,
+      lastUsedAt: status === 'ACTIVE' ? ts(rel(-1)) : null, ...extra,
+    });
+  };
+  for (const e of Object.values(emp)) {
+    if (e.seed.key === 'emp' || e.term) continue;
+    device(e.seed.key, 'phone', 'ACTIVE', Math.min(60, Math.max(1, Math.round((day(today).getTime() - day(e.hire).getTime()) / 86400000))));
+  }
+  // new phones waiting for HR (one in Olaya so the branch manager sees it too)
+  device('o6', 'new-phone', 'PENDING', 0);
+  device('m3', 'new-phone', 'PENDING', 1);
+  // a replaced phone approved by HR last week: the old binding is revoked and its first punch was flagged
+  const j4Old = db.employeeDevices.find((d) => d.deviceId === 'seed-j4-phone')!;
+  Object.assign(j4Old, { status: 'REVOKED', decidedAt: ts(rel(-6)) });
+  device('j4', 'replacement', 'ACTIVE', 7, { approvedById: hrU.id, decidedAt: ts(rel(-6)), lastUsedAt: ts(rel(-1)) });
+  const flag = (key: string, daysAgo: number, f: string) => {
+    const r = db.attendance.filter((x) => x.employeeId === emp[key].id && x.checkIn && x.date <= rel(-daysAgo)).sort((a, b) => b.date.localeCompare(a.date))[0];
+    if (r && !r.flags.includes(f)) r.flags.push(f);
+  };
+  flag('j4', 5, 'NEW_DEVICE_APPROVED');
+  // weak signal in the Malqa and Dammam branches: punches replayed after the connection came back
+  flag('m5', 1, 'OFFLINE');
+  flag('m5', 4, 'OFFLINE');
+  flag('d4', 2, 'OFFLINE');
+  flag('o10', 3, 'OFFLINE');
 
   // ---------- loans ----------
   for (const l of [

@@ -8,6 +8,7 @@ import { addDays, dayStr, eachDay, parseTime, r2, todayStr, weekday } from './da
 import { nextId, type Company, type DB, type Employee, type PlatformAdmin, type Role, type User } from './db';
 import { assertCompanyAccess, assertSeat, cleanCompanyName, endOfDay, lifecycleDefaults, logEvent, nextCompanyId, tenantCompanyView } from './lifecycle';
 import { badRequest, conflict, forbidden, notFound, unauthorized } from './errors';
+import { branchPublic, randomBranchSecret } from './routes-devices';
 import { route, v, pick, paginate, byCreatedAsc, byCreatedDesc, employeeView, ok, DATE_RE, EMAIL_RE, type Ctx, type Route } from './router';
 import { ADMIN, ALL_ROLES, STAFF, Services, byNumber, fullName, nowIso, type AuthUser } from './services';
 
@@ -188,7 +189,12 @@ export function upsertRecord(svc: Services, companyId: string, emp: Employee, da
   if (checkIn && checkOut && checkOut <= checkIn && checkOutRaw && /^\d{1,2}:\d{2}$/.test(checkOutRaw)) checkOut = new Date(checkOut.getTime() + 86400000);
   if (!checkIn && opts.status !== 'ABSENT') throw badRequest('checkIn is required', 'وقت الحضور مطلوب');
   const m = svc.compute(shift, checkIn, checkOut);
+  // a time HR changes is no longer the punch the server received: drop its receive time («استُلم لاحقاً»)
+  const prev = svc.db.attendance.find((r) => r.employeeId === emp.id && r.date === d);
+  const same = (x: string | null | undefined, y: Date | null) => (x ? Date.parse(x) : null) === (y?.getTime() ?? null);
   const data = {
+    ...(prev && same(prev.checkIn, checkIn) ? {} : { checkInReceivedAt: null }),
+    ...(prev && same(prev.checkOut, checkOut) ? {} : { checkOutReceivedAt: null }),
     shiftId: shift?.id ?? null, checkIn: checkIn?.toISOString() ?? null, checkOut: checkOut?.toISOString() ?? null, workedMinutes: m.workedMinutes,
     lateMinutes: m.lateMinutes, earlyLeaveMinutes: m.earlyLeaveMinutes, overtimeMinutes: m.overtimeMinutes, status: opts.status ?? m.status,
     source: opts.source, note: opts.note ?? null, updatedAt: nowIso(),
@@ -196,7 +202,7 @@ export function upsertRecord(svc: Services, companyId: string, emp: Employee, da
   let rec = svc.db.attendance.find((r) => r.employeeId === emp.id && r.date === d);
   if (rec) Object.assign(rec, data);
   else {
-    rec = { id: nextId(svc.db, 'att'), companyId, employeeId: emp.id, date: d, checkInLat: null, checkInLng: null, checkOutLat: null, checkOutLng: null, createdAt: nowIso(), ...data };
+    rec = { id: nextId(svc.db, 'att'), companyId, employeeId: emp.id, date: d, checkInLat: null, checkInLng: null, checkOutLat: null, checkOutLng: null, createdAt: nowIso(), flags: [], ...data };
     svc.db.attendance.push(rec);
   }
   return rec;
@@ -241,15 +247,16 @@ function branchesView(svc: Services, u: AuthUser) {
     const documentedSaudis = list.filter((e) => e.isSaudi && e.qiwaDocumented).length;
     const rate = saudizationRate(documentedSaudis, list.length);
     const m = svc.emp(b.managerEmployeeId);
-    return { ...b, employeesCount: list.length, saudis, documentedSaudis, saudizationRate: rate, internalSaudizationRate: saudizationRate(saudis, list.length), nitaqatBand: nitaqatBand(rate), managerName: m ? fullName(m) : null, manager: m ? { id: m.id, name: fullName(m) } : null };
+    return { ...branchPublic(b), employeesCount: list.length, saudis, documentedSaudis, saudizationRate: rate, internalSaudizationRate: saudizationRate(saudis, list.length), nitaqatBand: nitaqatBand(rate), managerName: m ? fullName(m) : null, manager: m ? { id: m.id, name: fullName(m) } : null };
   });
 }
 function companyDto(b: Record<string, unknown>) {
-  const dto = pick(b, ['nameAr', 'nameEn', 'crNumber', 'establishmentId', 'gosiNumber', 'vatNumber', 'sector', 'city', 'iban', 'bankCode', 'weekendDays', 'payrollDay', 'expatLevyMonthly', 'iqamaFeeAnnual']);
+  const dto = pick(b, ['nameAr', 'nameEn', 'crNumber', 'establishmentId', 'gosiNumber', 'vatNumber', 'sector', 'city', 'iban', 'bankCode', 'weekendDays', 'payrollDay', 'expatLevyMonthly', 'iqamaFeeAnnual', 'deviceBinding', 'requireBranchCode']);
   if (typeof dto.nameAr === 'string') dto.nameAr = cleanCompanyName(dto.nameAr, 'nameAr');
   if (typeof dto.nameEn === 'string') dto.nameEn = cleanCompanyName(dto.nameEn, 'nameEn') || null;
   if (dto.payrollDay !== undefined) dto.payrollDay = v.num(dto, 'payrollDay', { min: 1, max: 28 });
   for (const k of ['expatLevyMonthly', 'iqamaFeeAnnual'] as const) if (dto[k] !== undefined) dto[k] = v.num(dto, k, { min: 0, max: 100000, maxDecimals: 2 });
+  for (const k of ['deviceBinding', 'requireBranchCode'] as const) if (dto[k] !== undefined) v.bool(dto, k);
   if (dto.weekendDays !== undefined && !(Array.isArray(dto.weekendDays) && dto.weekendDays.length <= 7 && dto.weekendDays.every((d) => Number.isInteger(d) && d >= 0 && d <= 6))) throw badRequest('weekendDays must be an array');
   return dto;
 }
@@ -310,7 +317,7 @@ export const coreRoutes: Route[] = [
     const settings = db.settings;
     const company: Company = {
       id: companyId, nameAr: cleanCompanyName(String(body.companyNameAr), 'companyNameAr'), nameEn: typeof body.companyNameEn === 'string' ? cleanCompanyName(body.companyNameEn, 'companyNameEn') || null : null, crNumber: null, establishmentId: null, gosiNumber: null, vatNumber: null,
-      sector: String(body.sector), city: null, iban: null, bankCode: null, weekendDays: [5, 6], payrollDay: 27, employeesCount: body.employeesCount ? Number(body.employeesCount) : null, expatLevyMonthly: 800, iqamaFeeAnnual: 650, createdAt: now, updatedAt: now,
+      sector: String(body.sector), city: null, iban: null, bankCode: null, weekendDays: [5, 6], payrollDay: 27, employeesCount: body.employeesCount ? Number(body.employeesCount) : null, expatLevyMonthly: 800, iqamaFeeAnnual: 650, deviceBinding: true, requireBranchCode: false, createdAt: now, updatedAt: now,
       ...lifecycleDefaults(),
       ...(settings.requireApproval ? {} : { status: 'TRIAL' as const, trialEndsAt: endOfDay(addDays(todayStr(), settings.trialDays)) }),
     };
@@ -515,10 +522,10 @@ export const coreRoutes: Route[] = [
     if (dto.radiusMeters !== undefined) dto.radiusMeters = v.num(dto, 'radiusMeters', { min: 10, max: 10000 });
     if (dto.managerEmployeeId && !db.employees.some((e) => e.id === dto.managerEmployeeId && e.companyId === u.companyId)) throw badRequest('Invalid managerEmployeeId', 'المدير المحدد غير موجود');
     const now = nowIso();
-    const b = { id: nextId(db, 'br'), companyId: u.companyId, nameAr: String(dto.nameAr), nameEn: (dto.nameEn as string) ?? null, city: String(dto.city), address: (dto.address as string) ?? null, lat: Number(dto.lat), lng: Number(dto.lng), radiusMeters: (dto.radiusMeters as number) ?? 150, managerEmployeeId: (dto.managerEmployeeId as string) || null, createdAt: now, updatedAt: now };
+    const b = { id: nextId(db, 'br'), companyId: u.companyId, nameAr: String(dto.nameAr), nameEn: (dto.nameEn as string) ?? null, city: String(dto.city), address: (dto.address as string) ?? null, lat: Number(dto.lat), lng: Number(dto.lng), radiusMeters: (dto.radiusMeters as number) ?? 150, managerEmployeeId: (dto.managerEmployeeId as string) || null, createdAt: now, updatedAt: now, codeSecret: randomBranchSecret() };
     db.branches.push(b);
     svc.audit(u, 'CREATE', 'Branch', b.id, dto);
-    return b;
+    return branchPublic(b);
   }),
   route('PATCH', '/branches/:id', ADMIN, ({ db, svc, user: u, params, body }) => {
     const b = db.branches.find((x) => x.id === params.id && x.companyId === u.companyId);
@@ -530,7 +537,7 @@ export const coreRoutes: Route[] = [
     if (dto.managerEmployeeId && !db.employees.some((e) => e.id === dto.managerEmployeeId && e.companyId === u.companyId)) throw badRequest('Invalid managerEmployeeId', 'المدير المحدد غير موجود');
     Object.assign(b, dto, { updatedAt: nowIso() });
     svc.audit(u, 'UPDATE', 'Branch', b.id, dto);
-    return b;
+    return branchPublic(b);
   }),
   route('DELETE', '/branches/:id', ADMIN, ({ db, svc, user: u, params }) => {
     const b = db.branches.find((x) => x.id === params.id && x.companyId === u.companyId);

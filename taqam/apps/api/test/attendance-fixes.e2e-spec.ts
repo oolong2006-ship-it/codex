@@ -91,11 +91,11 @@ describe('Attendance review fixes (e2e)', () => {
     const D1 = dayStr(addDays(D, 1))!;
 
     freezeClock(riyadhDateTime(D, '21:55'));
-    const inRes = await http.post('/api/me/attendance/check-in').set(auth(emp.token)).send(BRANCH).expect(200);
+    const inRes = await http.post('/api/me/attendance/check-in').set(auth(emp.token)).set('X-Device-Id', 'e2e-device-0001').send(BRANCH).expect(200);
     expect(dayStr(inRes.body.date)).toBe(D);
 
     freezeClock(riyadhDateTime(D1, '06:05'));
-    const out = await http.post('/api/me/attendance/check-out').set(auth(emp.token)).send(BRANCH).expect(200);
+    const out = await http.post('/api/me/attendance/check-out').set(auth(emp.token)).set('X-Device-Id', 'e2e-device-0001').send(BRANCH).expect(200);
     expect(out.body.id).toBe(inRes.body.id);
     expect(dayStr(out.body.date)).toBe(D);
     expect(out.body.checkOut).toBe(riyadhDateTime(D1, '06:05').toISOString());

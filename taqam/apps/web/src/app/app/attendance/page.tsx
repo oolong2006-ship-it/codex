@@ -1,7 +1,7 @@
 'use client';
 import { useMemo, useState } from 'react';
 import { ChevronLeft, ChevronRight, Pencil, Plus } from 'lucide-react';
-import { Button, Card, EmptyState, Field, Input, Modal, PageHeader, Select, Table, Textarea, type Column } from '@/components/ui';
+import { Badge, Button, Card, EmptyState, Field, Input, Modal, PageHeader, Select, Table, Textarea, type Column } from '@/components/ui';
 import { Async, Avatar, Chips, FilterBar, SearchInput, StatusBadge } from '@/components/app/primitives';
 import { SubNav, ATTENDANCE_NAV } from '@/components/app/SubNav';
 import { useBranches, useEmployeeOptions } from '@/components/app/hooks';
@@ -11,10 +11,23 @@ import { useAuth } from '@/lib/auth';
 import { useFetch } from '@/lib/useFetch';
 import { useLang } from '@/lib/i18n';
 import { date, minutesToHours, num, time, todayISO } from '@/lib/format';
-import { ATTENDANCE_STATUS, label } from '@/lib/labels';
+import { ATTENDANCE_FLAG, ATTENDANCE_STATUS, label } from '@/lib/labels';
+import { receivedLate } from '@/lib/devices';
 import type { AttendanceRow } from '@/lib/types';
 
 const STATUSES = ['PRESENT', 'LATE', 'ABSENT', 'ON_LEAVE', 'INCOMPLETE', 'OFF'] as const;
+
+/** Captured time, plus «استُلم لاحقاً» with the receive time when an offline punch arrived more than 10 minutes later. */
+function PunchTime({ at, received }: { at: string | null; received?: string | null }) {
+  const { t } = useLang();
+  const late = receivedLate(at, received);
+  return (
+    <div>
+      <span className="num">{time(at)}</span>
+      {late && <p className="num text-[11px] text-warning">{t('استُلم لاحقاً', 'Received later')} {time(late)}</p>}
+    </div>
+  );
+}
 
 export default function AttendancePage() {
   const { t, lang } = useLang();
@@ -40,12 +53,21 @@ export default function AttendancePage() {
       <div className="flex items-center gap-2.5"><Avatar name={r.employeeName} size="sm" /><div><p className="font-medium text-ink">{r.employeeName}</p>{!isBM && <p className="text-xs text-ink-soft">{r.branchName ?? ''}</p>}</div></div>
     ) },
     { key: 'shift', header: t('الوردية', 'Shift'), render: (r) => <span className="text-ink-muted">{r.shiftName || '—'}</span> },
-    { key: 'in', header: t('الدخول', 'In'), render: (r) => <span className="num">{time(r.checkIn)}</span> },
-    { key: 'out', header: t('الخروج', 'Out'), render: (r) => <span className="num">{time(r.checkOut)}</span> },
+    { key: 'in', header: t('الدخول', 'In'), render: (r) => <PunchTime at={r.checkIn} received={r.checkInReceivedAt} /> },
+    { key: 'out', header: t('الخروج', 'Out'), render: (r) => <PunchTime at={r.checkOut} received={r.checkOutReceivedAt} /> },
     { key: 'worked', header: t('ساعات العمل', 'Worked'), render: (r) => <span className="num">{r.workedMinutes ? minutesToHours(r.workedMinutes) : '—'}</span> },
     { key: 'late', header: t('التأخير', 'Late'), render: (r) => r.lateMinutes ? <span className="num text-warning">{num(r.lateMinutes)} {t('د', 'm')}</span> : <span className="text-ink-soft">—</span> },
     { key: 'ot', header: t('إضافي', 'OT'), render: (r) => r.overtimeMinutes ? <span className="num text-info">{minutesToHours(r.overtimeMinutes)}</span> : <span className="text-ink-soft">—</span> },
-    { key: 'status', header: t('الحالة', 'Status'), render: (r) => <StatusBadge map={ATTENDANCE_STATUS} value={r.status} /> },
+    { key: 'status', header: t('الحالة', 'Status'), render: (r) => (
+      <div className="flex flex-wrap items-center gap-1">
+        <StatusBadge map={ATTENDANCE_STATUS} value={r.status} />
+        {(r.flags ?? []).map((f) => (
+          <Badge key={f} tone={f === 'NEW_DEVICE_APPROVED' ? 'info' : f === 'NO_BRANCH_CODE' ? 'warning' : 'neutral'}>
+            <span title={f === 'OFFLINE' ? t('سُجّلت دون اتصال وأُرسلت لاحقاً بوقتها الأصلي', 'Captured offline and sent later with its original time') : undefined}>{label(ATTENDANCE_FLAG, f, lang)}</span>
+          </Badge>
+        ))}
+      </div>
+    ) },
     { key: 'act', header: '', className: 'text-end', render: (r) => (
       <button onClick={() => setEdit(r)} className="rounded-lg p-1.5 text-ink-soft hover:bg-sand hover:text-primary" aria-label="edit" title={t('تعديل يدوي', 'Manual edit')}><Pencil className="h-4 w-4" /></button>
     ) },

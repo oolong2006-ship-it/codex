@@ -8,6 +8,12 @@ import { AuthUser } from '../common/types';
 import { badRequest, conflict, notFound } from '../common/errors';
 import { BranchDto, DepartmentDto, UpdateBranchDto, UpdateDepartmentDto } from './org.dto';
 
+/** The rotating-code secret never leaves the server. */
+function branchView<T extends { codeSecret?: string }>(b: T): Omit<T, 'codeSecret'> {
+  const { codeSecret: _s, ...rest } = b;
+  return rest;
+}
+
 @ApiTags('organization')
 @ApiBearerAuth()
 @Controller()
@@ -37,7 +43,7 @@ export class OrgController {
       // official rate (only Qiwa-documented Saudis count for Nitaqat) — same as GET /saudization
       const documentedSaudis = sum((c) => c.isSaudi && c.qiwaDocumented);
       const rate = saudizationRate(documentedSaudis, total);
-      const { manager, ...rest } = b;
+      const { manager, ...rest } = branchView(b);
       return {
         ...rest,
         employeesCount: total,
@@ -64,7 +70,7 @@ export class OrgController {
     await this.checkManager(u, dto.managerEmployeeId);
     const b = await this.prisma.branch.create({ data: { ...dto, radiusMeters: dto.radiusMeters ?? 150, companyId: u.companyId } });
     await this.audit.log(u, 'CREATE', 'Branch', b.id, dto);
-    return b;
+    return branchView(b);
   }
 
   @Roles(...ADMIN)
@@ -75,7 +81,7 @@ export class OrgController {
     await this.checkManager(u, dto.managerEmployeeId);
     const updated = await this.prisma.branch.update({ where: { id }, data: dto });
     await this.audit.log(u, 'UPDATE', 'Branch', id, dto);
-    return updated;
+    return branchView(updated);
   }
 
   @Roles(...ADMIN)

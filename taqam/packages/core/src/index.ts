@@ -10,3 +10,4 @@ export * from './nitaqat';
 export * from './documents';
 export * from './wps-check';
 export * from './compliance';
+export * from './branch-code';

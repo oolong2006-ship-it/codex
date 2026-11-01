@@ -201,26 +201,30 @@ enum CandidateStage {
 }
 
 model Company {
-  id               String   @id @default(uuid())
-  nameAr           String
-  nameEn           String?
-  crNumber         String?
-  establishmentId  String?
-  gosiNumber       String?
-  vatNumber        String?
-  sector           String?
-  city             String?
-  iban             String?
-  bankCode         String?
-  weekendDays      Int[]    @default([5, 6])
-  payrollDay       Int      @default(27)
-  employeesCount   Int?
+  id                String   @id @default(uuid())
+  nameAr            String
+  nameEn            String?
+  crNumber          String?
+  establishmentId   String?
+  gosiNumber        String?
+  vatNumber         String?
+  sector            String?
+  city              String?
+  iban              String?
+  bankCode          String?
+  weekendDays       Int[]    @default([5, 6])
+  payrollDay        Int      @default(27)
+  employeesCount    Int?
   /// المقابل المالي: monthly expat levy per non-Saudi (labor cost estimate; verify current fees)
-  expatLevyMonthly Decimal  @default(800) @db.Decimal(10, 2)
+  expatLevyMonthly  Decimal  @default(800) @db.Decimal(10, 2)
   /// رسوم الإقامة: annual iqama fee per non-Saudi (monthly = /12)
-  iqamaFeeAnnual   Decimal  @default(650) @db.Decimal(10, 2)
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  iqamaFeeAnnual    Decimal  @default(650) @db.Decimal(10, 2)
+  /// ESS punches only from the employee's bound device (first punch binds; HR approves a new one)
+  deviceBinding     Boolean  @default(true)
+  /// ESS punches must carry the rotating 6-digit code shown on the branch kiosk screen (offline replays exempt)
+  requireBranchCode Boolean  @default(false)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 
   // ---- platform lifecycle (admin portal) ----
   status             CompanyStatus @default(ACTIVE)
@@ -260,6 +264,7 @@ model Company {
   jobOpenings        JobOpening[]
   candidates         Candidate[]
   invoices           Invoice[]
+  employeeDevices    EmployeeDevice[]
 }
 
 model Branch {
@@ -273,6 +278,8 @@ model Branch {
   lng               Float
   radiusMeters      Int      @default(150)
   managerEmployeeId String?
+  /// Rotating branch code secret (32 random bytes, hex). Server-side only — never returned by the API.
+  codeSecret        String   @default(dbgenerated("replace(((gen_random_uuid())::text || (gen_random_uuid())::text), '-'::text, ''::text)"))
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 
@@ -392,6 +399,7 @@ model Employee {
   adjustments      PayrollAdjustment[]
   reviews          PerformanceReview[] @relation("ReviewEmployee")
   reviewsGiven     PerformanceReview[] @relation("ReviewReviewer")
+  devices          EmployeeDevice[]
 
   @@unique([companyId, employeeNumber])
   @@index([companyId])
@@ -454,26 +462,31 @@ model ShiftAssignment {
 }
 
 model AttendanceRecord {
-  id                String    @id @default(uuid())
-  companyId         String
-  employeeId        String
-  date              DateTime  @db.Date
-  shiftId           String?
-  checkIn           DateTime?
-  checkOut          DateTime?
-  checkInLat        Float?
-  checkInLng        Float?
-  checkOutLat       Float?
-  checkOutLng       Float?
-  workedMinutes     Int       @default(0)
-  lateMinutes       Int       @default(0)
-  earlyLeaveMinutes Int       @default(0)
-  overtimeMinutes   Int       @default(0)
-  status            String    @default("PRESENT")
-  source            String    @default("SELF")
-  note              String?
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
+  id                 String    @id @default(uuid())
+  companyId          String
+  employeeId         String
+  date               DateTime  @db.Date
+  shiftId            String?
+  checkIn            DateTime?
+  checkOut           DateTime?
+  checkInLat         Float?
+  checkInLng         Float?
+  checkOutLat        Float?
+  checkOutLng        Float?
+  workedMinutes      Int       @default(0)
+  lateMinutes        Int       @default(0)
+  earlyLeaveMinutes  Int       @default(0)
+  overtimeMinutes    Int       @default(0)
+  status             String    @default("PRESENT")
+  source             String    @default("SELF")
+  note               String?
+  /// OFFLINE (replayed with capturedAt), NO_BRANCH_CODE, KIOSK, NEW_DEVICE_APPROVED
+  flags              String[]  @default([])
+  /// when the server received the self punch (differs from checkIn/checkOut for offline replays)
+  checkInReceivedAt  DateTime?
+  checkOutReceivedAt DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
 
   company  Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
   employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
@@ -481,6 +494,36 @@ model AttendanceRecord {
 
   @@unique([employeeId, date])
   @@index([companyId, date])
+}
+
+enum EmployeeDeviceStatus {
+  ACTIVE
+  PENDING
+  REJECTED
+  REVOKED
+}
+
+/// A phone/browser an employee punches from (ESS device binding — no photos, ever).
+model EmployeeDevice {
+  id           String               @id @default(uuid())
+  companyId    String
+  employeeId   String
+  /// random id generated by the ESS app (localStorage `shuoon.deviceId`), sent as X-Device-Id
+  deviceId     String
+  status       EmployeeDeviceStatus @default(PENDING)
+  userAgent    String?
+  createdAt    DateTime             @default(now())
+  /// HR user who approved this device (null for the first-punch binding)
+  approvedById String?
+  decidedAt    DateTime?
+  /// last punch from this device (null on an approved device ⇒ its first punch is flagged NEW_DEVICE_APPROVED)
+  lastUsedAt   DateTime?
+
+  company  Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@unique([employeeId, deviceId])
+  @@index([companyId, status])
 }
 
 model LeaveType {

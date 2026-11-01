@@ -37,6 +37,10 @@ export class UpdateCompanyDto {
   @ApiPropertyOptional({ example: 800 }) @IsOptional() @IsNumber({ maxDecimalPlaces: 2 }) @Min(0) @Max(100000) expatLevyMonthly?: number;
   /** Annual iqama fee per non-Saudi (default 650; monthly = /12). */
   @ApiPropertyOptional({ example: 650 }) @IsOptional() @IsNumber({ maxDecimalPlaces: 2 }) @Min(0) @Max(100000) iqamaFeeAnnual?: number;
+  /** ESS punches only from the employee's bound device (first punch binds; HR approves a new device). */
+  @ApiPropertyOptional({ default: true }) @IsOptional() @IsBoolean() deviceBinding?: boolean;
+  /** ESS punches must include the rotating code shown on the branch kiosk screen. */
+  @ApiPropertyOptional({ default: false }) @IsOptional() @IsBoolean() requireBranchCode?: boolean;
 }
 
 /** Roles a company may assign — SUPER_ADMIN is platform-only. */

@@ -1,6 +1,6 @@
-import { Body, Controller, Get, HttpCode, Module, Param, Post, Query } from '@nestjs/common';
-import { ApiBearerAuth, ApiProperty, ApiTags } from '@nestjs/swagger';
-import { IsNumber, Max, Min } from 'class-validator';
+import { Body, Controller, Get, Headers, HttpCode, Module, Param, Post, Query } from '@nestjs/common';
+import { ApiBearerAuth, ApiHeader, ApiProperty, ApiPropertyOptional, ApiTags } from '@nestjs/swagger';
+import { IsISO8601, IsNumber, IsOptional, IsString, Max, MaxLength, Min } from 'class-validator';
 import { haversineMeters, isWithinGeofence } from '@taqam/core';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../shared/audit.service';
@@ -21,13 +21,54 @@ import { MyRequestDto } from '../requests/requests.dto';
 import { payslipInclude, payslipView } from '../payroll/payroll.service';
 import { announcementsWhere } from '../comms/comms.controller';
 import { fullName } from '../employees/employee.view';
+import { AttendanceModule } from '../attendance/attendance.module';
+import { DeviceCheck, DevicesService } from '../attendance/devices.service';
+import { checkBranchCode } from '../attendance/branch-code';
 
 /** How far back a self check-out may reach to close an open (overnight) record. */
 const OVERNIGHT_WINDOW_MS = 16 * 3600 * 1000;
+/** Offline punches replayed with `capturedAt` are accepted from the last 12 hours (2 minutes of clock skew allowed). */
+const OFFLINE_MAX_AGE_MS = 12 * 3600 * 1000;
+const OFFLINE_MAX_SKEW_MS = 2 * 60 * 1000;
+const OFFLINE_WINDOW_AR = 'وقت التسجيل خارج المدة المسموحة (12 ساعة)';
+
+const withFlags = (existing: string[], add: string[]) => [...new Set([...existing, ...add])];
 
 export class LocationDto {
   @ApiProperty({ example: 24.6911 }) @IsNumber() @Min(-90) @Max(90) lat: number;
   @ApiProperty({ example: 46.6853 }) @IsNumber() @Min(-180) @Max(180) lng: number;
+}
+
+/** ESS check-in/out body. No photo field — the owner decided punches never capture images of people. */
+export class PunchDto extends LocationDto {
+  @ApiPropertyOptional({ description: 'Rotating 6-digit code shown on the branch kiosk screen (when the company requires it)', example: '482913' })
+  @IsOptional() @IsString() @MaxLength(12) branchCode?: string;
+  @ApiPropertyOptional({ description: 'Offline replay: when the punch was captured (ISO). Accepted within the last 12 hours.' })
+  @IsOptional() @IsISO8601({ strict: true }) capturedAt?: string;
+}
+
+interface PunchContext {
+  /** punch time: capturedAt for an offline replay (capped at now), otherwise now */
+  at: Date;
+  /** capturedAt exactly as sent (may be up to 2 minutes ahead of the server clock) */
+  captured: Date | null;
+  offline: boolean;
+  /** server receive time */
+  receivedAt: Date;
+  device: DeviceCheck;
+  /** OFFLINE / NO_BRANCH_CODE / NEW_DEVICE_APPROVED added by the checks */
+  flags: string[];
+}
+
+/**
+ * The same offline punch replayed (flaky network): identical time, or — for a capturedAt that was a little ahead
+ * of the server clock and got capped at "now" — an OFFLINE record within the skew allowance before it.
+ */
+function samePunch(existing: Date, existingFlags: string[], ctx: PunchContext): boolean {
+  if (!ctx.offline || !ctx.captured) return false;
+  if (existing.getTime() === ctx.at.getTime()) return true;
+  const ahead = ctx.captured.getTime() - existing.getTime();
+  return existingFlags.includes('OFFLINE') && ahead > 0 && ahead <= OFFLINE_MAX_SKEW_MS;
 }
 
 @ApiTags('self-service (me)')
@@ -43,6 +84,7 @@ export class MeController {
     private readonly employees: EmployeesService,
     private readonly leaves: LeavesService,
     private readonly requests: RequestsService,
+    private readonly devices: DevicesService,
   ) {}
 
   private async me(u: AuthUser) {
@@ -62,7 +104,7 @@ export class MeController {
   async home(@CurrentUser() u: AuthUser) {
     const e = await this.me(u);
     const today = todayStr();
-    const [shift, board, leaveBalance, pendingLeaves, pendingReqs, lastSlip, announcements] = await Promise.all([
+    const [shift, board, leaveBalance, pendingLeaves, pendingReqs, lastSlip, announcements, policy] = await Promise.all([
       this.att.shiftFor(e, today),
       this.att.board({ id: e.id, companyId: u.companyId }, today),
       this.leaveCalc.annualBalance(e),
@@ -78,6 +120,7 @@ export class MeController {
         orderBy: { createdAt: 'desc' },
         take: 5,
       }),
+      this.policy(u.companyId),
     ]);
     const row = board[0];
     return {
@@ -90,7 +133,10 @@ export class MeController {
         status: row?.status ?? 'OFF',
         lateMinutes: row?.lateMinutes ?? 0,
         workedMinutes: row?.workedMinutes ?? 0,
+        flags: row?.flags ?? [],
       },
+      /** ESS punch rules: branch code input shown when required; device id always sent */
+      attendancePolicy: policy,
       leaveBalance,
       pendingRequests: pendingLeaves + pendingReqs,
       pendingLeaves,
@@ -109,21 +155,70 @@ export class MeController {
     }
   }
 
-  @HttpCode(200)
-  @Post('attendance/check-in')
-  async checkIn(@CurrentUser() u: AuthUser, @Body() dto: LocationDto) {
-    const e = await this.me(u);
-    this.geofence(e, dto);
-    const today = todayStr();
-    const d = day(today);
-    const existing = await this.prisma.attendanceRecord.findUnique({ where: { employeeId_date: { employeeId: e.id, date: d } } });
-    if (existing?.checkIn) throw conflict('Already checked in today', 'تم تسجيل الحضور مسبقاً اليوم');
-    const shift = await this.att.shiftFor(e, today);
+  private async policy(companyId: string) {
+    return this.prisma.company.findUniqueOrThrow({ where: { id: companyId }, select: { requireBranchCode: true, deviceBinding: true } });
+  }
+
+  /**
+   * Anti-tamper checks shared by check-in/out (spec §6), in this order: offline window, geofence, rotating
+   * branch code, then device binding — so a punch that fails any other check never binds a device or files a
+   * request. Never asks for a photo.
+   */
+  private async guardPunch(u: AuthUser, e: Awaited<ReturnType<MeController['me']>>, dto: PunchDto, deviceId?: string, userAgent?: string): Promise<PunchContext> {
     const now = new Date();
-    const m = this.att.compute(shift, now, null);
+    let at = now;
+    let captured: Date | null = null;
+    const offline = dto.capturedAt !== undefined;
+    const flags: string[] = [];
+    if (offline) {
+      captured = new Date(dto.capturedAt!);
+      if (Number.isNaN(captured.getTime()) || captured.getTime() < now.getTime() - OFFLINE_MAX_AGE_MS || captured.getTime() > now.getTime() + OFFLINE_MAX_SKEW_MS) {
+        throw badRequest('capturedAt is outside the allowed window (12 hours)', OFFLINE_WINDOW_AR);
+      }
+      at = captured > now ? now : captured; // clock skew: never record a punch in the future
+      flags.push('OFFLINE');
+    }
+    this.geofence(e, dto);
+    const policy = await this.policy(u.companyId);
+    if (policy.requireBranchCode) {
+      const code = dto.branchCode?.trim();
+      if (!offline) {
+        if (!code) throw badRequest('Branch code is required', 'أدخل رمز الفرع الظاهر على شاشة الحضور');
+        if (!checkBranchCode(e.branch!.codeSecret, code, now)) throw badRequest('Invalid or expired branch code', 'رمز الفرع غير صحيح أو منتهي');
+      } else if (!code || !checkBranchCode(e.branch!.codeSecret, code, captured!)) {
+        // offline: the code the kiosk showed when the punch was captured; accepted without one, but flagged
+        flags.push('NO_BRANCH_CODE');
+      }
+    }
+    const device: DeviceCheck = policy.deviceBinding ? await this.devices.check(u.companyId, e, deviceId, userAgent) : { device: null, flags: [] };
+    return { at, captured, offline, receivedAt: now, device, flags: [...flags, ...device.flags] };
+  }
+
+  @HttpCode(200)
+  @ApiHeader({ name: 'X-Device-Id', required: false, description: 'Random ESS device id (required while company device binding is on)' })
+  @Post('attendance/check-in')
+  async checkIn(@CurrentUser() u: AuthUser, @Body() dto: PunchDto, @Headers('x-device-id') deviceId?: string, @Headers('user-agent') userAgent?: string) {
+    const e = await this.me(u);
+    const ctx = await this.guardPunch(u, e, dto, deviceId, userAgent);
+    const today = todayStr(ctx.at);
+    const d = day(today);
+    const shift = await this.att.shiftFor(e, today);
+    const view = (rec: { lateMinutes: number }) => ({
+      ...rec,
+      status: rec.lateMinutes > 0 ? 'LATE' : 'PRESENT',
+      shift: shift ? { name: shift.name, startTime: shift.startTime, endTime: shift.endTime } : null,
+    });
+    const existing = await this.prisma.attendanceRecord.findUnique({ where: { employeeId_date: { employeeId: e.id, date: d } } });
+    if (existing?.checkIn) {
+      // flaky network: the same offline replay sent twice returns the record it already created
+      if (samePunch(existing.checkIn, existing.flags, ctx)) return view(existing);
+      throw conflict('Already checked in today', 'تم تسجيل الحضور مسبقاً اليوم');
+    }
+    const m = this.att.compute(shift, ctx.at, null);
     const data = {
       shiftId: shift?.id ?? null,
-      checkIn: now,
+      checkIn: ctx.at,
+      checkInReceivedAt: ctx.receivedAt,
       checkInLat: dto.lat,
       checkInLng: dto.lng,
       lateMinutes: m.lateMinutes,
@@ -131,41 +226,50 @@ export class MeController {
       overtimeMinutes: 0,
       status: m.status,
       source: 'SELF',
+      flags: withFlags(existing?.flags ?? [], ctx.flags),
     };
     const rec = await this.prisma.attendanceRecord.upsert({
       where: { employeeId_date: { employeeId: e.id, date: d } },
       create: { companyId: u.companyId, employeeId: e.id, date: d, ...data },
       update: data,
     });
-    await this.audit.log(u, 'CHECK_IN', 'AttendanceRecord', rec.id, { ...dto, lateMinutes: m.lateMinutes });
-    return { ...rec, status: m.lateMinutes > 0 ? 'LATE' : 'PRESENT', shift: shift ? { name: shift.name, startTime: shift.startTime, endTime: shift.endTime } : null };
+    await this.devices.markUsed(ctx.device.device);
+    await this.audit.log(u, 'CHECK_IN', 'AttendanceRecord', rec.id, { lat: dto.lat, lng: dto.lng, capturedAt: dto.capturedAt, flags: data.flags, lateMinutes: m.lateMinutes });
+    return view(rec);
   }
 
   @HttpCode(200)
+  @ApiHeader({ name: 'X-Device-Id', required: false, description: 'Random ESS device id (required while company device binding is on)' })
   @Post('attendance/check-out')
-  async checkOut(@CurrentUser() u: AuthUser, @Body() dto: LocationDto) {
+  async checkOut(@CurrentUser() u: AuthUser, @Body() dto: PunchDto, @Headers('x-device-id') deviceId?: string, @Headers('user-agent') userAgent?: string) {
     const e = await this.me(u);
-    this.geofence(e, dto);
-    const today = todayStr();
-    const d = day(today);
-    const now = new Date();
+    const ctx = await this.guardPunch(u, e, dto, deviceId, userAgent);
+    const at = ctx.at;
+    const d = day(todayStr(at));
     let rec = await this.prisma.attendanceRecord.findUnique({ where: { employeeId_date: { employeeId: e.id, date: d } }, include: { shift: true } });
     if (!rec) {
-      // Overnight shift: no record today → close the latest still-open record checked in within the last 16 hours.
+      // Overnight shift: no record that day → close the latest still-open record checked in within the 16 hours before.
       rec = await this.prisma.attendanceRecord.findFirst({
-        where: { employeeId: e.id, checkIn: { gte: new Date(now.getTime() - OVERNIGHT_WINDOW_MS), lte: now }, checkOut: null },
+        where: { employeeId: e.id, checkIn: { gte: new Date(at.getTime() - OVERNIGHT_WINDOW_MS), lte: at }, checkOut: null },
         orderBy: { checkIn: 'desc' },
         include: { shift: true },
       });
     }
     if (!rec?.checkIn) throw badRequest('You have not checked in today', 'لم يتم تسجيل الحضور اليوم');
-    if (rec.checkOut) throw conflict('Already checked out today', 'تم تسجيل الانصراف مسبقاً اليوم');
+    if (rec.checkOut) {
+      const { shift: _s, ...existing } = rec;
+      if (samePunch(rec.checkOut, rec.flags, ctx)) return existing;
+      throw conflict('Already checked out today', 'تم تسجيل الانصراف مسبقاً اليوم');
+    }
+    if (at <= rec.checkIn) throw badRequest('Check-out must be after check-in', 'وقت الانصراف يجب أن يكون بعد وقت الحضور');
     const shift = rec.shift ?? (await this.att.shiftFor(e, rec.date));
-    const m = this.att.compute(shift, rec.checkIn, now);
+    const m = this.att.compute(shift, rec.checkIn, at);
+    const flags = withFlags(rec.flags, ctx.flags);
     const updated = await this.prisma.attendanceRecord.update({
       where: { id: rec.id },
       data: {
-        checkOut: now,
+        checkOut: at,
+        checkOutReceivedAt: ctx.receivedAt,
         checkOutLat: dto.lat,
         checkOutLng: dto.lng,
         workedMinutes: m.workedMinutes,
@@ -173,9 +277,11 @@ export class MeController {
         earlyLeaveMinutes: m.earlyLeaveMinutes,
         overtimeMinutes: m.overtimeMinutes,
         status: m.status,
+        flags,
       },
     });
-    await this.audit.log(u, 'CHECK_OUT', 'AttendanceRecord', rec.id, { ...dto, workedMinutes: m.workedMinutes });
+    await this.devices.markUsed(ctx.device.device);
+    await this.audit.log(u, 'CHECK_OUT', 'AttendanceRecord', rec.id, { lat: dto.lat, lng: dto.lng, capturedAt: dto.capturedAt, flags, workedMinutes: m.workedMinutes });
     return updated;
   }
 
@@ -198,6 +304,7 @@ export class MeController {
       lateMinutes: r.lateMinutes,
       overtimeMinutes: r.overtimeMinutes,
       status: r.status,
+      flags: r.flags,
       shiftName: r.shift?.name ?? null,
     }));
   }
@@ -259,5 +366,5 @@ export class MeController {
   }
 }
 
-@Module({ imports: [EmployeesModule, LeavesModule, RequestsModule], controllers: [MeController] })
+@Module({ imports: [EmployeesModule, LeavesModule, RequestsModule, AttendanceModule], controllers: [MeController] })
 export class MeModule {}

@@ -1,6 +1,7 @@
 // Thin fetch client for the Shuoon API (see docs/API_CONTRACT.md).
 // In the static demo build (NEXT_PUBLIC_DEMO=1) every call is answered by an in-browser mock (src/demo), loaded lazily.
 import { IS_DEMO } from './paths';
+import { getDeviceId } from './device';
 
 export const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4100/api';
 const TOKEN_KEY = 'taqam.token';
@@ -50,9 +51,15 @@ function qs(query?: Query) {
   return s ? `?${s}` : '';
 }
 
+/** ESS punches identify the device they come from (device binding — spec §6). */
+const PUNCH_PATH = /^\/me\/attendance\/check-(in|out)$/;
+function deviceHeaders(path: string): Record<string, string> {
+  return PUNCH_PATH.test(path) ? { 'X-Device-Id': getDeviceId() } : {};
+}
+
 async function request<T>(method: string, path: string, body?: unknown, query?: Query): Promise<T> {
   if (IS_DEMO) return demoRequest<T>(method, path, body, query);
-  const headers: Record<string, string> = { Accept: 'application/json' };
+  const headers: Record<string, string> = { Accept: 'application/json', ...deviceHeaders(path) };
   const token = getToken();
   if (token) headers.Authorization = `Bearer ${token}`;
   if (body !== undefined) headers['Content-Type'] = 'application/json';
@@ -82,7 +89,7 @@ const loadDemo = () => (demoModule ??= import('@/demo/client'));
 
 async function demoCall(method: string, path: string, body?: unknown, query?: Query) {
   const { demoFetch } = await loadDemo();
-  const res = await demoFetch(method, path, { body, query, token: getToken() });
+  const res = await demoFetch(method, path, { body, query, token: getToken(), headers: deviceHeaders(path) });
   if (res.status === 401 && typeof window !== 'undefined' && !path.startsWith('/auth/login')) setToken(null);
   if (res.status >= 400) {
     const d = (res.data || {}) as { message?: string | string[]; messageAr?: string };

@@ -214,7 +214,7 @@ export class Services {
         employeeId: e.id, employeeName: fullName(e), branchId: e.branchId, branchName: this.branch(e.branchId)?.nameAr ?? null,
         shiftId: shift?.id ?? null, shiftName: shift?.name ?? null, checkIn: rec?.checkIn ?? null, checkOut: rec?.checkOut ?? null,
         workedMinutes: rec?.workedMinutes ?? 0, lateMinutes: rec?.lateMinutes ?? 0, overtimeMinutes: rec?.overtimeMinutes ?? 0,
-        status, recordId: rec?.id ?? null,
+        status, recordId: rec?.id ?? null, flags: rec?.flags ?? [], checkInReceivedAt: rec?.checkInReceivedAt ?? null, checkOutReceivedAt: rec?.checkOutReceivedAt ?? null,
       };
     });
   }

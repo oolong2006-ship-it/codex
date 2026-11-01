@@ -10,8 +10,9 @@ export interface Announcement { id: string; title: string; body: string; created
 export interface LeaveBalanceSummary { entitlementPerYear?: number; accrued?: number; taken?: number; balance: number }
 
 export interface MeHome {
-  employee: { name: string; jobTitle?: string; branchName?: string };
+  employee: { id?: string; name: string; jobTitle?: string; branchName?: string };
   today: {
+    date?: string;
     shift: { name: string; startTime: string; endTime: string } | null;
     checkIn: string | null;
     checkOut: string | null;
@@ -24,6 +25,8 @@ export interface MeHome {
   lastPayslip: { id: string; period: string; net: number } | null;
   announcements: Announcement[];
   branch: { lat: number; lng: number; radiusMeters: number } | null;
+  /** ESS punch rules (spec §6): show the branch-code field when required; the device id is always sent. */
+  attendancePolicy?: { requireBranchCode: boolean; deviceBinding: boolean };
 }
 
 export interface AttendanceRecord {

@@ -4,6 +4,9 @@ export const ROLE: L = { OWNER: ['المالك', 'Owner'], HR_ADMIN: ['مدير 
 export const EMPLOYEE_STATUS: L = { ACTIVE: ['على رأس العمل', 'Active'], ON_LEAVE: ['في إجازة', 'On leave'], TERMINATED: ['منتهية خدمته', 'Terminated'] };
 export const REQUEST_STATUS: L = { PENDING: ['قيد الاعتماد', 'Pending'], APPROVED: ['معتمد', 'Approved'], REJECTED: ['مرفوض', 'Rejected'], CANCELLED: ['ملغى', 'Cancelled'] };
 export const ATTENDANCE_STATUS: L = { PRESENT: ['حاضر', 'Present'], LATE: ['متأخر', 'Late'], ABSENT: ['غائب', 'Absent'], ON_LEAVE: ['إجازة', 'On leave'], INCOMPLETE: ['غير مكتمل', 'Incomplete'], OFF: ['راحة', 'Off'], HOLIDAY: ['عطلة', 'Holiday'] };
+/** Attendance record flags (anti-tamper, spec §6) shown to managers as badges. */
+export const ATTENDANCE_FLAG: L = { OFFLINE: ['دون اتصال', 'Offline'], NO_BRANCH_CODE: ['بدون رمز الفرع', 'No branch code'], NEW_DEVICE_APPROVED: ['جهاز جديد', 'New device'], KIOSK: ['جهاز الفرع', 'Kiosk'] };
+export const DEVICE_STATUS: L = { ACTIVE: ['معتمد', 'Active'], PENDING: ['بانتظار الاعتماد', 'Pending'], REJECTED: ['مرفوض', 'Rejected'], REVOKED: ['مُستبدل', 'Replaced'] };
 export const REQUEST_TYPE: L = { SALARY_CERTIFICATE: ['تعريف بالراتب', 'Salary certificate'], EXPENSE_CLAIM: ['مطالبة مصروفات', 'Expense claim'], LOAN: ['سلفة', 'Loan'], EXIT_REENTRY: ['خروج وعودة', 'Exit / re-entry'], ATTENDANCE_CORRECTION: ['تصحيح حضور', 'Attendance correction'], LETTER: ['خطاب', 'Letter'], OTHER: ['أخرى', 'Other'] };
 export const PAYROLL_STATUS: L = { DRAFT: ['مسودة', 'Draft'], CALCULATED: ['محسوب', 'Calculated'], APPROVED: ['معتمد', 'Approved'], PAID: ['مدفوع', 'Paid'] };
 export const DOC_TYPE: L = {

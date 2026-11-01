@@ -9,6 +9,7 @@ import { addDays, addMonths, eachDay, periodOf, riyadhDateTime, todayStr, weekda
 import { nextId, type BillingCycle, type Company, type CompanyStatus, type DB, type Employee, type Plan } from './db';
 import { endOfDay, lifecycleDefaults, logEvent, type Actor } from './lifecycle';
 import type { Services } from './services';
+import { seededBranchSecret } from './routes-devices';
 
 let st = 20261024;
 function rand() {
@@ -167,7 +168,7 @@ export function seedPlatform(db: DB, svc: Services, now: Date) {
     const c: Company = {
       id: companyId, nameAr: d.nameAr, nameEn: d.nameEn, crNumber: `${pick(['1010', '4030', '2050', '1131'])}${digits(6)}`, establishmentId: d.status === 'PENDING' ? null : `70${digits(8)}`,
       gosiNumber: d.status === 'PENDING' ? null : `5${digits(8)}`, vatNumber: null, sector: d.sector, city: d.city, iban: null, bankCode: null,
-      weekendDays: [5, 6], payrollDay: 27, employeesCount: d.employees, expatLevyMonthly: 800, iqamaFeeAnnual: 650, createdAt: created, updatedAt: createdAt,
+      weekendDays: [5, 6], payrollDay: 27, employeesCount: d.employees, expatLevyMonthly: 800, iqamaFeeAnnual: 650, deviceBinding: true, requireBranchCode: false, createdAt: created, updatedAt: createdAt,
       ...lifecycleDefaults(),
       status: d.status, plan: d.plan, billingCycle: d.cycle, maxEmployees: d.max, pricePerEmployee: d.price,
       trialEndsAt: d.trialEndsIn !== undefined ? endOfDay(rel(d.trialEndsIn)) : null,
@@ -186,7 +187,7 @@ export function seedPlatform(db: DB, svc: Services, now: Date) {
     }
     const [lat, lng] = CITY_GEO[d.city] ?? CITY_GEO['الرياض'];
     const branchId = nextId(db, 'br');
-    db.branches.push({ id: branchId, companyId, nameAr: `الفرع الرئيسي — ${d.city}`, nameEn: 'Main branch', city: d.city, address: null, lat, lng, radiusMeters: 200, managerEmployeeId: null, createdAt: created, updatedAt: createdAt });
+    db.branches.push({ id: branchId, companyId, nameAr: `الفرع الرئيسي — ${d.city}`, nameEn: 'Main branch', city: d.city, address: null, lat, lng, radiusMeters: 200, managerEmployeeId: null, createdAt: created, updatedAt: createdAt, codeSecret: seededBranchSecret(branchId) });
     const shift = { id: nextId(db, 'sh'), companyId, branchId, name: 'الدوام الرسمي', startTime: '08:00', endTime: '17:00', breakMinutes: 60, graceMinutes: 15, days: [0, 1, 2, 3, 4, 6], color: '#0369A1', createdAt: created };
     db.shifts.push(shift);
 
@@ -241,7 +242,7 @@ export function seedPlatform(db: DB, svc: Services, now: Date) {
           const m = svc.compute(shift, checkIn, checkOut);
           db.attendance.push({
             id: nextId(db, 'att'), companyId, employeeId: e.id, date: ds, shiftId: shift.id, checkIn: checkIn.toISOString(), checkOut: checkOut.toISOString(),
-            checkInLat: lat, checkInLng: lng, checkOutLat: lat, checkOutLng: lng, ...m, source: 'MOBILE', note: null, createdAt: checkIn.toISOString(), updatedAt: checkOut.toISOString(),
+            checkInLat: lat, checkInLng: lng, checkOutLat: lat, checkOutLng: lng, ...m, source: 'MOBILE', note: null, flags: [], createdAt: checkIn.toISOString(), updatedAt: checkOut.toISOString(),
           });
         }
       }

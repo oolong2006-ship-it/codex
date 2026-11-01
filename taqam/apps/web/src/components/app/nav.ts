@@ -1,7 +1,7 @@
 import {
   LayoutDashboard, Users, Network, Building2, FolderTree, Clock, CalendarRange, Timer, BarChart3,
   CalendarCheck, Inbox, Wallet, SlidersHorizontal, HandCoins, Flag, FileWarning, Target, Briefcase,
-  PieChart, Megaphone, Settings, ReceiptText, ShieldCheck, type LucideIcon,
+  PieChart, Megaphone, Settings, ReceiptText, ShieldCheck, Smartphone, type LucideIcon,
 } from 'lucide-react';
 import type { Role } from '@/lib/auth';
 
@@ -28,6 +28,7 @@ export const NAV: NavGroup[] = [
     { href: '/app/attendance', label: ['الحضور اليومي', 'Daily attendance'], icon: Clock, roles: ABM, exact: true },
     { href: '/app/attendance/roster', label: ['جدول الورديات', 'Roster'], icon: CalendarRange, roles: ABM },
     { href: '/app/attendance/shifts', label: ['الورديات', 'Shifts'], icon: Timer, roles: ABM },
+    { href: '/app/attendance/devices', label: ['الأجهزة بانتظار الاعتماد', 'Pending devices'], icon: Smartphone, roles: ABM },
     { href: '/app/attendance/summary', label: ['ملخص الحضور', 'Attendance summary'], icon: BarChart3, roles: ALL },
   ] },
   { label: ['الطلبات', 'Approvals'], items: [

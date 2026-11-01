@@ -6,6 +6,7 @@ import { nextId, type Employee, type Goal } from './db';
 import { badRequest, conflict, forbidden, notFound } from './errors';
 import { route, v, pick, paginate, byCreatedAsc, byCreatedDesc, leaveView, empLite, payslipView, ok, PERIOD_RE, type Route } from './router';
 import { attendanceSummary, employeeDetail, upsertRecord } from './routes-core';
+import { guardPunch, markDeviceUsed, samePunch, withFlags } from './routes-devices';
 import { ADMIN, ALL_ROLES, STAFF, PayrollStateError, Services, byNumber, fullName, nowIso, type AuthUser } from './services';
 
 const APPROVERS = ['OWNER', 'HR_ADMIN', 'BRANCH_MANAGER'] as const;
@@ -658,12 +659,15 @@ export const moreRoutes: Route[] = [
     const pendingReqs = db.requests.filter((r) => r.employeeId === e.id && r.status === 'PENDING').length;
     const last = db.payslips.filter((p) => p.employeeId === e.id && releasedRun(svc, p.companyId, p.payrollRunId)).sort((a, b) => b.period.localeCompare(a.period))[0];
     const b = svc.branch(e.branchId);
+    const c = svc.company(u.companyId);
     return {
       employee: { id: e.id, name: fullName(e), jobTitle: e.jobTitle, branchName: b?.nameAr ?? null, avatarColor: e.avatarColor, employeeNumber: e.employeeNumber },
       today: {
         date: today, shift: shift ? { id: shift.id, name: shift.name, startTime: shift.startTime, endTime: shift.endTime } : null,
         checkIn: row?.checkIn ?? null, checkOut: row?.checkOut ?? null, status: row?.status ?? 'OFF', lateMinutes: row?.lateMinutes ?? 0, workedMinutes: row?.workedMinutes ?? 0,
+        flags: row?.flags ?? [],
       },
+      attendancePolicy: { requireBranchCode: c.requireBranchCode, deviceBinding: c.deviceBinding },
       leaveBalance: svc.annualBalance(e),
       pendingRequests: pendingLeaves + pendingReqs,
       pendingLeaves,
@@ -672,44 +676,58 @@ export const moreRoutes: Route[] = [
       branch: b ? { id: b.id, name: b.nameAr, lat: b.lat, lng: b.lng, radiusMeters: b.radiusMeters } : null,
     };
   }),
-  route('POST', '/me/attendance/check-in', ALL_ROLES, ({ db, svc, user: u, body }) => {
+  route('POST', '/me/attendance/check-in', ALL_ROLES, ({ db, svc, user: u, body, headers }) => {
     const e = me(svc, u);
-    const loc = geofence(svc, e, body);
-    const today = todayStr();
-    const existing = db.attendance.find((r) => r.employeeId === e.id && r.date === today);
-    if (existing?.checkIn) throw conflict('Already checked in today', 'تم تسجيل الحضور مسبقاً اليوم');
+    let loc = { lat: 0, lng: 0 };
+    const ctx = guardPunch(svc, u.companyId, e, body, headers, () => { loc = geofence(svc, e, body); });
+    const today = todayStr(ctx.at);
     const shift = svc.shiftFor(e, today);
+    const view = <T extends { lateMinutes: number }>(rec: T) => ({ ...rec, status: rec.lateMinutes > 0 ? 'LATE' : 'PRESENT', shift: shift ? { name: shift.name, startTime: shift.startTime, endTime: shift.endTime } : null });
+    const existing = db.attendance.find((r) => r.employeeId === e.id && r.date === today);
+    if (existing?.checkIn) {
+      // flaky network: the same offline replay sent twice returns the record it already created
+      if (samePunch(existing.checkIn, existing.flags, ctx)) return view(existing);
+      throw conflict('Already checked in today', 'تم تسجيل الحضور مسبقاً اليوم');
+    }
     const now = new Date();
-    const m = svc.compute(shift, now, null);
-    const data = { shiftId: shift?.id ?? null, checkIn: now.toISOString(), checkInLat: loc.lat, checkInLng: loc.lng, lateMinutes: m.lateMinutes, workedMinutes: 0, overtimeMinutes: 0, status: m.status, source: 'SELF', updatedAt: now.toISOString() };
+    const m = svc.compute(shift, ctx.at, null);
+    const data = { shiftId: shift?.id ?? null, checkIn: ctx.at.toISOString(), checkInReceivedAt: ctx.receivedAt.toISOString(), checkInLat: loc.lat, checkInLng: loc.lng, lateMinutes: m.lateMinutes, workedMinutes: 0, overtimeMinutes: 0, status: m.status, source: 'SELF', flags: withFlags(existing?.flags ?? [], ctx.flags), updatedAt: now.toISOString() };
     let rec = existing;
     if (rec) Object.assign(rec, data);
     else {
       rec = { id: nextId(db, 'att'), companyId: u.companyId, employeeId: e.id, date: today, checkOut: null, checkOutLat: null, checkOutLng: null, earlyLeaveMinutes: 0, note: null, createdAt: now.toISOString(), ...data };
       db.attendance.push(rec);
     }
-    svc.audit(u, 'CHECK_IN', 'AttendanceRecord', rec.id, { ...loc, lateMinutes: m.lateMinutes });
-    return { ...rec, status: m.lateMinutes > 0 ? 'LATE' : 'PRESENT', shift: shift ? { name: shift.name, startTime: shift.startTime, endTime: shift.endTime } : null };
+    markDeviceUsed(svc, ctx.device);
+    svc.audit(u, 'CHECK_IN', 'AttendanceRecord', rec.id, { ...loc, capturedAt: body.capturedAt, flags: data.flags, lateMinutes: m.lateMinutes });
+    return view(rec);
   }),
-  route('POST', '/me/attendance/check-out', ALL_ROLES, ({ db, svc, user: u, body }) => {
+  route('POST', '/me/attendance/check-out', ALL_ROLES, ({ db, svc, user: u, body, headers }) => {
     const e = me(svc, u);
-    const loc = geofence(svc, e, body);
-    const today = todayStr();
-    const now = new Date();
-    let rec = db.attendance.find((r) => r.employeeId === e.id && r.date === today);
+    let loc = { lat: 0, lng: 0 };
+    const ctx = guardPunch(svc, u.companyId, e, body, headers, () => { loc = geofence(svc, e, body); });
+    const at = ctx.at;
+    const day = todayStr(at);
+    let rec = db.attendance.find((r) => r.employeeId === e.id && r.date === day);
     if (!rec) {
-      // Overnight shift: no record today → close the latest still-open record checked in within the last 16 hours.
-      const since = now.getTime() - OVERNIGHT_WINDOW_MS;
+      // Overnight shift: no record that day → close the latest still-open record checked in within the 16 hours before.
+      const since = at.getTime() - OVERNIGHT_WINDOW_MS;
       rec = db.attendance
-        .filter((r) => r.employeeId === e.id && r.checkIn && !r.checkOut && Date.parse(r.checkIn) >= since && Date.parse(r.checkIn) <= now.getTime())
+        .filter((r) => r.employeeId === e.id && r.checkIn && !r.checkOut && Date.parse(r.checkIn) >= since && Date.parse(r.checkIn) <= at.getTime())
         .sort((a, b) => b.checkIn!.localeCompare(a.checkIn!))[0];
     }
     if (!rec?.checkIn) throw badRequest('You have not checked in today', 'لم يتم تسجيل الحضور اليوم');
-    if (rec.checkOut) throw conflict('Already checked out today', 'تم تسجيل الانصراف مسبقاً اليوم');
+    if (rec.checkOut) {
+      if (samePunch(rec.checkOut, rec.flags, ctx)) return rec;
+      throw conflict('Already checked out today', 'تم تسجيل الانصراف مسبقاً اليوم');
+    }
+    if (at.getTime() <= Date.parse(rec.checkIn)) throw badRequest('Check-out must be after check-in', 'وقت الانصراف يجب أن يكون بعد وقت الحضور');
     const shift = svc.shift(rec.shiftId) ?? svc.shiftFor(e, rec.date);
-    const m = svc.compute(shift, new Date(rec.checkIn), now);
-    Object.assign(rec, { checkOut: now.toISOString(), checkOutLat: loc.lat, checkOutLng: loc.lng, workedMinutes: m.workedMinutes, lateMinutes: m.lateMinutes, earlyLeaveMinutes: m.earlyLeaveMinutes, overtimeMinutes: m.overtimeMinutes, status: m.status, updatedAt: now.toISOString() });
-    svc.audit(u, 'CHECK_OUT', 'AttendanceRecord', rec.id, { ...loc, workedMinutes: m.workedMinutes });
+    const m = svc.compute(shift, new Date(rec.checkIn), at);
+    const flags = withFlags(rec.flags, ctx.flags);
+    Object.assign(rec, { checkOut: at.toISOString(), checkOutReceivedAt: ctx.receivedAt.toISOString(), checkOutLat: loc.lat, checkOutLng: loc.lng, workedMinutes: m.workedMinutes, lateMinutes: m.lateMinutes, earlyLeaveMinutes: m.earlyLeaveMinutes, overtimeMinutes: m.overtimeMinutes, status: m.status, flags, updatedAt: nowIso() });
+    markDeviceUsed(svc, ctx.device);
+    svc.audit(u, 'CHECK_OUT', 'AttendanceRecord', rec.id, { ...loc, capturedAt: body.capturedAt, flags, workedMinutes: m.workedMinutes });
     return rec;
   }),
   route('GET', '/me/attendance', ALL_ROLES, ({ db, svc, user: u, query }) => {
@@ -717,7 +735,7 @@ export const moreRoutes: Route[] = [
     const period = query.month && /^\d{4}-\d{2}$/.test(query.month) ? query.month : todayStr().slice(0, 7);
     const { start, end } = periodRange(period);
     return db.attendance.filter((r) => r.employeeId === e.id && r.date >= start && r.date <= end).sort((a, b) => b.date.localeCompare(a.date))
-      .map((r) => ({ id: r.id, date: r.date, checkIn: r.checkIn, checkOut: r.checkOut, workedMinutes: r.workedMinutes, lateMinutes: r.lateMinutes, overtimeMinutes: r.overtimeMinutes, status: r.status, shiftName: svc.shift(r.shiftId)?.name ?? null }));
+      .map((r) => ({ id: r.id, date: r.date, checkIn: r.checkIn, checkOut: r.checkOut, workedMinutes: r.workedMinutes, lateMinutes: r.lateMinutes, overtimeMinutes: r.overtimeMinutes, status: r.status, flags: r.flags, shiftName: svc.shift(r.shiftId)?.name ?? null }));
   }),
   route('GET', '/me/leaves', ALL_ROLES, ({ db, svc, user: u }) => {
     const e = me(svc, u);

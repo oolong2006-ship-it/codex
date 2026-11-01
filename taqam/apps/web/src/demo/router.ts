@@ -11,6 +11,8 @@ export interface Ctx {
   params: Record<string, string>;
   query: Query;
   body: Record<string, unknown>;
+  /** request headers (e.g. X-Device-Id on ESS punches) */
+  headers: Record<string, string>;
 }
 export type Handler = (ctx: Ctx) => unknown;
 export interface Route { method: string; pattern: string; roles?: Role[] | 'PUBLIC'; handler: Handler; segs: string[] }

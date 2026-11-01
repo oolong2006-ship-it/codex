@@ -242,10 +242,10 @@ describe('Shuoon API (e2e)', () => {
   });
 
   it('check-in outside geofence → 400; inside → 200; twice → 409', async () => {
-    const out = await http.post('/api/me/attendance/check-in').set(auth(employeeToken)).send({ lat: 24.75, lng: 46.75 }).expect(400);
+    const out = await http.post('/api/me/attendance/check-in').set(auth(employeeToken)).set('X-Device-Id', 'e2e-device-0001').send({ lat: 24.75, lng: 46.75 }).expect(400);
     expect(out.body.messageAr).toBe('أنت خارج نطاق الفرع');
-    await http.post('/api/me/attendance/check-in').set(auth(employeeToken)).send({ lat: BRANCH.lat + 0.0003, lng: BRANCH.lng }).expect(200);
-    await http.post('/api/me/attendance/check-in').set(auth(employeeToken)).send(BRANCH).expect(409);
+    await http.post('/api/me/attendance/check-in').set(auth(employeeToken)).set('X-Device-Id', 'e2e-device-0001').send({ lat: BRANCH.lat + 0.0003, lng: BRANCH.lng }).expect(200);
+    await http.post('/api/me/attendance/check-in').set(auth(employeeToken)).set('X-Device-Id', 'e2e-device-0001').send(BRANCH).expect(409);
     const board = await http.get('/api/attendance').set(auth(tokenA)).expect(200);
     expect(board.body[0]).toMatchObject({ employeeId, shiftName: 'صباحية' });
     expect(board.body[0].checkIn).toBeTruthy();

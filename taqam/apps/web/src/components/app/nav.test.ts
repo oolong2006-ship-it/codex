@@ -16,3 +16,11 @@ describe('canVisit — links only to pages the role may open', () => {
     expect(canVisit('/app/documents', undefined)).toBe(false);
   });
 });
+
+describe('pending devices page (ESS device binding)', () => {
+  it('owners, HR and branch managers may open it; payroll and employees may not', () => {
+    for (const role of ['OWNER', 'HR_ADMIN', 'BRANCH_MANAGER'] as const) expect(canVisit('/app/attendance/devices', role)).toBe(true);
+    expect(canVisit('/app/attendance/devices', 'PAYROLL')).toBe(false);
+    expect(canVisit('/app/attendance/devices', 'EMPLOYEE')).toBe(false);
+  });
+});

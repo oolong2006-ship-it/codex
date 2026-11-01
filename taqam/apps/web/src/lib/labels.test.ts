@@ -30,3 +30,13 @@ describe('document type labels (spec §4)', () => {
     expect(Object.keys(SECTOR_DOC_HINT).sort()).toEqual([...SECTOR_DOC_TYPES].sort());
   });
 });
+
+describe('anti-tamper attendance labels', () => {
+  it('flags and device statuses read naturally in Arabic', async () => {
+    const { ATTENDANCE_FLAG, DEVICE_STATUS, label } = await import('./labels');
+    expect(label(ATTENDANCE_FLAG, 'OFFLINE', 'ar')).toBe('دون اتصال');
+    expect(label(ATTENDANCE_FLAG, 'NEW_DEVICE_APPROVED', 'ar')).toBe('جهاز جديد');
+    expect(label(ATTENDANCE_FLAG, 'NO_BRANCH_CODE', 'ar')).toBe('بدون رمز الفرع');
+    expect(label(DEVICE_STATUS, 'PENDING', 'ar')).toBe('بانتظار الاعتماد');
+  });
+});

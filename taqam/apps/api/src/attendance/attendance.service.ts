@@ -173,7 +173,15 @@ export class AttendanceService {
     }
     if (!checkIn && opts.status !== 'ABSENT') throw badRequest('checkIn is required', 'وقت الحضور مطلوب');
     const m = this.calc.compute(shift, checkIn, checkOut);
+    // a time HR changes is no longer the punch the server received: drop its receive time («استُلم لاحقاً»)
+    const prev = await this.prisma.attendanceRecord.findUnique({
+      where: { employeeId_date: { employeeId: employee.id, date: d } },
+      select: { checkIn: true, checkOut: true },
+    });
+    const same = (x: Date | null | undefined, y: Date | null) => (x?.getTime() ?? null) === (y?.getTime() ?? null);
     const data = {
+      ...(prev && same(prev.checkIn, checkIn) ? {} : { checkInReceivedAt: null }),
+      ...(prev && same(prev.checkOut, checkOut) ? {} : { checkOutReceivedAt: null }),
       shiftId: shift?.id ?? null,
       checkIn,
       checkOut,
