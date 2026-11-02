@@ -38,6 +38,8 @@ export interface Company {
   expatLevyMonthly?: number; iqamaFeeAnnual?: number;
   /** Anti-tamper attendance (spec §6): ESS punches only from the bound device / must include the rotating branch code. */
   deviceBinding?: boolean; requireBranchCode?: boolean;
+  /** GET /company only: paired, non-revoked branch kiosks — requireBranchCode can be switched on only when > 0. */
+  activeKiosks?: number;
 }
 export interface AppUser {
   id: ID; email: string; name: string; role: Role; isActive: boolean; employeeId?: ID | null;

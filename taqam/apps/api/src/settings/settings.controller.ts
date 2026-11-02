@@ -9,6 +9,7 @@ import { AuthUser } from '../common/types';
 import { badRequest, conflict, forbidden, notFound } from '../common/errors';
 import { day } from '../common/dates';
 import { pageParams } from '../common/pagination';
+import { NEED_KIOSK_AR } from '../kiosk/kiosk.service';
 import { CreateUserDto, HolidayDto, LeaveTypeDto, UpdateCompanyDto, UpdateLeaveTypeDto, UpdateUserDto } from './settings.dto';
 
 const userSelect = {
@@ -42,7 +43,12 @@ export class SettingsController {
   @Roles(...STAFF)
   @Get('company')
   async company(@CurrentUser() u: AuthUser) {
-    return tenantCompany(await this.prisma.company.findUniqueOrThrow({ where: { id: u.companyId } }));
+    const [c, activeKiosks] = await Promise.all([
+      this.prisma.company.findUniqueOrThrow({ where: { id: u.companyId } }),
+      this.prisma.kioskDevice.count({ where: { companyId: u.companyId, revokedAt: null } }),
+    ]);
+    // activeKiosks: the «require branch code» toggle can only be switched on while a kiosk shows the code
+    return { ...tenantCompany(c), activeKiosks };
   }
 
   @Roles(...ADMIN)
@@ -53,7 +59,15 @@ export class SettingsController {
       if (!validateSaudiIban(dto.iban)) throw badRequest('Invalid Saudi IBAN', 'رقم الآيبان غير صالح');
       dto.bankCode = dto.bankCode || bankCodeFromIban(dto.iban);
     }
-    const c = await this.prisma.company.update({ where: { id: u.companyId }, data: dto });
+    // the rotating branch code can only be required while a paired kiosk displays it (same lock as kiosk revoke)
+    const c = await this.prisma.$transaction(async (tx) => {
+      if (dto.requireBranchCode === true) {
+        await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${'kiosks:' + u.companyId}))`;
+        const active = await tx.kioskDevice.count({ where: { companyId: u.companyId, revokedAt: null } });
+        if (!active) throw badRequest('Pair a branch kiosk first so employees can see the code', NEED_KIOSK_AR);
+      }
+      return tx.company.update({ where: { id: u.companyId }, data: dto });
+    });
     await this.audit.log(u, 'UPDATE', 'Company', c.id, dto);
     return tenantCompany(c);
   }

@@ -7,6 +7,7 @@ import { ArrowRight, Building2, Calendar, Mail, Pencil, Phone, BadgeCheck } from
 import { Badge, Button, Card, CardBody, CardHeader, Tabs } from '@/components/ui';
 import { Async, Avatar, KV, StatusBadge } from '@/components/app/primitives';
 import { EmployeeFormModal, nationalityLabel } from '@/components/app/EmployeeForm';
+import { KioskPinCard } from '@/components/app/KioskPinCard';
 import { AttendanceTab, DocumentsTab, EosbTab, LeavesTab, PayslipsTab, expiryOf } from '@/components/app/EmployeeTabs';
 import { can, ADMIN, ADMIN_PAYROLL, employeeName } from '@/components/app/utils';
 import { api } from '@/lib/api';
@@ -121,6 +122,7 @@ export default function EmployeeDetailPage() {
                       ) : <p className="text-ink-muted">{t('لا يملك حساب دخول للخدمة الذاتية.', 'No self-service login.')}{admin && <> <Link href="/app/settings?tab=users" className="text-primary-500 hover:underline">{t('إنشاء حساب', 'Create one')}</Link></>}</p>}
                     </CardBody>
                   </Card>
+                  {admin && e.status !== 'TERMINATED' && <KioskPinCard employeeId={e.id} employeeNumber={e.employeeNumber} />}
                 </div>
               </div>
             )}

@@ -1,4 +1,5 @@
 'use client';
+import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { Pencil, Plus, Save, Trash2, UserPlus, ChevronDown } from 'lucide-react';
 import { Badge, Button, Card, CardBody, CardHeader, EmptyState, Field, Input, Modal, Pagination, Select, Table, type Column } from '@/components/ui';
@@ -25,6 +26,8 @@ export function CompanySection() {
   const [feeErrors, setFeeErrors] = useState<{ expatLevyMonthly?: string; iqamaFeeAnnual?: string }>({});
   useEffect(() => { if (data) setF(data); }, [data]);
   const s = (k: keyof Company) => (f?.[k] as string | null | undefined) ?? '';
+  // the rotating branch code can only be required while a paired kiosk displays it (the API refuses otherwise)
+  const noKiosk = (data?.activeKiosks ?? 0) === 0;
   const set = (k: keyof Company) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => setF((x) => (x ? { ...x, [k]: e.target.value } : x));
   const save = async () => {
     if (!f) return;
@@ -40,6 +43,8 @@ export function CompanySection() {
       bankCode: f.bankCode || null, weekendDays: f.weekendDays, payrollDay: Number(f.payrollDay) || 27,
       expatLevyMonthly: levy.value, iqamaFeeAnnual: iqama.value,
       deviceBinding: f.deviceBinding ?? true,
+      // nothing can show the code without an active kiosk (e.g. its branch was deleted): saving switches it off
+      requireBranchCode: !!f.requireBranchCode && (data?.activeKiosks ?? 0) > 0,
     };
     if (await run('save', () => api.patch('/company', body), t('تم حفظ بيانات المنشأة', 'Company saved'))) { reload(); void refresh(); }
   };
@@ -88,7 +93,17 @@ export function CompanySection() {
                 <Toggle checked={f.deviceBinding ?? true} onChange={(v) => setF({ ...f, deviceBinding: v })} label={t('ربط البصمة بجهاز الموظف', 'Bind punches to the employee’s device')} />
                 <p className="ms-[52px] mt-1 text-xs text-ink-soft">{t('أول بصمة تسجّل متصفح الموظف؛ البصمة من متصفح آخر تحتاج اعتماد الموارد البشرية من «الأجهزة بانتظار الاعتماد». تغيير المتصفح أو مسح بيانات الموقع يُعدّ جهازاً جديداً.', 'The first punch registers the employee’s browser; another browser needs HR approval under “Devices awaiting approval”. Switching browser or clearing site data counts as a new device.')}</p>
               </div>
-              {/* «طلب رمز الفرع المتغير» (requireBranchCode) stays hidden until a branch kiosk can display the code */}
+              <div>
+                <Toggle checked={!!f.requireBranchCode} onChange={(v) => setF({ ...f, requireBranchCode: v && !noKiosk })}
+                  label={t('طلب رمز الفرع المتغير عند البصمة من الجوال', 'Require the rotating branch code on phone punches')} />
+                <p className="ms-[52px] mt-1 text-xs text-ink-soft">{t('رمز من 6 أرقام يتغير كل 30 ثانية ويظهر على جهاز الحضور في الفرع؛ يثبت أن الموظف داخل الفرع فعلاً. البصمة دون اتصال تُقبل بدونه وتُعلَّم للمدير.', 'A 6-digit code that changes every 30 seconds, shown on the branch kiosk; it proves the employee is really at the branch. Offline punches are accepted without it and flagged to managers.')}</p>
+                {noKiosk && (
+                  <p className="ms-[52px] mt-2 inline-flex items-center gap-1.5 rounded-lg bg-warning-50 px-2.5 py-1.5 text-xs font-medium text-night">
+                    {t('اربط جهاز حضور في الفرع أولاً ليظهر الرمز للموظفين', 'Pair an attendance kiosk in a branch first so employees can see the code')}
+                    <Link href="/app/branches" className="text-primary-500 underline">{t('الفروع', 'Branches')}</Link>
+                  </p>
+                )}
+              </div>
             </CardBody>
           </Card>
           <Card>

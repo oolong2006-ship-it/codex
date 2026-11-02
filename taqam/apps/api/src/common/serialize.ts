@@ -19,6 +19,9 @@ export const DAY_KEYS = new Set([
   'weekStart',
 ]);
 
+/** Secrets and internal counters that never leave the server (login hash, kiosk PIN hash and lockout state, kiosk token hash). */
+const SECRET_KEYS = new Set(['passwordHash', 'kioskPinHash', 'kioskFailCount', 'kioskFirstFailAt', 'kioskLockedUntil', 'tokenHash']);
+
 export function serialize(value: unknown, key?: string): unknown {
   if (value === null || value === undefined) return value;
   if (value instanceof Date) {
@@ -31,7 +34,7 @@ export function serialize(value: unknown, key?: string): unknown {
     if (Buffer.isBuffer(value) || value instanceof StreamableFile) return value;
     const out: Record<string, unknown> = {};
     for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
-      if (k === 'passwordHash') continue;
+      if (SECRET_KEYS.has(k)) continue;
       out[k] = serialize(v, k);
     }
     return out;

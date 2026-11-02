@@ -27,6 +27,7 @@ import { AdminModule } from './admin/admin.module';
 import { MailModule } from './mail/mail.service';
 import { BillingModule } from './billing/billing.module';
 import { ComplianceModule } from './compliance/compliance.module';
+import { KioskModule } from './kiosk/kiosk.module';
 
 @Module({
   imports: [
@@ -58,6 +59,7 @@ import { ComplianceModule } from './compliance/compliance.module';
     ReportsModule,
     DashboardModule,
     MeModule,
+    KioskModule,
     BillingModule,
     AdminModule,
   ],

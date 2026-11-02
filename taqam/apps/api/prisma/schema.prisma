@@ -265,6 +265,7 @@ model Company {
   candidates         Candidate[]
   invoices           Invoice[]
   employeeDevices    EmployeeDevice[]
+  kioskDevices       KioskDevice[]
 }
 
 model Branch {
@@ -289,6 +290,7 @@ model Branch {
   shifts        Shift[]
   announcements Announcement[]
   jobOpenings   JobOpening[]
+  kioskDevices  KioskDevice[]
 
   @@index([companyId])
 }
@@ -379,6 +381,13 @@ model Employee {
   hoursPerDay           Int            @default(8)
   avatarColor           String         @default("#1F7A7C")
   annualLeaveCarryOver  Decimal        @default(0) @db.Decimal(6, 2)
+  /// Branch kiosk PIN (4–6 digits), bcrypt hash — never stored or returned in clear
+  kioskPinHash          String?
+  /// Wrong kiosk PINs since kioskFirstFailAt (reset when that is older than 15 minutes or on success)
+  kioskFailCount        Int            @default(0)
+  kioskFirstFailAt      DateTime?
+  /// 5 wrong PINs within 15 minutes lock the PIN until this time
+  kioskLockedUntil      DateTime?
   createdAt             DateTime       @default(now())
   updatedAt             DateTime       @updatedAt
 
@@ -494,6 +503,25 @@ model AttendanceRecord {
 
   @@unique([employeeId, date])
   @@index([companyId, date])
+}
+
+/// Branch attendance kiosk (shared tablet). The pairing token is shown once and stored as sha256. Never uses the camera.
+model KioskDevice {
+  id         String    @id @default(uuid())
+  companyId  String
+  branchId   String
+  name       String
+  /// sha256 (hex) of the 32-byte pairing token sent as X-Kiosk-Token
+  tokenHash  String    @unique
+  lastSeenAt DateTime?
+  revokedAt  DateTime?
+  createdAt  DateTime  @default(now())
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  branch  Branch  @relation(fields: [branchId], references: [id], onDelete: Cascade)
+
+  @@index([companyId, revokedAt])
+  @@index([branchId])
 }
 
 enum EmployeeDeviceStatus {

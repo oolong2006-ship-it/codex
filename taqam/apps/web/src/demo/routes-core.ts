@@ -9,6 +9,7 @@ import { nextId, type Company, type DB, type Employee, type PlatformAdmin, type 
 import { assertCompanyAccess, assertSeat, cleanCompanyName, endOfDay, lifecycleDefaults, logEvent, nextCompanyId, tenantCompanyView } from './lifecycle';
 import { badRequest, conflict, forbidden, notFound, unauthorized } from './errors';
 import { branchPublic, randomBranchSecret } from './routes-devices';
+import { assertCanRequireBranchCode, companyKioskCount } from './routes-kiosk';
 import { route, v, pick, paginate, byCreatedAsc, byCreatedDesc, employeeView, ok, DATE_RE, EMAIL_RE, type Ctx, type Route } from './router';
 import { ADMIN, ALL_ROLES, STAFF, Services, byNumber, fullName, nowIso, type AuthUser } from './services';
 
@@ -409,9 +410,10 @@ export const coreRoutes: Route[] = [
   }),
 
   // ---------- company & settings ----------
-  route('GET', '/company', STAFF, ({ svc, user }) => tenantCompanyView(svc.company(user.companyId))),
-  route('PATCH', '/company', ADMIN, ({ svc, user, body }) => {
+  route('GET', '/company', STAFF, ({ db, svc, user }) => ({ ...tenantCompanyView(svc.company(user.companyId)), activeKiosks: companyKioskCount(db, user.companyId) })),
+  route('PATCH', '/company', ADMIN, ({ db, svc, user, body }) => {
     const dto = companyDto(body);
+    assertCanRequireBranchCode(db, user.companyId, dto.requireBranchCode);
     if (dto.iban) {
       dto.iban = String(dto.iban).replace(/\s+/g, '').toUpperCase();
       if (!validateSaudiIban(dto.iban as string)) throw badRequest('Invalid Saudi IBAN', 'رقم الآيبان غير صالح');
@@ -549,6 +551,7 @@ export const coreRoutes: Route[] = [
     db.shifts = db.shifts.filter((s) => s.branchId !== b.id);
     db.assignments = db.assignments.filter((a) => !shiftIds.has(a.shiftId));
     db.announcements = db.announcements.filter((a) => a.branchId !== b.id);
+    db.kioskDevices = db.kioskDevices.filter((k) => k.branchId !== b.id);
     db.jobs.forEach((j) => { if (j.branchId === b.id) j.branchId = null; });
     svc.audit(u, 'DELETE', 'Branch', b.id, { nameAr: b.nameAr });
     return ok;

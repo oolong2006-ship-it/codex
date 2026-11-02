@@ -8,6 +8,7 @@
 import 'dotenv/config';
 import { Prisma, PrismaClient, Role } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
+import { createHash, randomBytes } from 'crypto';
 import { calculateAttendance, countLeaveDays, SAUDI_LEAVE_POLICIES } from '@taqam/core';
 import { approvePayrollRun, calculatePayrollRun } from '../src/payroll/payroll.engine';
 import { EXTRA_COMPANY_NAMES_EN, EXTRA_OWNER_EMAILS, seedPlatform, wipePlatformDemo } from './seed-platform';
@@ -642,6 +643,11 @@ async function main() {
     ],
   });
 
+  // branch kiosk (Task 7): one paired kiosk for «فرع العليا» (random token printed below) and PIN 1234 for every employee
+  const kioskToken = randomBytes(32).toString('hex');
+  await prisma.kioskDevice.create({ data: { companyId, branchId: branches.OLAYA.id, name: 'جهاز مدخل العليا', tokenHash: createHash('sha256').update(kioskToken).digest('hex') } });
+  await prisma.employee.updateMany({ where: { companyId, status: { not: 'TERMINATED' } }, data: { kioskPinHash: await bcrypt.hash('1234', 10) } });
+
   await seedPlatform(prisma, { passwordHash, demoCompanyId: companyId, demoCreatedDaysAgo: 120 });
 
   const totals = await prisma.payrollRun.findMany({ where: { companyId }, orderBy: { period: 'asc' }, select: { period: true, status: true, employeesCount: true, totalNet: true } });
@@ -650,6 +656,7 @@ async function main() {
   console.log(`   ${leaves.length} leave requests, ${reqs.length} employee requests, ${loanDefs.length} loans`);
   for (const t of totals) console.log(`   payroll ${t.period}: ${t.status} — ${t.employeesCount} payslips, net ${t.totalNet.toString()} SAR`);
   console.log(`   Logins (password ${PASSWORD}): ${DEMO_EMAILS.join(', ')}, admin@shuoon.demo (SUPER_ADMIN)`);
+  console.log(`   Kiosk «فرع العليا» (/kiosk): device code ${kioskToken} — employee PIN 1234`);
 }
 
 main()

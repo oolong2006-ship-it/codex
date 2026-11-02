@@ -89,6 +89,8 @@ describe('Anti-tamper attendance: device binding, branch code, offline punches (
     ownerToken = reg.body.accessToken;
     const branch = await http.post('/api/branches').set(auth(ownerToken)).send({ nameAr: 'فرع العليا', city: 'الرياض', ...BRANCH, radiusMeters: 200 }).expect(201);
     branchId = branch.body.id;
+    // requiring the rotating code needs a paired kiosk that displays it (Task 7)
+    await http.post(`/api/branches/${branchId}/kiosks`).set(auth(ownerToken)).send({ name: 'جهاز المدخل' }).expect(201);
   });
 
   afterEach(async () => {

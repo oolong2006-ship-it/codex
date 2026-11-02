@@ -124,6 +124,15 @@ export interface EmployeeDevice {
   id: string; companyId: string; employeeId: string; deviceId: string; status: EmployeeDeviceStatus; userAgent: string | null;
   createdAt: string; approvedById: string | null; decidedAt: string | null; lastUsedAt: string | null;
 }
+/** Paired branch kiosk (spec §6). Only the sha256 of the pairing token is kept. Never uses the camera. */
+export interface KioskDevice {
+  id: string; companyId: string; branchId: string; name: string; tokenHash: string; lastSeenAt: string | null; revokedAt: string | null; createdAt: string;
+}
+/**
+ * Kiosk PIN of an employee (Employee.kioskPinHash + lockout counters in the API). Kept apart from Employee so no employee
+ * view can ever spread it. pinHash = sha256(employeeId:pin) — the demo has no bcrypt; the PIN is never stored in clear.
+ */
+export interface KioskPin { employeeId: string; pinHash: string | null; failCount: number; firstFailAt: string | null; lockedUntil: string | null }
 export interface LeaveType { id: string; companyId: string; code: string; nameAr: string; nameEn: string; paid: boolean; maxDaysPerYear: number | null; createdAt: string }
 export interface LeaveRequest {
   id: string; companyId: string; employeeId: string; leaveTypeId: string; startDate: string; endDate: string; days: number;
@@ -202,6 +211,8 @@ export interface DB {
   assignments: ShiftAssignment[];
   attendance: AttendanceRecord[];
   employeeDevices: EmployeeDevice[];
+  kioskDevices: KioskDevice[];
+  kioskPins: KioskPin[];
   leaveTypes: LeaveType[];
   leaves: LeaveRequest[];
   requests: EmployeeRequest[];
@@ -230,14 +241,14 @@ export interface DB {
 }
 
 export const STORAGE_KEY = 'taqam.demo.v2';
-export const DB_VERSION = 13;
+export const DB_VERSION = 14;
 /** Seeded data is relative to "today"; a snapshot older than this is re-seeded so attendance and payroll stay current. */
 export const MAX_AGE_DAYS = 7;
 
 export function emptyDb(seededOn: string): DB {
   return {
     version: DB_VERSION, seededOn, seq: 0, newEmployeeUsed: 0, jobUsed: 0,
-    companies: [], branches: [], departments: [], users: [], employees: [], documents: [], shifts: [], assignments: [], attendance: [], employeeDevices: [],
+    companies: [], branches: [], departments: [], users: [], employees: [], documents: [], shifts: [], assignments: [], attendance: [], employeeDevices: [], kioskDevices: [], kioskPins: [],
     leaveTypes: [], leaves: [], requests: [], loans: [], runs: [], payslips: [], adjustments: [], holidays: [], announcements: [],
     notifications: [], audit: [], cycles: [], reviews: [], jobs: [], candidates: [], leads: [],
     admins: [], companyEvents: [], settings: JSON.parse(JSON.stringify(DEFAULT_SETTINGS)), invoices: [], counters: {}, emails: [], remindersRunOn: null,

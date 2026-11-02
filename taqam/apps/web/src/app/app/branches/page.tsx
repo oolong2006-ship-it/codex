@@ -1,9 +1,10 @@
 'use client';
 import { useState } from 'react';
-import { Flag, MapPin, Pencil, Plus, Trash2, Users, UserRound, ExternalLink, Radius } from 'lucide-react';
+import { Flag, MapPin, MonitorSmartphone, Pencil, Plus, Trash2, Users, UserRound, ExternalLink, Radius } from 'lucide-react';
 import { Button, Card, EmptyState, Field, Input, Modal, PageHeader, Select } from '@/components/ui';
 import { Async, BAND_COLOR, ConfirmModal } from '@/components/app/primitives';
 import { useEmployeeOptions } from '@/components/app/hooks';
+import { KioskDevicesModal } from '@/components/app/KioskDevices';
 import { can, ADMIN, useAction } from '@/components/app/utils';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
@@ -21,7 +22,10 @@ export default function BranchesPage() {
   const { data, loading, error, reload } = useFetch(() => api.get<Branch[]>('/branches'), []);
   const [edit, setEdit] = useState<Branch | 'new' | null>(null);
   const [del, setDel] = useState<Branch | null>(null);
+  const [kiosks, setKiosks] = useState<Branch | null>(null);
   const { busy, run } = useAction();
+  // «أجهزة الحضور»: owners/HR for every branch, a branch manager for their own branch
+  const canKiosks = (b: Branch) => admin || (user?.role === 'BRANCH_MANAGER' && user.branchId === b.id);
 
   const remove = async () => {
     if (!del) return;
@@ -60,6 +64,13 @@ export default function BranchesPage() {
                     </div>
                   </div>
                   <p className="mb-5 mt-4 flex items-center gap-1.5 text-sm text-ink-muted"><UserRound className="h-4 w-4" />{t('المدير:', 'Manager:')} <span className="text-ink">{b.managerName || '—'}</span></p>
+                  {canKiosks(b) && (
+                    <button onClick={() => setKiosks(b)} className="-mt-2 mb-5 flex w-full items-center gap-2 rounded-xl border border-line bg-sand/60 px-3 py-2.5 text-start text-sm font-medium text-ink hover:border-primary-500 hover:bg-primary-50">
+                      <MonitorSmartphone className="h-4 w-4 text-primary-500" />
+                      <span className="flex-1">{t('أجهزة الحضور', 'Attendance kiosks')}</span>
+                      <span className="text-xs text-ink-soft">{t('ربط · إلغاء', 'Pair · revoke')}</span>
+                    </button>
+                  )}
                   <div className="mt-auto flex items-center justify-between gap-2 border-t border-line pt-4">
                     <a href={`https://www.google.com/maps?q=${b.lat},${b.lng}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 text-sm font-medium text-primary-500 hover:underline">
                       <ExternalLink className="h-4 w-4" />{t('عرض على الخريطة', 'View on map')}
@@ -77,6 +88,7 @@ export default function BranchesPage() {
           </div>
         )}
       </Async>
+      {kiosks && <KioskDevicesModal branch={kiosks} onClose={() => setKiosks(null)} />}
       {edit && <BranchModal branch={edit === 'new' ? null : edit} onClose={() => setEdit(null)} onSaved={() => { setEdit(null); reload(); }} />}
       <ConfirmModal open={!!del} onClose={() => setDel(null)} onConfirm={remove} danger loading={busy === 'del'} confirmLabel={t('حذف', 'Delete')}
         title={t('حذف الفرع', 'Delete branch')} message={t('لا يمكن حذف فرع مرتبط بموظفين. هل تريد المتابعة؟', 'Branches with employees cannot be deleted. Continue?')} />

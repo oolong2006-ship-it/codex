@@ -2,7 +2,7 @@
 import clsx from 'clsx';
 import Link from 'next/link';
 import { useState } from 'react';
-import { Bell, BriefcaseBusiness, ChevronLeft, ChevronRight, ClipboardList, IdCard, KeyRound, Languages, LayoutDashboard, LogOut, UserRound } from 'lucide-react';
+import { Bell, BriefcaseBusiness, ChevronLeft, ChevronRight, ClipboardList, Grid3x3, IdCard, KeyRound, Languages, LayoutDashboard, LogOut, UserRound } from 'lucide-react';
 import { api, ApiError, changePassword } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { useFetch } from '@/lib/useFetch';
@@ -17,12 +17,15 @@ import { NotificationsList } from '@/components/ess/NotificationsList';
 import { FormError, IconTile, Section, Sheet, SheetButton, Skeleton } from '@/components/ess/primitives';
 import type { MyProfile } from '@/components/ess/types';
 import { daysUntil, maskIban } from '@/components/ess/utils';
+import { normalizePin } from '@/lib/kiosk';
 
 export default function MorePage() {
   const { t, lang, setLang, dir } = useLang();
   const { user, logout } = useAuth();
   const { data: p, loading, error, reload } = useFetch(() => api.get<MyProfile>('/me/profile'), []);
   const [pwOpen, setPwOpen] = useState(false);
+  const [pinOpen, setPinOpen] = useState(false);
+  const { data: kioskPin, reload: reloadPin } = useFetch(() => (user?.employeeId ? api.get<{ hasPin: boolean }>('/me/kiosk-pin') : Promise.resolve(null)), [user?.employeeId]);
   const Chevron = dir === 'rtl' ? ChevronLeft : ChevronRight;
 
   const fullName = p ? (lang === 'ar' ? `${p.firstNameAr} ${p.lastNameAr}` : p.fullNameEn || `${p.firstNameAr} ${p.lastNameAr}`) : user?.name ?? '';
@@ -112,6 +115,17 @@ export default function MorePage() {
         <div className="overflow-hidden rounded-3xl border border-line bg-white shadow-soft">
           <Row icon={<ClipboardList className="h-5 w-5" />} label={t('طلباتي', 'My requests')} href="/me/requests" chevron={<Chevron className="h-5 w-5" />} />
           <Row icon={<KeyRound className="h-5 w-5" />} label={t('تغيير كلمة المرور', 'Change password')} onClick={() => setPwOpen(true)} chevron={<Chevron className="h-5 w-5" />} />
+          {user?.employeeId && (
+            <button onClick={() => setPinOpen(true)} className="flex min-h-[60px] w-full items-center gap-3 border-t border-line/70 px-4 py-2 text-start active:bg-sand">
+              <IconTile icon={<Grid3x3 className="h-5 w-5" />} tone="primary" className="h-10 w-10" />
+              <span className="min-w-0 flex-1">
+                <span className="block text-[15px] font-medium text-ink">{t('رمز الحضور السريع (PIN)', 'Quick attendance PIN')}</span>
+                <span className="block text-xs text-ink-muted">{t('للبصمة من جهاز الحضور في الفرع برقمك الوظيفي', 'Punch on the branch kiosk with your employee number')}</span>
+              </span>
+              {kioskPin && <Badge tone={kioskPin.hasPin ? 'success' : 'warning'}>{kioskPin.hasPin ? t('مُعيَّن', 'Set') : t('غير مُعيَّن', 'Not set')}</Badge>}
+              <span className="text-ink-soft"><Chevron className="h-5 w-5" /></span>
+            </button>
+          )}
           <div className="flex min-h-[60px] items-center gap-3 border-t border-line/70 px-4">
             <IconTile icon={<Languages className="h-5 w-5" />} tone="neutral" className="h-10 w-10" />
             <span className="flex-1 text-[15px] font-medium text-ink">{t('اللغة', 'Language')}</span>
@@ -136,6 +150,7 @@ export default function MorePage() {
       <p className="text-center text-xs text-ink-soft">{user?.email} · {t('شؤون — الخدمة الذاتية', 'Shuoon self-service')}</p>
 
       <ChangePasswordSheet open={pwOpen} onClose={() => setPwOpen(false)} />
+      <KioskPinSheet open={pinOpen} hasPin={!!kioskPin?.hasPin} employeeNumber={p?.employeeNumber ?? null} onClose={() => setPinOpen(false)} onSaved={reloadPin} />
     </div>
   );
 }
@@ -201,6 +216,49 @@ function ChangePasswordSheet({ open, onClose }: { open: boolean; onClose: () => 
         </Field>
         <Field label={t('تأكيد كلمة المرور', 'Confirm password')} required>
           <Input type="password" autoComplete="new-password" value={confirm} onChange={(e) => setConfirm(e.target.value)} className="h-12" />
+        </Field>
+        <FormError message={error} />
+      </div>
+    </Sheet>
+  );
+}
+
+/** «رمز الحضور السريع (PIN)»: 4–6 digits for the branch kiosk (Arabic-Indic digits accepted). Stored hashed only. */
+function KioskPinSheet({ open, hasPin, employeeNumber, onClose, onSaved }: { open: boolean; hasPin: boolean; employeeNumber: string | null; onClose: () => void; onSaved: () => void }) {
+  const { t } = useLang();
+  const toast = useToast();
+  const [pin, setPin] = useState('');
+  const [confirm, setConfirm] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const submit = async () => {
+    setError(null);
+    const p = normalizePin(pin);
+    if (!p) return setError(t('الرمز يتكون من 4 إلى 6 أرقام', 'The PIN is 4 to 6 digits'));
+    if (p !== normalizePin(confirm)) return setError(t('تأكيد الرمز غير مطابق', 'PINs do not match'));
+    setSaving(true);
+    try {
+      await api.post('/me/kiosk-pin', { pin: p });
+      toast(t('تم حفظ رمز الحضور السريع', 'Attendance PIN saved'));
+      setPin(''); setConfirm('');
+      onSaved();
+      onClose();
+    } catch (e) { setError(e instanceof ApiError ? e.display : String(e)); }
+    finally { setSaving(false); }
+  };
+  return (
+    <Sheet open={open} onClose={onClose} title={t('رمز الحضور السريع (PIN)', 'Quick attendance PIN')}
+      footer={<SheetButton onClick={submit} loading={saving}>{hasPin ? t('تغيير الرمز', 'Change PIN') : t('حفظ الرمز', 'Save PIN')}</SheetButton>}>
+      <div className="space-y-4">
+        <p className="rounded-2xl bg-sand px-4 py-3 text-sm leading-relaxed text-ink-muted">
+          {t('على جهاز الحضور في الفرع اكتب رقمك الوظيفي', 'On the branch kiosk type your employee number')}{employeeNumber ? <> <bdi className="num whitespace-nowrap rounded-md bg-white px-1.5 py-0.5 font-semibold text-ink" dir="ltr">{employeeNumber}</bdi></> : null}
+          {t(' ثم هذا الرمز. لا تشاركه مع أحد — 5 محاولات خاطئة توقفه 15 دقيقة.', ', then this PIN. Keep it private — 5 wrong tries lock it for 15 minutes.')}
+        </p>
+        <Field label={t('الرمز الجديد', 'New PIN')} required hint={t('4 إلى 6 أرقام', '4 to 6 digits')}>
+          <Input type="password" inputMode="numeric" autoComplete="off" maxLength={6} dir="ltr" value={pin} onChange={(e) => setPin(e.target.value)} className="num h-12 text-center text-xl tracking-[0.4em]" />
+        </Field>
+        <Field label={t('تأكيد الرمز', 'Confirm PIN')} required>
+          <Input type="password" inputMode="numeric" autoComplete="off" maxLength={6} dir="ltr" value={confirm} onChange={(e) => setConfirm(e.target.value)} className="num h-12 text-center text-xl tracking-[0.4em]" />
         </Field>
         <FormError message={error} />
       </div>

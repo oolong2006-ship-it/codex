@@ -17,6 +17,18 @@ describe('serialize', () => {
     expect(out.nested).toEqual([{ amount: 12, date: '2026-02-22' }]);
   });
 
+  it('never returns kiosk secrets (PIN hash, pairing token hash, lockout counters)', () => {
+    const out = serialize({
+      id: 'e1',
+      kioskPinHash: '$2a$10$abc',
+      kioskFailCount: 3,
+      kioskFirstFailAt: new Date(),
+      kioskLockedUntil: new Date(),
+      kiosks: [{ id: 'k1', tokenHash: 'deadbeef' }],
+    }) as Record<string, unknown>;
+    expect(out).toEqual({ id: 'e1', kiosks: [{ id: 'k1' }] });
+  });
+
   it('passes primitives through', () => {
     expect(serialize('csv,data')).toBe('csv,data');
     expect(serialize(null)).toBeNull();

@@ -11,6 +11,7 @@ import { addDays, addMonths, day, eachDay, periodOf, periodRange, riyadhDateTime
 import { emptyDb, nextId, type Approval, type DB, type Employee, type Goal, type Role } from './db';
 import { Services, fullName } from './services';
 import { seededBranchSecret } from './routes-devices';
+import { seedKiosk } from './routes-kiosk';
 
 export const DEMO_PASSWORD = 'Shuoon@2026';
 /** First id of the admin-portal company pool (src/demo/ids.ts COMPANY_IDS). */
@@ -391,6 +392,18 @@ export function buildSeed(now: Date = new Date()): DB {
   flag('m5', 4, 'OFFLINE');
   flag('d4', 2, 'OFFLINE');
   flag('o10', 3, 'OFFLINE');
+
+  // ---------- branch kiosk (no camera, ever) ----------
+  // «فرع العليا» has a paired tablet at the entrance (token DEMO_KIOSK_TOKEN, shown on the demo kiosk screen); every
+  // active employee has PIN 1234. The kitchen staff punch there instead of from a phone.
+  seedKiosk(db, companyId, branchDefs.OLAYA.id, ts(rel(-30)));
+  db.kioskDevices[db.kioskDevices.length - 1].lastSeenAt = ts(rel(-1));
+  for (const key of ['o7', 'o9']) {
+    db.attendance.filter((x) => x.employeeId === emp[key].id && x.checkIn && x.date >= rel(-10)).forEach((r) => {
+      r.source = 'KIOSK';
+      if (!r.flags.includes('KIOSK')) r.flags.push('KIOSK');
+    });
+  }
 
   // ---------- loans ----------
   for (const l of [
