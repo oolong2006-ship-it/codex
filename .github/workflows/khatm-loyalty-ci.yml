@@ -1,0 +1,52 @@
+name: Khatm Loyalty CI
+
+on:
+  push:
+    paths: ["khatm-loyalty/**", ".github/workflows/khatm-loyalty-ci.yml"]
+  pull_request:
+    paths: ["khatm-loyalty/**", ".github/workflows/khatm-loyalty-ci.yml"]
+
+defaults:
+  run:
+    working-directory: khatm-loyalty
+
+jobs:
+  verify:
+    name: typecheck, tests (real Postgres), build, e2e
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      PGSUPER_URL: postgresql://postgres:postgres@localhost:5432/postgres
+      DATABASE_URL: postgresql://khatm:khatm_dev@localhost:5432/khatm
+      APP_URL: http://localhost:3200
+      CARD_TOKEN_KEYS: "1:ci-only-card-token-secret-not-for-production"
+      SEED_PASSWORD: ci-seed-password
+      WALLET_PROVIDER: mock
+      MESSAGING_PROVIDER: console
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: khatm-loyalty/package-lock.json
+      - run: sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client
+      - run: npm ci
+      - run: bash scripts/db-setup.sh
+      - run: npm run db:migrate
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+        env:
+          CI: "true"
+      - run: npm audit --omit=dev --audit-level=high

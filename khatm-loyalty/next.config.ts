@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import path from "node:path";
 
 const securityHeaders = [
   { key: "X-Content-Type-Options", value: "nosniff" },
@@ -25,6 +26,7 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  turbopack: { root: path.join(__dirname) },
   serverExternalPackages: ["pg", "node-forge"],
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
