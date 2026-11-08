@@ -16,7 +16,8 @@ export function parseKeys(raw: string): Key[] {
     .filter(Boolean)
     .map((p) => {
       const i = p.indexOf(":");
-      if (i <= 0) throw new Error("CARD_TOKEN_KEYS entries must be kid:secret");
+      // A bare secret (no "kid:") is key "1" — convenient for platform-generated values.
+      if (i <= 0) return { kid: "1", secret: p };
       return { kid: p.slice(0, i), secret: p.slice(i + 1) };
     });
   if (keys.length === 0) throw new Error("CARD_TOKEN_KEYS is empty");

@@ -48,6 +48,16 @@ Demo accounts (from `db:seed`, password = `SEED_PASSWORD` in `.env`):
 | Cashier `/pos/login` | business code `brew-house`, PIN `1234` (Olaya) / `5678` (Tahlia) |
 | Customer join page | `/join/brew-house` |
 
+## Free public demo (Render)
+
+1. render.com → **New → Blueprint** → choose this repository.
+2. Blueprint file path: `khatm-loyalty/render.yaml`.
+3. Enter `SEED_PASSWORD` when asked (the demo dashboard password), then **Apply**.
+4. The site appears at `https://khatm-loyalty-xxxx.onrender.com` with the demo café pre-loaded.
+
+Free-tier limits: the service sleeps after ~15 min idle (first visit takes about a minute to wake up), and
+Render's free Postgres expires after 30 days — for a lasting free database use Neon and set `DATABASE_URL`.
+
 ## Checks
 
 ```bash

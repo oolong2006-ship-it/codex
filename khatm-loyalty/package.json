@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "next dev -p 3200",
     "build": "next build",
-    "start": "next start -p 3200",
+    "start": "next start -p ${PORT:-3200}",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:e2e": "playwright test --trace off",
@@ -14,7 +14,8 @@
     "db:migrate": "tsx scripts/migrate.ts",
     "db:seed": "tsx scripts/seed.ts",
     "worker": "tsx scripts/worker.ts",
-    "verify": "npm run typecheck && npm run test && npm run build"
+    "verify": "npm run typecheck && npm run test && npm run build",
+    "start:hosted": "npm run db:migrate && node -e \"process.exit(process.env.DEMO_SEED==='1'?0:1)\" && SEED_IF_EMPTY=1 npm run db:seed; npm run start"
   },
   "engines": {
     "node": ">=20"

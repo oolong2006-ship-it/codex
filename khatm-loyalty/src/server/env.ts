@@ -26,9 +26,11 @@ let cached: Env | null = null;
 /** Validated environment. Empty strings are treated as unset. */
 export function env(): Env {
   if (cached) return cached;
-  const raw = Object.fromEntries(
+  const raw: Record<string, string | undefined> = Object.fromEntries(
     Object.entries(process.env).filter(([, v]) => v !== undefined && v !== ""),
   );
+  // Hosting platforms expose the public URL under their own names.
+  raw.APP_URL ??= raw.RENDER_EXTERNAL_URL ?? (raw.VERCEL_URL ? `https://${raw.VERCEL_URL}` : undefined);
   const parsed = schema.safeParse(raw);
   if (!parsed.success) {
     throw new Error("Invalid environment: " + parsed.error.issues.map((i) => i.path.join(".")).join(", "));

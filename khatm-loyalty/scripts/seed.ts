@@ -22,6 +22,11 @@ async function main() {
   if (!password || password.length < 10) throw new Error("SEED_PASSWORD (10+ chars) is required");
   const db = new Client({ connectionString: process.env.DATABASE_URL });
   await db.connect();
+  if (process.env.SEED_IF_EMPTY === "1" && (await db.query(`SELECT 1 FROM merchants WHERE slug = 'brew-house'`)).rowCount) {
+    console.log("seed: demo merchant already exists, skipping");
+    await db.end();
+    return;
+  }
   await db.query("BEGIN");
   await db.query(`DELETE FROM merchants WHERE slug = 'brew-house'`);
 
