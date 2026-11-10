@@ -25,7 +25,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const items = all.filter((i) => can(actor.role, i.perm)).map(({ perm: _perm, ...i }) => i);
   return (
     <div className="mx-auto flex min-h-dvh max-w-7xl flex-col lg:flex-row">
-      <aside className="no-print border-cream-300 bg-cream-50/60 px-4 py-4 lg:sticky lg:top-0 lg:h-dvh lg:w-64 lg:shrink-0 lg:border-e lg:py-6">
+      <aside className="no-print border-cream-300 bg-white px-4 py-4 lg:sticky lg:top-0 lg:h-dvh lg:w-64 lg:shrink-0 lg:border-e lg:py-6">
         <div className="flex items-center justify-between lg:block">
           <Link href="/dashboard"><Logo label={t(lang, "brand.name")} /></Link>
           <div className="flex items-center lg:hidden">
@@ -35,7 +35,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
             </form>
           </div>
         </div>
-        <div className="mt-4 rounded-xl bg-cream-200/70 px-3 py-2.5 lg:mt-6">
+        <div className="mt-4 rounded-2xl bg-coral-50 px-3 py-2.5 lg:mt-6">
           <div className="truncate text-sm font-semibold" data-testid="merchant-name">{merchant.name}</div>
           <div className="truncate text-xs text-espresso-500">{actor.name} · {t(lang, `role.${actor.role}`)}</div>
         </div>

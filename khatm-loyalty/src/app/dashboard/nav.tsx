@@ -17,7 +17,7 @@ export function DashNav({ items }: { items: NavItem[] }) {
             href={i.href}
             aria-current={active ? "page" : undefined}
             className={`flex shrink-0 items-center gap-2.5 rounded-xl px-3 py-2 text-sm font-medium transition ${
-              active ? "bg-espresso-800 text-cream-50" : "text-espresso-700 hover:bg-cream-200"
+              active ? "bg-espresso-800 text-white shadow-[0_10px_24px_-14px_rgba(23,20,58,0.8)]" : "text-espresso-700 hover:bg-cream-200"
             }`}
           >
             <span aria-hidden className="text-base">{i.icon}</span>

@@ -8,11 +8,13 @@ import { PageHeader } from "@/components/page-header";
 
 export const metadata = { title: "Overview" };
 
-function Stat({ label, value, hint, testId }: { label: string; value: string; hint?: string; testId?: string }) {
+const TONES = ["bg-coral-50", "bg-grape-50", "bg-mint-50", "bg-sun-50"] as const;
+
+function Stat({ label, value, hint, testId, tone = 0 }: { label: string; value: string; hint?: string; testId?: string; tone?: number }) {
   return (
-    <div className="card p-4 sm:p-5">
+    <div className={`rounded-3xl p-4 sm:p-5 ${TONES[tone % TONES.length]}`}>
       <div className="text-xs font-medium text-espresso-500 sm:text-sm">{label}</div>
-      <div className="mt-1.5 text-2xl font-bold tabular-nums sm:text-3xl" data-testid={testId}>{value}</div>
+      <div className="mt-1.5 font-[family-name:var(--font-display)] text-2xl font-bold tabular-nums sm:text-3xl" data-testid={testId}>{value}</div>
       {hint && <div className="mt-1 text-[11px] text-espresso-500">{hint}</div>}
     </div>
   );
@@ -27,7 +29,7 @@ function WeeklyChart({ lang, data }: { lang: Lang; data: Array<{ week: Date; vis
         {data.map((d, i) => (
           <div key={i} className="group relative flex h-full flex-1 items-end">
             <div
-              className={`w-full rounded-t-md transition ${i === data.length - 1 ? "bg-saffron-500" : "bg-espresso-700/75 group-hover:bg-espresso-800"}`}
+              className={`w-full rounded-t-md transition ${i === data.length - 1 ? "bg-saffron-500" : i % 2 ? "bg-grape-500/45 group-hover:bg-grape-500/70" : "bg-grape-500 group-hover:bg-grape-700"}`}
               style={{ height: `${d.visits > 0 ? Math.max((d.visits / max) * 100, 3) : 0}%` }}
               title={`${fmt.format(new Date(d.week))}: ${d.visits}`}
             />
@@ -61,18 +63,18 @@ export default async function Overview() {
     <>
       <PageHeader title={t(lang, "nav.overview")} />
       {empty && (
-        <div className="card mb-6 flex flex-wrap items-center justify-between gap-3 border-saffron-500/40 bg-saffron-400/10 p-5">
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-3xl bg-sun-50 p-5">
           <p className="font-medium">{t(lang, "analytics.empty")}</p>
           <Link href="/dashboard/poster" className="btn-primary">{t(lang, "nav.poster")}</Link>
         </div>
       )}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 2xl:grid-cols-6">
         <Stat label={t(lang, "kpi.customers")} value={n(k.customers)} testId="kpi-customers" />
-        <Stat label={t(lang, "kpi.active30")} value={n(k.active30)} />
-        <Stat label={t(lang, "kpi.visits30")} value={n(k.visits30)} testId="kpi-visits" />
-        <Stat label={t(lang, "kpi.repeatRate")} value={k.repeatRate === null ? "—" : `${Math.round(k.repeatRate * 100)}%`} hint={t(lang, "kpi.repeatRateHint")} />
-        <Stat label={t(lang, "kpi.redemptions30")} value={n(k.redemptions30)} />
-        <Stat label={t(lang, "kpi.rewardsReady")} value={n(k.rewardsReady)} />
+        <Stat tone={1} label={t(lang, "kpi.active30")} value={n(k.active30)} />
+        <Stat tone={2} label={t(lang, "kpi.visits30")} value={n(k.visits30)} testId="kpi-visits" />
+        <Stat tone={3} label={t(lang, "kpi.repeatRate")} value={k.repeatRate === null ? "—" : `${Math.round(k.repeatRate * 100)}%`} hint={t(lang, "kpi.repeatRateHint")} />
+        <Stat tone={0} label={t(lang, "kpi.redemptions30")} value={n(k.redemptions30)} />
+        <Stat tone={1} label={t(lang, "kpi.rewardsReady")} value={n(k.rewardsReady)} />
       </div>
 
       <div className="mt-6 grid gap-6 xl:grid-cols-[1.4fr_1fr]">

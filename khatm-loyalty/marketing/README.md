@@ -1,11 +1,15 @@
 # Marketing site
 
-`index.html` is a self-contained Arabic landing page (no build step). Host it on any static host
-(Netlify, Cloudflare Pages, GitHub Pages) or serve it as the app's `/` page.
+`site.tpl.html` is the single source of the marketing page. It is rendered two ways by
+`src/server/marketing.ts`:
 
-Photos are from Unsplash (free licence, commercial use allowed), embedded as WebP data URIs.
+- **In the app** at `/` (`src/app/route.ts`): self-hosted fonts (`public/fonts`, copied by
+  `scripts/copy-fonts.mjs` on `predev`/`prebuild`), photos from `public/img`, links to `/signup` and `/login`.
+- **Standalone** `index.html` (`npm run marketing:build`): Google Fonts and embedded photos, for any static host.
 
-Before going live, edit in `index.html`:
+Photos are from Unsplash (free licence, commercial use allowed).
+
+Before going live, edit `site.tpl.html`:
 - `WA_NUMBER` in the script: the sales WhatsApp number (digits only, e.g. `9665XXXXXXXX`).
-- Prices (`data-m` / `data-y`), the launch offer text, and the demo link (`claude.ai/artifact/...`).
+- Prices (`data-m` / `data-y`) and the launch offer text.
 - Feature claims for Apple/Google Wallet and Foodics should match what is activated (see the main README status table).

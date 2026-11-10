@@ -94,13 +94,17 @@ test("full journey: signup → program → customer joins → cashier stamps →
   await tablet.close();
 });
 
-test("English mode and security headers", async ({ page }) => {
+test("home page, English mode and security headers", async ({ page }) => {
   const res = await page.goto("/");
+  expect(res?.status()).toBe(200);
   expect(res?.headers()["x-frame-options"]).toBe("DENY");
   expect(res?.headers()["content-security-policy"]).toContain("frame-ancestors 'none'");
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("يرجع لك");
+  await page.getByRole("link", { name: "دخول التاجر" }).first().click();
+  await expect(page).toHaveURL(/\/login/);
   await page.getByRole("button", { name: "English" }).click();
   await expect(page.locator("html")).toHaveAttribute("dir", "ltr");
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Bring customers back — one stamp at a time");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Merchant sign in");
   await page.getByRole("button", { name: "العربية" }).click();
   await expect(page.locator("html")).toHaveAttribute("dir", "rtl");
 });

@@ -10,7 +10,7 @@ export default async function SignupPage() {
   const lang = await getLang();
   const k = (key: string) => t(lang, key);
   return (
-    <AuthShell lang={lang} title={k("auth.signup.title")}>
+    <AuthShell lang={lang} title={k("auth.signup.title")} photo="lattes">
       <SignupForm
         labels={{
           businessName: k("auth.signup.businessName"),

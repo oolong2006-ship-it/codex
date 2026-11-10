@@ -5,9 +5,9 @@ export const STAMP_ICONS = ["☕", "⭐", "🥐", "🍩", "❤️", "🧋", "�
 const hex = z.string().regex(/^#[0-9a-fA-F]{6}$/);
 
 export const designSchema = z.object({
-  bg: hex.default("#3B2418"),
-  fg: hex.default("#FFF7ED"),
-  accent: hex.default("#F59E0B"),
+  bg: hex.default("#6D4AFF"),
+  fg: hex.default("#FFFFFF"),
+  accent: hex.default("#FFC233"),
   icon: z.enum(STAMP_ICONS).default("☕"),
 });
 

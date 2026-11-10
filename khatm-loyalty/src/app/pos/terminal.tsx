@@ -153,11 +153,11 @@ export function Terminal({ labels, lang }: { labels: Labels; lang: "ar" | "en" }
             {camera ? (
               <div className="relative aspect-square bg-black">
                 <video ref={videoRef} className="h-full w-full object-cover" muted playsInline />
-                <div className="pointer-events-none absolute inset-10 rounded-3xl border-4 border-saffron-400/90" />
+                <div className="pointer-events-none absolute inset-10 rounded-3xl border-4 border-sun-400/90" />
                 <button type="button" onClick={stopCamera} className="btn absolute bottom-3 start-3 bg-white/90 text-espresso-900">{labels.stopCamera}</button>
               </div>
             ) : (
-              <button type="button" onClick={startCamera} className="flex aspect-[4/3] w-full flex-col items-center justify-center gap-3 bg-espresso-800 text-cream-50 transition hover:bg-espresso-700" data-testid="start-camera">
+              <button type="button" onClick={startCamera} className="flex aspect-[4/3] w-full flex-col items-center justify-center gap-3 bg-gradient-to-br from-saffron-500 to-saffron-600 text-white transition hover:brightness-105" data-testid="start-camera">
                 <svg viewBox="0 0 24 24" className="h-14 w-14" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden>
                   <path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3" strokeLinecap="round" />
                   <rect x="8" y="8" width="8" height="8" rx="1.5" />
@@ -182,7 +182,7 @@ export function Terminal({ labels, lang }: { labels: Labels; lang: "ar" | "en" }
 
       {card && (
         <div className="card overflow-hidden" data-testid="pos-card">
-          <div className="bg-espresso-800 px-5 py-4 text-cream-50">
+          <div className="bg-gradient-to-br from-grape-500 to-grape-700 px-5 py-4 text-white">
             <div className="flex items-start justify-between gap-3">
               <div>
                 <div className="text-xl font-bold">{card.customerName}</div>
@@ -192,10 +192,10 @@ export function Terminal({ labels, lang }: { labels: Labels; lang: "ar" | "en" }
             </div>
             <div className="mt-4 flex items-end justify-between">
               <div className="text-4xl font-bold tabular-nums" data-testid="pos-progress">{card.currentStamps}<span className="text-xl opacity-60"> / {card.stampsRequired}</span></div>
-              {card.rewardsAvailable > 0 && <div className="rounded-full bg-saffron-500 px-3 py-1 text-sm font-bold text-espresso-950" data-testid="pos-rewards">🎁 {card.rewardsAvailable} {labels.rewardsReady}</div>}
+              {card.rewardsAvailable > 0 && <div className="rounded-full bg-sun-400 px-3 py-1 text-sm font-bold text-espresso-900" data-testid="pos-rewards">🎁 {card.rewardsAvailable} {labels.rewardsReady}</div>}
             </div>
             <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/15">
-              <div className="h-full rounded-full bg-saffron-500 transition-all" style={{ width: `${(card.currentStamps / card.stampsRequired) * 100}%` }} />
+              <div className="h-full rounded-full bg-sun-400 transition-all" style={{ width: `${(card.currentStamps / card.stampsRequired) * 100}%` }} />
             </div>
           </div>
 

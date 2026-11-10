@@ -2,22 +2,32 @@
 
 @theme {
   --font-sans: "IBM Plex Sans Arabic", ui-sans-serif, system-ui, sans-serif;
-  --color-espresso-950: #1c110b;
-  --color-espresso-900: #2a1a11;
-  --color-espresso-800: #3b2418;
-  --color-espresso-700: #553624;
-  --color-espresso-500: #8a6650;
-  --color-cream-50: #fffcf7;
-  --color-cream-100: #fbf6ee;
-  --color-cream-200: #f3e9da;
-  --color-cream-300: #e7d8c2;
-  --color-saffron-400: #f7b733;
-  --color-saffron-500: #f59e0b;
-  --color-saffron-600: #d97f06;
-  --color-mint-600: #0f8a5f;
-  --color-mint-50: #e9f8f1;
-  --color-rose-600: #c2410c;
-  --color-rose-50: #fff1ea;
+  --font-display: "Alexandria", "IBM Plex Sans Arabic", ui-sans-serif, system-ui, sans-serif;
+  /* Ink (text, primary buttons, dark surfaces). Kept under the "espresso" name for continuity. */
+  --color-espresso-950: #0E0C26;
+  --color-espresso-900: #17143A;
+  --color-espresso-800: #17143A;
+  --color-espresso-700: #2B2760;
+  --color-espresso-500: #77749A;
+  /* Canvas and lines */
+  --color-cream-50: #FFFFFF;
+  --color-cream-100: #F6F5FB;
+  --color-cream-200: #EEECF6;
+  --color-cream-300: #E3E0EF;
+  /* Coral: the brand accent (kept under the "saffron" name) */
+  --color-saffron-400: #FF7559;
+  --color-saffron-500: #FF5A3C;
+  --color-saffron-600: #E8452A;
+  --color-coral-50: #FFE9E3;
+  --color-sun-50: #FFF5D6;
+  --color-sun-400: #FFC233;
+  --color-grape-50: #ECE7FF;
+  --color-grape-500: #6D4AFF;
+  --color-grape-700: #4A2FD0;
+  --color-mint-600: #0B9A6F;
+  --color-mint-50: #DDF7EE;
+  --color-rose-600: #D23A1E;
+  --color-rose-50: #FFEDE8;
 }
 
 @layer base {
@@ -26,24 +36,27 @@
   }
   body {
     @apply bg-cream-100 text-espresso-900 antialiased;
+  }
+  h1, h2, h3 {
+    font-family: var(--font-display);
     font-feature-settings: "ss01";
   }
   :focus-visible {
-    @apply outline-2 outline-offset-2 outline-saffron-500;
+    @apply outline-2 outline-offset-2 outline-grape-500;
   }
 }
 
 @utility card {
-  @apply rounded-2xl border border-cream-300 bg-cream-50 shadow-[0_1px_0_rgba(59,36,24,0.04)];
+  @apply rounded-3xl border border-cream-300 bg-cream-50 shadow-[0_18px_40px_-28px_rgba(23,20,58,0.35)];
 }
 @utility btn {
-  @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50;
+  @apply inline-flex items-center justify-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-semibold transition hover:-translate-y-px disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0;
 }
 @utility btn-primary {
   @apply btn bg-espresso-800 text-cream-50 hover:bg-espresso-700;
 }
 @utility btn-accent {
-  @apply btn bg-saffron-500 text-espresso-950 hover:bg-saffron-400;
+  @apply btn bg-saffron-500 text-white shadow-[0_12px_26px_-12px_rgba(255,90,60,0.7)] hover:bg-saffron-600;
 }
 @utility btn-ghost {
   @apply btn border border-cream-300 bg-cream-50 text-espresso-800 hover:bg-cream-200;
@@ -52,7 +65,7 @@
   @apply btn border border-rose-600/30 bg-rose-50 text-rose-600 hover:bg-rose-600 hover:text-white;
 }
 @utility input {
-  @apply w-full rounded-xl border border-cream-300 bg-white px-3.5 py-2.5 text-base text-espresso-900 placeholder:text-espresso-500/60 focus:border-saffron-500 focus:outline-none focus:ring-2 focus:ring-saffron-500/30;
+  @apply w-full rounded-2xl border-2 border-transparent bg-cream-100 px-3.5 py-2.5 text-base text-espresso-900 placeholder:text-espresso-500/60 focus:border-grape-500 focus:bg-white focus:outline-none;
 }
 @utility label {
   @apply mb-1.5 block text-sm font-medium text-espresso-700;

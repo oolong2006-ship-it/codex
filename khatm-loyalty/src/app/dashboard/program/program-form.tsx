@@ -19,12 +19,12 @@ type Program = {
 };
 
 const PRESETS = [
+  { bg: "#6D4AFF", fg: "#FFFFFF", accent: "#FFC233" },
+  { bg: "#FF5A3C", fg: "#FFFFFF", accent: "#FFE08A" },
+  { bg: "#12B886", fg: "#FFFFFF", accent: "#FFF3B0" },
+  { bg: "#17143A", fg: "#FFFFFF", accent: "#FF7559" },
+  { bg: "#2F9BFF", fg: "#FFFFFF", accent: "#FFE066" },
   { bg: "#3B2418", fg: "#FFF7ED", accent: "#F59E0B" },
-  { bg: "#0F3D3E", fg: "#F1FAEE", accent: "#E9C46A" },
-  { bg: "#1D1B4B", fg: "#F5F3FF", accent: "#F472B6" },
-  { bg: "#F7EFE5", fg: "#2A1A11", accent: "#B45309" },
-  { bg: "#14532D", fg: "#F0FDF4", accent: "#FACC15" },
-  { bg: "#111111", fg: "#FAFAFA", accent: "#22D3EE" },
 ];
 
 export function ProgramForm({ lang, merchantName, program, icons, labels }: { lang: Lang; merchantName: string; program: Program; icons: readonly string[]; labels: Record<string, string> }) {

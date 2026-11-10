@@ -41,7 +41,7 @@ async function main() {
   const p = (await db.query<{ id: string }>(
     `INSERT INTO loyalty_programs(merchant_id, slug, name, stamps_required, reward_description, cooldown_minutes, max_stamps_per_scan, welcome_stamps, terms, design)
      VALUES ($1,'brew-house','بطاقة القهوة',9,'قهوة مختصة مجانية بأي حجم',30,3,1,'ختم واحد لكل مشروب. المكافأة صالحة في جميع الفروع ولا تُستبدل نقداً.',$2) RETURNING id`,
-    [m, JSON.stringify({ bg: "#3B2418", fg: "#FFF7ED", accent: "#F59E0B", icon: "☕" })],
+    [m, JSON.stringify({ bg: "#6D4AFF", fg: "#FFFFFF", accent: "#FFC233", icon: "☕" })],
   )).rows[0]!.id;
 
   // Visit rhythms (days between visits); some regulars have stopped coming.

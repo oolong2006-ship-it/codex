@@ -11,7 +11,7 @@ export default async function ChooseBranch() {
   const lang = await getLang();
   const branches = await listBranches(actor, true);
   return (
-    <AuthShell lang={lang} title={t(lang, "pos.chooseBranch")}>
+    <AuthShell lang={lang} title={t(lang, "pos.chooseBranch")} photo="interior">
       <div className="grid gap-2">
         {branches.map((b) => (
           <form key={b.id} action={chooseBranchAction}>
