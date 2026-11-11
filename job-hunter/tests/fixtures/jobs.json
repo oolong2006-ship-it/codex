@@ -1,0 +1,10 @@
+[
+ {"title": "Procurement Manager", "company": "Almarai", "location": "Riyadh, Saudi Arabia", "url": "https://example.com/1",
+  "description": "Negotiation, contracts, Odoo ERP, spend analysis", "source": "fixture"},
+ {"title": "procurement manager", "company": "ALMARAI", "location": "Riyadh", "url": "https://example.com/1b",
+  "description": "short", "source": "fixture"},
+ {"title": "مدير إدارة المشتريات", "company": "شركة ب", "location": "الرياض", "url": "https://example.com/2",
+  "description": "خبرة في التفاوض وإدارة العقود", "source": "fixture"},
+ {"title": "Procurement Intern", "company": "C", "location": "Riyadh", "url": "https://example.com/3", "description": "", "source": "fixture"},
+ {"title": "Software Engineer", "company": "D", "location": "Riyadh", "url": "https://example.com/4", "description": "python", "source": "fixture"}
+]

@@ -1,0 +1,17 @@
+{
+  "name": "اسمك",
+  "queries": ["Procurement Manager", "مدير مشتريات", "Supply Chain Manager"],
+  "locations": ["Riyadh, Saudi Arabia"],
+  "preferred_locations": ["Riyadh", "الرياض", "Saudi Arabia"],
+  "title_keywords": ["procurement", "purchasing", "sourcing", "supply chain", "مشتريات", "سلاسل الامداد"],
+  "skill_keywords": ["negotiation", "contracts", "ERP", "SAP", "Odoo", "spend analysis", "category management", "التفاوض", "العقود"],
+  "exclude_keywords": ["intern", "internship", "junior", "trainee", "متدرب"],
+  "cv_text": "الصق هنا نص سيرتك الذاتية (بدون رقم الجوال إن أردت)",
+  "min_rule_score": 35,
+  "min_notify_score": 60,
+  "max_ai_jobs": 25,
+  "greenhouse_boards": [],
+  "lever_companies": [],
+  "country_code": "sa",
+  "language": "ar"
+}

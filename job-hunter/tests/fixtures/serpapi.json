@@ -1,0 +1,9 @@
+{"jobs_results": [
+ {"title": "Procurement Manager", "company_name": "Almarai", "location": "Riyadh, Saudi Arabia", "via": "LinkedIn",
+  "description": "Lead procurement, negotiation and contracts.", "detected_extensions": {"posted_at": "2 days ago"},
+  "apply_options": [{"title": "LinkedIn", "link": "https://example.com/apply/1"}]},
+ {"title": "مدير مشتريات", "company_name": "شركة أ", "location": "الرياض", "via": "Bayt",
+  "description": "خبرة في التفاوض", "share_link": "https://example.com/share/2"},
+ {"title": "Software Engineer", "company_name": "B", "location": "Riyadh", "description": "python",
+  "share_link": "https://example.com/3"}
+], "serpapi_pagination": {}}
