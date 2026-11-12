@@ -28,7 +28,7 @@ class RunResult:
     kpis: dict[str, float]
     frames: list[dict] | None
     phase_log: list[tuple[int, str, int]]
-    # Extra honesty data, not KPIs: e.g. vehicles still queued for insertion at the end.
+    # Extra data that is not a KPI (delayed vehicle-hours, duration).
     diagnostics: dict[str, float] = field(default_factory=dict)
 
 
@@ -108,8 +108,9 @@ def run(net_xml: Path, routes: Path, controller: Controller, seed: int,
 
         unfinished = conn.vehicle.getIDCount()
         pending = len(conn.simulation.getPendingVehicles())  # departure due, not inserted
-        kpis = acc.finish(arrived=arrived, unfinished=unfinished, teleports=teleports)
-        diagnostics = {"pending_insertion": pending, "delay_veh_h": acc.delay_veh_h,
+        kpis = acc.finish(arrived=arrived, unfinished=unfinished, teleports=teleports,
+                          pending_insertion=pending)
+        diagnostics = {"delay_veh_h": acc.delay_veh_h,
                        "duration_s": duration}
         return RunResult(kpis=kpis, frames=frames, phase_log=phase_log,
                          diagnostics=diagnostics)

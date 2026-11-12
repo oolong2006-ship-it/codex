@@ -4,7 +4,7 @@ from sim.kpi import (FUEL_SAR_PER_L, VALUE_OF_TIME_SAR_PER_H, KpiAccumulator, co
                      QUEUE_M_PER_HALTING_VEHICLE, PETROL_DENSITY_G_PER_L)
 
 KEYS = {"avg_wait_s", "max_queue_m", "throughput", "unfinished", "teleports",
-        "fuel_l", "co2_kg", "cost_sar"}
+        "fuel_l", "co2_kg", "cost_sar", "pending_insertion"}
 
 
 def test_cost_constants():
@@ -18,16 +18,18 @@ def test_cost_formula():
     assert cost_sar(0.0, 0.0) == 0.0
 
 
-def test_accumulator_avg_wait_is_mean_of_per_second_means():
+def test_accumulator_avg_wait_is_pooled_vehicle_second_mean():
     acc = KpiAccumulator()
     acc.add_second(waits=[0.0, 10.0], halting=1, lane_halting=[2, 0], lane_length_m=[100.0, 100.0], fuel_mg=0.0, co2_mg=0.0)
     acc.add_second(waits=[], halting=0, lane_halting=[0], lane_length_m=[100.0], fuel_mg=0.0, co2_mg=0.0)  # skipped
     acc.add_second(waits=[30.0], halting=1, lane_halting=[4], lane_length_m=[100.0], fuel_mg=0.0, co2_mg=0.0)
-    k = acc.finish(arrived=5, unfinished=1, teleports=0)
+    k = acc.finish(arrived=5, unfinished=1, teleports=0, pending_insertion=2)
     assert set(k) == KEYS
-    assert k["avg_wait_s"] == pytest.approx((5.0 + 30.0) / 2)
+    # sum over vehicle-seconds / number of vehicle-seconds: (0 + 10 + 30) / 3
+    assert k["avg_wait_s"] == pytest.approx(40.0 / 3)
     assert k["max_queue_m"] == pytest.approx(4 * QUEUE_M_PER_HALTING_VEHICLE)
     assert k["throughput"] == 5 and k["unfinished"] == 1 and k["teleports"] == 0
+    assert k["pending_insertion"] == 2
 
 
 def test_accumulator_fuel_co2_and_cost():
@@ -35,7 +37,7 @@ def test_accumulator_fuel_co2_and_cost():
     for _ in range(3600):  # one vehicle halting for an hour
         acc.add_second(waits=[1.0], halting=1, lane_halting=[1], lane_length_m=[100.0],
                        fuel_mg=PETROL_DENSITY_G_PER_L * 1000 / 3600, co2_mg=1e6 / 3600)
-    k = acc.finish(arrived=0, unfinished=1, teleports=0)
+    k = acc.finish(arrived=0, unfinished=1, teleports=0, pending_insertion=0)
     assert k["fuel_l"] == pytest.approx(1.0)
     assert k["co2_kg"] == pytest.approx(1.0)
     assert k["cost_sar"] == pytest.approx(45.0 + 2.33)
@@ -46,4 +48,4 @@ def test_queue_capped_at_lane_length():
     # 81 halting vehicles * 7.5 m = 607.5 m, but the lane is only 606 m long
     acc.add_second(waits=[0.0], halting=81, lane_halting=[81, 3], lane_length_m=[606.0, 50.0],
                    fuel_mg=0.0, co2_mg=0.0)
-    assert acc.finish(0, 0, 0)["max_queue_m"] == pytest.approx(606.0)
+    assert acc.finish(0, 0, 0, 0)["max_queue_m"] == pytest.approx(606.0)

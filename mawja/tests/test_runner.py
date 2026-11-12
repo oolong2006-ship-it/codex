@@ -9,7 +9,7 @@ from sim.runner import RunResult, run
 
 CFG = Path(__file__).resolve().parents[1] / "sim" / "config"
 KEYS = {"avg_wait_s", "max_queue_m", "throughput", "unfinished", "teleports",
-        "fuel_l", "co2_kg", "cost_sar"}
+        "fuel_l", "co2_kg", "cost_sar", "pending_insertion"}
 
 
 @pytest.fixture(scope="module")
@@ -44,6 +44,7 @@ def test_run_deterministic(net_xml, routes):
     assert a.kpis == b.kpis
     assert a.phase_log == b.phase_log
     assert a.kpis["throughput"] > 0
+    assert a.kpis["pending_insertion"] >= 0
     assert a.frames is None
 
 
@@ -52,6 +53,8 @@ def test_teleports_disabled(net_xml, routes_x2):
     assert r.kpis["teleports"] == 0
     # demand x2 must actually congest the corridor, otherwise the test is vacuous
     assert r.kpis["max_queue_m"] > 100
+    # at double demand entries back up: vehicles due to depart cannot enter
+    assert r.kpis["pending_insertion"] > 0
 
 
 def test_unfinished_reported(net_xml, routes):
