@@ -1,0 +1,21 @@
+# ESTIMATED evening-peak demand (16:00-18:00), Olaya Street, Riyadh.
+# IMPORTANT: all volumes below are estimates, not measured counts (UI shows them as «تقديري»).
+estimated: true
+peak: "16:00-18:00"
+duration_s: 7200
+olaya_veh_per_hour:        # per direction, at each corridor end
+  northbound: 1800
+  southbound: 1800
+cross_veh_per_hour:        # per cross-street entry (west side and east side each)
+  major: 900
+  minor: 400
+default_turns:             # share of vehicles turning at a junction; rest go straight
+  left: 0.15
+  right: 0.15
+intersections:             # cross-street class per junction (turn overrides optional: turns: {left, right})
+  olaya_musa_bin_nusair: {cross_class: minor}
+  olaya_tahlia: {cross_class: major}
+  olaya_prince_turki: {cross_class: minor}
+  olaya_urubah: {cross_class: major}
+  olaya_king_abdullah: {cross_class: major}
+  olaya_anas_bin_malik: {cross_class: minor}
