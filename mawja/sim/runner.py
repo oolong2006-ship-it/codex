@@ -23,6 +23,18 @@ _VEH_VARS = [tc.VAR_ACCUMULATED_WAITING_TIME, tc.VAR_SPEED, tc.VAR_FUELCONSUMPTI
 _VEH_VARS_REC = _VEH_VARS + [tc.VAR_POSITION]
 
 
+class PhaseEntry(tuple):
+    """A phase-log entry ``(t, tls_id, phase_index)``; ``.state`` holds the installed
+    red/yellow/green state string of that phase (used by ``sim.rules.check_rules``)."""
+
+    state: str
+
+    def __new__(cls, t: int, tls_id: str, phase: int, state: str) -> "PhaseEntry":
+        obj = super().__new__(cls, (t, tls_id, phase))
+        obj.state = state
+        return obj
+
+
 @dataclass
 class RunResult:
     kpis: dict[str, float]
@@ -47,7 +59,9 @@ def run(net_xml: Path, routes: Path, controller: Controller, seed: int,
     """Simulate ``duration`` seconds (None = 7200) and return KPIs (see ``sim.kpi``).
 
     Each second: advance SUMO one step, measure, then call ``controller.step(conn, t)``.
-    Phase changes are logged as (t, tls_id, phase index), including initial phases at t=0.
+    Phase changes are logged as (t, tls_id, phase index), including initial phases at t=0
+    (after ``controller.setup``); each entry is a ``PhaseEntry`` that also carries the
+    phase's signal state, so programs installed at runtime can be rule-checked.
     """
     duration = DEFAULT_DURATION_S if duration is None else int(duration)
     tls_ids = signal_ids(Path(net_xml))
@@ -65,8 +79,10 @@ def run(net_xml: Path, routes: Path, controller: Controller, seed: int,
         var_ids = _VEH_VARS_REC if record else _VEH_VARS
 
         controller.setup(conn, list(tls_ids))
-        phase = {tid: conn.trafficlight.getPhase(tid) for tid in tls_ids}
-        phase_log: list[tuple[int, str, int]] = [(0, tid, p) for tid, p in phase.items()]
+        tl = conn.trafficlight
+        phase = {tid: (tl.getPhase(tid), tl.getRedYellowGreenState(tid)) for tid in tls_ids}
+        phase_log: list[tuple[int, str, int]] = [PhaseEntry(0, tid, p, s)
+                                                 for tid, (p, s) in phase.items()]
         frames: list[dict] | None = [] if record else None
         acc = KpiAccumulator()
         arrived = teleports = 0
@@ -101,10 +117,10 @@ def run(net_xml: Path, routes: Path, controller: Controller, seed: int,
 
             controller.step(conn, t)
             for tid in tls_ids:
-                p = conn.trafficlight.getPhase(tid)
-                if p != phase[tid]:
-                    phase[tid] = p
-                    phase_log.append((t, tid, p))
+                cur = (tl.getPhase(tid), tl.getRedYellowGreenState(tid))
+                if cur != phase[tid]:
+                    phase[tid] = cur
+                    phase_log.append(PhaseEntry(t, tid, *cur))
 
         unfinished = conn.vehicle.getIDCount()
         pending = len(conn.simulation.getPendingVehicles())  # departure due, not inserted
