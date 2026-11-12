@@ -104,7 +104,9 @@ def build_network(corridor_yaml: Path, out_dir: Path) -> Path:
     cmd = [_netconvert(), "--tls.default-type", "static", "--no-warnings", "true",
            "-o", str(net)]
     osm = cfg.get("osm_file")
-    if osm and Path(osm).exists():
+    if osm and not Path(osm).exists():
+        raise FileNotFoundError(f"osm_file not found: {osm}")
+    if osm:
         cmd += ["--osm-files", str(osm), "--tls.guess-signals", "true"]
     else:
         nod, edg = _write_plain(cfg, out_dir)
