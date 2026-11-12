@@ -7,6 +7,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Any, Callable
 
 import libsumo
 from libsumo import constants as tc
@@ -58,13 +59,19 @@ def _sumo_cmd(net_xml: Path, routes: Path, seed: int, duration: int) -> list[str
 
 
 def run(net_xml: Path, routes: Path, controller: Controller, seed: int,
-        record: bool = False, duration: int | None = None) -> RunResult:
+        record: bool = False, duration: int | None = None,
+        frame_fn: Callable[[dict], Any] | None = None) -> RunResult:
     """Simulate ``duration`` seconds (None = 7200) and return KPIs (see ``sim.kpi``).
 
     Each second: advance SUMO one step, measure, then call ``controller.step(conn, t)``.
     Phase changes are logged as (t, tls_id, phase index), including initial phases at t=0
     (after ``controller.setup``); each entry is a ``PhaseEntry`` that also carries the
     phase's signal state, so programs installed at runtime can be rule-checked.
+
+    With ``record=True`` one frame per second is kept: ``{t, vehicles: [{id, x, y, wait}],
+    tls: {tls_id: state}, k: {avg_wait_s, max_queue_m, throughput}}`` where ``k`` holds the
+    KPIs accumulated up to t. ``frame_fn`` (optional) converts each frame as it is made and
+    its return value is stored instead (keeps memory low for 7200 s recordings).
     """
     duration = DEFAULT_DURATION_S if duration is None else int(duration)
     tls_ids = signal_ids(Path(net_xml))
@@ -108,7 +115,7 @@ def run(net_xml: Path, routes: Path, controller: Controller, seed: int,
             acc.add_second(waits, halting, lane_halt, lengths, fuel, co2)
 
             if frames is not None:
-                frames.append({
+                frame = {
                     "t": t,
                     "vehicles": [{"id": vid, "x": v[tc.VAR_POSITION][0],
                                   "y": v[tc.VAR_POSITION][1],
@@ -116,7 +123,10 @@ def run(net_xml: Path, routes: Path, controller: Controller, seed: int,
                                  for vid, v in veh.items()],
                     "tls": {tid: conn.trafficlight.getRedYellowGreenState(tid)
                             for tid in tls_ids},
-                })
+                    "k": {"avg_wait_s": acc.avg_wait_s, "max_queue_m": acc.max_queue_m,
+                          "throughput": arrived},
+                }
+                frames.append(frame_fn(frame) if frame_fn is not None else frame)
 
             controller.step(conn, t)
             for tid in tls_ids:

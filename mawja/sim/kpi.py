@@ -71,6 +71,16 @@ class KpiAccumulator:
         self._co2_mg += co2_mg
 
     @property
+    def avg_wait_s(self) -> float:
+        """Pooled vehicle-second mean waiting so far (equals the final KPI at the end)."""
+        return self._wait_sum / self._veh_seconds if self._veh_seconds else 0.0
+
+    @property
+    def max_queue_m(self) -> float:
+        """Longest per-lane queue so far (equals the final KPI at the end)."""
+        return self._max_queue_m
+
+    @property
     def delay_veh_h(self) -> float:
         return self._halting_veh_s / 3600.0
 
