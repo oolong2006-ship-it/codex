@@ -1,0 +1,16 @@
+[project]
+name = "mawja"
+version = "0.1.0"
+description = "Mawja: AI traffic-signal simulation on Olaya Street, Riyadh"
+requires-python = ">=3.10"
+dependencies = [
+    "eclipse-sumo==1.28.0",
+    "libsumo==1.28.0",
+    "numpy",
+    "pyyaml",
+    "pytest",
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]

@@ -1,0 +1,40 @@
+# Olaya Street corridor, Riyadh: six consecutive signalised intersections, south -> north.
+# NOTE: coordinates are approximate (no OSM download available when authored).
+geometry: approximate
+# osm_file: path/to/olaya.osm   # optional: when set and present, netconvert --osm-files is used
+olaya:
+  lanes_per_direction: 3
+  speed_kmh: 60
+cross_street_length_m: 250
+cross_street_speed_kmh: 50
+intersections:
+  - id: olaya_musa_bin_nusair
+    name_ar: تقاطع العليا مع موسى بن نصير
+    lat: 24.6900
+    lon: 46.6865
+    cross_lanes: 2
+  - id: olaya_tahlia
+    name_ar: تقاطع العليا مع الأمير محمد بن عبدالعزيز (التحلية)
+    lat: 24.6955
+    lon: 46.6850
+    cross_lanes: 3
+  - id: olaya_prince_turki
+    name_ar: تقاطع العليا مع الأمير تركي بن عبدالعزيز الأول
+    lat: 24.7005
+    lon: 46.6838
+    cross_lanes: 2
+  - id: olaya_urubah
+    name_ar: تقاطع العليا مع العروبة
+    lat: 24.7060
+    lon: 46.6822
+    cross_lanes: 3
+  - id: olaya_king_abdullah
+    name_ar: تقاطع العليا مع طريق الملك عبدالله
+    lat: 24.7115
+    lon: 46.6805
+    cross_lanes: 3
+  - id: olaya_anas_bin_malik
+    name_ar: تقاطع العليا مع أنس بن مالك
+    lat: 24.7165
+    lon: 46.6790
+    cross_lanes: 2
