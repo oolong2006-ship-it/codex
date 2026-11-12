@@ -90,12 +90,12 @@ def test_fixed_plan_and_green_wave_in_simulation(net_xml, routes):
     assert len(shift) == 1 and shift <= {0, 1}
     offs = [plan["junctions"][tid]["offset_s"] for tid in ids]
     assert offs == progression_offsets(plan["distances_m"], cycle, 50.0)
-    assert check_rules(r.phase_log, net_xml) == []
+    assert check_rules(r.phase_log, net_xml, end_t=r.diagnostics["duration_s"]) == []
 
 
 @pytest.mark.parametrize("ctl", [lambda: FixedWebster(DEMAND), Actuated])
 def test_baselines_obey_rules(net_xml, routes, ctl):
     r = run(net_xml, routes, ctl(), seed=1, duration=3600)
-    assert check_rules(r.phase_log, net_xml) == []
+    assert check_rules(r.phase_log, net_xml, end_t=r.diagnostics["duration_s"]) == []
     assert r.kpis["teleports"] == 0
     assert r.kpis["throughput"] > 0

@@ -34,6 +34,9 @@ class PhaseEntry(tuple):
         obj.state = state
         return obj
 
+    def __getnewargs__(self) -> tuple:  # pickle / copy support
+        return (*self, self.state)
+
 
 @dataclass
 class RunResult:

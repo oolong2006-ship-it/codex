@@ -96,3 +96,65 @@ def test_phase_kind():
     assert rules.phase_kind("rrGgrr") == "green"
     assert rules.phase_kind("rryyrr") == "yellow"
     assert rules.phase_kind("rrrrrr") == "all_red"
+
+
+def _net_greens(net_xml, tid):
+    return [s for s in rules._net_states(net_xml)[tid] if rules.phase_kind(s) == "green"]
+
+
+def test_frozen_signal_is_flagged(net_xml):
+    # a controller that never advances logs one entry per tls; the open phase must still
+    # be checked against MAX_GREEN up to the end of the run
+    tid = signal_ids(net_xml)[0]
+    g = _net_greens(net_xml, tid)[0]
+    msgs = check_rules([(0, tid, 0, g)], net_xml, end_t=3600)
+    assert len(msgs) == 1 and tid in msgs[0] and "3600" in msgs[0]
+
+
+def test_stuck_last_green_is_flagged(net_xml):
+    log = _cycle_log(cycles=2)  # ends with a green opened at t=160
+    assert check_rules(log, net_xml, end_t=log[-1][0] + 90) == []
+    msgs = check_rules(log, net_xml, end_t=log[-1][0] + 500)
+    assert len(msgs) == 1 and "500" in msgs[0] and f"t={log[-1][0]}" in msgs[0]
+
+
+def test_omitted_cross_street_green_is_flagged(net_xml):
+    # a program [Olaya G, y, all-red] that never serves the cross street must fail
+    tid = signal_ids(net_xml)[0]
+    g = _net_greens(net_xml, tid)[0]
+    log, t = [], 0
+    for _ in range(4):
+        for idx, (st, d) in enumerate([(g, 40), (rules_yellow(g), YELLOW), ("r" * len(g), ALL_RED)]):
+            log.append((t, tid, idx, st))
+            t += d
+    msgs = check_rules(log, net_xml, end_t=t)
+    assert msgs and any("cross" in m or "green" in m for m in msgs)
+    assert any("phases" in m for m in msgs)
+
+
+def test_full_cycle_with_net_greens_passes(net_xml):
+    tid = signal_ids(net_xml)[0]
+    greens = _net_greens(net_xml, tid)
+    log, t = [], 0
+    for _ in range(3):
+        idx = 0
+        for g in greens:
+            for st, d in [(g, 30), (rules_yellow(g), YELLOW), ("r" * len(g), ALL_RED)]:
+                log.append((t, tid, idx, st))
+                idx += 1
+                t += d
+    assert check_rules(log, net_xml, end_t=t) == []
+
+
+def rules_yellow(state):
+    return "".join("y" if c in "Gg" else "r" for c in state)
+
+
+def test_phase_entry_pickle_and_copy():
+    import copy
+    import pickle
+
+    from sim.runner import PhaseEntry
+    e = PhaseEntry(5, "J", 2, "rrGG")
+    for c in (pickle.loads(pickle.dumps(e)), copy.copy(e), copy.deepcopy(e)):
+        assert c == (5, "J", 2) and c.state == "rrGG" and isinstance(c, PhaseEntry)
