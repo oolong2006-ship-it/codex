@@ -1,0 +1,18 @@
+# Two-junction toy corridor for controller unit tests (same schema as sim/config/corridor.yaml).
+geometry: approximate
+olaya:
+  lanes_per_direction: 2
+  speed_kmh: 60
+cross_street_length_m: 200
+cross_street_speed_kmh: 50
+intersections:
+  - id: toy_a
+    name_ar: تقاطع تجريبي أ
+    lat: 24.6900
+    lon: 46.6865
+    cross_lanes: 1
+  - id: toy_b
+    name_ar: تقاطع تجريبي ب
+    lat: 24.6950
+    lon: 46.6865
+    cross_lanes: 1
