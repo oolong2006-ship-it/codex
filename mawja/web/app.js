@@ -431,14 +431,16 @@ function renderSummary(results, sk, mawjaKey, mawjaLabel) {
   const v = verdict(base, m);
   const wait = compare(base.avg_wait_s, m.avg_wait_s, 'lower');
   const cost = compare(base.cost_sar, m.cost_sar, 'lower');
+  // Green only when the overall verdict is an improvement; a worse figure is always amber.
+  const tone = (cmp) => (cmp.dir === -1 ? 'bad' : (v.cls === 'good' && cmp.dir === 1 ? 'good' : ''));
   const head = document.getElementById('headline');
   head.replaceChildren(
-    el('div', { class: `hl ${wait.dir === 1 ? 'good' : wait.dir === -1 ? 'bad' : ''}` }, [
+    el('div', { class: `hl ${tone(wait)}` }, [
       el('span', { class: 'hl-num', text: wait.dir === 0 ? '≈' : `${wait.pct < 0 ? '−' : '+'}${fmtPct(wait.pct)}` }),
       el('span', { class: 'hl-label', text: 'متوسط الانتظار' }),
       el('span', { class: 'hl-detail', text: `${fmtWait(base.avg_wait_s)} ← ${fmtWait(m.avg_wait_s)}` }),
     ]),
-    el('div', { class: `hl ${cost.dir === 1 ? 'good' : cost.dir === -1 ? 'bad' : ''}` }, [
+    el('div', { class: `hl ${tone(cost)}` }, [
       el('span', { class: 'hl-num', text: cost.dir === 0 ? '≈' : `${cost.pct < 0 ? '−' : '+'}${fmtPct(cost.pct)}` }),
       el('span', { class: 'hl-label', text: 'الكلفة التقديرية بالريال' }),
       el('span', { class: 'hl-detail', text: `${fmtInt(base.cost_sar)} ← ${fmtInt(m.cost_sar)} ريال خلال ساعتي الذروة` }),
@@ -679,20 +681,26 @@ async function initDemo() {
     return;
   }
 
-  const mawjaLabel = (mawja.meta && mawja.meta.label_ar) || controllerLabel(mawjaKey);
-  document.getElementById('algo-fixed').textContent = (fixed.meta && fixed.meta.label_ar) || controllerLabel('fixed');
-  document.getElementById('algo-mawja').textContent = mawjaLabel;
-  document.getElementById('title-mawja').textContent = 'موجة';
-
+  try {
+    const mawjaLabel = (mawja.meta && mawja.meta.label_ar) || controllerLabel(mawjaKey);
+    document.getElementById('algo-fixed').textContent = (fixed.meta && fixed.meta.label_ar) || controllerLabel('fixed');
+    document.getElementById('algo-mawja').textContent = mawjaLabel;
+    document.getElementById('title-mawja').textContent = 'موجة';
+    const sk = scaleKey(results.runs, fixed.meta.scale ?? 1);
+    if (results.runs[sk] && results.runs[sk].fixed && results.runs[sk][mawjaKey]) {
+      renderSummary(results, sk, mawjaKey, mawjaLabel);
+    } else {
+      document.getElementById('summary').hidden = true;
+    }
+    window.mawjaPlayer = new Player(fixed, mawja);
+  } catch (e) {
+    console.warn(e);
+    showError('تعذّر تجهيز العرض: بيانات ملفات المحاكاة غير مكتملة أو بصيغة غير متوقعة. '
+      + 'أعد تصدير ملفات data/ بأحدث إصدار من أداة المحاكاة.', [String(e && e.message || e)]);
+    return;
+  }
   document.getElementById('loading').hidden = true;
   document.body.dataset.state = 'ready';
-  const sk = scaleKey(results.runs, fixed.meta.scale ?? 1);
-  if (results.runs[sk] && results.runs[sk].fixed && results.runs[sk][mawjaKey]) {
-    renderSummary(results, sk, mawjaKey, mawjaLabel);
-  } else {
-    document.getElementById('summary').hidden = true;
-  }
-  window.mawjaPlayer = new Player(fixed, mawja);
 }
 
 async function initMethodology() {
@@ -713,6 +721,14 @@ async function initMethodology() {
   }
   const algo = document.getElementById('mawja-algo');
   if (algo) algo.textContent = controllerLabel(manifest.mawja);
+  // Show only the description of the algorithm the manifest names as Mawja.
+  let described = false;
+  for (const block of document.querySelectorAll('[data-algo]')) {
+    block.hidden = block.dataset.algo !== manifest.mawja;
+    described = described || !block.hidden;
+  }
+  const unknown = document.querySelector('.algo-unknown');
+  if (unknown) unknown.hidden = described;
   document.body.dataset.state = 'ready';
 }
 

@@ -264,3 +264,51 @@ def test_methodology_page(site):
                  "خوارزمية الضغط الأقصى", "SUMO", "ليست نتائج ميدانية", "45 ريالاً",
                  "2.33", "السيارات العابرة", "سيارات لم تتمكن من دخول الشارع", "0.8", "1.2"):
         assert text in body, text
+
+
+def test_methodology_describes_manifest_algorithm(serve, tmp_path):
+    def body_for(manifest, sub):
+        site_dir = tmp_path / sub
+        site_dir.mkdir()
+        _make_site(site_dir, manifest=manifest)
+        out = drive(serve(site_dir) + "/methodology.html", [
+            {"waitFor": "document.body.dataset.state === 'ready'"}], {"body": "document.body.innerText"})
+        assert out["console_errors"] == [] and out["page_errors"] == []
+        return out["evals"]["body"]
+
+    rl = body_for("rl", "rl")
+    assert "وكيل تعلم معزز" in rl and "دُرّب داخل المحاكاة" in rl
+    assert "Max-Pressure" not in rl and "ليست نموذج ذكاء اصطناعي" not in rl
+    mp = body_for("max_pressure", "mp")
+    assert "Max-Pressure" in mp and "ليست نموذج ذكاء اصطناعي مدرّباً" in mp
+    assert "وكيل تعلم معزز" not in mp
+
+
+def test_setup_failure_shows_error_not_ready(serve, tmp_path):
+    site_dir = _make_site(tmp_path)
+    for name in ("replay_fixed.json", "replay_max_pressure.json"):
+        path = site_dir / "data" / name
+        rep = json.loads(path.read_text(encoding="utf-8"))
+        rep["frames"] = []
+        path.write_text(json.dumps(rep), encoding="utf-8")
+    out = drive(serve(site_dir) + "/index.html", [ERROR], {
+        "error": "document.getElementById('error').innerText",
+        "state": "document.body.dataset.state"})
+    assert out["evals"]["state"] == "error"
+    assert "تعذّر تجهيز العرض" in out["evals"]["error"]
+    assert out["page_errors"] == []
+
+
+def test_headline_neutral_unless_verdict_good(serve, tmp_path):
+    site_dir = _make_site(tmp_path)
+    path = site_dir / "data" / "results.json"
+    results = json.loads(path.read_text(encoding="utf-8"))
+    mp = results["runs"]["1.0"]["max_pressure"]
+    mp["throughput"] = results["runs"]["1.0"]["fixed"]["throughput"] - 500  # wait lower, fewer cars
+    path.write_text(json.dumps(results), encoding="utf-8")
+    out = drive(serve(site_dir) + "/index.html", [READY], {
+        "tiles": "[...document.querySelectorAll('#headline .hl')].map(e => e.className)",
+        "verdict": "document.querySelector('#headline .hl-verdict').className"})
+    assert "mixed" in out["evals"]["verdict"]
+    assert len(out["evals"]["tiles"]) == 2
+    assert all("good" not in c for c in out["evals"]["tiles"])
