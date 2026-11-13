@@ -31,6 +31,7 @@ const nf1 = new Intl.NumberFormat('en-US', { minimumFractionDigits: 1, maximumFr
 function fmtInt(v) { return nf0.format(Math.round(v)); }
 function fmtWait(s) { return `${nf1.format(s)} ث`; }
 function fmtMetres(m) { return `${fmtInt(m)} م`; }
+function fmtHours(h) { return `${h < 100 ? nf1.format(h) : fmtInt(h)} ساعة`; }
 function fmtPct(p) { const a = Math.abs(p); return `${a < 1 ? nf1.format(a) : nf0.format(a)}%`; }
 
 function clockText(simSeconds) {
@@ -112,6 +113,9 @@ function resultsMismatches(results, replay) {
   if (rm.seed !== pm.seed) out.push(`البذرة العشوائية في results.json (${rm.seed}) لا تطابق ملفات العرض (${pm.seed})`);
   if (hash !== pm.demand_hash) out.push(`حجم المرور في results.json (${hash}) لا يطابق ملفات العرض (${pm.demand_hash})`);
   if (key === undefined) out.push('لا توجد في results.json نتائج لمقياس حجم المرور المعروض');
+  if (rm.duration !== pm.duration) {
+    out.push(`مدة المحاكاة في results.json (${rm.duration} ثانية) لا تطابق ملفات العرض (${pm.duration} ثانية)`);
+  }
   return out;
 }
 
@@ -295,7 +299,8 @@ class MapView {
 // ------------------------------------------------------------------ KPI cards
 
 const LIVE_KPIS = [
-  { key: 'avg_wait_s', label: 'متوسط الانتظار', fmt: fmtWait, better: 'lower' },
+  { key: 'delay_veh_h', label: 'ساعات توقف السيارات', fmt: fmtHours, better: 'lower' },
+  { key: 'avg_wait_s', label: 'متوسط الانتظار المتراكم', fmt: fmtWait, better: 'lower' },
   { key: 'max_queue_m', label: 'أطول طابور', fmt: fmtMetres, better: 'lower' },
   { key: 'throughput', label: 'السيارات العابرة', fmt: fmtInt, better: 'higher' },
 ];
@@ -331,7 +336,8 @@ function deltaText(cmp) {
 // ------------------------------------------------------------------ summary
 
 const LEDGER = [
-  { key: 'avg_wait_s', label: 'متوسط الانتظار', fmt: fmtWait, better: 'lower' },
+  { key: 'delay_veh_h', label: 'إجمالي ساعات توقف السيارات', fmt: fmtHours, better: 'lower' },
+  { key: 'avg_wait_s', label: 'متوسط الانتظار المتراكم', fmt: fmtWait, better: 'lower' },
   { key: 'max_queue_m', label: 'أطول طابور', fmt: fmtMetres, better: 'lower' },
   { key: 'throughput', label: 'السيارات العابرة', fmt: fmtInt, better: 'higher', abs: 'سيارة' },
   { key: 'pending_insertion', label: 'سيارات لم تتمكن من دخول الشارع', fmt: fmtInt, better: 'lower', abs: 'سيارة' },
@@ -352,22 +358,44 @@ function ledgerDelta(item, a, b) {
   return { text, dir: cmp.dir };
 }
 
+/** The lead delay measure: total stopped vehicle-hours (older results: the wait mean). */
+function delayMeasure(base, k) {
+  if (base.delay_veh_h != null && k.delay_veh_h != null) {
+    return { cmp: compare(base.delay_veh_h, k.delay_veh_h, 'lower'), name: 'ساعات توقف' };
+  }
+  return { cmp: compare(base.avg_wait_s, k.avg_wait_s, 'lower'), name: 'انتظار' };
+}
+
 /** Honest verdict of controller k against the fixed-time baseline at one scale. */
 function verdict(base, k) {
-  const wait = compare(base.avg_wait_s, k.avg_wait_s, 'lower');
+  const { cmp: wait, name } = delayMeasure(base, k);
   const fewerThrough = k.throughput < base.throughput;
   const morePending = k.pending_insertion > base.pending_insertion;
   if (wait.dir === 1 && !fewerThrough && !morePending) {
+    const caveats = [];
     const queue = compare(base.max_queue_m, k.max_queue_m, 'lower');
-    const caveat = queue.dir === -1 ? `، لكن أطول طابور أعلى بـ ${fmtPct(queue.pct)}` : '';
-    return { cls: 'good', text: `تحسّن: انتظار أقل بـ ${fmtPct(wait.pct)} دون خسارة في السيارات العابرة${caveat}` };
+    if (queue.dir === -1) caveats.push(`أطول طابور أعلى بـ ${fmtPct(queue.pct)}`);
+    const fuel = compare(base.fuel_l, k.fuel_l, 'lower');
+    if (fuel.dir === -1) caveats.push(`الوقود وانبعاثات CO₂ أعلى بـ ${fmtPct(fuel.pct)}`);
+    const caveat = caveats.length ? `، لكن ${caveats.join(' و')}` : '';
+    return { cls: 'good', text: `تحسّن: ${name} أقل بـ ${fmtPct(wait.pct)} دون خسارة في السيارات العابرة${caveat}` };
   }
   const issues = [];
   if (fewerThrough) issues.push(`عبور ${fmtInt(base.throughput - k.throughput)} سيارة أقل`);
   if (morePending) issues.push(`${fmtInt(k.pending_insertion - base.pending_insertion)} سيارة إضافية لم تدخل الشارع`);
-  if (wait.dir === -1) issues.unshift(`انتظار أعلى بـ ${fmtPct(wait.pct)}`);
+  if (fewerThrough && morePending) {
+    // Fewer cars through AND more left outside: worse, whatever the wait of those inside.
+    // A lower figure (stopped hours, else the accumulated-wait mean) comes last.
+    const avg = compare(base.avg_wait_s, k.avg_wait_s, 'lower');
+    let lower = '';
+    if (wait.dir === 1) lower = `، مع ${name} أقل بـ ${fmtPct(wait.pct)} للسيارات التي دخلت الشارع`;
+    else if (avg.dir === 1) lower = `، مع متوسط انتظار متراكم أقل بـ ${fmtPct(avg.pct)} للسيارات التي دخلت الشارع`;
+    if (wait.dir === -1) issues.push(`${name} أعلى بـ ${fmtPct(wait.pct)}`);
+    return { cls: 'bad', text: `أسوأ من التوقيت الثابت عند هذا الحجم: ${issues.join(' و')}${lower}` };
+  }
+  if (wait.dir === -1) issues.unshift(`${name} أعلى بـ ${fmtPct(wait.pct)}`);
   if (wait.dir === 1) {
-    return { cls: 'mixed', text: `نتيجة مختلطة: انتظار أقل بـ ${fmtPct(wait.pct)}، لكن ${issues.join(' و')}` };
+    return { cls: 'mixed', text: `نتيجة مختلطة: ${name} أقل بـ ${fmtPct(wait.pct)} للسيارات التي دخلت الشارع، لكن ${issues.join(' و')}` };
   }
   if (!issues.length) return { cls: 'mixed', text: 'لا فرق يُذكر' };
   return { cls: 'bad', text: `أسوأ من التوقيت الثابت: ${issues.join(' و')}` };
@@ -387,6 +415,7 @@ function renderScalesTable(tbody, results, mawjaKey, opts = {}) {
       const cells = [
         i === 0 ? el('th', { scope: 'row', rowSpan: ctrls.length, class: 'scale', text: scaleText(sk) }) : null,
         name,
+        el('td', { class: 'num', text: k.delay_veh_h != null ? fmtHours(k.delay_veh_h) : '—' }),
         el('td', { class: 'num', text: fmtWait(k.avg_wait_s) }),
       ];
       if (opts.full) cells.push(el('td', { class: 'num', text: fmtMetres(k.max_queue_m) }));
@@ -427,21 +456,30 @@ function renderSummary(results, sk, mawjaKey, mawjaLabel) {
       el('td', { class: `num delta d${d.dir}`, text: d.text }),
     ]));
   }
-  // Headline: the two numbers that matter, each with its honest direction.
+  // Headline: total stopped vehicle-hours leads, then the accumulated-wait mean and the
+  // cost, each with its honest direction.
   const v = verdict(base, m);
+  const delay = compare(base.delay_veh_h, m.delay_veh_h, 'lower');
   const wait = compare(base.avg_wait_s, m.avg_wait_s, 'lower');
   const cost = compare(base.cost_sar, m.cost_sar, 'lower');
   // Green only when the overall verdict is an improvement; a worse figure is always amber.
   const tone = (cmp) => (cmp.dir === -1 ? 'bad' : (v.cls === 'good' && cmp.dir === 1 ? 'good' : ''));
+  const num = (cmp) => (cmp.dir === 0 ? '≈' : `${cmp.pct < 0 ? '−' : '+'}${fmtPct(cmp.pct)}`);
   const head = document.getElementById('headline');
   head.replaceChildren(
-    el('div', { class: `hl ${tone(wait)}` }, [
-      el('span', { class: 'hl-num', text: wait.dir === 0 ? '≈' : `${wait.pct < 0 ? '−' : '+'}${fmtPct(wait.pct)}` }),
-      el('span', { class: 'hl-label', text: 'متوسط الانتظار' }),
-      el('span', { class: 'hl-detail', text: `${fmtWait(base.avg_wait_s)} ← ${fmtWait(m.avg_wait_s)}` }),
+    el('div', { class: `hl hl-lead ${tone(delay)}`, 'data-hl': 'delay_veh_h' }, [
+      el('span', { class: 'hl-num', text: num(delay) }),
+      el('span', { class: 'hl-label', text: 'إجمالي ساعات توقف السيارات' }),
+      el('span', { class: 'hl-detail', text: `${fmtHours(base.delay_veh_h)} ← ${fmtHours(m.delay_veh_h)} خلال ساعتي الذروة` }),
     ]),
-    el('div', { class: `hl ${tone(cost)}` }, [
-      el('span', { class: 'hl-num', text: cost.dir === 0 ? '≈' : `${cost.pct < 0 ? '−' : '+'}${fmtPct(cost.pct)}` }),
+    el('div', { class: `hl ${tone(wait)}`, 'data-hl': 'avg_wait_s' }, [
+      el('span', { class: 'hl-num', text: num(wait) }),
+      el('span', { class: 'hl-label', text: 'متوسط الانتظار المتراكم' }),
+      el('span', { class: 'hl-detail', text: `${fmtWait(base.avg_wait_s)} ← ${fmtWait(m.avg_wait_s)}` }),
+      el('span', { class: 'hl-note', text: 'يُحسب كل ثانية لكل سيارة، فيعطي الانتظارات الطويلة وزناً أكبر.' }),
+    ]),
+    el('div', { class: `hl ${tone(cost)}`, 'data-hl': 'cost_sar' }, [
+      el('span', { class: 'hl-num', text: num(cost) }),
       el('span', { class: 'hl-label', text: 'الكلفة التقديرية بالريال' }),
       el('span', { class: 'hl-detail', text: `${fmtInt(base.cost_sar)} ← ${fmtInt(m.cost_sar)} ريال خلال ساعتي الذروة` }),
     ]),
@@ -627,10 +665,10 @@ class Player {
     for (const k of LIVE_KPIS) {
       for (const name of ['fixed', 'mawja']) {
         const v = kNow[name];
-        this.cards[name][k.key].value.textContent = v ? k.fmt(v[k.key]) : '—';
+        this.cards[name][k.key].value.textContent = v && v[k.key] != null ? k.fmt(v[k.key]) : '—';
       }
       const d = this.cards.mawja[k.key].delta;
-      if (kNow.fixed && kNow.mawja) {
+      if (kNow.fixed && kNow.mawja && kNow.fixed[k.key] != null && kNow.mawja[k.key] != null) {
         const cmp = compare(kNow.fixed[k.key], kNow.mawja[k.key], k.better);
         d.textContent = deltaText(cmp);
         d.className = `kpi-delta d${cmp.dir}`;

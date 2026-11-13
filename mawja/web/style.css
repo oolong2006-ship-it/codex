@@ -241,7 +241,7 @@ body[data-state="loading"] #player { opacity: 0.35; pointer-events: none; }
 
 .kpis {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   border-top: 1px solid var(--rule);
 }
 
@@ -302,8 +302,8 @@ body.is-finished .summary h2 { color: var(--wave); }
 
 .headline {
   display: grid;
-  grid-template-columns: auto auto 1fr;
-  align-items: end;
+  grid-template-columns: auto auto auto 1fr;
+  align-items: start;
   gap: 18px 48px;
   margin: 22px 0 8px;
 }
@@ -320,7 +320,11 @@ body.is-finished .summary h2 { color: var(--wave); }
 .hl.bad .hl-num { color: var(--slow); }
 .hl-label { font-weight: 700; font-size: 1.05rem; }
 .hl-detail { color: var(--sand-dim); font-size: 0.88rem; font-variant-numeric: tabular-nums; }
-.hl-verdict { margin: 0; align-self: center; max-width: 46ch; color: var(--sand-dim); }
+.hl:not(.hl-lead) .hl-num { font-size: clamp(1.8rem, 3vw, 2.5rem); }
+.hl-lead .hl-num { font-size: clamp(3rem, 6vw, 4.4rem); }
+.hl-lead .hl-label { font-size: 1.15rem; }
+.hl-note { max-width: 30ch; margin-top: 4px; color: var(--sand-faint); font-size: 0.8rem; line-height: 1.5; }
+.hl-verdict { margin: 0; grid-column: 1 / -1; max-width: 80ch; color: var(--sand-dim); }
 
 table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
 th, td { padding: 9px 14px; text-align: start; }
@@ -403,14 +407,20 @@ td.num { white-space: nowrap; }
   .panels { grid-template-columns: minmax(0, 1fr); }
   .ledger th, .ledger td { padding: 8px 6px; }
   .ledger td.num { white-space: normal; }
-  .hl-num { font-size: 2.4rem; }
+  .hl-lead .hl-num { font-size: 2.6rem; }
   .controls { grid-template-columns: auto 1fr; row-gap: 10px; }
   .play, .speeds, .clock-wrap { grid-row: auto; }
   .scrub, .scrub-ends { grid-column: 1 / -1; }
   .headline { grid-template-columns: 1fr 1fr; }
-  .hl-verdict { grid-column: 1 / -1; }
+  .hl-lead { grid-column: 1 / -1; }
   .kpi { padding: 10px 12px; }
   .kpi-value { font-size: 1.3rem; }
+}
+
+@media (max-width: 600px) {
+  .kpis { grid-template-columns: repeat(2, 1fr); }
+  .kpi:nth-child(3) { border-inline-start: 0; }
+  .kpi:nth-child(n + 3) { border-top: 1px solid var(--rule); }
 }
 
 @media (prefers-reduced-motion: reduce) {

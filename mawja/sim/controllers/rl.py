@@ -18,6 +18,8 @@ import numpy as np
 
 from sim.controllers.max_pressure import MaxPressure
 
+# The committed policy lives in the source checkout: this path assumes an editable install
+# (``pip install -e ".[rl]"``), not a copy in site-packages.
 ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_MODEL = ROOT / "models" / "rl_policy.zip"
 
@@ -41,7 +43,7 @@ class RLController(MaxPressure):
             import torch
             from sb3_contrib import MaskablePPO
         except ImportError as exc:
-            raise _unavailable(f"rl extra not installed ({exc}); pip install -e '.[rl]'") \
+            raise _unavailable(f"rl extra not installed ({exc}); pip install -e \".[rl]\"") \
                 from exc
         torch.set_num_threads(1)
         self.model_path = model_path

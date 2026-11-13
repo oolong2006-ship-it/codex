@@ -10,7 +10,7 @@
 <header class="masthead">
   <div class="masthead-main">
     <h1><span class="wordmark">موجة</span> — إشارات ذكية لشارع العليا</h1>
-    <p class="lede">محاكاة ذروة المساء من 16:00 إلى 18:00 على ستة تقاطعات متتالية: الإشارات الحالية بتوقيت ثابت، مقابل إشارات تتكيّف مع الطوابير لحظة بلحظة.
+    <p class="lede">محاكاة ذروة المساء من 16:00 إلى 18:00 على ستة تقاطعات متتالية: توقيت ثابت منسّق يمثّل الوضع الحالي (التوقيتات الفعلية غير متوفرة لنا)، مقابل إشارات تتكيّف مع الطوابير لحظة بلحظة.
       <span class="badge" title="أحجام المرور في هذه المحاكاة تقديرية وليست عدّاً ميدانياً">حجم المرور تقديري</span>
       <a class="method-link" href="methodology.html">كيف بُنيت هذه المحاكاة؟</a></p>
   </div>
@@ -44,10 +44,10 @@
   <div class="panels">
     <section class="panel panel-fixed" aria-labelledby="title-fixed">
       <header class="panel-head">
-        <h2 id="title-fixed">الوضع الحالي (توقيت ثابت)</h2>
+        <h2 id="title-fixed">توقيت ثابت منسّق (يمثّل الوضع الحالي)</h2>
         <p class="algo" id="algo-fixed"></p>
       </header>
-      <canvas id="canvas-fixed" class="map" aria-label="خريطة حركة السيارات مع الإشارات الحالية"></canvas>
+      <canvas id="canvas-fixed" class="map" aria-label="خريطة حركة السيارات مع التوقيت الثابت المنسّق"></canvas>
       <div class="kpis" data-panel="fixed"></div>
     </section>
     <section class="panel panel-mawja" aria-labelledby="title-mawja">
@@ -78,17 +78,17 @@
     </table>
 
     <figure class="trend">
-      <figcaption>متوسط الانتظار حتى كل لحظة (ثانية) <span class="key key-fixed">التوقيت الثابت</span> <span class="key key-mawja">موجة</span></figcaption>
+      <figcaption>متوسط الانتظار المتراكم حتى كل لحظة (ثانية) <span class="key key-fixed">التوقيت الثابت</span> <span class="key key-mawja">موجة</span></figcaption>
       <canvas id="trend" aria-label="منحنى متوسط الانتظار عبر الزمن للطريقتين"></canvas>
     </figure>
 
     <h3>هل تصمد النتيجة إذا تغيّر حجم المرور؟</h3>
-    <p class="summary-sub">حجم المرور المرجعي تقديري، لذلك أعدنا المحاكاة عند 80% و120% منه. «السيارات العابرة» و«سيارات لم تتمكن من دخول الشارع» معروضتان بجانب الانتظار؛ لأن انخفاض الانتظار لا يُعدّ تحسّناً إذا عبرت سيارات أقل أو بقيت سيارات أكثر خارج الشارع.</p>
+    <p class="summary-sub">حجم المرور المرجعي تقديري، لذلك أعدنا المحاكاة عند 80% و120% منه. «السيارات العابرة» و«سيارات لم تتمكن من دخول الشارع» معروضتان بجانب ساعات التوقف والانتظار؛ لأن انخفاضهما لا يُعدّ تحسّناً إذا عبرت سيارات أقل أو بقيت سيارات أكثر خارج الشارع.</p>
     <div class="table-scroll">
       <table class="scales" id="scales-table">
         <thead><tr>
           <th scope="col">حجم المرور</th><th scope="col">طريقة التحكم</th>
-          <th scope="col">متوسط الانتظار</th><th scope="col">السيارات العابرة</th>
+          <th scope="col">ساعات توقف السيارات</th><th scope="col">متوسط الانتظار المتراكم</th><th scope="col">السيارات العابرة</th>
           <th scope="col">سيارات لم تتمكن من دخول الشارع</th><th scope="col">الكلفة التقديرية بالريال</th>
           <th scope="col">مقارنة بالتوقيت الثابت</th>
         </tr></thead>

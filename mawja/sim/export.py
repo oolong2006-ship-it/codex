@@ -10,7 +10,7 @@ Replay format (consumed by the offline web demo)::
      tls: [{id, name_ar, x, y}],                      # south -> north
      frames: [{t, v: [[x, y, waiting_bucket], ...],   # 1 frame / s, 0.5 m
                s: {tls_id: "G" | "Y" | "R"},          # Olaya northbound through signal
-               k: {avg_wait_s, max_queue_m, throughput}}]}   # KPIs accumulated up to t
+               k: {delay_veh_h, avg_wait_s, max_queue_m, throughput}}]}  # KPIs up to t
 
 Frames are recorded every second. If the 1 Hz file would exceed REPLAY_BUDGET_BYTES
 (a 7200 s peak has ~460 vehicles on the road), every ``frame_step_s``-th frame is kept
@@ -41,6 +41,8 @@ from sim.rules import check_rules
 from sim.runner import RunResult, run
 
 ROOT = Path(__file__).resolve().parents[1]
+# Paths are relative to the source checkout: they assume an editable install
+# (``pip install -e .``), as the README describes, not a copy in site-packages.
 CFG = ROOT / "sim" / "config"
 CORRIDOR_YAML = CFG / "corridor.yaml"
 DEMAND_YAML = CFG / "demand_evening.yaml"
@@ -137,7 +139,7 @@ def _load_rl():
     except ImportError as exc:
         raise ControllerUnavailable(
             "controller 'rl' is not available: the rl extra is not installed "
-            f"(pip install -e '.[rl]'): {exc}") from exc
+            f"(pip install -e \".[rl]\"): {exc}") from exc
     return lambda: RLController(DEFAULT_MODEL)
 
 
@@ -222,7 +224,8 @@ def _frame_converter(link_idx: dict[str, int]):
             "v": [[half_m(v["x"]), half_m(v["y"]), waiting_bucket(v["wait"])]
                   for v in frame["vehicles"]],
             "s": {tid: signal_char(frame["tls"][tid][i]) for tid, i in link_idx.items()},
-            "k": {"avg_wait_s": round(k["avg_wait_s"], 1),
+            "k": {"delay_veh_h": round(k["delay_veh_h"], 2),
+                  "avg_wait_s": round(k["avg_wait_s"], 1),
                   "max_queue_m": round(k["max_queue_m"], 1),
                   "throughput": int(k["throughput"])},
         }

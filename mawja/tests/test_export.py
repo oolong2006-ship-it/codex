@@ -60,7 +60,7 @@ def test_replay_schema(short_replay):
         assert set(f) == {"t", "v", "s", "k"}
         assert set(f["s"]) == set(names)
         assert set(f["s"].values()) <= {"G", "Y", "R"}
-        assert set(f["k"]) == {"avg_wait_s", "max_queue_m", "throughput"}
+        assert set(f["k"]) == {"delay_veh_h", "avg_wait_s", "max_queue_m", "throughput"}
         for x, y, b in f["v"]:
             assert _is_half_metre(x) and _is_half_metre(y)
             assert b in (0, 1, 2)
@@ -194,6 +194,7 @@ def test_committed_replays_match_results():
         assert meta["controller"] == name
         assert (meta["seed"], meta["demand_hash"]) == (res["meta"]["seed"],
                                                        res["meta"]["demand_hash"])
+        assert meta["duration"] == res["meta"]["duration"]
 
 
 def test_committed_replay_final_kpis_match_results():
@@ -206,6 +207,7 @@ def test_committed_replay_final_kpis_match_results():
         k, kpis = rep["frames"][-1]["k"], res["runs"]["1.0"][name]
         assert k["throughput"] == kpis["throughput"]
         assert k["avg_wait_s"] == pytest.approx(kpis["avg_wait_s"], abs=0.05)
+        assert k["delay_veh_h"] == pytest.approx(kpis["delay_veh_h"], abs=0.005)
         assert k["max_queue_m"] == pytest.approx(kpis["max_queue_m"], abs=0.05)
 
 

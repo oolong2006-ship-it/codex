@@ -63,7 +63,7 @@
 
 الأوامر بالإنجليزية كما هي:
 
-    pip install -e '.[rl]'
+    pip install -e ".[rl]"
     # stage 1: halting reward, ~1 M decisions (about 25 min on 4 cores)
     python -m sim.rl.train --reward halting --steps 1000000 --log-dir build/rl_stage1 \
         --out build/rl_stage1/final_policy.zip

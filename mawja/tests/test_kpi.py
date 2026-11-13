@@ -3,7 +3,7 @@ import pytest
 from sim.kpi import (FUEL_SAR_PER_L, VALUE_OF_TIME_SAR_PER_H, KpiAccumulator, cost_sar,
                      QUEUE_M_PER_HALTING_VEHICLE, PETROL_DENSITY_G_PER_L)
 
-KEYS = {"avg_wait_s", "max_queue_m", "throughput", "unfinished", "teleports",
+KEYS = {"delay_veh_h", "avg_wait_s", "max_queue_m", "throughput", "unfinished", "teleports",
         "fuel_l", "co2_kg", "cost_sar", "pending_insertion"}
 
 
@@ -30,6 +30,8 @@ def test_accumulator_avg_wait_is_pooled_vehicle_second_mean():
     assert k["max_queue_m"] == pytest.approx(4 * QUEUE_M_PER_HALTING_VEHICLE)
     assert k["throughput"] == 5 and k["unfinished"] == 1 and k["teleports"] == 0
     assert k["pending_insertion"] == 2
+    # two halting vehicle-seconds in total
+    assert k["delay_veh_h"] == pytest.approx(2 / 3600)
 
 
 def test_accumulator_fuel_co2_and_cost():
@@ -40,6 +42,7 @@ def test_accumulator_fuel_co2_and_cost():
     k = acc.finish(arrived=0, unfinished=1, teleports=0, pending_insertion=0)
     assert k["fuel_l"] == pytest.approx(1.0)
     assert k["co2_kg"] == pytest.approx(1.0)
+    assert k["delay_veh_h"] == pytest.approx(1.0)
     assert k["cost_sar"] == pytest.approx(45.0 + 2.33)
 
 
@@ -49,3 +52,15 @@ def test_queue_capped_at_lane_length():
     acc.add_second(waits=[0.0], halting=81, lane_halting=[81, 3], lane_length_m=[606.0, 50.0],
                    fuel_mg=0.0, co2_mg=0.0)
     assert acc.finish(0, 0, 0, 0)["max_queue_m"] == pytest.approx(606.0)
+
+
+def test_delay_counts_each_stopped_second_once_while_avg_wait_weights_long_waits():
+    # One car stopped for 100 s next to one moving car: 100 stopped vehicle-seconds, but
+    # the accumulated-wait mean grows with the square of the stop length.
+    acc = KpiAccumulator()
+    for t in range(1, 101):
+        acc.add_second(waits=[float(t), 0.0], halting=1, lane_halting=[1], lane_length_m=[100.0],
+                       fuel_mg=0.0, co2_mg=0.0)
+    k = acc.finish(0, 2, 0, 0)
+    assert k["delay_veh_h"] == pytest.approx(100 / 3600)
+    assert k["avg_wait_s"] == pytest.approx(sum(range(1, 101)) / 200)

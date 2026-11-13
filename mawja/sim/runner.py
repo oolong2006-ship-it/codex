@@ -123,8 +123,8 @@ def run(net_xml: Path, routes: Path, controller: Controller, seed: int,
                                  for vid, v in veh.items()],
                     "tls": {tid: conn.trafficlight.getRedYellowGreenState(tid)
                             for tid in tls_ids},
-                    "k": {"avg_wait_s": acc.avg_wait_s, "max_queue_m": acc.max_queue_m,
-                          "throughput": arrived},
+                    "k": {"delay_veh_h": acc.delay_veh_h, "avg_wait_s": acc.avg_wait_s,
+                          "max_queue_m": acc.max_queue_m, "throughput": arrived},
                 }
                 frames.append(frame_fn(frame) if frame_fn is not None else frame)
 

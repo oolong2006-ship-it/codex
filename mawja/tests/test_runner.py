@@ -8,7 +8,7 @@ from sim.network import build_network, signal_ids
 from sim.runner import RunResult, run
 
 CFG = Path(__file__).resolve().parents[1] / "sim" / "config"
-KEYS = {"avg_wait_s", "max_queue_m", "throughput", "unfinished", "teleports",
+KEYS = {"delay_veh_h", "avg_wait_s", "max_queue_m", "throughput", "unfinished", "teleports",
         "fuel_l", "co2_kg", "cost_sar", "pending_insertion"}
 
 

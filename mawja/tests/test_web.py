@@ -106,7 +106,7 @@ def _mini_replay(controller, label_ar, demand_hash, seed=1):
         t = 3 * i
         frames.append({"t": t, "v": [[0, (t * 7) % 1000, i % 3], [3, 480, 2]],
                        "s": {"j1": "GYR"[i % 3]},
-                       "k": {"avg_wait_s": float(i), "max_queue_m": 7.5 * i, "throughput": 2 * i}})
+                       "k": {"delay_veh_h": 0.1 * i, "avg_wait_s": float(i), "max_queue_m": 7.5 * i, "throughput": 2 * i}})
     return {"meta": {"controller": controller, "label_ar": label_ar, "seed": seed,
                      "demand_hash": demand_hash, "duration": 120, "scale": 1.0,
                      "frame_step_s": 3},
@@ -122,6 +122,7 @@ def _make_site(tmp: Path, fixed_hash="aaaa", mawja_hash="aaaa", manifest="max_pr
     results = json.loads((WEB / "data" / "results.json").read_text(encoding="utf-8"))
     results["meta"]["demand_hash"] = fixed_hash
     results["meta"]["demand_hash_by_scale"]["1.0"] = fixed_hash
+    results["meta"]["duration"] = 120  # duration of the mini replays
     (data / "results.json").write_text(json.dumps(results), encoding="utf-8")
     (data / "manifest.json").write_text(json.dumps({"mawja": manifest}), encoding="utf-8")
     (data / "replay_fixed.json").write_text(json.dumps(
@@ -157,13 +158,16 @@ def test_rtl_and_arabic(site):
     assert ev["dir"] == "rtl" and ev["lang"] == "ar"
     assert "موجة — إشارات ذكية لشارع العليا" in ev["h1"]
     body = ev["body"]
-    for text in ("الوضع الحالي (توقيت ثابت)", "خوارزمية الضغط الأقصى", "حجم المرور تقديري",
-                 "متوسط الانتظار", "أطول طابور", "السيارات العابرة", "حتى الآن",
+    for text in ("توقيت ثابت منسّق (يمثّل الوضع الحالي)", "خوارزمية الضغط الأقصى",
+                 "حجم المرور تقديري", "إجمالي ساعات توقف السيارات", "ساعات توقف السيارات",
+                 "متوسط الانتظار المتراكم", "أطول طابور", "السيارات العابرة", "حتى الآن",
                  "الكلفة التقديرية بالريال", "11.4 مليار ريال", "منتدى الرياض الاقتصادي"):
         assert text in body, text
     # The Mawja panel is labelled by its real algorithm, never as a trained AI agent.
     assert "وكيل تعلم معزز" not in body
     assert "16:00" in body
+    # The baseline is not asserted to BE today's signals.
+    assert "الوضع الحالي (توقيت ثابت)" not in body
 
 
 def test_mismatched_meta_shows_error(serve, tmp_path):
@@ -192,6 +196,20 @@ def test_results_mismatch_shows_error(serve, tmp_path):
     assert "results.json" in out["evals"]["error"]
 
 
+def test_results_duration_mismatch_shows_error(serve, tmp_path):
+    site_dir = _make_site(tmp_path)
+    res_path = site_dir / "data" / "results.json"
+    results = json.loads(res_path.read_text(encoding="utf-8"))
+    results["meta"]["duration"] = 600  # the fixture replays last 120 s
+    res_path.write_text(json.dumps(results), encoding="utf-8")
+    out = drive(serve(site_dir) + "/index.html", [ERROR], {
+        "error": "document.getElementById('error').innerText",
+        "play_disabled": "document.getElementById('play').disabled"})
+    assert "لا يمكن تشغيل المقارنة" in out["evals"]["error"]
+    assert "مدة المحاكاة في results.json (600 ثانية)" in out["evals"]["error"]
+    assert out["evals"]["play_disabled"] is True
+
+
 def test_matching_fixture_plays(serve, tmp_path):
     url = serve(_make_site(tmp_path))
     out = drive(url + "/index.html", [READY], {"state": "document.body.dataset.state"})
@@ -212,7 +230,7 @@ def test_kpis_update(site):
             "[...document.querySelectorAll('[data-kpi-value]')].map(e => e.textContent).join('|')")
     out = drive(site + "/index.html", [READY], {"before": kpis, "clock": "document.getElementById('clock').textContent"})
     before = out["evals"]["before"]
-    assert before.startswith("6|")
+    assert before.startswith("8|")
     out = drive(site + "/index.html", [READY, {"click": "[data-speed='60']"}, {"click": "#play"},
                                        {"wait": 2000}],
                 {"after": kpis, "clock": "document.getElementById('clock').textContent"})
@@ -225,7 +243,8 @@ def test_summary_is_honest_per_scale(site):
     out = drive(site + "/index.html", [READY], {
         "rows": """[...document.querySelectorAll('#scales-table tbody tr')].map(r => ({
             scale: r.dataset.scale, controller: r.dataset.controller,
-            text: r.innerText, verdict: (r.querySelector('.verdict') || {}).textContent || ''}))""",
+            text: r.innerText, verdict: (r.querySelector('.verdict') || {}).textContent || '',
+            cls: (r.querySelector('.verdict') || {}).className || ''}))""",
     })
     rows = out["evals"]["rows"]
     results = json.loads((WEB / "data" / "results.json").read_text(encoding="utf-8"))
@@ -242,9 +261,26 @@ def test_summary_is_honest_per_scale(site):
                      or k["pending_insertion"] > base["pending_insertion"])
             if ctrl != "fixed" and worse:
                 assert "تحسّن" not in row["verdict"], (scale, ctrl, row["verdict"])
-    # 1.2x: max-pressure moves fewer cars and leaves more outside -> never called an improvement
-    assert "تحسّن" not in by[("1.2", "max_pressure")]["verdict"]
+            both = (k["throughput"] < base["throughput"]
+                    and k["pending_insertion"] > base["pending_insertion"])
+            if ctrl != "fixed" and both:
+                # Ruling R16: fewer cars through AND more left outside -> worse, full stop;
+                # a lower delay is mentioned last and only for the cars that got in.
+                v = row["verdict"]
+                assert "bad" in row["cls"].split(), (scale, ctrl, row["cls"])
+                assert v.startswith("أسوأ من التوقيت الثابت عند هذا الحجم: "), v
+                if (k["delay_veh_h"] < base["delay_veh_h"]
+                        or k["avg_wait_s"] < base["avg_wait_s"]):
+                    assert v.endswith("للسيارات التي دخلت الشارع"), v
+                    assert v.index("لم تدخل الشارع") < v.index("أقل بـ"), v
+    # 1.2x: max-pressure moves fewer cars and leaves more outside -> worse, not mixed
+    mp12 = by[("1.2", "max_pressure")]
+    assert "تحسّن" not in mp12["verdict"] and "bad" in mp12["cls"].split()
     assert "تحسّن" in by[("1.0", "max_pressure")]["verdict"]
+    # Scale 0.8: lower delay but more fuel -> the improvement carries a fuel / CO2 caveat.
+    r08 = results["runs"]["0.8"]
+    if r08["max_pressure"]["fuel_l"] > r08["fixed"]["fuel_l"] * 1.005:
+        assert "الوقود وانبعاثات CO₂ أعلى" in by[("0.8", "max_pressure")]["verdict"]
 
 
 def test_methodology_page(site):
@@ -259,7 +295,10 @@ def test_methodology_page(site):
     assert ev["dir"] == "rtl"
     assert ev["rows"] == 9
     body = ev["body"]
-    for text in ("تقريبية", "OpenStreetMap", "تقديري", "1800", "700", "300", "Webster",
+    for text in ("لم تتوفر لنا توقيتات الإشارات الفعلية في شارع العليا",
+                 "1800 مركبة/ساعة لكل حارة", "والاتجاه جنوباً غير منسّق", "بنزين 95",
+                 "إجمالي ساعات توقف السيارات", "متوسط الانتظار المتراكم", "وزناً أكبر",
+                 "تقريبية", "OpenStreetMap", "تقديري", "1800", "700", "300", "Webster",
                  "60 ثانية", "موجة خضراء", "10 ثوانٍ", "90 ثانية", "3 ثوانٍ", "ثانيتان",
                  "خوارزمية الضغط الأقصى", "SUMO", "ليست نتائج ميدانية", "45 ريالاً",
                  "2.33", "السيارات العابرة", "سيارات لم تتمكن من دخول الشارع", "0.8", "1.2"):
@@ -278,10 +317,12 @@ def test_methodology_describes_manifest_algorithm(serve, tmp_path):
 
     rl = body_for("rl", "rl")
     assert "وكيل تعلم معزز" in rl and "دُرّب داخل المحاكاة" in rl
+    assert "الطوابير على الحارات الداخلة وطوابير التقاطعين المجاورين" in rl
     assert "Max-Pressure" not in rl and "ليست نموذج ذكاء اصطناعي" not in rl
     mp = body_for("max_pressure", "mp")
     assert "Max-Pressure" in mp and "ليست نموذج ذكاء اصطناعي مدرّباً" in mp
     assert "وكيل تعلم معزز" not in mp
+    assert "بفارق كافٍ" not in mp
 
 
 def test_setup_failure_shows_error_not_ready(serve, tmp_path):
@@ -310,5 +351,24 @@ def test_headline_neutral_unless_verdict_good(serve, tmp_path):
         "tiles": "[...document.querySelectorAll('#headline .hl')].map(e => e.className)",
         "verdict": "document.querySelector('#headline .hl-verdict').className"})
     assert "mixed" in out["evals"]["verdict"]
-    assert len(out["evals"]["tiles"]) == 2
+    assert len(out["evals"]["tiles"]) == 3
     assert all("good" not in c for c in out["evals"]["tiles"])
+
+
+def test_headline_leads_with_stopped_vehicle_hours(site):
+    out = drive(site + "/index.html", [READY], {
+        "keys": "[...document.querySelectorAll('#headline .hl')].map(e => e.dataset.hl)",
+        "first": "document.querySelector('#headline .hl').innerText",
+        "second": "document.querySelectorAll('#headline .hl')[1].innerText",
+        "ledger": "document.querySelector('#ledger tbody tr').innerText"})
+    assert out["console_errors"] == [] and out["page_errors"] == []
+    ev = out["evals"]
+    assert ev["keys"] == ["delay_veh_h", "avg_wait_s", "cost_sar"]
+    res = json.loads((WEB / "data" / "results.json").read_text(encoding="utf-8"))["runs"]["1.0"]
+    f, m = res["fixed"]["delay_veh_h"], res["max_pressure"]["delay_veh_h"]
+    pct = abs(m - f) / f * 100
+    assert "إجمالي ساعات توقف السيارات" in ev["first"]
+    assert f"−{pct:.0f}%" in ev["first"], (ev["first"], pct)
+    assert f"{f:,.0f} ساعة" in ev["first"] and f"{m:,.0f} ساعة" in ev["first"]
+    assert "متوسط الانتظار المتراكم" in ev["second"] and "وزناً أكبر" in ev["second"]
+    assert ev["ledger"].startswith("إجمالي ساعات توقف السيارات")
