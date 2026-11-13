@@ -38,12 +38,17 @@ def _parser() -> argparse.ArgumentParser:
     e.add_argument("--duration", type=int, default=None,
                    help="simulated seconds (default: full 7200 s peak)")
     e.add_argument("--set-mawja", action="store_true",
-                   help="set manifest.json mawja to this controller")
+                   help="set manifest.json mawja to this controller "
+                        f"(only {' / '.join(export.MAWJA_CHOICES)})")
     return p
 
 
 def main(argv: list[str] | None = None) -> int:
-    args = _parser().parse_args(argv)
+    parser = _parser()
+    args = parser.parse_args(argv)
+    if args.cmd == "export" and args.set_mawja and args.controller not in export.MAWJA_CHOICES:
+        parser.error(f"--set-mawja: Mawja can only be {' or '.join(export.MAWJA_CHOICES)}, "
+                     f"not {args.controller!r}")
     log = lambda msg: print(msg, file=sys.stderr, flush=True)  # noqa: E731
     try:
         if args.cmd == "compare":
@@ -56,7 +61,8 @@ def main(argv: list[str] | None = None) -> int:
             manifest = export.write_manifest(
                 args.out, args.controller if args.set_mawja else None)
             log(f"wrote {path} ({path.stat().st_size / 1e6:.1f} MB); manifest {manifest}")
-    except (export.RuleViolation, export.ControllerUnavailable) as exc:
+    except (export.RuleViolation, export.ControllerUnavailable,
+            export.ReplayIncomplete) as exc:
         log(f"error: {exc}")
         return 1
     return 0

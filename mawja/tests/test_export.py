@@ -99,7 +99,8 @@ def test_choose_frame_step():
     ts = list(range(1, 11))
     assert export.choose_frame_step([10] * 10, ts, overhead=0, budget=200) == 1
     assert export.choose_frame_step([10] * 10, ts, overhead=0, budget=60) == 2
-    assert export.choose_frame_step([10] * 10, ts, overhead=0, budget=40) == 3
+    # step 3 keeps 3, 6, 9 and the final frame 10 (44 B > 40) -> step 4 (4, 8, 10)
+    assert export.choose_frame_step([10] * 10, ts, overhead=0, budget=40) == 4
 
 
 def test_frames_thinned_uniformly_when_over_budget(tmp_path):
@@ -156,9 +157,9 @@ def test_cli_export_writes_manifest(tmp_path):
     assert (tmp_path / "replay_max_pressure.json").exists()
     assert json.loads((tmp_path / "manifest.json").read_text()) == {"mawja": "max_pressure"}
     rc = cli.main(["export", "--controller", "fixed", "--seed", "1", "--duration", "30",
-                   "--out", str(tmp_path), "--set-mawja"])
-    assert rc == 0
-    assert json.loads((tmp_path / "manifest.json").read_text()) == {"mawja": "fixed"}
+                   "--out", str(tmp_path)])
+    assert rc == 0  # exporting another controller leaves the Mawja choice alone
+    assert json.loads((tmp_path / "manifest.json").read_text()) == {"mawja": "max_pressure"}
 
 
 def test_cli_rl_unavailable_is_clear_error(tmp_path, monkeypatch, capsys):
@@ -206,3 +207,47 @@ def test_committed_replay_final_kpis_match_results():
         assert k["throughput"] == kpis["throughput"]
         assert k["avg_wait_s"] == pytest.approx(kpis["avg_wait_s"], abs=0.05)
         assert k["max_queue_m"] == pytest.approx(kpis["max_queue_m"], abs=0.05)
+
+
+# --- Task 8 hardening ---------------------------------------------------------------------
+
+def test_replay_keeps_final_frame_when_duration_not_multiple_of_step(tmp_path):
+    path = export.export_replay("fixed", seed=1, out_dir=tmp_path, duration=61,
+                                work_dir=tmp_path / "w", budget_bytes=60_000)
+    rep = json.loads(path.read_text(encoding="utf-8"))
+    step = rep["meta"]["frame_step_s"]
+    assert step > 1 and 61 % step != 0
+    ts = [f["t"] for f in rep["frames"]]
+    assert ts[:-1] == list(range(step, 61, step))
+    assert ts[-1] == 61 == rep["meta"]["duration"]
+    assert path.stat().st_size <= 60_000
+
+
+def test_replay_missing_final_frame_fails_loudly(tmp_path, monkeypatch):
+    real = export.run_checked
+
+    def drop_last(*a, **k):
+        r = real(*a, **k)
+        r.frames.pop()
+        return r
+
+    monkeypatch.setattr(export, "run_checked", drop_last)
+    with pytest.raises(export.ReplayIncomplete):
+        export.export_replay("fixed", seed=1, out_dir=tmp_path, duration=30,
+                             work_dir=tmp_path / "w")
+    assert not (tmp_path / "replay_fixed.json").exists()
+
+
+def test_set_mawja_only_rl_or_max_pressure(tmp_path, capsys):
+    for bad in ("fixed", "actuated"):
+        with pytest.raises(SystemExit) as exc:
+            cli.main(["export", "--controller", bad, "--seed", "1", "--duration", "30",
+                      "--out", str(tmp_path), "--set-mawja"])
+        assert exc.value.code != 0
+        assert "--set-mawja" in capsys.readouterr().err
+        assert not (tmp_path / f"replay_{bad}.json").exists()
+        assert not (tmp_path / "manifest.json").exists()
+    with pytest.raises(ValueError):
+        export.write_manifest(tmp_path, "fixed")
+    assert export.write_manifest(tmp_path, "rl") == {"mawja": "rl"}
+    assert export.write_manifest(tmp_path, "max_pressure") == {"mawja": "max_pressure"}

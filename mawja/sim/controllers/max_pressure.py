@@ -90,8 +90,26 @@ class MaxPressure:
             self._start[tid] = 0
 
     def step(self, conn: Any, t: int) -> None:
+        for tid in self._due(conn, t):
+            if self._decide(conn, tid):
+                self._end_green(conn.trafficlight, tid)
+
+    def green_index(self, tid: str) -> int:
+        """Index (into ``self._greens[tid]``) of the green being served or just ended."""
+        return self._phase[tid] // 3
+
+    def green_seconds(self, tid: str, t: int) -> int | None:
+        """Length the current green would have if it ended now (None outside green)."""
+        if self._phase[tid] % 3 != 0:
+            return None
+        return t + 1 - self._start[tid]
+
+    def _due(self, conn: Any, t: int) -> list[str]:
+        """Bookkeeping for second ``t``: track phase changes, force the end of greens at
+        MAX_GREEN, and return the tls whose extend/advance decision is due now."""
         tl = conn.trafficlight
-        for tid, greens in self._greens.items():
+        due: list[str] = []
+        for tid in self._greens:
             idx = tl.getPhase(tid)
             if idx != self._phase[tid]:          # a phase change took effect this step
                 self._phase[tid] = idx
@@ -109,11 +127,16 @@ class MaxPressure:
                 continue
             if green_s < MIN_GREEN or (green_s - MIN_GREEN) % self.decision_interval:
                 continue
-            g = idx // 3
-            cur = pressure(conn, tid, greens[g])
-            nxt = pressure(conn, tid, greens[(g + 1) % len(greens)])
-            if nxt - cur > self.threshold:
-                self._end_green(tl, tid)
+            due.append(tid)
+        return due
+
+    def _decide(self, conn: Any, tid: str) -> bool:
+        """True = advance to the next phase: its pressure exceeds the current one's."""
+        greens = self._greens[tid]
+        g = self.green_index(tid)
+        cur = pressure(conn, tid, greens[g])
+        nxt = pressure(conn, tid, greens[(g + 1) % len(greens)])
+        return nxt - cur > self.threshold
 
     def _end_green(self, tl: Any, tid: str) -> None:
         """Let SUMO move to this green's yellow (then all-red, next green) next step,

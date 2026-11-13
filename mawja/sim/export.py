@@ -14,7 +14,8 @@ Replay format (consumed by the offline web demo)::
 
 Frames are recorded every second. If the 1 Hz file would exceed REPLAY_BUDGET_BYTES
 (a 7200 s peak has ~460 vehicles on the road), every ``frame_step_s``-th frame is kept
-(t = step, 2 step, ..., so the final frame -- final KPIs -- is always included); the
+(t = step, 2 step, ...) plus the final frame (t = duration, final KPIs), which is always
+included -- a replay whose frames do not end at t = duration raises ReplayIncomplete; the
 smallest step that fits is used and stored in ``meta.frame_step_s``.
 
 ``waiting_bucket``: accumulated waiting of the vehicle < 10 s -> 0, 10-60 s -> 1, > 60 s -> 2.
@@ -48,6 +49,8 @@ DEFAULT_OUT = ROOT / "web" / "data"
 CONTROLLERS = ("fixed", "actuated", "max_pressure", "rl")
 COMPARE_CONTROLLERS = ("fixed", "actuated", "max_pressure")
 DEFAULT_MAWJA = "max_pressure"
+# Controllers the web page may present as Mawja (label honesty: rl or max-pressure only).
+MAWJA_CHOICES = ("rl", "max_pressure")
 REPLAY_SCALE = 1.0
 # Replay size budget: below the 25 MB hard limit with margin, so the page loads fast.
 REPLAY_BUDGET_BYTES = 20 * 1024 * 1024
@@ -59,6 +62,10 @@ class RuleViolation(RuntimeError):
 
 class ControllerUnavailable(RuntimeError):
     """The requested controller cannot be built (e.g. rl before it exists)."""
+
+
+class ReplayIncomplete(RuntimeError):
+    """The recorded frames do not end at the run's final second; nothing is written."""
 
 
 # --- helpers ----------------------------------------------------------------------------
@@ -100,12 +107,20 @@ def _write_json(path: Path, obj) -> None:
     _write_text(path, _dumps(obj))
 
 
+def keep_frame(t: int, step: int, final_t: int | None) -> bool:
+    """Frames kept at ``step``: t = step, 2 step, ... plus always the final second."""
+    return t % step == 0 or t == final_t
+
+
 def choose_frame_step(frame_sizes: Sequence[int], ts: Sequence[int], overhead: int,
                       budget: int = REPLAY_BUDGET_BYTES) -> int:
-    """Smallest step >= 1 such that frames with t % step == 0 (plus overhead) fit budget."""
+    """Smallest step >= 1 such that the kept frames (``keep_frame``, the last t always
+    kept) plus overhead fit the budget."""
     step = 1
+    final_t = ts[-1] if len(ts) else None
     while True:
-        size = overhead + sum(n + 1 for n, t in zip(frame_sizes, ts) if t % step == 0)
+        size = overhead + sum(n + 1 for n, t in zip(frame_sizes, ts)
+                              if keep_frame(t, step, final_t))
         if size <= budget or step >= max(len(ts), 1):
             return step
         step += 1
@@ -116,13 +131,14 @@ def scale_key(scale: float) -> str:
 
 
 def _load_rl():
+    """RLController with the committed policy (models/rl_policy.zip)."""
     try:
-        from sim.controllers.rl import RL  # noqa: WPS433 (Task 8)
+        from sim.controllers.rl import DEFAULT_MODEL, RLController
     except ImportError as exc:
         raise ControllerUnavailable(
-            "controller 'rl' is not available: sim/controllers/rl.py (class RL) "
-            f"cannot be imported ({exc})") from exc
-    return RL
+            "controller 'rl' is not available: the rl extra is not installed "
+            f"(pip install -e '.[rl]'): {exc}") from exc
+    return lambda: RLController(DEFAULT_MODEL)
 
 
 def make_controller(name: str, scale: float):
@@ -235,6 +251,11 @@ def export_replay(controller: str, seed: int, out_dir: Path = DEFAULT_OUT,
         r = run_checked(net, routes, ctrl, seed, duration=duration, record=True,
                         frame_fn=_frame_converter(link_idx))
         network, tls = network_payload(net)
+    final_t = int(r.diagnostics["duration_s"])
+    if not r.frames or r.frames[-1]["t"] != final_t:
+        last = r.frames[-1]["t"] if r.frames else None
+        raise ReplayIncomplete(f"{controller}: recorded frames end at t={last}, run ended "
+                               f"at t={final_t}; replay not written")
     frame_json = [_dumps(f) for f in r.frames]
     ts = [f["t"] for f in r.frames]
     meta = {"controller": controller, "label_ar": ctrl.label_ar, "seed": int(seed),
@@ -246,7 +267,9 @@ def export_replay(controller: str, seed: int, out_dir: Path = DEFAULT_OUT,
                              budget_bytes)
     meta["frame_step_s"] = step
     head = _dumps({"meta": meta, "network": network, "tls": tls})
-    kept = (s for s, t in zip(frame_json, ts) if t % step == 0)
+    kept = [s for s, t in zip(frame_json, ts) if keep_frame(t, step, final_t)]
+    if not kept or json.loads(kept[-1])["t"] != final_t:
+        raise ReplayIncomplete(f"{controller}: final frame t={final_t} missing from replay")
     path = Path(out_dir) / f"replay_{controller}.json"
     _write_text(path, head[:-1] + ',"frames":[' + ",".join(kept) + "]}")
     return path
@@ -299,6 +322,8 @@ def write_manifest(out_dir: Path, mawja: str | None = None) -> dict:
     ``mawja`` given (``--set-mawja``): set it. Otherwise create the manifest with
     max_pressure if missing, and leave an existing choice (e.g. rl from Task 8) unchanged.
     """
+    if mawja is not None and mawja not in MAWJA_CHOICES:
+        raise ValueError(f"Mawja can only be one of {MAWJA_CHOICES}, not {mawja!r}")
     path = Path(out_dir) / "manifest.json"
     current = {}
     if path.exists():
