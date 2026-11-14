@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>موجة — إشارات ذكية لشارع العليا</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body data-state="loading">
+<header class="masthead">
+  <div class="masthead-main">
+    <h1><span class="wordmark">موجة</span> — إشارات ذكية لشارع العليا</h1>
+    <p class="lede">محاكاة ذروة المساء من 16:00 إلى 18:00 على ستة تقاطعات متتالية: توقيت ثابت منسّق يمثّل الوضع الحالي (التوقيتات الفعلية غير متوفرة لنا)، مقابل إشارات تتكيّف مع الطوابير لحظة بلحظة.
+      <span class="badge" title="أحجام المرور في هذه المحاكاة تقديرية وليست عدّاً ميدانياً">حجم المرور تقديري</span>
+      <a class="method-link" href="methodology.html">كيف بُنيت هذه المحاكاة؟</a></p>
+  </div>
+  <section class="context" aria-label="كلفة الازدحام">
+    <p class="context-figure"><strong>11.4 مليار ريال</strong> كلفة الازدحام المروري المقدّرة في الرياض عام 2025</p>
+    <p class="source">المصدر: دراسة منتدى الرياض الاقتصادي، كما نشرتها صحيفة سبق</p>
+  </section>
+</header>
+
+<div id="error" class="error" role="alert" hidden></div>
+<p id="loading" class="loading">جارٍ تحميل بيانات المحاكاة…</p>
+
+<main id="player">
+  <div class="controls" role="group" aria-label="التحكم في العرض">
+    <button id="play" class="play" type="button" disabled aria-label="تشغيل">
+      <span class="play-icon" aria-hidden="true">▶︎</span><span class="play-text">تشغيل</span>
+    </button>
+    <div class="speeds" role="group" aria-label="سرعة العرض">
+      <button type="button" data-speed="1" aria-pressed="false">×1</button>
+      <button type="button" data-speed="10" aria-pressed="false">×10</button>
+      <button type="button" data-speed="60" aria-pressed="true">×60</button>
+    </div>
+    <div class="clock-wrap">
+      <span class="clock-label">الساعة في المحاكاة</span>
+      <output id="clock" class="clock">16:00:00</output>
+    </div>
+    <input id="scrub" class="scrub" type="range" min="0" max="7200" step="3" value="0" aria-label="الانتقال إلى لحظة في المحاكاة" disabled>
+    <div class="scrub-ends" aria-hidden="true"><span>16:00</span><span>18:00</span></div>
+  </div>
+
+  <div class="panels">
+    <section class="panel panel-fixed" aria-labelledby="title-fixed">
+      <header class="panel-head">
+        <h2 id="title-fixed">توقيت ثابت منسّق (يمثّل الوضع الحالي)</h2>
+        <p class="algo" id="algo-fixed"></p>
+      </header>
+      <canvas id="canvas-fixed" class="map" aria-label="خريطة حركة السيارات مع التوقيت الثابت المنسّق"></canvas>
+      <div class="kpis" data-panel="fixed"></div>
+    </section>
+    <section class="panel panel-mawja" aria-labelledby="title-mawja">
+      <header class="panel-head">
+        <h2 id="title-mawja">موجة</h2>
+        <p class="algo" id="algo-mawja"></p>
+      </header>
+      <canvas id="canvas-mawja" class="map" aria-label="خريطة حركة السيارات مع إشارات موجة"></canvas>
+      <div class="kpis" data-panel="mawja"></div>
+    </section>
+  </div>
+
+  <ul class="legend" aria-label="مفتاح الألوان">
+    <li><i class="dot b0"></i>سيارة انتظرت أقل من 10 ثوانٍ</li>
+    <li><i class="dot b1"></i>انتظرت 10–60 ثانية</li>
+    <li><i class="dot b2"></i>انتظرت أكثر من دقيقة</li>
+    <li><i class="sig"></i>إشارة العليا للاتجاه شمالاً (أخضر / أصفر / أحمر)</li>
+  </ul>
+  <p class="note">المؤشرات تحت كل خريطة تراكمية منذ 16:00 «حتى الآن». تُعرض لقطة من المحاكاة كل 3 ثوانٍ.</p>
+
+  <section class="summary" id="summary" aria-labelledby="summary-title">
+    <h2 id="summary-title">النتيجة بعد ساعتين من الذروة</h2>
+    <p class="summary-sub" id="summary-sub"></p>
+    <div class="headline" id="headline"></div>
+    <table class="ledger" id="ledger">
+      <thead><tr><th scope="col">المؤشر</th><th scope="col">التوقيت الثابت</th><th scope="col">موجة</th><th scope="col">الفرق</th></tr></thead>
+      <tbody></tbody>
+    </table>
+
+    <figure class="trend">
+      <figcaption>متوسط الانتظار المتراكم حتى كل لحظة (ثانية) <span class="key key-fixed">التوقيت الثابت</span> <span class="key key-mawja">موجة</span></figcaption>
+      <canvas id="trend" aria-label="منحنى متوسط الانتظار عبر الزمن للطريقتين"></canvas>
+    </figure>
+
+    <h3>هل تصمد النتيجة إذا تغيّر حجم المرور؟</h3>
+    <p class="summary-sub">حجم المرور المرجعي تقديري، لذلك أعدنا المحاكاة عند 80% و120% منه. «السيارات العابرة» و«سيارات لم تتمكن من دخول الشارع» معروضتان بجانب ساعات التوقف والانتظار؛ لأن انخفاضهما لا يُعدّ تحسّناً إذا عبرت سيارات أقل أو بقيت سيارات أكثر خارج الشارع.</p>
+    <div class="table-scroll">
+      <table class="scales" id="scales-table">
+        <thead><tr>
+          <th scope="col">حجم المرور</th><th scope="col">طريقة التحكم</th>
+          <th scope="col">ساعات توقف السيارات</th><th scope="col">متوسط الانتظار المتراكم</th><th scope="col">السيارات العابرة</th>
+          <th scope="col">سيارات لم تتمكن من دخول الشارع</th><th scope="col">الكلفة التقديرية بالريال</th>
+          <th scope="col">مقارنة بالتوقيت الثابت</th>
+        </tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+</main>
+
+<footer class="foot">
+  <p>نتائج محاكاة حاسوبية في SUMO على هندسة تقريبية للشارع وحجم مرور تقديري، وليست نتائج ميدانية. <a href="methodology.html">المنهجية والافتراضات كاملة</a></p>
+</footer>
+<script src="app.js"></script>
+</body>
+</html>
